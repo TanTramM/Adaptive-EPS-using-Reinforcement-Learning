@@ -1,0 +1,80 @@
+Tóm Tắt Dữ Liệu Về Tân, Thầy & Hướng Nghiên Cứu
+1. Thông Tin Về Tân (Trần Minh Tân)
+Công Việc & Chuyên Môn
+Vị trí: Embedded Software Developer tại Bosch Global Software Technologies Vietnam (BGSV), TP.HCM
+Lĩnh vực chuyên sâu:
+ASW AUTOSAR (Automotive Software Architecture)
+Static code analysis (Astrée)
+vECU development & testing
+MATLAB/Simulink Model-Based Development (MBD)
+Kỹ năng lập trình: C, Python, MATLAB/Simulink, Git, Agile
+Công cụ nghề: Astrée, Git/Bitbucket/ClearCase, Jira
+Chứng chỉ: ISTQB Foundation
+Học Vấn
+Bằng: Bachelor's in Automotive Engineering (HCMUT)
+Hiện tại: Đang theo học Master's in Mechatronics tại HCMUT
+Ngôn ngữ: Tiếng Anh fluent, Tiếng Đức cơ bản
+2. Thầy Hướng Dẫn & Chiều Hướng Nghiên Cứu
+Thầy Hướng Dẫn
+Tên: Dr. Phùng Thanh Huy (HCMUT)
+Lĩnh vực quan tâm:
+Robotics & Automatic Control
+AI + Computer Vision trong Mechatronics
+(Tân cũng quan tâm đến cả hai hướng này)
+Hướng Nghiên Cứu Chính
+
+Công nghệ tập trung: RL (Reinforcement Learning) áp dụng vào hệ thống tự động
+
+3. Chủ Đề Luận Văn (Đã Xác Định)
+Tên Đề Tài
+
+"Adaptive EPS (Electric Power Steering) using Reinforcement Learning"
+
+4. Mô Hình Môi Trường
+Cấu Trúc
+Mô hình: CEPS (Column-type EPS) từ Marouf et al.
+3 hệ con chính:
+Steering column dynamics
+Motor dynamics
+Rack & road reaction forces
+Dữ liệu:
+Hoàn toàn từ công khai (academic literature, patents)
+Không được dùng tài sản nội bộ Bosch (Simulink models, calibration tables, measurement data, code)
+
+6. Ràng Buộc & Điều Kiện
+Yếu Tố	Chi Tiết
+Thời gian	~300 giờ, ~4 tháng
+Tỷ lệ nội dung	50% AI + 50% Control & Modeling
+Dữ liệu	Public only — không dùng assets nội bộ Bosch
+Phần cứng	STM32G474 Nucleo board only (không motor, driver, sensors thực)
+Phương pháp	Problem-first, rồi literature review (≥3 papers), rồi mới chọn algorithm
+7. Điểm Mạnh & Điểm Yếu
+Điểm Mạnh
+
+✅ MATLAB/Simulink simulation
+✅ C/Python automation coding
+✅ Kinh nghiệm AUTOSAR & automotive
+
+Điểm Yếu / Cần Cải Thiện
+
+⚠️ Lý thuyết điều khiển sâu (Sliding Mode Control, nonlinear dynamics)
+⚠️ AI frameworks (PyTorch, TensorFlow, stable-baselines3)
+⚠️ Điện tử & vi điều khiển chi tiết
+
+8. Preference & Cách Làm Việc Của Tân
+Nguyên Tắc Làm Việc
+Problem-first discipline: Tân thích xác định vấn đề thực tế trước → hiểu trạng thái công nghiệp → rồi chọn tool/algorithm
+Không bao giờ nhảy vào kỹ thuật sớm
+Sequential, one-requirement-at-a-time: Làm xong yêu cầu A → thảo luận chi tiết → mới sang B
+Detailed explanations + concrete examples trước khi bước tiếp
+Responsive to mid-task corrections (VD: mở rộng scope, thêm cột) — không yêu cầu restart toàn bộ
+Giao Tiếp
+Ngôn ngữ ưa thích: Tiếng Việt
+Ghi chú: Có thể chuyển sang Tiếng Anh nếu context gợi ý
+Công Cụ Chủ Yếu
+MATLAB/Simulink (simulation)
+Git (version control)
+Zotero/Mendeley (reference management — sắp setup)
+Word/Excel (report, tables)
+Astrée, Jira (công việc Bosch)
+
