@@ -32,20 +32,5 @@
         "l_f": 1.1,
         "l_r": 1.58,
         "k_zz": 1.3515
-    },
-    "steering_column_derived_dynamics": {
-        "j_c": 0.04221
-    },
-    "torsion_bar_derived_dynamics": {
-        "k_c": 149.643
-    },
-    "assist_motor_and_rack_derived_dynamics": {
-        "g_w": 16.5,
-        "r_p": 0.0072,
-        "j_m": 0.00045,
-        "m_r": 131.5,
-        "J_p_eq": 0.12933,
-        "B_p_eq": 8.7121,
-        "T_fp_eq": 0.0000144
     }
 }
