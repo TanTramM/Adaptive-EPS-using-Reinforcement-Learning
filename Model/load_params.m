@@ -1,7 +1,7 @@
 % load_params.m
 % MATLAB script to load physical parameters from params.json and calculate derived dynamic parameters
 
-json_file = 'params.json';
+json_file = 'data/params.json';
 
 if exist(json_file, 'file')
     % 1. Read JSON file content
