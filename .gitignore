@@ -1,0 +1,18 @@
+# MATLAB / Simulink build artifacts
+*.mexw64
+*.mexw32
+*.mexa64
+*.mexmaci64
+*.slxc
+*.autosave
+*.asv
+slprj/
+sfprj/
+codegen/
+
+# Visual Studio project cache (khi mo thu muc code S-Function bang VS)
+.vs/
+
+# OS junk
+Thumbs.db
+.DS_Store

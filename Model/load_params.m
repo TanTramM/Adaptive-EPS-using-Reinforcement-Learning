@@ -1,84 +1,99 @@
 % load_params.m
-% MATLAB script to load physical parameters from params.json and calculate derived dynamic parameters
+% MATLAB script to load nominal CEPS parameters and pre-calculate 
+% derived parameters once for the S-Function simulation.
 
-json_file = 'data/params.json';
+% Xac dinh duong dan tuyet doi theo vi tri cua chinh file nay, khong phu
+% thuoc thu muc lam viec (pwd) hien tai cua MATLAB.
+script_dir = fileparts(mfilename('fullpath'));
+json_file = fullfile(script_dir, 'data', 'params.json');
 
 if exist(json_file, 'file')
     % 1. Read JSON file content
     json_text = fileread(json_file);
     data = jsondecode(json_text);
     
-    % 2. Dynamically load all measured physical parameters into the MATLAB Workspace
-    fields = fieldnames(data.measured_physical_parameters);
-    for idx = 1:numel(fields)
-        field_name = fields{idx};
-        assignin('base', field_name, data.measured_physical_parameters.(field_name));
-    end
+    % Initialize parameter structure
+    p = struct();
     
-    % 3. Calculate Derived Dynamics Parameters (Sections 3.1 to 3.4)
+    % 2. Load Nominal Parameters for all blocks
+    % Block 1: Steering Column
+    p.m_sw = data.block1_steering_column.m_sw;
+    p.r_sw = data.block1_steering_column.r_sw;
+    p.m_sh = data.block1_steering_column.m_sh;
+    p.r_sh = data.block1_steering_column.r_sh;
+    p.b_c  = data.block1_steering_column.b_c;
+    p.t_fc = data.block1_steering_column.t_fc;
+    p.m_rt = data.block1_steering_column.m_rt;
+    p.r_rt = data.block1_steering_column.r_rt;
+    p.z1   = data.block1_steering_column.z1;
+    p.z2   = data.block1_steering_column.z2;
+    p.j_m  = data.block1_steering_column.j_m;
+    p.b_m  = data.block1_steering_column.b_m;
+    p.m_rraw = data.block1_steering_column.m_rraw;
+    p.m_wh   = data.block1_steering_column.m_wh;
+    p.r_wh   = data.block1_steering_column.r_wh;
+    p.l_am   = data.block1_steering_column.l_am;
+    p.b_r    = data.block1_steering_column.b_r;
+    p.T_fp_eq = data.block1_steering_column.T_fp_eq;
+    p.r_p    = data.block1_steering_column.r_p;
+
+    % Block 2: Tire & Pacejka (Load as nominal)
+    p.t_p = data.block2_tire_pacejka.t_p;
+    p.t_m = data.block2_tire_pacejka.t_m;
+    p.B   = data.block2_tire_pacejka.B;
+    p.C   = data.block2_tire_pacejka.C;
+    p.D   = data.block2_tire_pacejka.D;
+    p.E   = data.block2_tire_pacejka.E;
+
+    % Block 3: Vehicle Dynamics (Load as nominal)
+    p.m    = data.block3_vehicle_dynamics.m;
+    p.l_f  = data.block3_vehicle_dynamics.l_f;
+    p.l_r  = data.block3_vehicle_dynamics.l_r;
+    p.k_zz = data.block3_vehicle_dynamics.k_zz;
+    p.C_r  = data.block3_vehicle_dynamics.C_r;
+
+    % Test Scenario
+    p.v  = data.test_scenario.v;
+    p.mu = data.test_scenario.mu;
+
+    % 3. Pre-calculate Derived Parameters for Block 1 (Steering Column)
+    % Mô-men quán tính vành vô-lăng
+    p.J_sw = p.m_sw * (p.r_sw ^ 2);
     
-    % --- SECTION 3.1: Upper Steering Column Dynamics ---
-    % Moment of inertia of the steering wheel (thin ring model)
-    J_sw = m_sw * r_sw^2; 
-    % Moment of inertia of the steering shaft (solid cylinder model)
-    J_sh = 0.5 * m_sh * r_sh^2; 
-    % Total reduced moment of inertia of the upper column
-    j_c = J_sw + J_sh; 
+    % Mô-men quán tính trục lái trên
+    p.J_sh = 0.5 * p.m_sh * (p.r_sh ^ 2);
     
-    % --- SECTION 3.2: Torsion Bar Elasticity ---
-    % Polar moment of inertia of the circular torsion bar cross-section
-    I_p = (pi * d_tb^4) / 32; 
-    % Torsional stiffness of the torsion bar (material SUP7)
-    k_c = (g_st * I_p) / l_tb; 
+    % Tổng mô-men quán tính trục vô-lăng và cột lái trên
+    p.J_c = p.J_sw + p.J_sh;
     
-    % --- SECTION 3.3: Motor and Rack-Pinion Dynamics ---
-    % Worm gear reduction ratio
-    g_w = z2 / z1; 
-    % Pinion pitch circle radius
-    r_p = c_lk / (2 * pi); 
-    % Moment of inertia of the assist motor rotor
-    j_m = 0.5 * m_rt * r_rt^2; 
-    % Moment of inertia of one front wheel about the kingpin axis
-    j_w_rot = m_wh * r_wh^2; 
-    % Equivalent linear mass translation from the rotation of both front wheels
-    m_w_eq = 2 * (j_w_rot / l_am^2); 
-    % Total equivalent mass of the rack and steering assembly
-    m_r = m_rraw + m_w_eq; 
-    % Total equivalent moment of inertia reduced to the Pinion shaft
-    J_p_eq = (g_w^2 * j_m) + (r_p^2 * m_r); 
-    % Total equivalent viscous damping coefficient reduced to the Pinion shaft
-    B_p_eq = (g_w^2 * b_m) + (r_p^2 * b_r); 
-    % Total equivalent dry friction torque reduced to the Pinion shaft
-    T_fp_eq = r_p * f_fr; 
+    % Tỉ số truyền hộp số giảm tốc trục vít - bánh vít
+    p.g_w = p.z2 / p.z1;
     
-    % --- SECTION 3.4: Tire Magic Formula and Steering Geometry ---
-    % Geometric steering gear ratio
-    i_sg = l_am / r_p; 
-    % Total trail (Pneumatic trail + Mechanical caster trail)
-    t_total = t_p + t_m; 
-    % Force ratio coefficient from tire lateral force to rack feedback force
-    K_force_ratio = (2 * t_total) / l_am; 
-    % Torque ratio coefficient from tire lateral force to pinion feedback torque
-    K_torque_ratio = r_p * K_force_ratio; 
+    % Khối lượng quy đổi của cơ cấu thước lái thước lái
+    p.m_r = p.m_rraw + 2 * p.m_wh * ((p.r_wh / p.l_am) ^ 2);
     
-    % 4. Print Summary to MATLAB Command Window
+    % Mô-men quán tính bánh răng pinion dưới
+    p.J_p = 0.5 * p.m_rt * (p.r_rt ^ 2);
+    
+    % Tổng mô-men quán tính quy đổi về trục Pinion dưới
+    p.J_p_eq = p.J_p + (p.g_w ^ 2) * p.j_m + (p.r_p ^ 2) * p.m_r;
+    
+    % Tổng hệ số ma sát nhớt quy đổi tại cơ cấu pinion thước lái dưới
+    p.B_p_eq = (p.g_w ^ 2) * p.b_m + (p.r_p ^ 2) * p.b_r;
+    
+    % Các thông số gộp cho mô hình trục lái cứng hợp nhất
+    p.J_total = p.J_c + p.J_p_eq;
+    p.B_total = p.b_c + p.B_p_eq;
+    p.T_f_total = p.t_fc + p.T_fp_eq;
+    
+    % Hồi tiếp cánh tay đòn hình học lái (Sử dụng cho Block 2)
+    p.K_torque_ratio = 2 * p.r_p * (p.t_p + p.t_m) / p.l_am;
+
+    % Assign parameter structure 'p' to MATLAB base workspace
+    assignin('base', 'p', p);
+    
     disp('==================================================================');
-    disp('  CEPS MEASURED PHYSICAL PARAMETERS DYNAMICALLY LOADED');
-    disp('==================================================================');
-    fprintf('  Upper Column Reduced Inertia (j_c):    %10.6f kg.m2\n', j_c);
-    fprintf('  Torsion Bar Stiffness (k_c):          %10.4f N.m/rad\n', k_c);
-    fprintf('  Worm Gear Reduction Ratio (g_w):      %10.2f\n', g_w);
-    fprintf('  Pinion Pitch Radius (r_p):            %10.4f m\n', r_p);
-    fprintf('  Total Rack Eq. Mass (m_r):            %10.2f kg\n', m_r);
-    fprintf('  Pinion Eq. Inertia (J_p_eq):          %10.6f kg.m2\n', J_p_eq);
-    fprintf('  Pinion Eq. Viscous Damping (B_p_eq):  %10.4f N.m/(rad/s)\n', B_p_eq);
-    fprintf('  Pinion Eq. Dry Friction (T_fp_eq):    %10.6f N.m\n', T_fp_eq);
-    fprintf('  Steering Gear Ratio (i_sg):           %10.4f\n', i_sg);
-    fprintf('  Total Tire Trail (t_total):           %10.4f m\n', t_total);
-    fprintf('  Tire-to-Rack Force Ratio:             %10.4f\n', K_force_ratio);
-    fprintf('  Tire-to-Pinion Torque Ratio:          %10.6f\n', K_torque_ratio);
-    disp('==================================================================');
-    disp('  ALL CEPS DERIVED PARAMETERS CALCULATED AND INTEGRATED SUCCESSFULLY');
+    disp('  NOMINAL PARAMETERS LOADED & BLOCK 1 DERIVED SYSTEM CALCULATED   ');
     disp('==================================================================');
 else
     error('File %s not found! Please check the path.', json_file);
