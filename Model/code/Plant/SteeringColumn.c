@@ -16,8 +16,8 @@
 #define N_STATES  2
 /* Inputs: [T_d, T_a, T_r] */
 #define N_INPUTS  3
-/* Outputs: [theta, theta_dot, T_s] */
-#define N_OUTPUTS 3
+/* Outputs: [theta, T_s] */
+#define N_OUTPUTS 2
 
 /* Only T_d feeds through to the outputs (T_s = T_d); T_a and T_r are only
  * used in BlockDerivatives, not BlockOutputs. Marking them as non-feedthrough
@@ -28,7 +28,7 @@
 enum { P_J_TOTAL, P_B_TOTAL, P_TF_TOTAL };
 enum { ST_THETA, ST_THETA_DOT };
 enum { IN_TD, IN_TA, IN_TR };
-enum { OUT_THETA, OUT_THETA_DOT, OUT_TS };
+enum { OUT_THETA, OUT_TS };
 
 #include <math.h>
 
@@ -44,11 +44,12 @@ static double sign(double val) {
     return tanh(val / eps);
 }
 
-/* y = [theta, theta_dot, T_s = T_d] (rigid shaft assumption, see Block 1 - section 3.2) */
+/* y = [theta, T_s = T_d] (rigid shaft assumption, see Block 1 - section 3.2).
+ * theta_dot is still tracked internally as a state (needed by BlockDerivatives)
+ * but is no longer exposed as an output - nothing downstream consumes it. */
 void BlockOutputs(const double *params, const double *states, const double *inputs, double *outputs) {
-    outputs[OUT_THETA]     = states[ST_THETA];
-    outputs[OUT_THETA_DOT] = states[ST_THETA_DOT];
-    outputs[OUT_TS]        = inputs[IN_TD];
+    outputs[OUT_THETA] = states[ST_THETA];
+    outputs[OUT_TS]    = inputs[IN_TD];
 }
 
 /* theta_ddot = (T_d + T_a - B*theta_dot - Tf*sign(theta_dot) - T_r) / J */
