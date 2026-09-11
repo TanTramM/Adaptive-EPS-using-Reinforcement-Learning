@@ -1,7 +1,8 @@
 /*
  * VehicleDynamics.c
  * -----------------
- * Block 3: Lateral Vehicle Dynamics - Bicycle 2-DOF model (thesis section 3.4).
+ * Block 3: Lateral Vehicle Dynamics - Bicycle 2-DOF model
+ * (thesis Block 3, eq. 25-37).
  * This file only holds the port/param/state configuration and the physics
  * equations. All the Simulink-facing plumbing (mdlInitializeSizes, mdlOutputs,
  * mdlDerivatives, ...) lives in "SFunctionSetup.h", included at the bottom.
@@ -36,12 +37,17 @@ void BlockOutputs(const double *params, const double *states, const double *inpu
     outputs[OUT_GAMMA] = states[ST_GAMMA];
 }
 
-/*
- * beta_dot  = (Fyf + Fyr) / (m*v) - gamma
- * gamma_dot = (l_f*Fyf - l_r*Fyr) / I_z
- * Fyr       = C_r * alpha_r
- * alpha_r   = -beta + l_r*gamma/v
- */
+/* thesis eq. (36), (37):
+ *   beta_dot  = 2*(Fyf + Fyr) / (m*v) - gamma
+ *   gamma_dot = 2*(l_f*Fyf - l_r*Fyr) / I_z
+ *   Fyr       = C_r * alpha_r                    (eq. 20)
+ *   alpha_r   = -beta + l_r*gamma/v              (eq. 16)
+ *
+ * The factor 2 converts the PER-WHEEL tire forces coming out of Block 2 into
+ * PER-AXLE forces, which is what the body-force balance needs: F_zf in eq. (21)
+ * is the static load on ONE front wheel, and the factor 2 already inside K_tr
+ * (eq. 22) accounts for both wheels on the torque path back to the column.
+ * See "Quy uoc cap do luc" in the thesis, Block 3. */
 void BlockDerivatives(const double *params, const double *states, const double *inputs, double *derivatives) {
     double m   = params[P_M];
     double l_f = params[P_LF];
@@ -60,11 +66,11 @@ void BlockDerivatives(const double *params, const double *states, const double *
     /* Rear tire slip angle (linear tire model: no direct steering input at the rear) */
     alpha_r = -beta + (l_r * gamma) / v;
 
-    /* Rear lateral tire force */
+    /* Rear lateral tire force, per wheel */
     Fyr = C_r * alpha_r;
 
-    derivatives[ST_BETA]  = (Fyf + Fyr) / (m * v) - gamma;
-    derivatives[ST_GAMMA] = (l_f * Fyf - l_r * Fyr) / I_z;
+    derivatives[ST_BETA]  = 2.0 * (Fyf + Fyr) / (m * v) - gamma;
+    derivatives[ST_GAMMA] = 2.0 * (l_f * Fyf - l_r * Fyr) / I_z;
 }
 
 #include "SFunctionSetup.h"

@@ -2,7 +2,7 @@
  * TirePacejka.c
  * -----------------
  * Block 2: Nonlinear Tire Interaction Dynamics - Pacejka Magic Formula
- * (thesis section 3.3).
+ * (thesis Block 2, eq. 13-24).
  *
  * Purely algebraic block: no continuous state, the outputs are computed
  * directly from the current inputs every step (no BlockDerivatives needed).
@@ -14,15 +14,15 @@
 #define S_FUNCTION_NAME  TirePacejka
 #define S_FUNCTION_LEVEL 2
 
-/* Params: [r_p, l_am, l_f, Bf, Cf, Df, Ef, K_torque_ratio] */
+/* Params: [r_p, l_am, l_f, C_alpha_f, Cf, F_zf, Ef, K_torque_ratio] */
 #define N_PARAMS  8
 /* Inputs: [theta, beta, gamma, v, mu] */
 #define N_INPUTS  5
 /* Outputs: [Fyf, Tr] */
 #define N_OUTPUTS 2
-/* No N_STATES: this block has no ODE, see thesis section 3.3 */
+/* No N_STATES: this block has no ODE, only algebraic equations */
 
-enum { P_RP, P_LAM, P_LF, P_BF, P_CF, P_DF, P_EF, P_KTORQUE_RATIO };
+enum { P_RP, P_LAM, P_LF, P_C_ALPHA_F, P_CF, P_FZF, P_EF, P_KTORQUE_RATIO };
 enum { IN_THETA, IN_BETA, IN_GAMMA, IN_V, IN_MU };
 enum { OUT_FYF, OUT_TR };
 
@@ -37,9 +37,9 @@ void BlockOutputs(const double *params, const double *states, const double *inpu
     double r_p            = params[P_RP];
     double l_am           = params[P_LAM];
     double l_f            = params[P_LF];
-    double Bf             = params[P_BF];
+    double C_alpha_f      = params[P_C_ALPHA_F];
     double Cf             = params[P_CF];
-    double Df             = params[P_DF];
+    double F_zf           = params[P_FZF];
     double Ef             = params[P_EF];
     double K_torque_ratio = params[P_KTORQUE_RATIO];
 
@@ -49,20 +49,30 @@ void BlockOutputs(const double *params, const double *states, const double *inpu
     double v     = inputs[IN_V];
     double mu    = inputs[IN_MU];
 
-    double delta_f, alpha_f, Bf_af, Fyf, Tr;
+    double delta_f, alpha_f, Df, Bf, Bf_af, Fyf, Tr;
 
-    /* Front wheel steer angle, geared down from the rigid steering shaft angle */
+    /* Front wheel steer angle, geared down from the rigid steering shaft angle (eq. 8) */
     delta_f = (r_p / l_am) * theta;
 
-    /* Front tire slip angle (assumes v is the constant forward speed for this maneuver) */
+    /* Front tire slip angle (eq. 14/15); v is the constant forward speed */
     alpha_f = delta_f - beta - (l_f * gamma) / v;
 
-    /* Pacejka Magic Formula: nonlinear lateral tire force, scaled by the
-     * road friction coefficient mu (mu ~= 1.0 on dry road, mu <= 0.2 on ice) */
-    Bf_af = Bf * alpha_f;
-    Fyf = mu * Df * sin(Cf * atan(Bf_af - Ef * (Bf_af - atan(Bf_af))));
+    /* Pacejka peak factor (eq. 18) and stiffness factor (eq. 19), both recomputed
+     * every step because mu is a live input (road condition can change
+     * mid-simulation), not a fixed parameter. C_alpha_f (the tire's own cornering
+     * stiffness) stays constant - only the peak D_f moves with mu, so the tire
+     * keeps its normal initial slope and just saturates sooner/lower on a
+     * slippery road. */
+    Df = mu * F_zf;
+    Bf = C_alpha_f / (Cf * Df);
 
-    /* Road feedback torque fed back to the steering column (T_r input of Block 1) */
+    /* Pacejka Magic Formula: nonlinear lateral tire force, per wheel (eq. 17/23) */
+    Bf_af = Bf * alpha_f;
+    Fyf = Df * sin(Cf * atan(Bf_af - Ef * (Bf_af - atan(Bf_af))));
+
+    /* Road feedback torque fed back to the steering column, T_r input of Block 1.
+     * K_torque_ratio (eq. 22) already carries a factor 2 for both front wheels,
+     * so it consumes the PER-WHEEL Fyf computed above (eq. 24). */
     Tr = K_torque_ratio * Fyf;
 
     outputs[OUT_FYF] = Fyf;

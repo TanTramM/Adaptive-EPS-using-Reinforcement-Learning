@@ -1,7 +1,7 @@
 /*
  * SteeringColumn.c
  * -----------------
- * Block 1: Rigid Steering Dynamics (thesis section 3.2).
+ * Block 1: Rigid Steering Dynamics (thesis Block 1, eq. 1-12).
  * This file ONLY holds the port/param/state configuration and the physics
  * equations. All the Simulink-facing plumbing (mdlInitializeSizes, mdlOutputs,
  * mdlDerivatives, ...) lives in "SFunctionSetup.h", included at the bottom.
@@ -32,19 +32,16 @@ enum { OUT_THETA, OUT_TS };
 
 #include <math.h>
 
-/* Coulomb dry friction: opposes the direction of motion.
+/* Smoothing slope for the Coulomb dry friction term (thesis eq. 4: c = 100).
  * A hard sign() is discontinuous at theta_dot = 0, which makes a continuous
  * variable-step solver chatter (repeatedly halve its step) trying to resolve
  * the jump exactly, stalling the simulation near t = 0 (theta_dot(0) = 0).
- * tanh() gives a smooth approximation: it saturates to +-1 for |val| >> eps,
- * so the physics is essentially unchanged away from zero velocity, but the
- * transition through zero is continuous and solver-friendly. */
-static double sign(double val) {
-    const double eps = 1e-3; /* rad/s, smoothing width around zero velocity */
-    return tanh(val / eps);
-}
+ * tanh(c * theta_dot) saturates to +-1 for |theta_dot| >> 1/c, so the physics
+ * is essentially unchanged away from zero velocity, but the transition through
+ * zero is continuous and solver-friendly. */
+#define C_FRICTION_SMOOTH 100.0
 
-/* y = [theta, T_s = T_d] (rigid shaft assumption, see Block 1 - section 3.2).
+/* y = [theta, T_s = T_d] - rigid shaft assumption, eq. (9).
  * theta_dot is still tracked internally as a state (needed by BlockDerivatives)
  * but is no longer exposed as an output - nothing downstream consumes it. */
 void BlockOutputs(const double *params, const double *states, const double *inputs, double *outputs) {
@@ -52,7 +49,8 @@ void BlockOutputs(const double *params, const double *states, const double *inpu
     outputs[OUT_TS]    = inputs[IN_TD];
 }
 
-/* theta_ddot = (T_d + T_a - B*theta_dot - Tf*sign(theta_dot) - T_r) / J */
+/* thesis eq. (10)/(12):
+ * theta_ddot = (T_d + T_a - B_total*theta_dot - Tf_total*tanh(c*theta_dot) - T_r) / J_total */
 void BlockDerivatives(const double *params, const double *states, const double *inputs, double *derivatives) {
     double J_total  = params[P_J_TOTAL];
     double B_total  = params[P_B_TOTAL];
@@ -62,8 +60,11 @@ void BlockDerivatives(const double *params, const double *states, const double *
     double T_a = inputs[IN_TA];
     double T_r = inputs[IN_TR];
 
+    double T_b = B_total * theta_dot;                                  /* eq. (3) */
+    double T_f = Tf_total * tanh(C_FRICTION_SMOOTH * theta_dot);       /* eq. (4) */
+
     derivatives[ST_THETA]     = theta_dot;
-    derivatives[ST_THETA_DOT] = (T_d + T_a - B_total * theta_dot - Tf_total * sign(theta_dot) - T_r) / J_total;
+    derivatives[ST_THETA_DOT] = (T_d + T_a - T_b - T_f - T_r) / J_total;
 }
 
 #include "SFunctionSetup.h"
