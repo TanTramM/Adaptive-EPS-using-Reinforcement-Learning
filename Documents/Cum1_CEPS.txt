@@ -1,0 +1,206 @@
+================================================================================
+CỤM 1: ĐỘNG LỰC HỌC CƠ CẤU LÁI (STEERING COLUMN)
+TRỤC CỨNG - KHÔNG XÉT THANH XOẮN ĐÀN HỒI
+================================================================================
+Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết - KHÔNG chép nguyên vào
+luận văn. Bản rút gọn để đưa vào luận văn nằm ở PHẦN CUỐI file này.
+
+Quy ước: mỗi công thức có thêm 1 dòng dạng LaTeX trong ngoặc [ ]. Dán dòng đó
+vào ô công thức Word (Insert > Equation, hoặc Alt+=) với chế độ nhập LaTeX
+đang bật (Equation > mũi tên góc > LaTeX thay vì UnicodeMath) - Word 2016+ tự
+dựng thành công thức chuẩn.
+
+Giả thiết: cột lái trên và trục pinion coi như một khối cứng duy nhất, quay
+đồng bộ (KHÔNG xét độ đàn hồi / góc lệch thanh xoắn giữa 2 trục). Hệ quả trực
+tiếp: mô-men cảm biến đo được chính là mô-men tay tài xế:
+
+  T_s(t) = T_d(t)
+  [ T_s(t) = T_d(t) ]
+
+Biến trạng thái: x1 = theta (rad), x2 = theta_dot (rad/s).
+  [ x_1 = \theta \quad x_2 = \dot{\theta} ]
+Đầu vào: T_d (tài xế), T_a (trợ lực), T_r (phản hồi mặt đường, từ Cụm 2).
+
+--------------------------------------------------------------------------------
+BẢNG THAM SỐ CỤM 1 (chi tiết đầy đủ + nguồn: xem params_plant.xlsx, sheet Cum1)
+--------------------------------------------------------------------------------
+
+    J_total    = 0.154 kg.m^2         (quán tính quy đổi toàn hệ)
+    B_total    = 1.6   N.m.s/rad      (ma sát nhớt quy đổi toàn hệ)
+    T_f,total  = 2     N.m            (ma sát khô Coulomb quy đổi toàn hệ)
+    c          = 100   (không thứ nguyên)  (hệ số làm mịn tanh, tự chọn)
+
+  3 tham số đầu lấy TRỰC TIẾP (không tự tính/không tách tiếp) từ nguồn [1]
+  (Lee, Kim, Kim (2018) - xem đầy đủ tại Documents/References.txt) - đo thực
+  nghiệm trên xe Hyundai i30. Lý do và cách đo: xem mục 1, 3 bên dưới.
+
+--------------------------------------------------------------------------------
+1. Vì sao dùng tham số GỘP thay vì tham số cơ khí thô
+--------------------------------------------------------------------------------
+
+  Bản trước dùng "Bảng 3.1" (tham số thô: khối lượng vô-lăng, tỷ số truyền
+  hộp số, bán kính pinion, khối lượng bánh xe...) với trích dẫn kiểu catalog
+  hãng (Toyota, JTEKT, Denso, SKF...). Đã KIỂM CHỨNG LẠI toàn bộ trích dẫn đó
+  và xác nhận: các số hiệu tài liệu cụ thể (model number, report number) ĐỀU
+  KHÔNG TỒN TẠI - đây là trích dẫn bịa (hallucination) của AI tạo bản trước,
+  không phải nguồn thật. Nguyên nhân gốc: các hãng xe/linh kiện KHÔNG công
+  khai dữ liệu cấp linh kiện (khối lượng vô-lăng, ma sát ổ trục, quán tính
+  rotor...) - đây là dữ liệu kỹ thuật nội bộ, không hãng nào công bố ra
+  ngoài, dù tìm cách nào cũng không có nguồn xác thực.
+
+  => QUYẾT ĐỊNH: không tách J_total/B_total/T_f,total thành từng tham số thô
+  riêng lẻ (khối lượng, bán kính, tỷ số truyền...) nữa. Dùng thẳng bộ 3 hằng
+  số GỘP đã ĐO THỰC NGHIỆM trên xe thật (Lee 2018) - đây là cách "vòng qua"
+  đúng bài toán thiếu nguồn tham số thô, vì bản thân bài báo đó cũng đo trực
+  tiếp đại lượng gộp bằng nhận dạng hệ thống (system identification), không
+  cần biết từng chi tiết cơ khí bên trong.
+
+--------------------------------------------------------------------------------
+2. Cột lái là hệ quay 1 bậc tự do - phương trình chuyển động (Lagrange)
+--------------------------------------------------------------------------------
+
+  Vì mọi khâu cơ khí (vô-lăng, cột lái, rotor motor, thanh răng, bánh trước)
+  nối với nhau qua tỷ số truyền CỐ ĐỊNH, toàn bộ cơ cấu lái chỉ có ĐÚNG 1 bậc
+  tự do thực - coi là MỘT khối quay duy nhất quanh trục theta, với quán tính
+  quy đổi J_total và ma sát nhớt quy đổi B_total (2 hằng số gộp, giá trị lấy
+  từ Bảng tham số ở trên, KHÔNG tính từ tổng các khối con).
+
+  Động năng và hàm tiêu tán Rayleigh (ma sát nhớt) của khối quay này:
+
+    E = 0.5 * J_total * theta_dot^2
+    [ E = \frac{1}{2} J_{total}\dot\theta^2 ]
+    F = 0.5 * B_total * theta_dot^2
+    [ \mathcal F = \frac{1}{2} B_{total}\dot\theta^2 ]
+
+  Lagrange tổng quát có tiêu tán, cho 1 bậc tự do theta:
+
+    d/dt(dE/d(theta_dot)) - dE/d(theta) + dF/d(theta_dot) = Q_ngoài
+    [ \frac{d}{dt}\frac{\partial E}{\partial\dot\theta} - \frac{\partial E}{\partial\theta}
+      + \frac{\partial \mathcal F}{\partial \dot\theta} = Q ]
+
+    dE/d(theta_dot) = J_total*theta_dot,   dE/d(theta) = 0  (J_total hằng số)
+    dF/d(theta_dot) = B_total*theta_dot
+
+  Thay vào:
+
+    J_total*theta_ddot + B_total*theta_dot = Q
+
+  Q gồm 3 mô-men KHÔNG đến từ hàm thế/hàm tiêu tán bậc 2 - cộng trực tiếp như
+  ngoại lực suy rộng: T_d, T_a (chủ động), T_r (phản hồi mặt đường, cản), và
+  ma sát khô T_f,total*tanh(c*theta_dot) (KHÔNG phải dạng bậc 2 vì tanh phi
+  tuyến, không suy được từ E hay F - cộng thẳng như ngoại lực, cùng cách T_r):
+
+    Q = T_d + T_a - T_r - T_f,total*tanh(c*theta_dot)
+
+  => Phương trình chuyển động đầy đủ:
+
+    J_total*theta_ddot + B_total*theta_dot + T_f,total*tanh(c*theta_dot)
+      = T_d + T_a - T_r
+    [ J_{total}\ddot\theta + B_{total}\dot\theta + T_{f,total}\tanh(c\dot\theta)
+      = T_d+T_a-T_r ]
+
+  Đặt T_loss(theta_dot) := B_total*theta_dot + T_f,total*tanh(c*theta_dot):
+
+    J_total*theta_ddot = T_d + T_a - T_loss(theta_dot) - T_r
+
+  Giải thích 2 thành phần của T_loss:
+  - B_total*theta_dot: ma sát NHỚT (viscous) - lực cản tỉ lệ TUYẾN TÍNH với
+    vận tốc góc, sinh ra bởi dầu bôi trơn/vòng bi. Càng quay nhanh, cản càng
+    lớn; khi đứng yên, cản bằng 0.
+  - T_f,total*tanh(c*theta_dot): ma sát khô Coulomb - độ lớn gần như KHÔNG
+    ĐỔI (không phụ thuộc tốc độ), chỉ đổi DẤU theo chiều quay. Về lý thuyết
+    đây là hàm sign(theta_dot) gián đoạn tại theta_dot=0, gây rung giật
+    (chattering) khi giải số. Dùng tanh(c*theta_dot) với c=100 làm mịn: tanh
+    tiến nhanh về ±1 khi |theta_dot| lớn (giữ đúng bản chất vật lý), nhưng
+    liên tục và có đạo hàm tại theta_dot=0 (bộ giải số không bị kẹt).
+
+--------------------------------------------------------------------------------
+3. Cách Lee 2018 [1] đo ra J_total, B_total, T_f,total (tóm tắt phương pháp)
+--------------------------------------------------------------------------------
+
+  Xe thử nghiệm: Hyundai i30. Điều kiện: xe kích bánh trước lên (lift-on),
+  tài xế buông tay lái (free-handle) - đảm bảo T_h (driver torque) = 0 và
+  T_l (load từ lốp) = 0, cô lập hoàn toàn ảnh hưởng của motor.
+
+  Motor được kích thích bằng dòng điện dạng SIN, quét qua nhiều tần số. Đo
+  đồng thời góc cột lái, dòng điện motor, mô-men cảm biến tại MỖI tần số kích
+  thích - dựng được Bode plot thực nghiệm (biên độ + pha theo tần số).
+
+  Mô hình lý thuyết của họ (2 khối quán tính J1=vô-lăng, J2=cột lái+motor+
+  rack gộp qua tỷ số truyền, nối qua thanh xoắn K) cho hàm truyền dạng
+  closed-form theo (J1,C1,K,J2,C2). Họ dùng bình phương tối thiểu khớp hàm
+  truyền lý thuyết với Bode plot đo được, tìm ra bộ tham số khớp tốt nhất -
+  đây là PHÉP ĐO GIÁN TIẾP (system identification), không cần tháo rời từng
+  chi tiết cơ khí ra cân/đo riêng.
+
+  Kết quả PT(14) của họ: K=143.24 N.m/rad, J1=0.044 kg.m^2, C1=0.25
+  N.m.s/rad, J2=0.11 kg.m^2, C2=1.35 N.m.s/rad. File này giả thiết TRỤC CỨNG
+  (không thanh xoắn, tương đương K -> vô cùng) nên gộp 2 khối:
+
+    J_total = J1 + J2 = 0.154 kg.m^2
+    B_total = C1 + C2 = 1.6 N.m.s/rad
+
+  T_f,total = 2 N.m lấy từ Table III của cùng bài - hệ số ma sát khô Coulomb
+  giữa các cặp bánh răng (motor-cột lái, thước lái-pinion) mà chính nhóm tác
+  giả dùng trong mô phỏng Simulink của họ để tái tạo hành vi xe thật.
+
+================================================================================
+KẾT QUẢ ĐƯA VÀO LUẬN VĂN (bản rút gọn - chỉ nêu công thức + giải thích ngắn,
+không lặp lại suy diễn Lagrange ở trên)
+================================================================================
+
+Giả thiết trục cứng: T_s(t) = T_d(t).
+
+Bảng tham số (nguồn [1] - Lee, Kim, Kim (2018), IEEE TCST, PT(14) và Table
+III - xem đầy đủ tại References.txt và params_plant.xlsx, sheet Cum1):
+
+    J_total    = 0.154 kg.m^2
+    B_total    = 1.6   N.m.s/rad
+    T_f,total  = 2     N.m
+    c          = 100   (tự chọn)
+
+--------------------------------------------------------------------------------
+Mục 1. Phương trình vi phân cân bằng mô-men tổng quát
+--------------------------------------------------------------------------------
+
+  (1)  J_total*theta_ddot = T_d + T_a - T_loss(theta_dot) - T_r
+  [ J_{total}\ddot\theta = T_d+T_a-T_{loss}(\dot\theta)-T_r ]
+
+--------------------------------------------------------------------------------
+Mục 2. Tính T_loss
+--------------------------------------------------------------------------------
+
+  (2)  T_loss(theta_dot) = B_total*theta_dot + T_f,total*tanh(c*theta_dot)
+  [ T_{loss}(\dot\theta) = B_{total}\dot\theta + T_{f,total}\tanh(c\dot\theta) ]
+
+  - B_total*theta_dot: ma sát nhớt, tỉ lệ tuyến tính vận tốc góc.
+  - T_f,total*tanh(c*theta_dot): ma sát khô Coulomb, làm mịn bằng tanh để
+    tránh rung giật số khi giải ODE qua theta_dot=0.
+
+--------------------------------------------------------------------------------
+Mục 3. Hệ phương trình trạng thái
+--------------------------------------------------------------------------------
+
+Biến trạng thái: x1=theta, x2=theta_dot.
+  [ x_1=\theta \quad x_2=\dot\theta ]
+
+Thế (2) vào (1):
+
+  (3)  dx1/dt = x2
+  (4)  dx2/dt = [ T_d + T_a - B_total*x2 - T_f,total*tanh(c*x2) - T_r ] / J_total
+
+  [ \begin{cases}
+      \dot x_1 = x_2 \\[6pt]
+      \dot x_2 = \dfrac{T_d+T_a-B_{total}x_2-T_{f,total}\tanh(c x_2)-T_r}{J_{total}}
+    \end{cases} ]
+
+Thay số (J_total=0.154, B_total=1.6, T_f,total=2, c=100):
+
+  dx2/dt = [ T_d + T_a - 1.6*x2 - 2*tanh(100*x2) - T_r ] / 0.154
+  [ \dot x_2 = \dfrac{T_d+T_a-1.6x_2-2\tanh(100x_2)-T_r}{0.154} ]
+
+(Phương trình hình học delta_f = (r_p/l_am)*theta trình bày trong Cụm 2 - đó
+là nơi nó thực sự được dùng (tính góc trượt lốp alpha_f). r_p, l_am dùng ở
+Cụm 2 lấy nguồn riêng, KHÔNG liên quan tới J_total/B_total/T_f,total ở file
+này - Cụm 1 không cần biết r_p, l_am.)
+================================================================================

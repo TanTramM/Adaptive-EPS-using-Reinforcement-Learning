@@ -1,40 +1,25 @@
 {
-    "block1_steering_column": {
-        "m_sw": 1.3,
-        "r_sw": 0.18,
-        "m_sh": 1.8,
-        "r_sh": 0.01,
-        "b_c": 0.072,
-        "t_fc": 0.0052,
-        "m_rt": 1.0,
-        "r_rt": 0.03,
-        "z1": 2.0,
-        "z2": 33.0,
-        "b_m": 0.032,
-        "m_rraw": 3.5,
-        "m_wh": 16.0,
-        "r_wh": 0.25,
-        "l_am": 0.125,
-        "b_r": 2.0,
-        "T_fp_eq": 0.0000144,
-        "r_p": 0.0072
-    },
-    "block2_tire_pacejka": {
-        "t_p": 0.02,
-        "t_m": 0.015,
-        "C_alpha_f": 59133.5,
-        "C": 1.3,
-        "E": -1.0
-    },
-    "block3_vehicle_dynamics": {
-        "m": 1573.0,
-        "l_f": 1.1,
-        "l_r": 1.58,
-        "k_zz": 1.3515,
-        "C_r": 50000.0
-    },
-    "test_scenario": {
-        "v": 10.0,
-        "mu": 1.0
-    }
+  "_note": "Tham số plant (Cụm 1+2+3), khớp Documents/Cum1_CEPS.txt, Cum2_Pacejka.txt, Cum3_2DOF.txt và Documents/params_plant.xlsx. Số [n] tra Documents/References.txt. Bộ số cũ (Bảng 3.1, Documents/Gemini_old/) ĐÃ BỎ HẲN - chứa trích dẫn không xác thực.",
+  "cum1": {
+    "J_total":   { "value": 0.154, "unit": "kg.m^2",     "desc": "Tổng quán tính quy đổi về trục theta của toàn bộ cơ cấu lái", "ref": "[1]" },
+    "B_total":   { "value": 1.6,   "unit": "N.m.s/rad",  "desc": "Tổng hệ số ma sát nhớt quy đổi về trục theta",                "ref": "[1]" },
+    "T_f_total": { "value": 2,     "unit": "N.m",        "desc": "Mô-men ma sát khô Coulomb quy đổi về trục theta",             "ref": "[1]" },
+    "c":         { "value": 100,   "unit": "-",          "desc": "Hệ số làm mịn tanh (chống chattering ma sát khô)",            "ref": "tự chọn" }
+  },
+  "cum2": {
+    "m":         { "value": 1573,  "unit": "kg",     "desc": "Khối lượng xe",                                   "ref": "[5]" },
+    "l_f":       { "value": 1.1,   "unit": "m",      "desc": "Khoảng cách trọng tâm (CG) đến cầu trước",        "ref": "[5]" },
+    "l_r":       { "value": 1.58,  "unit": "m",      "desc": "Khoảng cách trọng tâm (CG) đến cầu sau",          "ref": "[5]" },
+    "g":         { "value": 9.81,  "unit": "m/s^2",  "desc": "Gia tốc trọng trường",                            "ref": "hằng số vật lý" },
+    "C_alpha_f": { "value": 80000, "unit": "N/rad",  "desc": "Độ cứng góc trượt lốp trước (cấp cả cầu)",        "ref": "[5]" },
+    "C_r":       { "value": 80000, "unit": "N/rad",  "desc": "Độ cứng góc trượt lốp sau (cấp cả cầu)",          "ref": "[5]" },
+    "C":         { "value": 1.3,   "unit": "-",      "desc": "Hệ số hình dạng đường cong Pacejka (lực ngang)",  "ref": "[3]" },
+    "E":         { "value": -1,    "unit": "-",      "desc": "Hệ số độ cong đường cong Pacejka (lực ngang)",    "ref": "[3]" },
+    "n_st":      { "value": 16,    "unit": "-",      "desc": "Tỷ số truyền cơ cấu lái tổng (góc vô-lăng/góc bánh xe)", "ref": "tự chọn, kiểm chứng chéo [7][8]" },
+    "e_p0":      { "value": 0.048, "unit": "m",      "desc": "Pneumatic trail danh nghĩa tại bánh xe ở góc trượt nhỏ, dùng cho K_tr(alpha_f,mu) động", "ref": "tự chọn" }
+  },
+  "cum3": {
+    "Iz": { "value": 2873, "unit": "kg.m^2", "desc": "Mô-men quán tính Yaw quanh trục thẳng đứng qua trọng tâm", "ref": "[5]" }
+  },
+  "_cum3_reused_from_cum2": ["m", "l_f", "l_r"]
 }

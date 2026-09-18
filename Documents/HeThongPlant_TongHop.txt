@@ -1,0 +1,187 @@
+================================================================================
+HỆ PHƯƠNG TRÌNH TRẠNG THÁI CỦA PLANT (GHÉP CỤM 1 + CỤM 2 + CỤM 3)
+================================================================================
+File này KHÔNG có suy diễn vật lý mới - trình bày lại các phương trình đã suy
+đầy đủ ở 3 file cụm dưới dạng HỆ PHƯƠNG TRÌNH TRẠNG THÁI chuẩn cho bài toán
+điều khiển (dùng để thiết kế bộ điều khiển / môi trường RL), theo đúng cách
+trình bày của sách tham khảo [5] (Rajamani, Vehicle Dynamics and Control,
+Chương 2, mục 2.6 "Dynamic Model in Terms of Yaw Rate and Slip Angle" - sách
+tóm tắt bằng 1 bảng định nghĩa biến trạng thái/đầu vào, sau đó viết hệ PT vi
+phân dùng ĐÚNG các ký hiệu đã định nghĩa, không thế số).
+
+Muốn xem suy diễn/giải thích/nguồn trích dẫn từng công thức, tra đúng file
+cụm tương ứng:
+  Documents/Cum1_CEPS.txt      - Cụm 1: cơ cấu lái
+  Documents/Cum2_Pacejka.txt   - Cụm 2: tương tác lốp (đại số)
+  Documents/Cum3_2DOF.txt      - Cụm 3: động lực học thân xe
+
+Quy ước: mỗi công thức có thêm 1 dòng LaTeX trong ngoặc [ ] (dán vào Word
+Insert Equation, chế độ nhập LaTeX). Trích dẫn [n] khớp Documents/References.txt.
+
+--------------------------------------------------------------------------------
+BƯỚC 1 - Định nghĩa vector biến trạng thái (theo mẫu Bảng 2.2, sách [5])
+--------------------------------------------------------------------------------
+
+  x = [x1, x2, x3, x4]^T = [theta, theta_dot, beta, gamma]^T
+  [ x=\begin{bmatrix}x_1\\x_2\\x_3\\x_4\end{bmatrix}
+    =\begin{bmatrix}\theta\\\dot\theta\\\beta\\\gamma\end{bmatrix} ]
+
+  Ý nghĩa vật lý từng biến:
+
+  x1 = theta (rad) - GÓC QUAY CỦA VÔ-LĂNG (đo tại trục cột lái, Cụm 1). Đây
+       là biến "cơ cấu lái" thuần túy - mô tả tài xế/motor trợ lực đã xoay
+       vô-lăng đi bao nhiêu, CHƯA quy đổi sang góc bánh xe thực tế (việc quy
+       đổi qua n_st là bước ĐẠI SỐ ở Cụm 2, không phải tích phân trạng thái
+       riêng). Trực tiếp quyết định delta_f = x1/n_st - góc bẻ bánh xe.
+
+  x2 = theta_dot = dx1/dt (rad/s) - VẬN TỐC GÓC VÔ-LĂNG. Cần thiết vì Cụm 1
+       là hệ bậc 2 (có quán tính J_total) - phương trình Newton cho cơ cấu
+       lái là 1 PT vi phân bậc 2 theo theta, nên bắt buộc tách thành 2 biến
+       trạng thái bậc 1 (x1, x2) theo đúng kỹ thuật chuẩn hóa không gian
+       trạng thái. x2 còn xuất hiện trực tiếp trong số hạng ma sát nhớt
+       (B_total*x2) và ma sát khô (tanh(c*x2)) của Cụm 1.
+
+  x3 = beta (rad) - GÓC TRƯỢT HÔNG (side-slip angle) TẠI TRỌNG TÂM XE. Là
+       góc lệch giữa hướng vector vận tốc thật của trọng tâm xe và trục dọc
+       thân xe - đại lượng đặc trưng cho mức độ "xe đang trượt ngang" so với
+       hướng mũi xe đang chỉ. Cùng với gamma, x3 là 1 trong 2 biến trạng
+       thái kinh điển của mô hình bicycle 2-DOF (đúng theo [5], mục 2.6).
+
+  x4 = gamma (rad/s) - VẬN TỐC GÓC YAW (yaw rate) CỦA THÂN XE quanh trục
+       thẳng đứng qua trọng tâm - đại lượng đo được thực tế bằng cảm biến
+       yaw-rate tiêu chuẩn trên xe, đặc trưng cho mức độ xe đang "quay đầu"
+       nhanh hay chậm khi vào cua.
+
+  LÝ DO CẦN CẢ 4 BIẾN (không thể rút gọn còn 2 hay 3): x1, x2 mô tả trạng
+  thái CƠ CẤU LÁI (Cụm 1); x3, x4 mô tả trạng thái THÂN XE (Cụm 3). Hai cặp
+  này PHỤ THUỘC NHAU 2 CHIỀU qua khối đại số Cụm 2: x1 (qua delta_f) và x3,
+  x4 cùng quyết định alpha_f, từ đó quyết định F_yf và mô-men phản hồi T_r
+  quay ngược lại phương trình của x2; đồng thời F_yf, F_yr (phụ thuộc x1,
+  x3, x4) quyết định dx3/dt, dx4/dt. Thiếu bất kỳ biến nào trong 4 biến này
+  sẽ làm đứt 1 trong 2 vòng phản hồi trên - không còn mô tả đúng hiện tượng
+  "trợ lực dội ngược lại tay lái phụ thuộc xe đang trượt ngang/quay đầu bao
+  nhiêu", vốn là cơ chế vật lý cốt lõi tạo ra over-assist.
+
+--------------------------------------------------------------------------------
+BƯỚC 2 - Định nghĩa đầu vào (điều khiển, đo được, nhiễu)
+--------------------------------------------------------------------------------
+
+  T_a (N.m) - MÔ-MEN TRỢ LỰC của motor EPS - ĐẦU VÀO ĐIỀU KHIỂN (biến duy
+              nhất bộ điều khiển/RL agent được quyền chọn).
+  T_d (N.m) - MÔ-MEN TÀI XẾ đặt lên vô-lăng - đo được (cảm biến torque trên
+              trục lái), không điều khiển được, coi là đầu vào ngoại sinh.
+  v   (m/s) - VẬN TỐC DỌC xe - đo được, coi hằng số trong mỗi bước tính
+              (không phải biến trạng thái - xem Cum3_2DOF.txt mục Giả thiết).
+  mu  (không thứ nguyên) - HỆ SỐ BÁM mặt đường - NHIỄU/biến ngoại sinh KHÔNG
+              đo được trực tiếp, chính là nguồn gốc hiện tượng over-assist
+              cần bù. KHÔNG đưa mu vào bảng tham số (không phải hằng số của
+              hệ - xem Cum2_Pacejka.txt).
+
+--------------------------------------------------------------------------------
+BƯỚC 3 - Dạng tổng quát hệ phương trình trạng thái phi tuyến
+--------------------------------------------------------------------------------
+
+  Hệ KHÔNG tuyến tính (do Pacejka Magic Formula và công thức e_p có sin/atan/
+  tan/sgn) nên không viết được dạng ma trận x_dot=Ax+Bu như sách [5] làm cho
+  mô hình tuyến tính hóa của riêng thân xe (PT 2.46) - ở đây giữ dạng tổng
+  quát phi tuyến, nhưng vẫn tách rõ phần ĐIỀU KHIỂN được (T_a) theo đúng tinh
+  thần affine-in-control:
+
+    x_dot = f(x, v, mu) + g * T_a + g * T_d
+    [ \dot x = f(x,v,\mu) + g\,T_a + g\,T_d ]
+
+  với g = [0, 1/J_total, 0, 0]^T (T_a và T_d CÙNG đi vào đúng 1 kênh - PT
+  của x2 - với cùng hệ số 1/J_total, vì cả 2 đều là mô-men tác động trực
+  tiếp lên trục cột lái, xem Cum1_CEPS.txt):
+
+    g = [0, 1/J_total, 0, 0]^T
+    [ g=\begin{bmatrix}0\\1/J_{total}\\0\\0\end{bmatrix} ]
+
+--------------------------------------------------------------------------------
+BƯỚC 4 - 4 phương trình trạng thái (dạng rút gọn, dùng T_r/F_yf/F_yr)
+--------------------------------------------------------------------------------
+
+  (1)  dx1/dt = x2
+  [ \dot x_1 = x_2 ]
+
+  (2)  dx2/dt = [T_d + T_a - B_total*x2 - T_f_total*tanh(c*x2) - T_r] / J_total
+  [ \dot x_2 = \dfrac{T_d+T_a-B_{total}x_2-T_{f,total}\tanh(cx_2)-T_r}{J_{total}} ]
+
+  (3)  dx3/dt = (F_yf + F_yr)/(m*v) - x4
+  [ \dot x_3 = \dfrac{F_{yf}+F_{yr}}{mv} - x_4 ]
+
+  (4)  dx4/dt = (l_f*F_yf - l_r*F_yr) / Iz
+  [ \dot x_4 = \dfrac{l_f F_{yf}-l_r F_{yr}}{I_z} ]
+
+  T_r, F_yf, F_yr KHÔNG phải trạng thái - là đại lượng ĐẠI SỐ tính lại mỗi
+  bước từ x1, x3, x4, v, mu (Cụm 2, không tích phân). Khai triển đầy đủ ở
+  Bước 5.
+
+--------------------------------------------------------------------------------
+BƯỚC 5 - Khai triển đầy đủ T_r, F_yf, F_yr theo x1, x3, x4, v, mu (Cụm 2)
+--------------------------------------------------------------------------------
+
+  Góc bẻ bánh xe và góc trượt lốp:
+
+  (5)  delta_f = x1/n_st
+  [ \delta_f=\dfrac{x_1}{n_{st}} ]
+
+  (6)  alpha_f = delta_f - x3 - l_f*x4/v
+  [ \alpha_f=\delta_f-x_3-\dfrac{l_f x_4}{v} ]
+
+  (7)  alpha_r = -x3 + l_r*x4/v
+  [ \alpha_r=-x_3+\dfrac{l_r x_4}{v} ]
+
+  Tải trọng tĩnh cầu trước (không phụ thuộc trạng thái, hằng số suy từ
+  tham số thô):
+
+  (8)  F_zf = (m*g*l_r)/(l_f+l_r)
+  [ F_{zf}=\dfrac{mgl_r}{l_f+l_r} ]
+
+  Lực bên lốp trước (Pacejka, phi tuyến, phụ thuộc mu) và lốp sau (tuyến
+  tính):
+
+  (9)  D = mu*F_zf              (10) B = C_alpha_f/(C*D)
+  [ D=\mu F_{zf} ]              [ B=\dfrac{C_{\alpha f}}{CD} ]
+
+  (11) F_yf = D*sin(C*atan(B*alpha_f - E*(B*alpha_f - atan(B*alpha_f))))
+  [ F_{yf}=D\sin(C\arctan(B\alpha_f-E(B\alpha_f-\arctan(B\alpha_f)))) ]
+
+  (12) F_yr = C_r*alpha_r
+  [ F_{yr}=C_r\alpha_r ]
+
+  Mô-men phản hồi mặt đường T_r (pneumatic trail động theo alpha_f, mu -
+  [6], xem Cum2_Pacejka.txt mục 5):
+
+  (13) e_p = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)
+  [ e_p=e_{p0}-\text{sgn}(\alpha_f)e_{p0}\dfrac{C_{\alpha f}\tan(\alpha_f)}{3\mu F_{zf}} ]
+
+  (14) K_tr = e_p/n_st           (15) T_r = K_tr*F_yf
+  [ K_{tr}=\dfrac{e_p}{n_{st}} ] [ T_r=K_{tr}F_{yf} ]
+
+--------------------------------------------------------------------------------
+BƯỚC 6 - Đại lượng đầu ra bổ sung (không phải trạng thái)
+--------------------------------------------------------------------------------
+
+  Gia tốc ngang trọng tâm - dùng làm tham số tra T_d,ref(v,a_y) ở bước điều
+  khiển sau (Blueprint mục 1.3):
+
+  (16) a_y = v*(dx3/dt + x4) = (F_yf + F_yr)/m
+  [ a_y = v(\dot x_3+x_4) = \dfrac{F_{yf}+F_{yr}}{m} ]
+
+--------------------------------------------------------------------------------
+Vòng lặp phụ thuộc giữa 3 cụm
+--------------------------------------------------------------------------------
+
+  x1 -> delta_f -> alpha_f (cần thêm x3,x4) -> F_yf, D, B (phụ thuộc mu)
+     -> e_p, K_tr (phụ thuộc alpha_f, mu) -> T_r quay lại PT(2)
+     -> F_yf, F_yr vào PT(3),(4) -> x3,x4 mới
+     -> alpha_f, alpha_r bước sau (vòng lặp tiếp tục)
+
+  Cơ chế over-assist: khi mu giảm, D=mu*F_zf giảm -> F_yf bão hòa sớm hơn
+  VÀ e_p (pneumatic trail) co lại theo PT(13) - 2 hiệu ứng cộng dồn làm T_r
+  giảm mạnh hơn so với chỉ xét riêng F_yf. Nếu bộ điều khiển vẫn tính T_a
+  dựa trên mu danh định (không cập nhật theo mu thực), phần thiếu hụt T_r
+  này chính là phần "trợ lực thừa" cảm nhận được ở tay lái - đây là lượng
+  sai lệch mà bộ điều khiển thích nghi (RL) cần học để bù lại.
+================================================================================

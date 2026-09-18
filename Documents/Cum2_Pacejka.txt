@@ -1,0 +1,383 @@
+================================================================================
+CỤM 2: ĐỘNG LỰC HỌC TƯƠNG TÁC LỐP PHI TUYẾN (PACEJKA TIRE DYNAMICS)
+KHỐI ĐẠI SỐ - KHÔNG CÓ TRẠNG THÁI RIÊNG (không có phương trình vi phân)
+================================================================================
+Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết - KHÔNG chép nguyên vào
+luận văn. Bản rút gọn để đưa vào luận văn nằm ở PHẦN CUỐI file này.
+
+Quy ước: mỗi công thức có thêm 1 dòng dạng LaTeX trong ngoặc [ ]. Dán dòng đó
+vào ô công thức Word (Insert > Equation, hoặc Alt+=) với chế độ nhập LaTeX
+đang bật (Equation > mũi tên góc > LaTeX thay vì UnicodeMath) - Word 2016+ tự
+dựng thành công thức chuẩn.
+
+QUY TẮC TRÌNH BÀY (áp dụng xuyên suốt file này): mọi công thức chỉ viết dạng
+KÝ HIỆU (symbolic) - KHÔNG thế số vào giữa công thức. Giá trị số của từng
+tham số chỉ xuất hiện DUY NHẤT 1 lần, trong Bảng tham số dưới đây. Muốn biết
+1 đại lượng bằng bao nhiêu, tra Bảng tham số rồi tự thay vào công thức - file
+này không làm thay bước đó.
+
+Trích dẫn dạng [n] khớp số trong Documents/References.txt - không lặp lại
+tên tài liệu đầy đủ trong file này.
+
+Đầu vào: theta (từ Cụm 1), beta, gamma (từ Cụm 3), v (đo được), mu (KHÔNG đo
+được - biến ngoại sinh, không phải tham số cố định của cụm này).
+Đầu ra: F_yf, F_yr (-> Cụm 3), T_r (-> Cụm 1).
+Không có biến trạng thái - đây là khối ĐẠI SỐ thuần túy, mọi đầu ra tính
+trực tiếp từ đầu vào hiện tại, không tích phân theo thời gian.
+
+--------------------------------------------------------------------------------
+BẢNG THAM SỐ CỤM 2 (chi tiết đầy đủ + nguồn: xem file params_plant.xlsx,
+sheet Cum2)
+--------------------------------------------------------------------------------
+
+    m          = 1573    kg          (khối lượng xe)
+    l_f        = 1.1     m           (CG - cầu trước)
+    l_r        = 1.58    m           (CG - cầu sau)
+    g          = 9.81    m/s^2       (gia tốc trọng trường)
+    C_alpha_f  = 80000   N/rad       (độ cứng góc trượt lốp trước, CẤP CẦU)
+    C_r        = 80000   N/rad       (độ cứng góc trượt lốp sau, CẤP CẦU)
+    C          = 1.3     (không thứ nguyên)  (hệ số hình dạng Pacejka)
+    E          = -1      (không thứ nguyên)  (hệ số độ cong Pacejka)
+    n_st       = 16      (không thứ nguyên)  (tỷ số truyền cơ cấu lái tổng,
+                                               = l_am/r_p)
+    e_p0       = 0.048   m                   (pneumatic trail danh nghĩa ở
+                                               góc trượt nhỏ - dùng cho K_tr
+                                               động, xem mục 5)
+
+  m, l_f, l_r, C_alpha_f, C_r lấy TRỰC TIẾP từ nguồn [5] (Rajamani, R. (2012),
+  Vehicle Dynamics and Control, 2nd ed., Springer, Chương 3, tr.48) - tác giả
+  ghi rõ đây là bộ số "representative of parameters for a passenger sedan"
+  (đại diện cho xe sedan phổ thông, dùng xuyên suốt sách cho các ví dụ điều
+  khiển) - KHÔNG gắn 1 xe thật cụ thể, nhưng tự nhất quán nội bộ (cả 5 số
+  cùng 1 nguồn, không trộn nhiều xe khác nhau).
+
+  C, E lấy từ nguồn [3] (Pacejka (2006), Tyre and Vehicle Dynamics, 2nd ed.),
+  Table 4.2, tr.196 - bảng "Magic Formula hypothetical parameter values".
+  Tác giả ghi rõ ngay trên bảng "It has not been attempted to find a best
+  fit for the parameters" - đây là bộ số MINH HỌA để vẽ hình dạng đường cong
+  trong sách giáo khoa, KHÔNG PHẢI số đo/fit thật cho 1 lốp cụ thể nào. Đã
+  kiểm tra các nguồn khác (MATLAB Vehicle Dynamics Blockset, CEPS ANFIS-FOC
+  Model.pdf) và xác nhận: mọi nguồn tìm được đều dẫn lại (trực tiếp hoặc
+  gián tiếp) từ chính bảng "hypothetical" này của Pacejka, không có nguồn
+  nào khác độc lập. C=1.3 khớp đúng pCy1=1.3 trong Table 4.2; E=-1 lấy từ
+  pEy1=-1 (điều kiện tải danh định Fz=Fzo, vì pEy2=pEy3=pEy4=0 trong cùng
+  bảng nên số hạng phụ thuộc tải triệt tiêu, hệ số cong cơ bản E rút gọn về
+  đúng pEy1). Dấu ÂM của E hợp lý về vật lý: tạo ra hình dạng đặc trưng của
+  lực bên lốp thật (tăng dần, đạt đỉnh, rồi giảm nhẹ ở góc trượt lớn do vùng
+  tiếp xúc bị bão hòa/trượt hoàn toàn) - khác lực dọc (thường chỉ tăng rồi
+  bão hòa phẳng). Sách cũng lưu ý E > 1 sẽ cho đường cong KHÔNG thực tế.
+
+--------------------------------------------------------------------------------
+LÝ GIẢI CHỌN n_st = 16 (KHÔNG có nguồn trích dẫn đúng con số 16, có kiểm
+chứng chéo bằng số liệu thực đo [8])
+--------------------------------------------------------------------------------
+
+  Đã rà soát toàn bộ References/ (Rajamani, Pacejka, Multi-Map EPS.pdf, CEPS
+  ANFIS-FOC Model.pdf, Road_Identification_BP-NN.pdf, AI-EPS Review.pdf) -
+  KHÔNG tìm thấy sách/paper nào cho số hay dải giá trị của tỷ số truyền cơ
+  cấu lái (steering ratio/isg) TẠI THỜI ĐIỂM ĐÓ. Các nguồn có nhắc tới khái
+  niệm này (ví dụ Pacejka mô tả cách dùng steering ratio để quy đổi góc
+  vô-lăng đo được sang góc bánh xe trong 1 phương pháp thực nghiệm) nhưng
+  không kèm số cụ thể. Cũng đã thử hướng suy ngược qua hình học Ackermann
+  (dùng góc bẻ vô-lăng tối đa 720 độ đã có nguồn thật từ [7], kết hợp bán
+  kính quay vòng tối thiểu để suy ra góc bánh xe tối đa) nhưng Rajamani
+  không có dữ liệu turning radius/Ackermann bằng số, nên hướng này cũng
+  không khép kín được bằng nguồn thật.
+
+  VỀ SAU tìm thêm được [8] (Ren, Deng (2014)) có SỐ LIỆU THỰC ĐO tỷ số
+  truyền lái - xem kiểm tra chéo cập nhật ở cuối mục này.
+
+  Vì vậy n_st = 16 là GIÁ TRỊ TỰ CHỌN, dựa lý luận kỹ thuật thuần túy (không
+  trích dẫn được), như sau:
+  - Tỷ số truyền lái quá THẤP (ví dụ dưới 10) khiến xe quá "nhạy" ở tốc độ
+    cao - chỉ cần xoay nhẹ vô-lăng đã đổi hướng mạnh, dễ mất ổn định.
+  - Tỷ số truyền lái quá CAO (ví dụ trên 22) khiến tài xế phải xoay vô-lăng
+    rất nhiều vòng khi đỗ xe/quay đầu, gây mỏi tay, đặc biệt bất lợi nếu
+    không có trợ lực đủ mạnh ở tốc độ thấp.
+  - Cân bằng 2 yêu cầu trên, hiểu biết kỹ thuật chung trong ngành ô tô coi
+    khoảng 14-20 là dải "vừa phải" cho xe con phổ thông (không quá nhạy,
+    không quá nặng tay) - chọn n_st=16, gần giữa dải này, số tròn dễ dùng.
+  - Kiểm tra chéo đơn giản: với n_st=16, góc bẻ vô-lăng tối đa 720 độ
+    (nguồn thật, [7]) tương ứng góc bẻ bánh xe tối đa 720/16 = 45 độ - đây
+    là mức góc bẻ bánh xe tối đa hợp lý về mặt hình học cho xe con (không
+    quá nhỏ tới mức không đủ xoay trở khi đỗ xe, không quá lớn tới mức bánh
+    xe chạm gầm/vòm bánh) - dù không có nguồn trích dẫn cho ngưỡng "hợp lý"
+    này, đây là kiểm tra tính nhất quán nội bộ với con số 720 độ đã có
+    nguồn thật, không phải bằng chứng độc lập.
+  - Kiểm tra chéo bằng SỐ LIỆU THỰC ĐO (bổ sung sau): [8] (Ren, Deng (2014),
+    Bảng 1) đo trực tiếp tỷ số truyền lái trên 3 xe thật: i=16.5, 19, 24.7
+    (xe 1.31-1.42 tấn). n_st=16 gần khớp xe có i=16.5 - cùng bậc, cùng nằm
+    trong dải 16-25 thực đo. Đây là căn cứ MẠNH HƠN kiểm tra hình học ở trên
+    (số đo thật, không phải suy luận), tuy vẫn không phải "trích dẫn trực
+    tiếp cho chính giá trị 16" (3 xe đo được không có xe nào đúng bằng 16).
+
+  GHI CHÚ TRUNG THỰC: n_st không có nguồn trích dẫn trực tiếp cho đúng giá
+  trị 16 - nhưng đã có kiểm tra chéo bằng số liệu thực đo [8] (dải 16.5-24.7)
+  cho thấy 16 nằm sát biên dưới dải thực tế, không phải số bịa đặt tùy ý.
+  Tất cả tham số còn lại (m, l_f, l_r, C_alpha_f, C_r, C, E) đều trích dẫn
+  được trực tiếp từ sách thật trong References/.
+
+--------------------------------------------------------------------------------
+LÝ GIẢI CHỌN e_p0 = 0.048 m VÀ CÔNG THỨC K_tr(alpha_f, mu) ĐỘNG
+--------------------------------------------------------------------------------
+
+  K_tr quy đổi lực bên lốp trước F_yf thành mô-men phản hồi T_r cảm nhận ở
+  tay lái - đây là KÊNH DUY NHẤT đưa cảm giác mặt đường từ Cụm 2/3 ngược về
+  Cụm 1. Không xác định được K_tr thì T_r=0 mãi mãi, toàn bộ hiện tượng
+  over-assist (chủ đề chính luận văn) sẽ không tồn tại trong mô hình - nên
+  bắt buộc phải chọn, không bỏ qua được.
+
+  Bản trước tách K_tr = r_p*(t_p+t_m)/l_am, cần 5 tham số hình học phụ
+  (r_p, t_p, t_m, và gián tiếp qua T_Fz cần thêm γ_p, γ_c, r_s) - không tìm
+  được nguồn cho phần lớn các tham số này, và khi thử áp dụng công thức
+  T_Fz với vài số tự chọn, kết quả sai lệch 11 lần so với thực tế cần có
+  (đã thử nghiệm và ghi nhận). Vì vậy BỎ HẲN cách tách này.
+
+  Bản kế tiếp coi K_tr là 1 HẰNG SỐ gộp cố định (0.003 m) - nhưng cách này
+  bỏ sót đúng cơ chế vật lý cốt lõi của over-assist: khi mu giảm, pneumatic
+  trail của lốp trước KHÔNG chỉ làm F_yf giảm gián tiếp (qua D=mu*F_zf) mà
+  bản thân trail cũng CO LẠI khi lốp bắt đầu trượt nhiều (alpha_f lớn) -
+  2 hiệu ứng cộng dồn. Coi K_tr là hằng số làm mất hẳn hiệu ứng cộng dồn
+  này. Vì vậy chuyển sang K_tr ĐỘNG, phụ thuộc alpha_f và mu.
+
+  Công thức pneumatic trail động lấy từ [6] Multi-Map EPS.pdf, PT(4):
+
+    e_p = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f) / (3*mu*F_zf)
+    [ e_p = e_{p0} - \text{sgn}(\alpha_f)\,e_{p0}\dfrac{C_{\alpha f}\tan(\alpha_f)}{3\mu F_{zf}} ]
+
+  trong đó k (độ cứng ngang lốp) lấy chính là C_alpha_f đã có nguồn [5]
+  (Rajamani), W (tải cầu trước) lấy chính là F_zf đã tính ở mục 2 - không
+  cần thêm tham số mới cho phần này. Đã KIỂM TRA NGUỒN của PT(4): [6] trích
+  [11] Guan et al. (2021) và [12] Pugi et al. (2020) (số [11][12] này là số
+  trích dẫn NỘI BỘ của bài [6], không trùng số trong References.txt của ta)
+  nhưng CHỈ cho PT liền trước (T_z = F_Y*e - quan hệ tổng quát lực nhân
+  cánh tay đòn, không phải riêng PT(4)). Đã đọc trực tiếp Guan et al. (2021,
+  đã tải về References/guan2021.pdf) - bài này KHÔNG hề đề cập mu/adhesion
+  coefficient, coi trail là hằng số gộp (giống bản K_tr cũ của ta), KHÔNG
+  chứa PT(4). Vậy PT(4) là công thức [6] tự đưa ra (không có nguồn gốc xa
+  hơn xác minh được) - CHẤP NHẬN DÙNG dựa trên quyết định của người thực
+  hiện luận văn, ghi rõ nguồn là chính [6], không phải Guan/Pugi.
+
+  e_p0 (giá trị pneumatic trail ở alpha_f=0, vì khi đó sgn(0)*tan(0)=0 nên
+  e_p=e_p0 - đây LÀ giá trị trail "danh nghĩa" ở góc trượt nhỏ) - Multi-Map
+  KHÔNG cho số cụ thể (bài báo dùng Trucksim+mạng BP-NN để lấy T_r trực
+  tiếp, không dùng PT(4) để tính số nên không cần calibrate e_p0). Vì vậy
+  e_p0 TỰ CHỌN, dùng lại đúng 2 hướng lý luận độc lập đã có từ bản K_tr
+  hằng số trước đây (xem lịch sử suy luận):
+
+  Hướng 1 - mô hình brush (Pacejka [3]): "trail của mô hình brush carcass
+  cứng = 0.33a", "carcass đàn hồi ≈ 0.46a" (a = nửa chiều dài vùng tiếp
+  xúc). Với a ước lượng ~50-70mm (không có nguồn riêng), suy ra trail lốp
+  ≈ 17-32mm, cộng thêm phần caster (không tách riêng, giả định cùng bậc độ
+  lớn) → tổng cánh tay đòn ≈ 30-60mm.
+
+  Hướng 2 - kiểm tra ngược bậc độ lớn mô-men (không qua hình học): T_r cỡ
+  vài N·m ứng với F_yf cỡ vài nghìn N → cánh tay đòn phía TAY LÁI (đã chia
+  n_st) ≈ T_r/F_yf ≈ 0.001-0.005 m → quy đổi ngược về cánh tay đòn TẠI BÁNH
+  XE (nhân lại n_st=16) ≈ 16-80mm.
+
+  Hai hướng cho cùng bậc độ lớn (~30-60mm) → chọn cánh tay đòn danh nghĩa
+  tại bánh xe = 48mm (giữa dải), tức:
+
+    e_p0 = K_tr_cũ * n_st = 0.003 * 16 = 0.048 m
+
+  GHI CHÚ TRUNG THỰC: e_p0 không có nguồn trích dẫn trực tiếp cho bản thân
+  con số - kế thừa nguyên lý luận đã dùng cho K_tr hằng số trước đây (căn
+  cứ MỘT PHẦN từ Pacejka [3], còn lại là suy luận kỹ thuật). PT(4) (dạng
+  công thức, không phải số) lấy từ [6] nhưng đã xác minh KHÔNG bắt nguồn
+  được từ [11]/[12] nội bộ mà [6] trích - chấp nhận dùng vì hợp lý về mặt
+  vật lý (trail giảm khi mu giảm hoặc trượt tăng), không vì có nguồn xác
+  thực sâu hơn.
+
+--------------------------------------------------------------------------------
+1. Góc trượt lốp (hình học)
+--------------------------------------------------------------------------------
+
+1.1. Góc bẻ bánh xe trước (nhận từ Cụm 1)
+
+  Cụm 1 quy đổi góc vô-lăng theta thành góc bẻ bánh xe thực tế qua tỷ số
+  truyền cơ cấu lái r_p/l_am = 1/n_st (Cum1_CEPS.txt không cần biết tỷ số
+  này - chỉ dùng ở đây):
+
+    delta_f = (r_p/l_am) * theta = theta / n_st
+    [ \delta_f = \dfrac{r_p}{l_{am}}\theta = \dfrac{\theta}{n_{st}} ]
+
+1.2. Góc trượt lốp trước (alpha_f)
+
+  Góc trượt lốp là góc lệch giữa hướng bánh xe đang CHỈ (delta_f, do tài xế
+  bẻ lái) và hướng bánh xe đang THỰC SỰ DI CHUYỂN (do vận tốc trọng tâm xe
+  gồm cả trượt ngang beta lẫn quay Yaw gamma). Vận tốc ngang tại tâm bánh
+  trước = v*beta + l_f*gamma (trượt ngang thân xe + phần thêm do xoay Yaw
+  tại vị trí cách trọng tâm l_f về phía trước). Góc lệch do phần này gây ra
+  xấp xỉ (v*beta+l_f*gamma)/v = beta + l_f*gamma/v (góc nhỏ). Trừ khỏi góc
+  bánh xe đang chỉ:
+
+    alpha_f = delta_f - beta - l_f*gamma/v
+    [ \alpha_f = \delta_f - \beta - \dfrac{l_f\gamma}{v} ]
+
+1.3. Góc trượt lốp sau (alpha_r)
+
+  Tương tự, bánh sau không có delta (không bẻ lái), chỉ chịu ảnh hưởng
+  trượt ngang + xoay Yaw tại vị trí cách trọng tâm l_r về phía sau (dấu
+  ngược vì ở phía sau trọng tâm):
+
+    alpha_r = -beta + l_r*gamma/v
+    [ \alpha_r = -\beta + \dfrac{l_r\gamma}{v} ]
+
+--------------------------------------------------------------------------------
+2. Tải trọng tĩnh cầu trước F_zf (từ cân bằng mô-men tĩnh) - CẤP CẦU
+--------------------------------------------------------------------------------
+
+  QUY ƯỚC CẤP ĐỘ LỰC: C_alpha_f, C_r lấy từ nguồn [5] là độ cứng CẤP CẦU (cả
+  2 bánh trái+phải gộp chung 1 con số - cách hiểu chuẩn cho hệ số cornering
+  stiffness trong mô hình bicycle 1 vệt bánh). Để nhất quán, toàn bộ file này
+  định nghĩa F_zf, D, F_yf, F_yr đều ở CẤP CẦU (tổng 2 bánh) - không còn hệ
+  số 2 nào cần thêm khi chuyển dữ liệu sang Cụm 3.
+
+  Xét xe ở trạng thái tĩnh (không tăng/giảm tốc), lấy mô-men quanh điểm tiếp
+  xúc BÁNH SAU (loại được phản lực bánh sau ra khỏi phương trình):
+
+    Mô-men trọng lực quanh trục sau = m*g*l_r  (trọng lượng đặt tại CG, cách
+                                                  trục sau đúng l_r)
+    Mô-men phản lực cầu trước       = F_zf * (l_f+l_r)  (F_zf là TỔNG phản
+                                       lực CẢ 2 bánh trước, cách trục sau
+                                       l_f+l_r)
+
+  Cân bằng: F_zf*(l_f+l_r) = m*g*l_r
+
+    F_zf = (m*g*l_r) / (l_f+l_r)
+    [ F_{zf} = \dfrac{m g\, l_r}{l_f+l_r} ]
+
+  (tải tĩnh CẢ CẦU TRƯỚC, không phải 1 bánh - không thế số, xem Bảng tham số
+  để lấy giá trị m, g, l_f, l_r rồi tự tính)
+
+--------------------------------------------------------------------------------
+3. Lực bên lốp trước - Pacejka Magic Formula (phi tuyến, phụ thuộc mu)
+--------------------------------------------------------------------------------
+
+3.1. Công thức Magic Formula (thực nghiệm Pacejka [3])
+
+  Dạng hàm thực nghiệm khớp đường cong lực bên lốp đo thực tế (không suy từ
+  nguyên lý vật lý cơ bản - là công thức fit số liệu chuẩn công nghiệp):
+
+    F_yf = D * sin( C * atan( B*alpha_f - E*(B*alpha_f - atan(B*alpha_f))) )
+    [ F_{yf} = D\sin\!\Big(C\arctan\big(B\alpha_f-E(B\alpha_f-\arctan(B\alpha_f))\big)\Big) ]
+
+  C, E: hệ số hình dạng/độ cong, hằng số cố định theo lốp (Bảng tham số).
+  B, D: hệ số độ dốc/đỉnh - PHỤ THUỘC mu, tính động mỗi bước (mục 3.2).
+
+3.2. B, D tính động theo mu (không phải hằng số cố định)
+
+  D: đỉnh bão hòa lực bên CẢ CẦU TRƯỚC - vật lý cơ bản: lực bám tối đa = hệ
+  số bám mu nhân tải trọng thẳng đứng:
+
+    D = mu * F_zf
+    [ D = \mu F_{zf} ]
+
+  B: độ dốc ban đầu đường cong - GIỮ CỐ ĐỊNH độ cứng lốp thật (C_alpha_f,
+  hằng số vật lý của lốp, không đổi theo mu), suy ngược từ D hiện tại:
+
+    B = C_alpha_f / (C * D)
+    [ B = \dfrac{C_{\alpha f}}{C D} ]
+
+  Ý nghĩa: khi mu giảm (đường trơn), D giảm -> B tăng để độ dốc BAN ĐẦU
+  (BCD = C_alpha_f, không đổi) giữ nguyên - lốp vẫn "nhạy" y hệt lúc bắt
+  đầu trượt, nhưng bão hòa SỚM HƠN và THẤP HƠN. Đây là cơ chế vật lý cốt lõi
+  gây ra hiện tượng trợ lực thừa (over-assist) khi mu thay đổi.
+
+  mu KHÔNG phải tham số cố định của cụm này - là biến ngoại sinh (không đo
+  được, đầu vào của toàn hệ thống). Dải giá trị mô phỏng tham khảo {0.2, 0.4,
+  0.6, 0.8} theo [6].
+
+--------------------------------------------------------------------------------
+4. Lực bên lốp sau - mô hình tuyến tính (CẤP CẦU)
+--------------------------------------------------------------------------------
+
+  Lốp sau không bẻ lái, hoạt động trong vùng tuyến tính ở điều kiện chuẩn -
+  không cần Pacejka đầy đủ, chỉ cần độ cứng góc trượt C_r (hằng số, CẤP
+  CẦU - đã nêu ở mục 2):
+
+    F_yr = C_r * alpha_r
+    [ F_{yr} = C_r\,\alpha_r ]
+
+--------------------------------------------------------------------------------
+5. Mô-men phản hồi mặt đường T_r
+--------------------------------------------------------------------------------
+
+  T_r là mô-men lực bên lốp trước F_yf tạo ra tại thước lái, quy đổi qua
+  1 hệ số K_tr (đơn vị mét, đóng vai trò cánh tay đòn hiệu dụng - gộp chung
+  mọi cơ chế cơ khí thật sự tạo ra mô-men này: đàn hồi lốp/pneumatic trail,
+  caster, tỷ số truyền lái... KHÔNG tách riêng từng thành phần). Khác với
+  bản trước, K_tr ở đây KHÔNG PHẢI hằng số - phụ thuộc động vào alpha_f và
+  mu, vì pneumatic trail tại lốp co lại khi lốp bắt đầu trượt/mu giảm (xem
+  "Lý giải chọn e_p0" ở đầu file). Trail tại bánh xe e_p quy đổi về phía
+  tay lái qua n_st (giống cách delta_f quy đổi ngược ở mục 1.1):
+
+    e_p = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f) / (3*mu*F_zf)
+    [ e_p = e_{p0} - \text{sgn}(\alpha_f)\,e_{p0}\dfrac{C_{\alpha f}\tan(\alpha_f)}{3\mu F_{zf}} ]
+
+    K_tr = e_p / n_st
+    [ K_{tr} = \dfrac{e_p}{n_{st}} ]
+
+    T_r = K_tr * F_yf
+    [ T_r = K_{tr} F_{yf} ]
+
+================================================================================
+KẾT QUẢ ĐƯA VÀO LUẬN VĂN (bản rút gọn - chỉ nêu công thức + giải thích ngắn,
+không lặp lại suy diễn hình học/tĩnh học ở trên. Tất cả công thức dạng ký
+hiệu, không thế số - tra Bảng tham số ở trên hoặc params_plant.xlsx để lấy
+giá trị)
+================================================================================
+
+Khối đại số - không có biến trạng thái. Đầu vào: theta, beta, gamma, v, mu.
+
+--------------------------------------------------------------------------------
+Mục 1. Góc trượt lốp
+--------------------------------------------------------------------------------
+
+  (1)  delta_f = theta / n_st
+  [ \delta_f = \dfrac{\theta}{n_{st}} ]
+
+  (2)  alpha_f = delta_f - beta - l_f*gamma/v
+  [ \alpha_f = \delta_f-\beta-\dfrac{l_f\gamma}{v} ]
+
+  (3)  alpha_r = -beta + l_r*gamma/v
+  [ \alpha_r = -\beta+\dfrac{l_r\gamma}{v} ]
+
+--------------------------------------------------------------------------------
+Mục 2. Lực bên lốp (Pacejka phi tuyến trước, tuyến tính sau) - CẤP CẦU
+--------------------------------------------------------------------------------
+
+  (4)  F_yf = D*sin(C*atan(B*alpha_f - E*(B*alpha_f - atan(B*alpha_f))))
+  [ F_{yf}=D\sin(C\arctan(B\alpha_f-E(B\alpha_f-\arctan(B\alpha_f)))) ]
+
+  (5)  D = mu * F_zf              (6)  B = C_alpha_f/(C*D)
+  [ D=\mu F_{zf} ]                [ B=\dfrac{C_{\alpha f}}{C D} ]
+    - D: đỉnh bão hòa, tỉ lệ trực tiếp hệ số bám mu.
+    - B: suy ngược để độ cứng lốp thật C_alpha_f (hằng số vật lý) không đổi
+      theo mu - lốp bão hòa sớm hơn trên đường trơn nhưng độ nhạy ban đầu
+      giữ nguyên.
+
+  (7)  F_zf = (m*g*l_r) / (l_f+l_r)
+  [ F_{zf}=\dfrac{mgl_r}{l_f+l_r} ]
+    (tải tĩnh CẢ CẦU TRƯỚC, từ cân bằng mô-men quanh trục sau - KHÔNG chia 2)
+
+  (8)  F_yr = C_r * alpha_r
+  [ F_{yr}=C_r\alpha_r ]
+
+--------------------------------------------------------------------------------
+Mục 3. Mô-men phản hồi mặt đường T_r
+--------------------------------------------------------------------------------
+
+  (9)  e_p = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)
+  [ e_p=e_{p0}-\text{sgn}(\alpha_f)e_{p0}\dfrac{C_{\alpha f}\tan(\alpha_f)}{3\mu F_{zf}} ]
+    (e_p: pneumatic trail tại bánh xe, phụ thuộc động alpha_f và mu -
+    [6] PT(4). e_p0: tự chọn, xem "Lý giải chọn e_p0" ở đầu file)
+
+  (10) K_tr = e_p / n_st
+  [ ``K_{tr}=\dfrac{e_p}{n_{st}}`` ]
+    (quy đổi trail tại bánh xe về cánh tay đòn hiệu dụng phía tay lái)
+
+  (11) T_r = K_tr * F_yf
+  [ T_r=K_{tr}F_{yf} ]
+================================================================================
