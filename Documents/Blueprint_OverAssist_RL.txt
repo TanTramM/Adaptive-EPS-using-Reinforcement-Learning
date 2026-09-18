@@ -16,11 +16,12 @@ Tài liệu tham khảo dẫn theo tên file trong thư mục References/. Phầ
 theo Process_Control.pdf (Seborg, Edgar, Mellichamp, Doyle - Process Dynamics
 and Control), số chương/mục ghi kèm để tra cứu lại nguyên bản.
 
-Phạm vi file này: CHỈ dừng ở việc (1) xác lập phương trình vi phân của đối
-tượng và (2) xác định biến điều khiển + dạng tổng quát của hàm điều khiển.
-CHƯA chọn thuật toán điều khiển cụ thể (PID/RL/...), CHƯA thiết kế kịch bản
-huấn luyện hay kiểm chứng - các bước đó để ở tài liệu khác, sau khi phần này
-được chốt.
+Phạm vi file này (đã MỞ RỘNG so với bản đầu): (1) xác lập phương trình vi
+phân của đối tượng [Phần 2], (2) xác định biến điều khiển + chiến lược tổng
+quát [Phần 1], (3) hiện thực hóa Model/ Simulink [Mục 2.6], (4) thiết kế bộ
+điều khiển [Phần 3 - ĐANG LÀM], (5) phương pháp kiểm chứng bộ điều khiển
+[Phần 4]. Thuật toán đã chốt là RL; chi tiết thiết kế mạng/reward/huấn
+luyện chưa chốt.
 
 --------------------------------------------------------------------------------
 PHẦN 1. PHẠM VI BÀI TOÁN
@@ -212,4 +213,112 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ - xem Model/]
   t=8s, CHƯA phải giá trị xác lập chính xác. Muốn số chính xác cho luận văn
   cần giải xác lập bằng fsolve trên hệ đại số (thay vì mô phỏng theo thời
   gian) - CHƯA LÀM, để bước sau nếu cần.
+
+3.9. Kiểm chứng bổ sung 2: quét (T_a, mu) - có trợ lực
+  Script: Model/Plant/script/sweep_Ta_mu.m.
+  Lý do: sweep_v_mu.m đặt T_a=0 (vòng hở, KHÔNG trợ lực) nên góc lái đạt
+  được nhỏ, lốp còn gần tuyến tính, hiệu ứng mu mờ nhạt. Quét này cho T_a
+  khác 0 để mô phỏng gần tình huống EPS thật hơn.
+  Quét: T_a (10 mức) x mu={0.2,0.4,0.6,0.8,1.0}, v=60km/h, T_d=3N.m.
+  KẾT QUẢ: chênh lệch |T_r| giữa mu=1.0 và mu=0.2 TĂNG theo mức trợ lực -
+  từ ~7.7% (T_a=0) lên ~26.7% (T_a=1.75N.m). Xác nhận: trợ lực càng mạnh,
+  góc trượt càng lớn, vùng phi tuyến Pacejka càng lộ, độ nhạy theo mu càng
+  nghiêm trọng.
+  PHÁT HIỆN QUAN TRỌNG - MẤT ỔN ĐỊNH VÒNG HỞ: khi T_a vượt ~1.94 N.m (tại
+  mu=0.2, v=60km/h, T_d=3N.m), hệ MẤT ỔN ĐỊNH: mô-men cản T_r không còn đủ
+  cân bằng T_d+T_a (vì F_yf theo Magic Formula đạt đỉnh rồi GIẢM ở góc
+  trượt lớn - hệ số E âm), theta chạy trốn, alpha_f tiến tới 90 độ làm
+  tan(alpha_f) trong PT e_p phân kỳ -> solver không hội tụ. Script tự dò
+  ngưỡng này bằng bisection và chỉ quét trong vùng ổn định (lùi 10% biên).
+  => RÀNG BUỘC AN TOÀN cho bộ điều khiển: T_a KHÔNG ĐƯỢC đẩy hệ vượt ngưỡng
+  này (xem Phần 4, tầng 3, mục "mất ổn định").
+  LƯU Ý VỀ TÊN GỌI: con số % nói trên là ĐỘ NHẠY CỦA T_r THEO MU tại cùng 1
+  mức mô-men lái tổng - KHÔNG PHẢI "% over-assist". Muốn tính over-assist
+  đúng nghĩa cần có bản đồ trợ lực/bộ điều khiển cụ thể để so sánh với giá
+  trị "đáng lẽ phải có" - chưa có (chưa làm Controller).
+
+--------------------------------------------------------------------------------
+PHẦN 3. THIẾT KẾ BỘ ĐIỀU KHIỂN   [ĐANG LÀM]
+--------------------------------------------------------------------------------
+(Chưa viết - đang bàn. Chiến lược tổng quát đã chốt ở mục 1.2: feedforward
+(T_d, v) + feedback bắt buộc cho mu. CV đã chốt ở mục 1.3: e_T = T_d -
+T_d,ref(v,a_y), điểm đặt 0. Thuật toán: RL - chi tiết thiết kế chưa chốt.)
+
+--------------------------------------------------------------------------------
+PHẦN 4. PHƯƠNG PHÁP KIỂM CHỨNG BỘ ĐIỀU KHIỂN RL   [CẦN LÀM]
+--------------------------------------------------------------------------------
+Khác biệt cốt lõi so với bộ điều khiển kinh điển: PID/LQR chứng minh được
+ổn định bằng LÝ THUYẾT (Lyapunov, biên pha/biên khuếch đại). RL KHÔNG
+chứng minh được như vậy -> bắt buộc thay thế bằng (a) test phủ kín không
+gian trạng thái và (b) lớp bảo vệ runtime. Đây là chỗ hội đồng soi kỹ nhất.
+
+4.1. TẦNG 1 - Bám setpoint (e_T -> 0)
+  Lưu ý: T_d,ref THAY ĐỔI liên tục theo v và a_y trong lúc lái -> đây là
+  bài toán TRACKING (bám tín hiệu động), KHÔNG phải regulation (giữ 1 điểm
+  cố định). Phải test cả khi setpoint đang di chuyển.
+  Chỉ số:
+  - RMSE(e_T) trên toàn hành trình test.
+  - max|e_T| (quan trọng hơn RMSE về mặt an toàn - sai lệch tệ nhất).
+  - Sai lệch xác lập (steady-state error) - kiểm có bias thường trực không.
+  - Thời gian xác lập, độ vọt lố khi T_d,ref đổi đột ngột.
+
+4.2. TẦNG 2 - Hiệu quả khắc phục over-assist (độ bất biến theo mu)
+  Chỉ số cốt lõi: vẽ RMSE(e_T) THEO mu -> đường càng PHẲNG càng tốt.
+  - Chỉ số gói gọn: spread = max(RMSE) - min(RMSE) trên toàn dải mu.
+    Lý tưởng -> 0 (hiệu năng KHÔNG phụ thuộc mu = đã khắc phục hoàn toàn).
+  - So với chính Plant khi dùng map tĩnh không bù -> ra con số "cải thiện
+    bao nhiêu lần".
+  - Quét mu CẢ trên lưới (0.2/0.4/0.6/0.8) LẪN giữa lưới (0.3/0.5/0.7) -
+    điểm giữa lưới là chỗ phương pháp multi-map rời rạc ([6]) lộ điểm yếu.
+
+4.3. TẦNG 3 - An toàn và hành vi lạ (RL-specific, quan trọng nhất)
+  7 kiểu hỏng RL dễ mắc mà bộ kinh điển không có, mỗi kiểu 1 phép kiểm:
+
+  (1) Rung/chattering đầu ra T_a: mạng neural hay xuất tín hiệu giật, motor
+      không theo kịp, gây ồn/mòn cơ khí.
+      -> FFT của T_a (năng lượng >15-20Hz phải không đáng kể), total
+         variation, thống kê |dT_a/dt|.
+  (2) Vượt giới hạn cơ cấu chấp hành: |T_a| <= T_a,max VÀ |dT_a/dt| <=
+      slew rate, tại MỌI thời điểm.
+  (3) Đảo dấu trợ lực: T_a ngược chiều T_d (chống lại tài xế) - cực nguy
+      hiểm. -> Kiểm sign(T_a) = sign(T_d) khi |T_d| > vùng chết.
+  (4) Bù quá tay -> lái quá nặng: e_T -> 0 CHƯA ĐỦ; nếu vô-lăng nặng bất
+      thường, tài xế không đánh lái kịp lúc khẩn cấp.
+      -> Kiểm |T_d| trong dải sức người (chuẩn QC/T 480, trích qua [6]).
+  (5) Mất ổn định / theta chạy trốn: ĐÃ QUAN SÁT THẤY THẬT ở mục 3.9
+      (T_a > ~1.94 N.m ở mu=0.2). RL tuyệt đối không được đẩy hệ vào vùng
+      này. -> Kiểm |alpha_f| luôn trong vùng hợp lệ mô hình lốp (~<15-20
+      độ), không phân kỳ.
+  (6) Hành vi lạ ngoài vùng huấn luyện (out-of-distribution): RL hay
+      "loạn" ở điều kiện chưa từng thấy. -> Test có chủ đích: mu ngoài dải
+      train, v cực thấp/cực cao, đánh lái cực nhanh, tổ hợp nhiều cực trị.
+  (7) Nhạy nhiễu cảm biến: thêm nhiễu trắng vào T_d, v, a_y đo được, kiểm
+      hiệu năng không sụp đổ (có tiền lệ: CEPS ANFIS-FOC Model.pdf làm
+      đúng test này với mô-men nhiễu ngẫu nhiên).
+
+4.4. TẦNG 4 - Lớp bảo vệ runtime (safety supervisor) [BẮT BUỘC]
+  Nguyên tắc: KHÔNG tin RL tự an toàn. Bọc RL trong 1 lớp giám sát đơn
+  giản, kiểm chứng được bằng logic thường (không phải mạng neural):
+  - Chặn biên |T_a| và tốc độ đổi dT_a/dt.
+  - Ép sign(T_a) = sign(T_d).
+  - Nếu RL xuất giá trị ngoài miền hợp lệ -> RƠI VỀ map tĩnh (fallback).
+  Và PHẢI chứng minh lớp này CÓ KÍCH HOẠT trong test cực trị - vừa an toàn
+  thật, vừa cho thấy đã lường trước rủi ro.
+
+4.5. Tách train/test theo mu (bắt buộc với RL)
+  Huấn luyện trên 1 tập mu (vd 0.2, 0.5, 0.8), ĐÁNH GIÁ trên mu CHƯA TỪNG
+  THẤY (vd 0.3, 0.65). Chứng minh TỔNG QUÁT HÓA, không phải học thuộc.
+  Thiếu bước này hội đồng chắc chắn sẽ hỏi.
+
+4.6. Kịch bản test chuẩn (có nguồn trích dẫn)
+  - Weave test: vô-lăng dạng sin 0.2Hz, v=60km/h, biên độ giới hạn a_y đỉnh
+    ~0.15g - theo GB/T 6313-2014 và ISO 13674-1 (trích qua [6] mục 4.4 và
+    [8]). Đây là chuẩn ngành cho đánh giá on-center road feel.
+  - Bước nhảy góc lái: v=60km/h, bẻ nhanh tới góc cố định - theo [6] mục
+    4.3 (họ dùng 60 độ tại t=1s).
+  - mu thay đổi giữa chừng (bậc và dốc, vd 0.8 -> 0.3): test tốc độ thích
+    nghi và độ mượt - kịch bản RIÊNG của ta, không có trong [6].
+  Chỉ số phụ để đối chiếu văn liệu: độ dốc mô-men dT_d/da_y gần tâm lái
+  (chỉ số chuẩn ngành, [6] mục 4.4, Bảng 3) + a_y và yaw rate xác lập
+  (chứng minh không đánh đổi ổn định để lấy cảm giác lái).
 
