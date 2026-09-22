@@ -76,7 +76,7 @@ không lặp lại chi tiết dùng ở đâu.
     of Driver.pdf.
     Dùng ở: (a) Blueprint mục 1.3 - căn cứ để dùng THẲNG số liệu Bảng 4 của
     [7] làm T_d,ref cho xe của ta (Rajamani [5], 1.573 tấn): bài đo thực
-    nghiệm trên 3 xe thật (1.31-1.42 tấn) và kết luận "khi lái trên cùng 1
+    nghiệm trên 3 xe thật (1.5-1.9 tấn: 1.9, 1.5, 1.7) và kết luận "khi lái trên cùng 1
     mặt đường, T_ideal của tài xế HẦU NHƯ KHÔNG PHỤ THUỘC loại xe, MIỄN LÀ
     các xe có kích thước/khối lượng gần nhau" - xe của [7] (~1.53 tấn) và xe
     Rajamani (1.573 tấn) đủ gần để áp dụng kết luận này, không còn coi là

@@ -1,0 +1,15 @@
+5. Lộ trình học tối thiểu (đủ để làm + bảo vệ)
+Bước 1 — Nền lý thuyết (~1 tuần)
+Sutton & Barto, Reinforcement Learning: An Introduction, 2nd ed (PDF miễn phí chính thức từ tác giả). Chỉ cần:
+
+Ch. 1 (tổng quan), Ch. 3 (MDP — bắt buộc, đây là khung toán học hợp thức hóa mọi thứ), Ch. 6 (TD learning, Q-learning)
+Ch. 13 (Policy gradient) — đọc lướt lấy ý tưởng Actor
+Bỏ qua Ch. 4–5, 7–12 (planning, Monte Carlo, eligibility traces) — không dùng trong bài này.
+
+Bước 2 — Actor-Critic liên tục (~3 ngày)
+Đọc 2 paper gốc: DDPG (Lillicrap 2015) và TD3 (Fujimoto 2018). Đọc phần Abstract + Algorithm box, không cần chứng minh.
+
+Bước 3 — Thực hành MATLAB (~3 ngày)
+MathWorks có sẵn ví dụ "Train DDPG Agent to Control Double Integrator / Swing-Up Pendulum". Làm 1 ví dụ chạy được trước khi đụng vào Plant EPS — để tách bạch lỗi RL với lỗi mô hình.
+
+Bước 4 — Áp vào bài mình.

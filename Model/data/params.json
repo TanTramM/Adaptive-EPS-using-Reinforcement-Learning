@@ -1,10 +1,13 @@
 {
   "_note": "Tham số plant (Cụm 1+2+3), khớp Documents/Cum1_CEPS.txt, Cum2_Pacejka.txt, Cum3_2DOF.txt và Documents/params_plant.xlsx. Số [n] tra Documents/References.txt. Bộ số cũ (Bảng 3.1, Documents/Gemini_old/) ĐÃ BỎ HẲN - chứa trích dẫn không xác thực.",
   "cum1": {
-    "J_total":   { "value": 0.154, "unit": "kg.m^2",     "desc": "Tổng quán tính quy đổi về trục theta của toàn bộ cơ cấu lái", "ref": "[1]" },
-    "B_total":   { "value": 1.6,   "unit": "N.m.s/rad",  "desc": "Tổng hệ số ma sát nhớt quy đổi về trục theta",                "ref": "[1]" },
-    "T_f_total": { "value": 2,     "unit": "N.m",        "desc": "Mô-men ma sát khô Coulomb quy đổi về trục theta",             "ref": "[1]" },
-    "c":         { "value": 100,   "unit": "-",          "desc": "Hệ số làm mịn tanh (chống chattering ma sát khô)",            "ref": "tự chọn" }
+    "K":  { "value": 143.24, "unit": "N.m/rad",   "desc": "Độ cứng thanh xoắn nối J1 (vô-lăng) và J2 (cột lái+motor+rack quy đổi)", "ref": "[1]" },
+    "J1": { "value": 0.044,  "unit": "kg.m^2",    "desc": "Quán tính vô-lăng (phía tài xế)",                                       "ref": "[1]" },
+    "C1": { "value": 0.25,   "unit": "N.m.s/rad", "desc": "Hệ số cản (damping) phía vô-lăng (J1) - KHÔNG phải ma sát nhớt",       "ref": "[1]" },
+    "J2": { "value": 0.11,   "unit": "kg.m^2",    "desc": "Quán tính cột lái+motor+rack quy đổi (phía cơ cấu chấp hành)",         "ref": "[1]" },
+    "C2": { "value": 1.35,   "unit": "N.m.s/rad", "desc": "Hệ số cản (damping) phía J2 - KHÔNG phải ma sát nhớt",                 "ref": "[1]" },
+    "T_f": { "value": 2,     "unit": "N.m",       "desc": "Mô-men ma sát khô Coulomb tại các cặp bánh răng, đặt ở phương trình J2", "ref": "[1]" },
+    "c":  { "value": 100,    "unit": "-",         "desc": "Hệ số làm mịn tanh (chống chattering ma sát khô)",                      "ref": "tự chọn" }
   },
   "cum2": {
     "m":         { "value": 1573,  "unit": "kg",     "desc": "Khối lượng xe",                                   "ref": "[5]" },
