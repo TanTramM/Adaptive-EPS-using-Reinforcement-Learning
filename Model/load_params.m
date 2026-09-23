@@ -1,45 +1,52 @@
 %% load_params.m
-% Doc tham so tho tu data/params.json (Cum 1+2+3), day thang vao base
-% workspace de cac model Simulink (Plant/*.mdl) tham chieu truc tiep theo
-% ten bien.
+% Read raw parameters from data/params.json (Clusters 1+2+3) straight into
+% the base workspace so Simulink models (Plant/*.mdl) can reference them
+% directly by variable name.
 %
-% KHONG con buoc tinh ky hieu gop trung gian (J_total, B_total, T_f_total,
-% Ktr...) tu tham so con - cac gia tri nay da la TRUC TIEP tham so trong
-% params.json (theo phuong phap system-identification cua [1] Lee et al.
-% 2018, xem Documents/Cum1_CEPS.txt). Cac dai luong dai so cua Cum 2/3
-% (delta_f, alpha_f, F_yf, T_r, beta_dot, gamma_dot...) tinh o Simulink
-% block moi buoc mo phong, khong tinh san o day.
+% NO intermediate lumped-symbol computation here (J_total, B_total,
+% T_f_total, Ktr, ...) - values in params.json are ALREADY the raw
+% parameters used directly by the model (system-identification method of
+% [1] Lee et al. 2018, see Documents/Cum1_CEPS.txt). Algebraic quantities
+% of Cluster 2/3 (delta_f, alpha_f, F_yf, T_r, beta_dot, gamma_dot, ...)
+% are computed inside Simulink blocks every simulation step, not
+% precomputed here - EXCEPT quantities that are time-invariant for a given
+% parameter set (see load_derived.m, called at the end of this script).
 %
-% Cach dung: chay script nay (khong phai function) TRUOC khi build/mo
-% phong bat ky model nao trong Plant/, vi bien tao ra se nam o base
-% workspace. Chay duoc tu bat ky thu muc lam viec nao (duong dan tuyet
-% doi theo vi tri script).
+% Usage: run this SCRIPT (not a function) BEFORE building/simulating any
+% model under Plant/, since the variables it creates must live in the base
+% workspace. Works from any current working directory (uses the script's
+% own absolute path).
 
 scriptDir = fileparts(mfilename('fullpath'));   % Model/
 raw = jsondecode(fileread(fullfile(scriptDir, 'data', 'params.json')));
 
-%% ===================== CUM 1 - CO CAU LAI =====================
+%% ===================== CLUSTER 1 - STEERING COLUMN =====================
 p1 = raw.cum1;
 fn = fieldnames(p1);
 for i = 1:numel(fn)
     assignin('base', fn{i}, p1.(fn{i}).value);
 end
 
-%% ===================== CUM 2 - LOP PACEJKA =====================
+%% ===================== CLUSTER 2 - PACEJKA TIRES =====================
 p2 = raw.cum2;
 fn = fieldnames(p2);
 for i = 1:numel(fn)
     assignin('base', fn{i}, p2.(fn{i}).value);
 end
 
-%% ===================== CUM 3 - THAN XE 2-DOF =====================
-% m, l_f, l_r da nap o Cum 2 (dung lai, khong dinh nghia lai - xem
-% "_cum3_reused_from_cum2" trong params.json). Chi nap them Iz.
+%% ===================== CLUSTER 3 - 2-DOF VEHICLE BODY =====================
+% m, l_f, l_r already loaded from Cluster 2 (reused, not redefined - see
+% "_cum3_reused_from_cum2" in params.json). Only Iz is loaded here.
 p3 = raw.cum3;
 fn = fieldnames(p3);
 for i = 1:numel(fn)
     assignin('base', fn{i}, p3.(fn{i}).value);
 end
 
-fprintf('Da nap tham so plant (data/params.json): Cum1 [%s], Cum2 [%s], Cum3 [%s] (+ m,l_f,l_r dung lai tu Cum2)\n', ...
+fprintf('Loaded plant parameters (data/params.json): Cluster1 [%s], Cluster2 [%s], Cluster3 [%s] (+ m,l_f,l_r reused from Cluster2)\n', ...
     strjoin(fieldnames(raw.cum1), ', '), strjoin(fieldnames(raw.cum2), ', '), strjoin(fieldnames(raw.cum3), ', '));
+
+%% ===================== DERIVED QUANTITIES (time-invariant) =====================
+% See load_derived.m - computes F_zf once, instead of recomputing it every
+% Simulink simulation step.
+run(fullfile(scriptDir, 'load_derived.m'));

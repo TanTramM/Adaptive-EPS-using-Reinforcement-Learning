@@ -1,55 +1,57 @@
 %% build_cum1.m
-% Dung Simulink API de dung khoi Cum 1 (co cau lai, CO THANH XOAN, 2 khoi
-% quan tinh) thanh 1 subsystem rieng, luu thanh SteeringColumn_s.mdl NGAY
-% TRONG thu muc Plant/ (thu muc cha cua script nay) - hau to "_s" de phan
-% biet voi ban se tu format tay (SteeringColumn.mdl, cung thu muc). Khop
-% dung Documents/Cum1_CEPS.txt:
+% Use the Simulink API to build Cluster 1 (steering column, WITH torsion
+% spring, two inertias) as its own subsystem, saved as SteeringColumn_s.mdl
+% RIGHT INSIDE the Plant/ folder (parent of this script) - the "_s" suffix
+% distinguishes it from the hand-formatted version (SteeringColumn.mdl,
+% same folder). Matches Documents/Cum1_CEPS.txt:
 %
-%   PT(1) - khoi J1 (vo-lang):
-%     x1_dot = x2
-%     x2_dot = (T_d - K*(x1-x3) - C1*x2) / J1
-%   PT(2) - khoi J2 (cot lai/pinion):
-%     x3_dot = x4
-%     x4_dot = (T_a - T_r - T_f*tanh(c*x4) - C2*x4 - K*(x3-x1)) / J2
-%   Dau ra cam bien (CV, Blueprint muc 1.3):
+%   Eq.(3) - sensor torque (CV, Blueprint section 1.3):
 %     T_s = K*(x1-x3)
+%   Eq.(1) - J1 block (steering wheel):
+%     x1_dot = x2
+%     x2_dot = (T_d - T_s - C1*x2) / J1
+%   Eq.(2) - J2 block (column/pinion):
+%     x3_dot = x4
+%     x4_dot = (T_a - T_r + T_s - T_f*tanh(c*x4) - C2*x4) / J2
 %
-% x1=theta1 (vo-lang), x3=theta2 (cot lai/pinion). T_s KHAC T_d (mo-men tay
-% tai xe, ngoai sinh, khong do duoc - xem Cum1_CEPS.txt dau file).
+% x1=theta1 (steering wheel), x3=theta2 (column/pinion). T_s is DIFFERENT
+% from T_d (driver hand torque, exogenous, not measurable - see
+% Cum1_CEPS.txt header).
 %
-% CAU TRUC PHAN CAP (moi - 1 subsystem con cho MOI phuong trinh vi phan):
+% NOTE ON THE SPRING TERM: Cum1_CEPS.txt writes the spring term as
+% -K*(x1-x3) in Eq.(1) and -K*(x3-x1) in Eq.(2). Since T_s = K*(x1-x3),
+% those are exactly -T_s and +T_s. Factoring T_s out into its own subsystem
+% (instead of computing K*(x1-x3) twice) follows the "one subsystem per
+% NAMED quantity" rule - T_s is a named quantity (it IS the CV).
 %
-%   Cum1_SteeringColumn
-%     In : T_d, T_a, T_r          Out: theta1, theta1_dot, theta2,
-%                                      theta2_dot, T_s
+% HIERARCHY (see CLAUDE.md, "Quy tac dung model Simulink"):
+%
+%   SteeringColumn
+%     In : T_d, T_a, T_r
+%     Out: theta1, theta1_dot, theta2, theta2_dot, T_s
 %     |
-%     +-- Upper   (PT(1), khoi J1)
-%     |     In : T_d, theta2      Out: theta1, theta1_dot, T_s
-%     |     (T_s tinh o day vi Upper da co san hieu x1-x3 cho so hang lo xo)
-%     |
-%     +-- Lower   (PT(2), khoi J2)
-%           In : T_a, T_r, theta1 Out: theta2, theta2_dot
+%     +-- Cal T_s   In : theta1, theta2      Out: T_s
+%     |             (sits BETWEEN Upper and Lower - a hub both depend on,
+%     |              same role as D/B sitting above Cal F_yf/Cal F_yr in
+%     |              Tires.mdl)
+%     +-- Upper     In : T_d, T_s            Out: theta1, theta1_dot
+%     |             (Eq.(1), J1 block)
+%     +-- Lower     In : T_a, T_r, T_s       Out: theta2, theta2_dot
+%                   (Eq.(2), J2 block)
 %
-%   2 tin hieu ghep cheo (theta1 -> Lower, theta2 -> Upper) tao vong hoi
-%   tiep giua 2 subsystem - noi bang Goto/From cho khoi roi day.
+%   theta1, theta2, T_s are routed with Goto/From at cluster level.
 %
-% Quy uoc dung khoi:
-%   - Moi khoi giu NGUYEN kich thuoc mac dinh khi add_block tao ra - chi
-%     doi VI TRI (dich chuyen), khong keo dan/co lai (xem ham dichKhoi()).
-%   - Phep nhan dung khoi Product (khong dung Gain).
-%   - Phep chia (1/J1, 1/J2) dung khoi Product o che do chia (Divide).
-%   - Ham tanh dung khoi Trigonometric Function (Function=tanh), khong
-%     dung Fcn/MATLAB Function.
-%   - Khoi Constant KHONG dat ten rieng - de ten mac dinh (Constant,
-%     Constant1, ...), chi dat truong Value bang TEN BIEN base workspace.
-%   - Goto/From deu de TagVisibility='local' (KHONG global/scoped): tag chi
-%     nhin thay trong dung 1 cap he thong, nen tag trung ten o cap khac
-%     (vd x1/x2 trong Upper vs x3/x4 trong Lower) khong va cham nhau.
+% LAYOUT (CLAUDE.md section 6): Upper occupies the top band, Lower the
+% bottom band, Cal T_s sits as a hub between them. Inside each subsystem,
+% the main torque-balance -> integrator chain is laid out on ONE straight
+% horizontal line; secondary terms (friction, damping, the spring torque
+% itself) join that line from below, positioned right next to the block
+% that actually consumes them - not forced into a left-hand column.
 %
-% Tham so (K, J1, C1, J2, C2, T_f, c) lay tu base workspace - chay
-% Model/load_params.m TRUOC khi build/mo phong.
+% Parameters (K, J1, C1, J2, C2, T_f, c) are read from the base workspace -
+% run Model/load_params.m BEFORE building/simulating.
 %
-% Cach dung (chay tu thu muc nay, Plant/script/):
+% Usage (run from this folder, Plant/script/):
 %   >> run('../../load_params.m')
 %   >> build_cum1
 
@@ -69,299 +71,310 @@ end
 new_system(modelName);
 open_system(modelName);
 
-%% ===================== Subsystem goc: Cum1_SteeringColumn ==============
-sub = [modelName '/Cum1_SteeringColumn'];
-taoSubsystem(sub);
-dichKhoi(sub, 50, 50);
+%% ===================== Root subsystem: SteeringColumn ==================
+sub = [modelName '/SteeringColumn'];
+createSubsystem(sub);
+moveBlock(sub, 50, 50);
 
-% --- Cong vao cap cum ---
-themIn(sub, 'T_d', 1,  40,  60);
-themIn(sub, 'T_a', 2,  40, 380);
-themIn(sub, 'T_r', 3,  40, 440);
+% --- Inputs: T_d feeds Upper (top band), T_a/T_r feed Lower (bottom band) ---
+addInport(sub, 'T_d', 1,  40,  60);
+addInport(sub, 'T_a', 2,  40, 460);
+addInport(sub, 'T_r', 3,  40, 520);
 
-% --- Cong ra cap cum ---
-themOut(sub, 'theta1',     1, 760,  60);
-themOut(sub, 'theta1_dot', 2, 760, 130);
-themOut(sub, 'T_s',        3, 760, 200);
-themOut(sub, 'theta2',     4, 760, 380);
-themOut(sub, 'theta2_dot', 5, 760, 450);
+% --- Outputs: grouped by which band produces them; T_s (the hub output)
+% sits between the two bands, matching Cal T_s's own position ---
+addOutport(sub, 'theta1',     1, 900,  60);
+addOutport(sub, 'theta1_dot', 2, 900, 140);
+addOutport(sub, 'T_s',        3, 900, 300);
+addOutport(sub, 'theta2',     4, 900, 460);
+addOutport(sub, 'theta2_dot', 5, 900, 540);
 
-%% ===================== Subsystem UPPER - PT(1), khoi J1 ================
+%% ===================== Cal T_s - Eq.(3), the hub =======================
+% Vertically centered between Upper and Lower: it consumes theta1 (from
+% Upper, above) and theta2 (from Lower, below), and feeds T_s back to both.
+ts = [sub '/Cal T_s'];
+createSubsystem(ts);
+moveBlock(ts, 420, 260);
+buildCalTs(ts);
+
+%% ===================== Upper - Eq.(1), J1 block (top band) =============
 up = [sub '/Upper'];
-taoSubsystem(up);
-dichKhoi(up, 320, 60);
-xayUpper(up);
+createSubsystem(up);
+moveBlock(up, 420, 60);
+buildUpper(up);
 
-%% ===================== Subsystem LOWER - PT(2), khoi J2 ================
+%% ===================== Lower - Eq.(2), J2 block (bottom band) ==========
 lo = [sub '/Lower'];
-taoSubsystem(lo);
-dichKhoi(lo, 320, 380);
-xayLower(lo);
+createSubsystem(lo);
+moveBlock(lo, 420, 460);
+buildLower(lo);
 
-%% ===================== Noi day cap cum ================================
-% Vao thang tung subsystem
+%% ===================== Cluster-level wiring ============================
+% Straight into each subsystem's primary input (same row as the block)
 add_line(sub, 'T_d/1', 'Upper/1', 'autorouting', 'on');
 add_line(sub, 'T_a/1', 'Lower/1', 'autorouting', 'on');
 add_line(sub, 'T_r/1', 'Lower/2', 'autorouting', 'on');
 
-% theta1 (Upper ra) -> Goto ; From -> Lower va cong ra cum
-g_th1 = themGoto(sub, 'theta1', 520,  60);
+% theta1 (Upper) -> Goto right after Upper ; From near Cal T_s (its top
+% input, joining from above) and near the cluster output
+g_th1 = addGoto(sub, 'theta1', 640,  60);
 add_line(sub, 'Upper/1', [g_th1 '/1'], 'autorouting', 'on');
-f_th1a = themFrom(sub, 'theta1', 250, 470);
-add_line(sub, [f_th1a '/1'], 'Lower/3', 'autorouting', 'on');
-f_th1b = themFrom(sub, 'theta1', 660,  60);
-add_line(sub, [f_th1b '/1'], 'theta1/1', 'autorouting', 'on');
+f_th1_ts  = addFrom(sub, 'theta1', 320, 240);
+add_line(sub, [f_th1_ts '/1'], 'Cal T_s/1', 'autorouting', 'on');
+f_th1_out = addFrom(sub, 'theta1', 800,  60);
+add_line(sub, [f_th1_out '/1'], 'theta1/1', 'autorouting', 'on');
 
-% theta2 (Lower ra) -> Goto ; From -> Upper va cong ra cum
-g_th2 = themGoto(sub, 'theta2', 520, 380);
+% theta2 (Lower) -> Goto right after Lower ; From near Cal T_s (its bottom
+% input, joining from below) and near the cluster output
+g_th2 = addGoto(sub, 'theta2', 640, 460);
 add_line(sub, 'Lower/1', [g_th2 '/1'], 'autorouting', 'on');
-f_th2a = themFrom(sub, 'theta2', 250, 150);
-add_line(sub, [f_th2a '/1'], 'Upper/2', 'autorouting', 'on');
-f_th2b = themFrom(sub, 'theta2', 660, 380);
-add_line(sub, [f_th2b '/1'], 'theta2/1', 'autorouting', 'on');
+f_th2_ts  = addFrom(sub, 'theta2', 320, 320);
+add_line(sub, [f_th2_ts '/1'], 'Cal T_s/2', 'autorouting', 'on');
+f_th2_out = addFrom(sub, 'theta2', 800, 460);
+add_line(sub, [f_th2_out '/1'], 'theta2/1', 'autorouting', 'on');
 
-% Cac dau ra con lai: noi thang (chi 1 dich den, khong can Goto/From)
+% T_s (Cal T_s) -> Goto right after Cal T_s ; From near Upper (joins its
+% torque-sum from below), near Lower (joins from above), and cluster output
+g_ts = addGoto(sub, 'T_s', 640, 300);
+add_line(sub, 'Cal T_s/1', [g_ts '/1'], 'autorouting', 'on');
+f_ts_up  = addFrom(sub, 'T_s', 320, 200);
+add_line(sub, [f_ts_up '/1'], 'Upper/2', 'autorouting', 'on');
+f_ts_lo  = addFrom(sub, 'T_s', 320, 580);
+add_line(sub, [f_ts_lo '/1'], 'Lower/3', 'autorouting', 'on');
+f_ts_out = addFrom(sub, 'T_s', 800, 300);
+add_line(sub, [f_ts_out '/1'], 'T_s/1', 'autorouting', 'on');
+
+% Rate outputs: 1 destination each, wire directly
 add_line(sub, 'Upper/2', 'theta1_dot/1', 'autorouting', 'on');
-add_line(sub, 'Upper/3', 'T_s/1',        'autorouting', 'on');
 add_line(sub, 'Lower/2', 'theta2_dot/1', 'autorouting', 'on');
 
 save_system(modelName, modelPath);
 close_system(modelName, 0);
 
-fprintf('Da tao: %s\n', modelPath);
+fprintf('Created: %s\n', modelPath);
 
-%% ===================== Xay subsystem UPPER ============================
-function xayUpper(up)
-% PT(1): x2_dot = (T_d - K*(x1-x3) - C1*x2)/J1 ; x1_dot = x2
-%        T_s    = K*(x1-x3)   (tinh luon o day, tai dung hieu x1-x3)
-    themIn(up, 'T_d',    1,  40,  60);
-    themIn(up, 'theta2', 2,  40, 320);
+%% ===================== Eq.(3): sensor torque (hub) ======================
+function buildCalTs(ts)
+% T_s = K*(theta1 - theta2)
+% Main line: Sum_dTheta -> Prod_Ts -> T_s, all on the same row. K joins
+% Prod_Ts from below, right where it is consumed.
+    addInport(ts, 'theta1', 1, 40,  60);
+    addInport(ts, 'theta2', 2, 40, 160);
 
-    themOut(up, 'theta1',     1, 780,  60);
-    themOut(up, 'theta1_dot', 2, 780, 140);
-    themOut(up, 'T_s',        3, 780, 330);
+    addOutport(ts, 'T_s', 1, 460, 100);
 
-    hK  = themHang(up, 'K',  180, 380);
-    hC1 = themHang(up, 'C1', 180, 230);
-    hJ1 = themHang(up, 'J1', 330, 140);
+    addSum    (ts, 'Sum_dTheta', '+-', 180, 100);   % theta1 - theta2
+    addProduct(ts, 'Prod_Ts',    '**', 300, 100);   % K*(theta1-theta2)
 
-    % x1 - x3 (x3 lay tu cong vao theta2)
-    add_block('simulink/Math Operations/Add', [up '/Sub_dTheta']);
-    set_param([up '/Sub_dTheta'], 'Inputs', '+-');
-    dichKhoi([up '/Sub_dTheta'], 180, 310);
+    hK = addConstant(ts, 'K', 300, 220);   % right below Prod_Ts
 
-    % K*(x1-x3)  -> vua la so hang lo xo, vua la T_s
-    add_block('simulink/Math Operations/Product', [up '/Prod_K']);
-    dichKhoi([up '/Prod_K'], 260, 330);
+    add_line(ts, 'theta1/1', 'Sum_dTheta/1', 'autorouting', 'on');
+    add_line(ts, 'theta2/1', 'Sum_dTheta/2', 'autorouting', 'on');
+    add_line(ts, 'Sum_dTheta/1', 'Prod_Ts/1', 'autorouting', 'on');
+    add_line(ts, [hK '/1'],      'Prod_Ts/2', 'autorouting', 'on');
+    add_line(ts, 'Prod_Ts/1',    'T_s/1',     'autorouting', 'on');
+end
 
-    % C1*x2
-    add_block('simulink/Math Operations/Product', [up '/Prod_C1']);
-    dichKhoi([up '/Prod_C1'], 260, 220);
+%% ===================== Eq.(1): J1 block (steering wheel) ===============
+function buildUpper(up)
+% x2_dot = (T_d - T_s - C1*x2)/J1 ; x1_dot = x2
+% Main line (torque balance -> integrate twice): T_d -> Sum_torque ->
+% Div_x2dot -> Int_x2 -> Int_x1 -> theta1, all on the same row (y=60).
+% T_s joins Sum_torque from below (secondary input). C1*x2 (feedback
+% through the damping term) sits below the main line, close to
+% Sum_torque. theta1_dot (=x2) is a side output, placed on its own lower
+% row next to where the x2 signal already lives.
+    addInport(up, 'T_d', 1, 40,  60);
+    addInport(up, 'T_s', 2, 40, 200);
 
-    % T_d - K*(x1-x3) - C1*x2
-    add_block('simulink/Math Operations/Add', [up '/Sum1']);
-    set_param([up '/Sum1'], 'Inputs', '+--');
-    dichKhoi([up '/Sum1'], 350, 60);
+    addOutport(up, 'theta1',     1, 760,  60);
+    addOutport(up, 'theta1_dot', 2, 760, 200);
 
-    % ( ... ) / J1
-    add_block('simulink/Math Operations/Product', [up '/Div_J1']);
-    set_param([up '/Div_J1'], 'Inputs', '*/');
-    dichKhoi([up '/Div_J1'], 430, 60);
+    addSum    (up, 'Sum_torque', '+--', 260,  60);   % T_d - T_s - C1*x2
+    addProduct(up, 'Div_x2dot',  '*/',  380,  60);   % /J1
+    addIntegrator(up, 'Int_x2', 460, 60);            % x2 = theta1_dot
+    addIntegrator(up, 'Int_x1', 600, 60);            % x1 = theta1
 
-    add_block('simulink/Continuous/Integrator', [up '/Int_x2']);
-    dichKhoi([up '/Int_x2'], 500, 60);
+    hJ1 = addConstant(up, 'J1', 380, 160);   % right below Div_x2dot
+    hC1 = addConstant(up, 'C1', 160, 300);   % right above Prod_C1x2
+    addProduct(up, 'Prod_C1x2', '**', 260, 260);     % C1*x2, below main line
 
-    add_block('simulink/Continuous/Integrator', [up '/Int_x1']);
-    dichKhoi([up '/Int_x1'], 660, 60);
+    % x2 feeds Prod_C1x2 (secondary) and the theta1_dot output -> Goto/From
+    g_x2 = addGoto(up, 'x2', 500, 60);
+    add_line(up, 'Int_x2/1', [g_x2 '/1'], 'autorouting', 'on');
+    f_x2_int = addFrom(up, 'x2', 540,  60);
+    f_x2_c1  = addFrom(up, 'x2', 160, 260);
+    f_x2_out = addFrom(up, 'x2', 680, 200);
 
-    % --- Goto/From cho 2 bien trang thai (local) ---
-    g_x2 = themGoto(up, 'x2', 560,  60);
-    g_x1 = themGoto(up, 'x1', 720,  60);
+    add_line(up, 'T_d/1', 'Sum_torque/1', 'autorouting', 'on');
+    add_line(up, 'T_s/1', 'Sum_torque/2', 'autorouting', 'on');
+    add_line(up, 'Prod_C1x2/1', 'Sum_torque/3', 'autorouting', 'on');
 
-    f_x2_int = themFrom(up, 'x2', 610,  60);   % -> Int_x1
-    f_x2_c1  = themFrom(up, 'x2', 180, 190);   % -> Prod_C1
-    f_x2_out = themFrom(up, 'x2', 720, 140);   % -> Out theta1_dot
-    f_x1_sub = themFrom(up, 'x1', 110, 300);   % -> Sub_dTheta
-    f_x1_out = themFrom(up, 'x1', 720, 200);   % -> Out theta1
+    add_line(up, [f_x2_c1 '/1'], 'Prod_C1x2/1', 'autorouting', 'on');
+    add_line(up, [hC1 '/1'],     'Prod_C1x2/2', 'autorouting', 'on');
 
-    %% --- Noi day trong Upper ---
-    add_line(up, [f_x1_sub '/1'], 'Sub_dTheta/1', 'autorouting', 'on');
-    add_line(up, 'theta2/1',      'Sub_dTheta/2', 'autorouting', 'on');
-    add_line(up, 'Sub_dTheta/1',  'Prod_K/1',     'autorouting', 'on');
-    add_line(up, [hK '/1'],       'Prod_K/2',     'autorouting', 'on');
+    add_line(up, 'Sum_torque/1', 'Div_x2dot/1', 'autorouting', 'on');
+    add_line(up, [hJ1 '/1'],     'Div_x2dot/2', 'autorouting', 'on');
+    add_line(up, 'Div_x2dot/1',  'Int_x2/1',    'autorouting', 'on');
 
-    add_line(up, [f_x2_c1 '/1'], 'Prod_C1/1', 'autorouting', 'on');
-    add_line(up, [hC1 '/1'],     'Prod_C1/2', 'autorouting', 'on');
-
-    add_line(up, 'T_d/1',     'Sum1/1', 'autorouting', 'on');
-    add_line(up, 'Prod_K/1',  'Sum1/2', 'autorouting', 'on');
-    add_line(up, 'Prod_C1/1', 'Sum1/3', 'autorouting', 'on');
-
-    add_line(up, 'Sum1/1',    'Div_J1/1', 'autorouting', 'on');
-    add_line(up, [hJ1 '/1'],  'Div_J1/2', 'autorouting', 'on');
-    add_line(up, 'Div_J1/1',  'Int_x2/1', 'autorouting', 'on');
-
-    add_line(up, 'Int_x2/1',       [g_x2 '/1'],  'autorouting', 'on');
-    add_line(up, [f_x2_int '/1'],  'Int_x1/1',   'autorouting', 'on');
-    add_line(up, 'Int_x1/1',       [g_x1 '/1'],  'autorouting', 'on');
-
+    add_line(up, [f_x2_int '/1'], 'Int_x1/1', 'autorouting', 'on');
+    add_line(up, 'Int_x1/1',      'theta1/1', 'autorouting', 'on');
     add_line(up, [f_x2_out '/1'], 'theta1_dot/1', 'autorouting', 'on');
-    add_line(up, [f_x1_out '/1'], 'theta1/1',     'autorouting', 'on');
-    add_line(up, 'Prod_K/1',      'T_s/1',        'autorouting', 'on');
 end
 
-%% ===================== Xay subsystem LOWER ============================
-function xayLower(lo)
-% PT(2): x4_dot = (T_a - T_r - T_f*tanh(c*x4) - C2*x4 - K*(x3-x1))/J2
-%        x3_dot = x4
-    themIn(lo, 'T_a',    1,  40,  60);
-    themIn(lo, 'T_r',    2,  40, 120);
-    themIn(lo, 'theta1', 3,  40, 420);
+%% ===================== Eq.(2): J2 block (column/pinion) ================
+function buildLower(lo)
+% x4_dot = (T_a - T_r + T_s - T_f*tanh(c*x4) - C2*x4)/J2 ; x3_dot = x4
+% Main line: T_a -> Sum_torque -> Div_x4dot -> Int_x4 -> Int_x3 -> theta2,
+% all on the same row (y=60). T_r, T_s join Sum_torque directly (they are
+% cluster/Goto inputs already positioned at this subsystem's edge).
+% T_f*tanh(c*x4) and C2*x4 sit below the main line, close to where each
+% is consumed. theta2_dot (=x4) is a side output on its own lower row.
+    addInport(lo, 'T_a', 1, 40,  60);
+    addInport(lo, 'T_r', 2, 40, 120);
+    addInport(lo, 'T_s', 3, 40, 180);
 
-    themOut(lo, 'theta2',     1, 780,  60);
-    themOut(lo, 'theta2_dot', 2, 780, 140);
+    addOutport(lo, 'theta2',     1, 900,  60);
+    addOutport(lo, 'theta2_dot', 2, 900, 220);
 
-    hK  = themHang(lo, 'K',   180, 480);
-    hC2 = themHang(lo, 'C2',  180, 330);
-    hc  = themHang(lo, 'c',   180, 250);
-    hTf = themHang(lo, 'T_f', 330, 210);
-    hJ2 = themHang(lo, 'J2',  430, 140);
+    addSum    (lo, 'Sum_torque', '+-+--', 420,  60);  % T_a-T_r+T_s-(.)-(.)
+    addProduct(lo, 'Div_x4dot',  '*/',    560,  60);  % /J2
+    addIntegrator(lo, 'Int_x4', 640, 60);             % x4 = theta2_dot
+    addIntegrator(lo, 'Int_x3', 780, 60);             % x3 = theta2
 
-    % x3 - x1 (x1 lay tu cong vao theta1)
-    add_block('simulink/Math Operations/Add', [lo '/Sub_dTheta']);
-    set_param([lo '/Sub_dTheta'], 'Inputs', '+-');
-    dichKhoi([lo '/Sub_dTheta'], 180, 410);
+    hJ2 = addConstant(lo, 'J2', 560, 160);   % right below Div_x4dot
 
-    add_block('simulink/Math Operations/Product', [lo '/Prod_K']);
-    dichKhoi([lo '/Prod_K'], 260, 430);
+    % T_f*tanh(c*x4) branch, below the main line near where it feeds in
+    hc  = addConstant(lo, 'c',   160, 340);
+    hTf = addConstant(lo, 'T_f', 300, 300);
+    addProduct(lo, 'Prod_cx4',     '**',    220, 320);
+    addTrigFcn(lo, 'Trig_tanh_x4', 'tanh',  300, 340);
+    addProduct(lo, 'Prod_Tf',      '**',    380, 300);
 
-    add_block('simulink/Math Operations/Product', [lo '/Prod_C2']);
-    dichKhoi([lo '/Prod_C2'], 260, 320);
+    % C2*x4 branch, below the main line near where it feeds in
+    hC2 = addConstant(lo, 'C2', 160, 420);
+    addProduct(lo, 'Prod_C2x4', '**', 220, 400);
 
-    % c*x4 -> tanh -> T_f*tanh(c*x4)
-    add_block('simulink/Math Operations/Product', [lo '/Prod_c']);
-    dichKhoi([lo '/Prod_c'], 260, 240);
+    % x4 feeds Prod_cx4, Prod_C2x4 (secondary) and theta2_dot -> Goto/From
+    g_x4 = addGoto(lo, 'x4', 680, 60);
+    add_line(lo, 'Int_x4/1', [g_x4 '/1'], 'autorouting', 'on');
+    f_x4_int = addFrom(lo, 'x4', 720,  60);
+    f_x4_c   = addFrom(lo, 'x4', 160, 300);
+    f_x4_c2  = addFrom(lo, 'x4', 160, 380);
+    f_x4_out = addFrom(lo, 'x4', 820, 220);
 
-    add_block('simulink/Math Operations/Trigonometric Function', [lo '/Tanh']);
-    set_param([lo '/Tanh'], 'Operator', 'tanh');
-    dichKhoi([lo '/Tanh'], 330, 250);
+    add_line(lo, [f_x4_c '/1'], 'Prod_cx4/1', 'autorouting', 'on');
+    add_line(lo, [hc '/1'],     'Prod_cx4/2', 'autorouting', 'on');
+    add_line(lo, 'Prod_cx4/1',  'Trig_tanh_x4/1', 'autorouting', 'on');
+    add_line(lo, 'Trig_tanh_x4/1', 'Prod_Tf/1', 'autorouting', 'on');
+    add_line(lo, [hTf '/1'],       'Prod_Tf/2', 'autorouting', 'on');
 
-    add_block('simulink/Math Operations/Product', [lo '/Prod_Tf']);
-    dichKhoi([lo '/Prod_Tf'], 400, 230);
+    add_line(lo, [f_x4_c2 '/1'], 'Prod_C2x4/1', 'autorouting', 'on');
+    add_line(lo, [hC2 '/1'],     'Prod_C2x4/2', 'autorouting', 'on');
 
-    % T_a - T_r - T_f*tanh(c*x4) - C2*x4 - K*(x3-x1)
-    add_block('simulink/Math Operations/Add', [lo '/Sum2']);
-    set_param([lo '/Sum2'], 'Inputs', '+----');
-    dichKhoi([lo '/Sum2'], 470, 60);
+    add_line(lo, 'T_a/1',       'Sum_torque/1', 'autorouting', 'on');
+    add_line(lo, 'T_r/1',       'Sum_torque/2', 'autorouting', 'on');
+    add_line(lo, 'T_s/1',       'Sum_torque/3', 'autorouting', 'on');
+    add_line(lo, 'Prod_Tf/1',   'Sum_torque/4', 'autorouting', 'on');
+    add_line(lo, 'Prod_C2x4/1', 'Sum_torque/5', 'autorouting', 'on');
 
-    add_block('simulink/Math Operations/Product', [lo '/Div_J2']);
-    set_param([lo '/Div_J2'], 'Inputs', '*/');
-    dichKhoi([lo '/Div_J2'], 540, 60);
+    add_line(lo, 'Sum_torque/1', 'Div_x4dot/1', 'autorouting', 'on');
+    add_line(lo, [hJ2 '/1'],     'Div_x4dot/2', 'autorouting', 'on');
+    add_line(lo, 'Div_x4dot/1',  'Int_x4/1',    'autorouting', 'on');
 
-    add_block('simulink/Continuous/Integrator', [lo '/Int_x4']);
-    dichKhoi([lo '/Int_x4'], 600, 60);
-
-    add_block('simulink/Continuous/Integrator', [lo '/Int_x3']);
-    dichKhoi([lo '/Int_x3'], 720, 60);
-
-    % --- Goto/From cho 2 bien trang thai (local) ---
-    g_x4 = themGoto(lo, 'x4', 650,  60);
-    g_x3 = themGoto(lo, 'x3', 770,  60);
-
-    f_x4_int = themFrom(lo, 'x4', 690,  60);   % -> Int_x3
-    f_x4_c2  = themFrom(lo, 'x4', 110, 310);   % -> Prod_C2
-    f_x4_c   = themFrom(lo, 'x4', 110, 230);   % -> Prod_c
-    f_x4_out = themFrom(lo, 'x4', 720, 140);   % -> Out theta2_dot
-    f_x3_sub = themFrom(lo, 'x3', 110, 400);   % -> Sub_dTheta
-    f_x3_out = themFrom(lo, 'x3', 720, 200);   % -> Out theta2
-
-    %% --- Noi day trong Lower ---
-    add_line(lo, [f_x3_sub '/1'], 'Sub_dTheta/1', 'autorouting', 'on');
-    add_line(lo, 'theta1/1',      'Sub_dTheta/2', 'autorouting', 'on');
-    add_line(lo, 'Sub_dTheta/1',  'Prod_K/1',     'autorouting', 'on');
-    add_line(lo, [hK '/1'],       'Prod_K/2',     'autorouting', 'on');
-
-    add_line(lo, [f_x4_c2 '/1'], 'Prod_C2/1', 'autorouting', 'on');
-    add_line(lo, [hC2 '/1'],     'Prod_C2/2', 'autorouting', 'on');
-
-    add_line(lo, [f_x4_c '/1'], 'Prod_c/1', 'autorouting', 'on');
-    add_line(lo, [hc '/1'],     'Prod_c/2', 'autorouting', 'on');
-    add_line(lo, 'Prod_c/1',    'Tanh/1',   'autorouting', 'on');
-    add_line(lo, 'Tanh/1',      'Prod_Tf/1', 'autorouting', 'on');
-    add_line(lo, [hTf '/1'],    'Prod_Tf/2', 'autorouting', 'on');
-
-    add_line(lo, 'T_a/1',     'Sum2/1', 'autorouting', 'on');
-    add_line(lo, 'T_r/1',     'Sum2/2', 'autorouting', 'on');
-    add_line(lo, 'Prod_Tf/1', 'Sum2/3', 'autorouting', 'on');
-    add_line(lo, 'Prod_C2/1', 'Sum2/4', 'autorouting', 'on');
-    add_line(lo, 'Prod_K/1',  'Sum2/5', 'autorouting', 'on');
-
-    add_line(lo, 'Sum2/1',   'Div_J2/1', 'autorouting', 'on');
-    add_line(lo, [hJ2 '/1'], 'Div_J2/2', 'autorouting', 'on');
-    add_line(lo, 'Div_J2/1', 'Int_x4/1', 'autorouting', 'on');
-
-    add_line(lo, 'Int_x4/1',      [g_x4 '/1'], 'autorouting', 'on');
-    add_line(lo, [f_x4_int '/1'], 'Int_x3/1',  'autorouting', 'on');
-    add_line(lo, 'Int_x3/1',      [g_x3 '/1'], 'autorouting', 'on');
-
+    add_line(lo, [f_x4_int '/1'], 'Int_x3/1', 'autorouting', 'on');
+    add_line(lo, 'Int_x3/1',      'theta2/1', 'autorouting', 'on');
     add_line(lo, [f_x4_out '/1'], 'theta2_dot/1', 'autorouting', 'on');
-    add_line(lo, [f_x3_out '/1'], 'theta2/1',     'autorouting', 'on');
 end
 
-%% ===================== Ham tien ich ===================================
-function dichKhoi(blk, x, y)
-% Dich chuyen khoi ve (x,y), GIU NGUYEN kich thuoc mac dinh.
+%% ===================== Shared utility functions ========================
+function moveBlock(blk, x, y)
+% Move a block to (x,y), KEEPING its default size.
     pos = get_param(blk, 'Position');
     w = pos(3) - pos(1);
     h = pos(4) - pos(2);
     set_param(blk, 'Position', [x, y, x + w, y + h]);
 end
 
-function taoSubsystem(path)
-% Tao 1 Subsystem rong (bo cap In1->Out1 mac dinh).
+function createSubsystem(path)
+% Create an empty Subsystem (removes the default In1->Out1 pair).
     add_block('simulink/Ports & Subsystems/Subsystem', path);
     delete_line(path, 'In1/1', 'Out1/1');
     delete_block([path '/In1']);
     delete_block([path '/Out1']);
 end
 
-function themIn(sys, name, port, x, y)
+function addInport(sys, name, port, x, y)
+% Ports keep MEANINGFUL names - they ARE the physical variable name and are
+% looked up by name in test_*.m.
     full = [sys '/' name];
     add_block('simulink/Sources/In1', full);
     set_param(full, 'Port', num2str(port));
-    dichKhoi(full, x, y);
+    moveBlock(full, x, y);
 end
 
-function themOut(sys, name, port, x, y)
+function addOutport(sys, name, port, x, y)
     full = [sys '/' name];
     add_block('simulink/Sinks/Out1', full);
     set_param(full, 'Port', num2str(port));
-    dichKhoi(full, x, y);
+    moveBlock(full, x, y);
 end
 
-function nm = themHang(sys, bienBaseWs, x, y)
-% Them khoi Constant KHONG dat ten rieng (de ten mac dinh Constant,
-% Constant1, ...), Value tro THANG toi ten bien trong base workspace.
+function nm = addConstant(sys, baseWorkspaceVar, x, y)
+% Constant block, DEFAULT name (Constant, Constant1, ...); Value points
+% STRAIGHT to a base-workspace variable name.
     h = add_block('simulink/Sources/Constant', [sys '/Constant'], ...
         'MakeNameUnique', 'on');
-    set_param(h, 'Value', bienBaseWs);
-    dichKhoi(h, x, y);
+    set_param(h, 'Value', baseWorkspaceVar);
+    moveBlock(h, x, y);
     nm = get_param(h, 'Name');
 end
 
-function nm = themGoto(sys, tag, x, y)
-% Goto pham vi LOCAL (khong global/scoped).
+function nm = addGoto(sys, tag, x, y)
+% Goto block, DEFAULT name; LOCAL scope only. tag is the plain variable
+% name, no suffix.
     h = add_block('simulink/Signal Routing/Goto', [sys '/Goto'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'GotoTag', tag, 'TagVisibility', 'local');
-    dichKhoi(h, x, y);
+    moveBlock(h, x, y);
     nm = get_param(h, 'Name');
 end
 
-function nm = themFrom(sys, tag, x, y)
+function nm = addFrom(sys, tag, x, y)
     h = add_block('simulink/Signal Routing/From', [sys '/From'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'GotoTag', tag);
-    dichKhoi(h, x, y);
+    moveBlock(h, x, y);
     nm = get_param(h, 'Name');
+end
+
+function addProduct(sys, name, inputsStr, x, y)
+% Computation blocks DO get meaningful names: Prod_<result>, Div_<result>.
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Product', full);
+    set_param(full, 'Inputs', inputsStr);
+    moveBlock(full, x, y);
+end
+
+function addSum(sys, name, inputsStr, x, y)
+% Sum_<result>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Add', full);
+    set_param(full, 'Inputs', inputsStr);
+    moveBlock(full, x, y);
+end
+
+function addTrigFcn(sys, name, op, x, y)
+% Trig_<function>_<argument>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Trigonometric Function', full);
+    set_param(full, 'Operator', op);
+    moveBlock(full, x, y);
+end
+
+function addIntegrator(sys, name, x, y)
+% Int_<state variable>
+    full = [sys '/' name];
+    add_block('simulink/Continuous/Integrator', full);
+    moveBlock(full, x, y);
 end

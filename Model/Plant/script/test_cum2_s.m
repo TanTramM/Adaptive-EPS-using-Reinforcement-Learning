@@ -1,6 +1,6 @@
-function test_cum2()
-%TEST_CUM2 Verify the Tires.mdl model (Cluster 2, hand-formatted from
-%the auto-built version).
+function test_cum2_s()
+%TEST_CUM2_S Verify the Tires_s.mdl model (Cluster 2, auto-built by
+%build_cum2.m).
 %
 %   Requires the root subsystem to expose ports named:
 %   In: theta2, beta, gamma, v, mu | Out: F_yf, F_yr, T_r.
@@ -12,7 +12,7 @@ function test_cum2()
 %   here directly from data/params.json (not from base-workspace values
 %   such as F_zf, which load_derived.m itself might get wrong).
 
-modelFileName = 'Tires';
+modelFileName = 'Tires_s';
 
 scriptDir = fileparts(mfilename('fullpath'));   % Plant/script
 plantDir  = fileparts(scriptDir);               % Plant/
@@ -25,7 +25,7 @@ load_system(fullfile(plantDir, [modelFileName '.mdl']));
 
 dut = findRootSubsystem(modelFileName);
 
-harnessName = 'test_cum2_harness';
+harnessName = 'test_cum2_s_harness';
 if bdIsLoaded(harnessName)
     close_system(harnessName, 0);
 end

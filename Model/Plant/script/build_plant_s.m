@@ -1,10 +1,9 @@
-%% build_plant.m
-% Assemble the 3 HAND-FORMATTED cluster models (SteeringColumn.mdl,
-% Tires.mdl, Bike2DOF.mdl - no "_s" suffix, right inside the Plant/
-% folder) into 1 closed-loop model Plant.mdl, saved RIGHT INSIDE the
-% Plant/ folder. Does NOT regenerate the 3 source files - uses them
-% exactly as they are on disk. Counterpart: build_plant_s.m (regenerates
-% fresh "_s" cluster models via build_cum1/2/3, then assembles those).
+%% build_plant_s.m
+% Regenerate the 3 cluster models WITH the "_s" suffix (by calling
+% build_cum1, build_cum2, build_cum3 - always fresh, never reusing stale
+% files), then assemble those 3 into 1 closed-loop model Plant_s.mdl,
+% saved RIGHT INSIDE the Plant/ folder. Counterpart: build_plant.m
+% (assembles the HAND-FORMATTED trio, no "_s", without regenerating them).
 %
 % Ports are wired by NAME (found via find_system), not by port number - so
 % this script works regardless of how the 3 source models order their
@@ -39,10 +38,13 @@
 %
 % Usage (run from this folder, Plant/script/):
 %   >> run('../../load_params.m')
-%   >> build_plant
-%   (creates Plant.mdl in Plant/, using the hand-formatted trio as-is)
+%   >> build_plant_s
+%   (regenerates SteeringColumn_s.mdl, Tires_s.mdl, Bike2DOF_s.mdl, then
+%   creates Plant_s.mdl, all in Plant/)
 
-modelName = 'Plant';
+regenerateClusterModels();
+
+modelName = 'Plant_s';
 
 if bdIsLoaded(modelName)
     close_system(modelName, 0);
@@ -55,8 +57,19 @@ if exist(modelPath, 'file')
     delete(modelPath);
 end
 
-srcFiles = struct('steer', 'SteeringColumn', 'tires', 'Tires', 'bike', 'Bike2DOF');
+srcFiles = struct('steer', 'SteeringColumn_s', 'tires', 'Tires_s', 'bike', 'Bike2DOF_s');
 assemblePlant(modelName, modelPath, plantDir, srcFiles);
+
+%% ===================== Regenerate the 3 "_s" cluster models =============
+function regenerateClusterModels()
+% Calling build_cum1/2/3 as LOCAL-FUNCTION calls (not straight from the
+% script body) keeps their script-level variables (modelName, sub, ...)
+% confined to THIS function's own workspace - they do NOT leak into
+% build_plant_s.m's own script variables of the same name.
+    build_cum1;
+    build_cum2;
+    build_cum3;
+end
 
 %% ===================== Assemble Plant from 3 source models ===============
 function assemblePlant(modelName, modelPath, plantDir, srcFiles)

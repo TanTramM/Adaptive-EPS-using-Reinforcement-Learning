@@ -40,11 +40,11 @@ __MWOPC_PART_BEGIN__ /metadata/coreProperties.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <cp:category>model</cp:category>
-  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-22T18:02:54Z</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-23T18:26:55Z</dcterms:created>
   <dc:creator>Tan_Tram</dc:creator>
   <cp:lastModifiedBy>Tan_Tram</cp:lastModifiedBy>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-22T18:16:06Z</dcterms:modified>
-  <cp:revision>1.3</cp:revision>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-23T18:34:46Z</dcterms:modified>
+  <cp:revision>1.2</cp:revision>
   <cp:version>R2023a</cp:version>
 </cp:coreProperties>
 
@@ -106,12 +106,12 @@ __MWOPC_PART_BEGIN__ /simulink/blockdiagram.xml
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
   <Model>
-    <P Name="ModelUUID">3df555a4-2cb5-47be-a740-2704189ad013</P>
+    <P Name="ModelUUID">d24fc27f-f8e9-4b64-81d2-b4d3187b553c</P>
     <P Name="LastSavedArchitecture">win64</P>
     <ConfigManagerSettings>
       <P Name="ModifiedByFormat">%&lt;Auto&gt;</P>
       <P Name="ModifiedDateFormat">%&lt;Auto&gt;</P>
-      <P Name="ModelVersionFormat">%&lt;AutoIncrement:1.3&gt;</P>
+      <P Name="ModelVersionFormat">%&lt;AutoIncrement:1.2&gt;</P>
     </ConfigManagerSettings>
     <SimulationSettings>
       <P Name="SimulationMode">normal</P>
@@ -937,8 +937,8 @@ __MWOPC_PART_BEGIN__ /simulink/hdlParams.xml
 __MWOPC_PART_BEGIN__ /simulink/modelDictionary.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <MF0 version="1.1" defaultPackage="slid" packageUris="http://schema.mathworks.com/mf0/slid/R2023a_20220628">
-  <System type="System" uuid="357bb7f3-1393-4a34-ac6d-7e65b0693a1a">
-    <Interface type="Interface" uuid="6999ca92-db0b-4ad2-b81d-8252f8f17a3a"/>
+  <System type="System" uuid="1e59901e-028a-4fa5-87af-d9d779024a33">
+    <Interface type="Interface" uuid="7527ab24-6557-4dd1-9c8e-703ef929fb03"/>
   </System>
 </MF0>
 __MWOPC_PART_BEGIN__ /simulink/ScheduleCore.xml
@@ -978,7 +978,8 @@ __MWOPC_PART_BEGIN__ /simulink/systems/_rels/system_1.xml.rels
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="system_12" Target="system_12.xml" Type="http://schemas.mathworks.com/simulink/2010/relationships/system"/>
-  <Relationship Id="system_37" Target="system_37.xml" Type="http://schemas.mathworks.com/simulink/2010/relationships/system"/>
+  <Relationship Id="system_21" Target="system_21.xml" Type="http://schemas.mathworks.com/simulink/2010/relationships/system"/>
+  <Relationship Id="system_39" Target="system_39.xml" Type="http://schemas.mathworks.com/simulink/2010/relationships/system"/>
 </Relationships>
 
 __MWOPC_PART_BEGIN__ /simulink/systems/_rels/system_root.xml.rels
@@ -991,117 +992,194 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_1.xml
 <?xml version="1.0" encoding="utf-8"?>
 <System>
   <P Name="Location">[-1, -7, 2049, 1105]</P>
-  <P Name="Open">on</P>
-  <P Name="ZoomFactor">150</P>
+  <P Name="ZoomFactor">175</P>
   <Block BlockType="Inport" Name="T_d" SID="4">
-    <P Name="Position">[82, 258, 112, 272]</P>
+    <P Name="Position">[215, 83, 245, 97]</P>
     <P Name="ZOrder">1</P>
   </Block>
   <Block BlockType="Inport" Name="T_a" SID="5">
-    <P Name="Position">[82, 123, 112, 137]</P>
+    <P Name="Position">[215, 223, 245, 237]</P>
     <P Name="ZOrder">2</P>
     <P Name="Port">2</P>
   </Block>
   <Block BlockType="Inport" Name="T_r" SID="6">
-    <P Name="Position">[82, 158, 112, 172]</P>
+    <P Name="Position">[215, 263, 245, 277]</P>
     <P Name="ZOrder">3</P>
     <P Name="Port">3</P>
   </Block>
-  <Block BlockType="SubSystem" Name="Lower" SID="37">
-    <PortCounts in="3" out="2"/>
-    <P Name="Position">[165, 113, 260, 217]</P>
-    <P Name="ZOrder">10</P>
-    <P Name="ContentPreviewEnabled">on</P>
-    <System Ref="system_37"/>
-  </Block>
-  <Block BlockType="SubSystem" Name="Upper" SID="12">
-    <PortCounts in="2" out="3"/>
-    <P Name="Position">[435, 238, 550, 342]</P>
+  <Block BlockType="SubSystem" Name="Cal T_s" SID="12">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[420, 374, 520, 476]</P>
     <P Name="ZOrder">9</P>
     <P Name="ContentPreviewEnabled">on</P>
     <System Ref="system_12"/>
   </Block>
+  <Block BlockType="From" Name="From" SID="65">
+    <P Name="Position">[315, 386, 375, 414]</P>
+    <P Name="ZOrder">13</P>
+    <P Name="GotoTag">theta1</P>
+  </Block>
+  <Block BlockType="From" Name="From2" SID="68">
+    <P Name="Position">[315, 436, 375, 464]</P>
+    <P Name="ZOrder">16</P>
+    <P Name="GotoTag">theta2</P>
+  </Block>
+  <Block BlockType="From" Name="From4" SID="71">
+    <P Name="Position">[315, 136, 355, 164]</P>
+    <P Name="ZOrder">19</P>
+    <P Name="GotoTag">T_s</P>
+  </Block>
+  <Block BlockType="From" Name="From5" SID="72">
+    <P Name="Position">[315, 296, 355, 324]</P>
+    <P Name="ZOrder">20</P>
+    <P Name="GotoTag">T_s</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto" SID="64">
+    <P Name="Position">[590, 25, 650, 55]</P>
+    <P Name="ZOrder">12</P>
+    <P Name="GotoTag">theta1</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto1" SID="67">
+    <P Name="Position">[590, 185, 650, 215]</P>
+    <P Name="ZOrder">15</P>
+    <P Name="GotoTag">theta2</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto2" SID="70">
+    <P Name="Position">[610, 375, 650, 405]</P>
+    <P Name="ZOrder">18</P>
+    <P Name="GotoTag">T_s</P>
+  </Block>
+  <Block BlockType="SubSystem" Name="Lower" SID="39">
+    <PortCounts in="3" out="2"/>
+    <P Name="Position">[420, 211, 520, 329]</P>
+    <P Name="ZOrder">11</P>
+    <P Name="ContentPreviewEnabled">on</P>
+    <System Ref="system_39"/>
+  </Block>
+  <Block BlockType="SubSystem" Name="Upper" SID="21">
+    <PortCounts in="2" out="2"/>
+    <P Name="Position">[420, 61, 520, 179]</P>
+    <P Name="ZOrder">10</P>
+    <P Name="ContentPreviewEnabled">on</P>
+    <System Ref="system_21"/>
+  </Block>
   <Block BlockType="Outport" Name="theta1" SID="7">
-    <P Name="Position">[662, 318, 692, 332]</P>
+    <P Name="Position">[715, 83, 745, 97]</P>
     <P Name="ZOrder">4</P>
   </Block>
   <Block BlockType="Outport" Name="theta1_dot" SID="8">
-    <P Name="Position">[662, 283, 692, 297]</P>
+    <P Name="Position">[715, 143, 745, 157]</P>
     <P Name="ZOrder">5</P>
     <P Name="Port">2</P>
   </Block>
   <Block BlockType="Outport" Name="T_s" SID="9">
-    <P Name="Position">[662, 248, 692, 262]</P>
+    <P Name="Position">[715, 418, 745, 432]</P>
     <P Name="ZOrder">6</P>
     <P Name="Port">3</P>
   </Block>
   <Block BlockType="Outport" Name="theta2" SID="10">
-    <P Name="Position">[662, 183, 692, 197]</P>
+    <P Name="Position">[715, 233, 745, 247]</P>
     <P Name="ZOrder">7</P>
     <P Name="Port">4</P>
   </Block>
   <Block BlockType="Outport" Name="theta2_dot" SID="11">
-    <P Name="Position">[662, 133, 692, 147]</P>
+    <P Name="Position">[715, 293, 745, 307]</P>
     <P Name="ZOrder">8</P>
     <P Name="Port">5</P>
   </Block>
   <Line>
-    <P Name="ZOrder">16</P>
+    <P Name="ZOrder">2</P>
     <P Name="Src">4#out:1</P>
+    <P Name="Dst">21#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">3</P>
+    <P Name="Src">5#out:1</P>
+    <P Name="Dst">39#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">4</P>
+    <P Name="Src">6#out:1</P>
+    <P Name="Dst">39#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">6</P>
+    <P Name="Src">65#out:1</P>
     <P Name="Dst">12#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">36</P>
-    <P Name="Src">12#out:3</P>
-    <P Name="Points">[58, 0]</P>
+    <P Name="ZOrder">5</P>
+    <P Name="Src">21#out:1</P>
+    <P Name="Points">[41, 0]</P>
     <Branch>
-      <P Name="ZOrder">39</P>
-      <P Name="Points">[0, 53; -472, 0; 0, -178]</P>
-      <P Name="Dst">37#in:3</P>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">37</P>
+      <P Name="ZOrder">22</P>
+      <P Name="Points">[149, 0]</P>
       <P Name="Dst">7#in:1</P>
     </Branch>
-  </Line>
-  <Line>
-    <P Name="ZOrder">18</P>
-    <P Name="Src">6#out:1</P>
-    <P Name="Dst">37#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">19</P>
-    <P Name="Src">5#out:1</P>
-    <P Name="Dst">37#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">26</P>
-    <P Name="Src">37#out:2</P>
-    <P Name="Points">[55, 0]</P>
     <Branch>
-      <P Name="ZOrder">42</P>
-      <P Name="Points">[0, 125]</P>
-      <P Name="Dst">12#in:2</P>
+      <P Name="ZOrder">19</P>
+      <P Name="Points">[0, -50]</P>
+      <P Name="Dst">64#in:1</P>
     </Branch>
+  </Line>
+  <Line>
+    <P Name="ZOrder">9</P>
+    <P Name="Src">68#out:1</P>
+    <P Name="Dst">12#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">8</P>
+    <P Name="Src">39#out:1</P>
+    <P Name="Points">[41, 0]</P>
     <Branch>
-      <P Name="ZOrder">41</P>
+      <P Name="ZOrder">25</P>
+      <P Name="Points">[149, 0]</P>
       <P Name="Dst">10#in:1</P>
     </Branch>
+    <Branch>
+      <P Name="ZOrder">23</P>
+      <P Name="Points">[0, -40]</P>
+      <P Name="Dst">67#in:1</P>
+    </Branch>
   </Line>
   <Line>
-    <P Name="ZOrder">22</P>
-    <P Name="Src">37#out:1</P>
-    <P Name="Dst">11#in:1</P>
+    <P Name="ZOrder">12</P>
+    <P Name="Src">71#out:1</P>
+    <P Name="Points">[-5, 0]</P>
+    <P Name="Dst">21#in:2</P>
   </Line>
   <Line>
-    <P Name="ZOrder">24</P>
-    <P Name="Src">12#out:2</P>
+    <P Name="ZOrder">13</P>
+    <P Name="Src">72#out:1</P>
+    <P Name="Points">[-5, 0]</P>
+    <P Name="Dst">39#in:3</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">11</P>
+    <P Name="Src">12#out:1</P>
+    <P Name="Points">[44, 0]</P>
+    <Branch>
+      <P Name="ZOrder">26</P>
+      <P Name="Points">[146, 0]</P>
+      <P Name="Dst">9#in:1</P>
+    </Branch>
+    <Branch>
+      <P Name="ZOrder">17</P>
+      <P Name="Points">[0, -35]</P>
+      <P Name="Dst">70#in:1</P>
+    </Branch>
+  </Line>
+  <Line>
+    <P Name="ZOrder">15</P>
+    <P Name="Src">21#out:2</P>
+    <P Name="Points">[190, 0]</P>
     <P Name="Dst">8#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">25</P>
-    <P Name="Src">12#out:1</P>
-    <P Name="Dst">9#in:1</P>
+    <P Name="ZOrder">16</P>
+    <P Name="Src">39#out:2</P>
+    <P Name="Points">[190, 0]</P>
+    <P Name="Dst">11#in:1</P>
   </Line>
 </System>
 
@@ -1109,498 +1187,440 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_12.xml
 <?xml version="1.0" encoding="utf-8"?>
 <System>
   <P Name="Location">[-1, -7, 2049, 1105]</P>
-  <P Name="ZoomFactor">175</P>
-  <Block BlockType="Inport" Name="T_d" SID="15">
-    <P Name="Position">[40, 58, 70, 72]</P>
+  <P Name="ZoomFactor">200</P>
+  <Block BlockType="Inport" Name="theta1" SID="15">
+    <P Name="Position">[53, 73, 83, 87]</P>
     <P Name="ZOrder">1</P>
   </Block>
   <Block BlockType="Inport" Name="theta2" SID="16">
-    <P Name="Position">[40, 318, 70, 332]</P>
+    <P Name="Position">[53, 118, 83, 132]</P>
     <P Name="ZOrder">2</P>
     <P Name="Port">2</P>
   </Block>
   <Block BlockType="Constant" Name="Constant" SID="20">
-    <P Name="Position">[180, 380, 210, 410]</P>
+    <P Name="Position">[123, 130, 153, 160]</P>
     <P Name="ZOrder">6</P>
     <P Name="Value">K</P>
   </Block>
-  <Block BlockType="Constant" Name="Constant1" SID="21">
-    <P Name="Position">[180, 230, 210, 260]</P>
-    <P Name="ZOrder">7</P>
-    <P Name="Value">C1</P>
-  </Block>
-  <Block BlockType="Constant" Name="Constant2" SID="22">
-    <P Name="Position">[330, 140, 360, 170]</P>
-    <P Name="ZOrder">8</P>
-    <P Name="Value">J1</P>
-  </Block>
-  <Block BlockType="Product" Name="Div_J1" SID="27">
+  <Block BlockType="Product" Name="Prod_Ts" SID="19">
     <PortCounts in="2" out="1"/>
-    <P Name="Position">[430, 62, 460, 93]</P>
-    <P Name="ZOrder">13</P>
-    <P Name="Inputs">*/</P>
+    <P Name="Position">[204, 82, 234, 113]</P>
+    <P Name="ZOrder">5</P>
+    <P Name="Inputs">**</P>
   </Block>
-  <Block BlockType="From" Name="From" SID="32">
-    <P Name="Position">[610, 61, 650, 89]</P>
-    <P Name="ZOrder">18</P>
-    <P Name="GotoTag">x2</P>
-  </Block>
-  <Block BlockType="From" Name="From1" SID="33">
-    <P Name="Position">[180, 191, 220, 219]</P>
-    <P Name="ZOrder">19</P>
-    <P Name="GotoTag">x2</P>
-  </Block>
-  <Block BlockType="From" Name="From2" SID="34">
-    <P Name="Position">[700, 131, 740, 159]</P>
-    <P Name="ZOrder">20</P>
-    <P Name="GotoTag">x2</P>
-  </Block>
-  <Block BlockType="From" Name="From3" SID="35">
-    <P Name="Position">[110, 301, 150, 329]</P>
-    <P Name="ZOrder">21</P>
-    <P Name="GotoTag">x1</P>
-  </Block>
-  <Block BlockType="From" Name="From4" SID="36">
-    <P Name="Position">[720, 201, 760, 229]</P>
-    <P Name="ZOrder">22</P>
-    <P Name="GotoTag">x1</P>
-  </Block>
-  <Block BlockType="Goto" Name="Goto" SID="30">
-    <P Name="Position">[560, 60, 600, 90]</P>
-    <P Name="ZOrder">16</P>
-    <P Name="GotoTag">x2</P>
-  </Block>
-  <Block BlockType="Goto" Name="Goto1" SID="31">
-    <P Name="Position">[720, 60, 760, 90]</P>
-    <P Name="ZOrder">17</P>
-    <P Name="GotoTag">x1</P>
-  </Block>
-  <Block BlockType="Integrator" Name="Int_x1" SID="29">
-    <PortCounts in="1" out="1"/>
-    <P Name="Position">[660, 60, 690, 90]</P>
-    <P Name="ZOrder">15</P>
-  </Block>
-  <Block BlockType="Integrator" Name="Int_x2" SID="28">
-    <PortCounts in="1" out="1"/>
-    <P Name="Position">[500, 60, 530, 90]</P>
-    <P Name="ZOrder">14</P>
-  </Block>
-  <Block BlockType="Product" Name="Prod_C1" SID="25">
+  <Block BlockType="Sum" Name="Sum_dTheta" SID="18">
     <PortCounts in="2" out="1"/>
-    <P Name="Position">[260, 222, 290, 253]</P>
-    <P Name="ZOrder">11</P>
-  </Block>
-  <Block BlockType="Product" Name="Prod_K" SID="24">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[260, 332, 290, 363]</P>
-    <P Name="ZOrder">10</P>
-  </Block>
-  <Block BlockType="Sum" Name="Sub_dTheta" SID="23">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[180, 312, 210, 343]</P>
-    <P Name="ZOrder">9</P>
+    <P Name="Position">[123, 72, 153, 103]</P>
+    <P Name="ZOrder">4</P>
     <P Name="IconShape">rectangular</P>
     <P Name="Inputs">+-</P>
   </Block>
-  <Block BlockType="Sum" Name="Sum1" SID="26">
-    <PortCounts in="3" out="1"/>
-    <P Name="Position">[350, 59, 380, 91]</P>
-    <P Name="ZOrder">12</P>
-    <P Name="IconShape">rectangular</P>
-    <P Name="Inputs">+--</P>
-  </Block>
-  <Block BlockType="Outport" Name="T_s" SID="19">
-    <P Name="Position">[780, 328, 810, 342]</P>
-    <P Name="ZOrder">5</P>
-  </Block>
-  <Block BlockType="Outport" Name="theta1_dot" SID="18">
-    <P Name="Position">[780, 138, 810, 152]</P>
-    <P Name="ZOrder">4</P>
-    <P Name="Port">2</P>
-  </Block>
-  <Block BlockType="Outport" Name="theta1" SID="17">
-    <P Name="Position">[780, 58, 810, 72]</P>
+  <Block BlockType="Outport" Name="T_s" SID="17">
+    <P Name="Position">[274, 93, 304, 107]</P>
     <P Name="ZOrder">3</P>
-    <P Name="Port">3</P>
   </Block>
-  <Line>
-    <P Name="ZOrder">2</P>
-    <P Name="Src">35#out:1</P>
-    <P Name="Points">[5, 0; 0, 5]</P>
-    <P Name="Dst">23#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">3</P>
-    <P Name="Src">16#out:1</P>
-    <P Name="Points">[30, 0; 0, 10]</P>
-    <P Name="Dst">23#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">4</P>
-    <P Name="Src">23#out:1</P>
-    <P Name="Points">[15, 0; 0, 10]</P>
-    <P Name="Dst">24#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">5</P>
-    <P Name="Src">20#out:1</P>
-    <P Name="Points">[15, 0; 0, -40]</P>
-    <P Name="Dst">24#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">6</P>
-    <P Name="Src">33#out:1</P>
-    <P Name="Points">[10, 0; 0, 25]</P>
-    <P Name="Dst">25#in:1</P>
-  </Line>
   <Line>
     <P Name="ZOrder">7</P>
-    <P Name="Src">21#out:1</P>
-    <P Name="Dst">25#in:2</P>
+    <P Name="Src">20#out:1</P>
+    <P Name="Points">[26, 0; 0, -40]</P>
+    <P Name="Dst">19#in:2</P>
   </Line>
   <Line>
     <P Name="ZOrder">8</P>
-    <P Name="Src">15#out:1</P>
-    <P Name="Dst">26#in:1</P>
+    <P Name="Src">18#out:1</P>
+    <P Name="Dst">19#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">19</P>
-    <P Name="Src">24#out:1</P>
-    <P Name="Points">[20, 0]</P>
-    <Branch>
-      <P Name="ZOrder">9</P>
-      <P Name="Points">[0, -275]</P>
-      <P Name="Dst">26#in:2</P>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">20</P>
-      <P Name="Points">[215, 0; 0, -15]</P>
-      <P Name="Dst">19#in:1</P>
-    </Branch>
+    <P Name="ZOrder">9</P>
+    <P Name="Src">15#out:1</P>
+    <P Name="Dst">18#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">10</P>
-    <P Name="Src">25#out:1</P>
-    <P Name="Points">[30, 0; 0, -155]</P>
-    <P Name="Dst">26#in:3</P>
+    <P Name="Src">19#out:1</P>
+    <P Name="Dst">17#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">11</P>
-    <P Name="Src">26#out:1</P>
-    <P Name="Points">[15, 0; 0, -5]</P>
-    <P Name="Dst">27#in:1</P>
+    <P Name="Src">16#out:1</P>
+    <P Name="Points">[13, 0; 0, -30]</P>
+    <P Name="Dst">18#in:2</P>
   </Line>
-  <Line>
+</System>
+
+__MWOPC_PART_BEGIN__ /simulink/systems/system_21.xml
+<?xml version="1.0" encoding="utf-8"?>
+<System>
+  <P Name="Location">[-1, -7, 2049, 1105]</P>
+  <P Name="Open">on</P>
+  <P Name="ZoomFactor">274</P>
+  <Block BlockType="Inport" Name="T_d" SID="24">
+    <P Name="Position">[-28, 203, 2, 217]</P>
+    <P Name="ZOrder">1</P>
+  </Block>
+  <Block BlockType="Inport" Name="T_s" SID="25">
+    <P Name="Position">[-28, 243, 2, 257]</P>
+    <P Name="ZOrder">2</P>
+    <P Name="Port">2</P>
+  </Block>
+  <Block BlockType="Constant" Name="Constant" SID="32">
+    <P Name="Position">[283, 265, 313, 295]</P>
+    <P Name="ZOrder">9</P>
+    <P Name="Value">J1</P>
+  </Block>
+  <Block BlockType="Constant" Name="Constant1" SID="33">
+    <P Name="Position">[57, 310, 87, 340]</P>
+    <P Name="ZOrder">10</P>
+    <P Name="Value">C1</P>
+  </Block>
+  <Block BlockType="Product" Name="Div_x2dot" SID="29">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[360, 242, 390, 273]</P>
+    <P Name="ZOrder">6</P>
+    <P Name="Inputs">*/</P>
+  </Block>
+  <Block BlockType="From" Name="From1" SID="37">
+    <P Name="Position">[57, 266, 97, 294]</P>
+    <P Name="ZOrder">14</P>
+    <P Name="GotoTag">x2</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto" SID="35">
+    <P Name="Position">[563, 195, 603, 225]</P>
     <P Name="ZOrder">12</P>
-    <P Name="Src">22#out:1</P>
-    <P Name="Points">[25, 0; 0, -70]</P>
-    <P Name="Dst">27#in:2</P>
-  </Line>
+    <P Name="GotoTag">x2</P>
+  </Block>
+  <Block BlockType="Integrator" Name="Int_x1" SID="31">
+    <PortCounts in="1" out="1"/>
+    <P Name="Position">[522, 245, 552, 275]</P>
+    <P Name="ZOrder">8</P>
+  </Block>
+  <Block BlockType="Integrator" Name="Int_x2" SID="30">
+    <PortCounts in="1" out="1"/>
+    <P Name="Position">[433, 245, 463, 275]</P>
+    <P Name="ZOrder">7</P>
+  </Block>
+  <Block BlockType="Product" Name="Prod_C1x2" SID="34">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[132, 272, 162, 303]</P>
+    <P Name="ZOrder">11</P>
+    <P Name="Inputs">**</P>
+  </Block>
+  <Block BlockType="Sum" Name="Sum_torque" SID="28">
+    <PortCounts in="3" out="1"/>
+    <P Name="Position">[220, 191, 250, 309]</P>
+    <P Name="ZOrder">5</P>
+    <P Name="IconShape">rectangular</P>
+    <P Name="Inputs">+--</P>
+  </Block>
+  <Block BlockType="Outport" Name="theta1" SID="26">
+    <P Name="Position">[638, 253, 668, 267]</P>
+    <P Name="ZOrder">3</P>
+  </Block>
+  <Block BlockType="Outport" Name="theta1_dot" SID="27">
+    <P Name="Position">[637, 158, 667, 172]</P>
+    <P Name="ZOrder">4</P>
+    <P Name="Port">2</P>
+  </Block>
   <Line>
-    <P Name="ZOrder">13</P>
-    <P Name="Src">27#out:1</P>
-    <P Name="Points">[10, 0; 0, -5]</P>
+    <P Name="ZOrder">14</P>
+    <P Name="Src">24#out:1</P>
     <P Name="Dst">28#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">14</P>
-    <P Name="Src">28#out:1</P>
-    <P Name="Dst">30#in:1</P>
-  </Line>
-  <Line>
     <P Name="ZOrder">15</P>
-    <P Name="Src">32#out:1</P>
+    <P Name="Src">28#out:1</P>
     <P Name="Dst">29#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">16</P>
-    <P Name="Src">29#out:1</P>
-    <P Name="Dst">31#in:1</P>
+    <P Name="Src">33#out:1</P>
+    <P Name="Points">[18, 0; 0, -30]</P>
+    <P Name="Dst">34#in:2</P>
   </Line>
   <Line>
-    <P Name="ZOrder">17</P>
+    <P Name="ZOrder">25</P>
+    <P Name="Src">30#out:1</P>
+    <P Name="Points">[21, 0]</P>
+    <Branch>
+      <P Name="ZOrder">29</P>
+      <P Name="Dst">31#in:1</P>
+    </Branch>
+    <Branch>
+      <P Name="ZOrder">28</P>
+      <P Name="Points">[0, -50]</P>
+      <Branch>
+        <P Name="ZOrder">33</P>
+        <P Name="Points">[0, -45]</P>
+        <P Name="Dst">27#in:1</P>
+      </Branch>
+      <Branch>
+        <P Name="ZOrder">32</P>
+        <P Name="Dst">35#in:1</P>
+      </Branch>
+    </Branch>
+  </Line>
+  <Line>
+    <P Name="ZOrder">19</P>
     <P Name="Src">34#out:1</P>
-    <P Name="Dst">18#in:1</P>
+    <P Name="Dst">28#in:3</P>
   </Line>
   <Line>
-    <P Name="ZOrder">18</P>
-    <P Name="Src">36#out:1</P>
-    <P Name="Points">[50, 0; 0, -135; -50, 0]</P>
-    <P Name="Dst">17#in:1</P>
+    <P Name="ZOrder">20</P>
+    <P Name="Src">31#out:1</P>
+    <P Name="Dst">26#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">21</P>
+    <P Name="Src">37#out:1</P>
+    <P Name="Dst">34#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">22</P>
+    <P Name="Src">25#out:1</P>
+    <P Name="Dst">28#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">23</P>
+    <P Name="Src">32#out:1</P>
+    <P Name="Points">[16, 0; 0, -15]</P>
+    <P Name="Dst">29#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">24</P>
+    <P Name="Src">29#out:1</P>
+    <P Name="Dst">30#in:1</P>
   </Line>
 </System>
 
-__MWOPC_PART_BEGIN__ /simulink/systems/system_37.xml
+__MWOPC_PART_BEGIN__ /simulink/systems/system_39.xml
 <?xml version="1.0" encoding="utf-8"?>
 <System>
   <P Name="Location">[-1, -7, 2049, 1105]</P>
-  <P Name="ZoomFactor">190</P>
-  <Block BlockType="Inport" Name="T_a" SID="40">
-    <P Name="Position">[-220, 118, -190, 132]</P>
+  <Block BlockType="Inport" Name="T_a" SID="42">
+    <P Name="Position">[40, 58, 70, 72]</P>
     <P Name="ZOrder">1</P>
   </Block>
-  <Block BlockType="Inport" Name="T_r" SID="41">
-    <P Name="Position">[-220, 178, -190, 192]</P>
+  <Block BlockType="Inport" Name="T_r" SID="43">
+    <P Name="Position">[40, 118, 70, 132]</P>
     <P Name="ZOrder">2</P>
     <P Name="Port">2</P>
   </Block>
-  <Block BlockType="Inport" Name="theta1" SID="42">
-    <P Name="Position">[-218, 358, -188, 372]</P>
+  <Block BlockType="Inport" Name="T_s" SID="44">
+    <P Name="Position">[40, 178, 70, 192]</P>
     <P Name="ZOrder">3</P>
     <P Name="Port">3</P>
   </Block>
-  <Block BlockType="Constant" Name="Constant" SID="45">
-    <P Name="Position">[128, 365, 158, 395]</P>
-    <P Name="ZOrder">6</P>
-    <P Name="Value">K</P>
-  </Block>
-  <Block BlockType="Constant" Name="Constant1" SID="46">
-    <P Name="Position">[128, 305, 158, 335]</P>
-    <P Name="ZOrder">7</P>
-    <P Name="Value">C2</P>
-  </Block>
-  <Block BlockType="Constant" Name="Constant2" SID="47">
-    <P Name="Position">[-18, 235, 12, 265]</P>
-    <P Name="ZOrder">8</P>
-    <P Name="Value">c</P>
-  </Block>
-  <Block BlockType="Constant" Name="Constant3" SID="48">
-    <P Name="Position">[128, 255, 158, 285]</P>
-    <P Name="ZOrder">9</P>
-    <P Name="Value">T_f</P>
-  </Block>
-  <Block BlockType="Constant" Name="Constant4" SID="49">
-    <P Name="Position">[330, 260, 360, 290]</P>
+  <Block BlockType="Constant" Name="Constant" SID="51">
+    <P Name="Position">[560, 160, 590, 190]</P>
     <P Name="ZOrder">10</P>
     <P Name="Value">J2</P>
   </Block>
-  <Block BlockType="Product" Name="Div_J2" SID="57">
+  <Block BlockType="Constant" Name="Constant1" SID="52">
+    <P Name="Position">[160, 340, 190, 370]</P>
+    <P Name="ZOrder">11</P>
+    <P Name="Value">c</P>
+  </Block>
+  <Block BlockType="Constant" Name="Constant2" SID="53">
+    <P Name="Position">[300, 300, 330, 330]</P>
+    <P Name="ZOrder">12</P>
+    <P Name="Value">T_f</P>
+  </Block>
+  <Block BlockType="Constant" Name="Constant3" SID="57">
+    <P Name="Position">[160, 420, 190, 450]</P>
+    <P Name="ZOrder">16</P>
+    <P Name="Value">C2</P>
+  </Block>
+  <Block BlockType="Product" Name="Div_x4dot" SID="48">
     <PortCounts in="2" out="1"/>
-    <P Name="Position">[400, 237, 430, 268]</P>
-    <P Name="ZOrder">18</P>
+    <P Name="Position">[560, 62, 590, 93]</P>
+    <P Name="ZOrder">7</P>
     <P Name="Inputs">*/</P>
   </Block>
-  <Block BlockType="From" Name="From1" SID="63">
-    <P Name="Position">[-120, 281, -35, 309]</P>
-    <P Name="ZOrder">24</P>
-    <P Name="GotoTag">theta2_dot</P>
-  </Block>
-  <Block BlockType="From" Name="From2" SID="64">
-    <P Name="Position">[-120, 211, -35, 239]</P>
-    <P Name="ZOrder">25</P>
-    <P Name="GotoTag">theta2_dot</P>
-  </Block>
-  <Block BlockType="From" Name="From4" SID="66">
-    <P Name="Position">[-120, 331, -65, 359]</P>
-    <P Name="ZOrder">27</P>
-    <P Name="GotoTag">theta2</P>
-  </Block>
-  <Block BlockType="Goto" Name="Goto" SID="60">
-    <P Name="Position">[650, 120, 735, 150]</P>
-    <P Name="ZOrder">21</P>
-    <P Name="GotoTag">theta2_dot</P>
-  </Block>
-  <Block BlockType="Goto" Name="Goto1" SID="61">
-    <P Name="Position">[680, 200, 735, 230]</P>
-    <P Name="ZOrder">22</P>
-    <P Name="GotoTag">theta2</P>
-  </Block>
-  <Block BlockType="Integrator" Name="Int_x3" SID="59">
-    <PortCounts in="1" out="1"/>
-    <P Name="Position">[552, 240, 582, 270]</P>
-    <P Name="ZOrder">20</P>
-  </Block>
-  <Block BlockType="Integrator" Name="Int_x4" SID="58">
-    <PortCounts in="1" out="1"/>
-    <P Name="Position">[470, 240, 500, 270]</P>
+  <Block BlockType="From" Name="From" SID="60">
+    <P Name="Position">[720, 61, 760, 89]</P>
     <P Name="ZOrder">19</P>
+    <P Name="GotoTag">x4</P>
   </Block>
-  <Block BlockType="Product" Name="Prod_C2" SID="52">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[190, 287, 220, 318]</P>
-    <P Name="ZOrder">13</P>
+  <Block BlockType="From" Name="From1" SID="61">
+    <P Name="Position">[160, 301, 200, 329]</P>
+    <P Name="ZOrder">20</P>
+    <P Name="GotoTag">x4</P>
   </Block>
-  <Block BlockType="Product" Name="Prod_K" SID="51">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[190, 347, 220, 378]</P>
-    <P Name="ZOrder">12</P>
+  <Block BlockType="From" Name="From2" SID="62">
+    <P Name="Position">[160, 381, 200, 409]</P>
+    <P Name="ZOrder">21</P>
+    <P Name="GotoTag">x4</P>
   </Block>
-  <Block BlockType="Product" Name="Prod_Tf" SID="55">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[190, 227, 220, 258]</P>
-    <P Name="ZOrder">16</P>
+  <Block BlockType="From" Name="From3" SID="63">
+    <P Name="Position">[820, 221, 860, 249]</P>
+    <P Name="ZOrder">22</P>
+    <P Name="GotoTag">x4</P>
   </Block>
-  <Block BlockType="Product" Name="Prod_c" SID="53">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[52, 217, 82, 248]</P>
-    <P Name="ZOrder">14</P>
+  <Block BlockType="Goto" Name="Goto" SID="59">
+    <P Name="Position">[680, 60, 720, 90]</P>
+    <P Name="ZOrder">18</P>
+    <P Name="GotoTag">x4</P>
   </Block>
-  <Block BlockType="Sum" Name="Sub_dTheta" SID="50">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[50, 337, 80, 373]</P>
-    <P Name="ZOrder">11</P>
-    <P Name="IconShape">rectangular</P>
-    <P Name="Inputs">+-</P>
-  </Block>
-  <Block BlockType="Sum" Name="Sum2" SID="56">
-    <PortCounts in="5" out="1"/>
-    <P Name="Position">[265, 96, 295, 394]</P>
-    <P Name="ZOrder">17</P>
-    <P Name="IconShape">rectangular</P>
-    <P Name="Inputs">+----</P>
-  </Block>
-  <Block BlockType="Trigonometry" Name="Tanh" SID="54">
+  <Block BlockType="Integrator" Name="Int_x3" SID="50">
     <PortCounts in="1" out="1"/>
-    <P Name="Position">[128, 220, 158, 250]</P>
+    <P Name="Position">[780, 60, 810, 90]</P>
+    <P Name="ZOrder">9</P>
+  </Block>
+  <Block BlockType="Integrator" Name="Int_x4" SID="49">
+    <PortCounts in="1" out="1"/>
+    <P Name="Position">[640, 60, 670, 90]</P>
+    <P Name="ZOrder">8</P>
+  </Block>
+  <Block BlockType="Product" Name="Prod_C2x4" SID="58">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[220, 402, 250, 433]</P>
+    <P Name="ZOrder">17</P>
+    <P Name="Inputs">**</P>
+  </Block>
+  <Block BlockType="Product" Name="Prod_Tf" SID="56">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[380, 302, 410, 333]</P>
     <P Name="ZOrder">15</P>
+    <P Name="Inputs">**</P>
+  </Block>
+  <Block BlockType="Product" Name="Prod_cx4" SID="54">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[220, 322, 250, 353]</P>
+    <P Name="ZOrder">13</P>
+    <P Name="Inputs">**</P>
+  </Block>
+  <Block BlockType="Sum" Name="Sum_torque" SID="47">
+    <PortCounts in="5" out="1"/>
+    <P Name="Position">[420, 59, 450, 91]</P>
+    <P Name="ZOrder">6</P>
+    <P Name="IconShape">rectangular</P>
+    <P Name="Inputs">+-+--</P>
+  </Block>
+  <Block BlockType="Trigonometry" Name="Trig_tanh_x4" SID="55">
+    <PortCounts in="1" out="1"/>
+    <P Name="Position">[300, 340, 330, 370]</P>
+    <P Name="ZOrder">14</P>
     <P Name="Operator">tanh</P>
   </Block>
-  <Block BlockType="Outport" Name="theta2_dot" SID="44">
-    <P Name="Position">[757, 163, 787, 177]</P>
-    <P Name="ZOrder">5</P>
-  </Block>
-  <Block BlockType="Outport" Name="theta2" SID="43">
-    <P Name="Position">[757, 248, 787, 262]</P>
+  <Block BlockType="Outport" Name="theta2" SID="45">
+    <P Name="Position">[900, 58, 930, 72]</P>
     <P Name="ZOrder">4</P>
+  </Block>
+  <Block BlockType="Outport" Name="theta2_dot" SID="46">
+    <P Name="Position">[900, 218, 930, 232]</P>
+    <P Name="ZOrder">5</P>
     <P Name="Port">2</P>
   </Block>
   <Line>
-    <P Name="ZOrder">26</P>
-    <P Name="Src">56#out:1</P>
-    <P Name="Dst">57#in:1</P>
+    <P Name="ZOrder">2</P>
+    <P Name="Src">49#out:1</P>
+    <P Name="Dst">59#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">27</P>
-    <P Name="Src">52#out:1</P>
-    <P Name="Dst">56#in:4</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">28</P>
-    <P Name="Src">66#out:1</P>
-    <P Name="Dst">50#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">30</P>
-    <P Name="Src">53#out:1</P>
+    <P Name="ZOrder">3</P>
+    <P Name="Src">61#out:1</P>
+    <P Name="Points">[10, 0; 0, 15]</P>
     <P Name="Dst">54#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">31</P>
-    <P Name="Src">55#out:1</P>
-    <P Name="Dst">56#in:3</P>
+    <P Name="ZOrder">4</P>
+    <P Name="Src">52#out:1</P>
+    <P Name="Points">[5, 0; 0, -10]</P>
+    <P Name="Dst">54#in:2</P>
   </Line>
   <Line>
-    <P Name="ZOrder">43</P>
-    <P Name="Src">58#out:1</P>
-    <P Name="Points">[15, 0]</P>
-    <Branch>
-      <P Name="ZOrder">53</P>
-      <P Name="Points">[0, -85; 99, 0]</P>
-      <Branch>
-        <P Name="ZOrder">63</P>
-        <P Name="Points">[0, -35]</P>
-        <P Name="Dst">60#in:1</P>
-      </Branch>
-      <Branch>
-        <P Name="ZOrder">62</P>
-        <P Name="Dst">44#in:1</P>
-      </Branch>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">51</P>
-      <P Name="Points">[32, 0]</P>
-      <P Name="Dst">59#in:1</P>
-    </Branch>
-  </Line>
-  <Line>
-    <P Name="ZOrder">33</P>
-    <P Name="Src">64#out:1</P>
-    <P Name="Dst">53#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">35</P>
-    <P Name="Src">42#out:1</P>
-    <P Name="Dst">50#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">37</P>
-    <P Name="Src">47#out:1</P>
-    <P Name="Points">[15, 0; 0, -10]</P>
-    <P Name="Dst">53#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">38</P>
+    <P Name="ZOrder">5</P>
     <P Name="Src">54#out:1</P>
+    <P Name="Points">[15, 0; 0, 15]</P>
     <P Name="Dst">55#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">39</P>
-    <P Name="Src">48#out:1</P>
-    <P Name="Points">[11, 0; 0, -20]</P>
-    <P Name="Dst">55#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">40</P>
-    <P Name="Src">41#out:1</P>
-    <P Name="Dst">56#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">41</P>
-    <P Name="Src">63#out:1</P>
-    <P Name="Points">[-5, 0]</P>
-    <P Name="Dst">52#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">42</P>
-    <P Name="Src">46#out:1</P>
-    <P Name="Points">[11, 0; 0, -10]</P>
-    <P Name="Dst">52#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">44</P>
-    <P Name="Src">57#out:1</P>
-    <P Name="Dst">58#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">45</P>
-    <P Name="Src">50#out:1</P>
-    <P Name="Dst">51#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">46</P>
-    <P Name="Src">45#out:1</P>
-    <P Name="Points">[11, 0; 0, -10]</P>
-    <P Name="Dst">51#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">47</P>
-    <P Name="Src">49#out:1</P>
-    <P Name="Points">[15, 0; 0, -15]</P>
-    <P Name="Dst">57#in:2</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">48</P>
-    <P Name="Src">40#out:1</P>
+    <P Name="ZOrder">6</P>
+    <P Name="Src">55#out:1</P>
+    <P Name="Points">[15, 0; 0, -45]</P>
     <P Name="Dst">56#in:1</P>
   </Line>
   <Line>
-    <P Name="ZOrder">49</P>
-    <P Name="Src">51#out:1</P>
-    <P Name="Dst">56#in:5</P>
+    <P Name="ZOrder">7</P>
+    <P Name="Src">53#out:1</P>
+    <P Name="Points">[25, 0; 0, 10]</P>
+    <P Name="Dst">56#in:2</P>
   </Line>
   <Line>
-    <P Name="ZOrder">54</P>
-    <P Name="Src">59#out:1</P>
-    <P Name="Points">[32, 0]</P>
-    <Branch>
-      <P Name="ZOrder">57</P>
-      <P Name="Points">[0, -40]</P>
-      <P Name="Dst">61#in:1</P>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">55</P>
-      <P Name="Dst">43#in:1</P>
-    </Branch>
+    <P Name="ZOrder">8</P>
+    <P Name="Src">62#out:1</P>
+    <P Name="Points">[10, 0; 0, 15]</P>
+    <P Name="Dst">58#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">9</P>
+    <P Name="Src">57#out:1</P>
+    <P Name="Points">[5, 0; 0, -10]</P>
+    <P Name="Dst">58#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">10</P>
+    <P Name="Src">42#out:1</P>
+    <P Name="Dst">47#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">11</P>
+    <P Name="Src">43#out:1</P>
+    <P Name="Points">[330, 0]</P>
+    <P Name="Dst">47#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">12</P>
+    <P Name="Src">44#out:1</P>
+    <P Name="Points">[330, 0]</P>
+    <P Name="Dst">47#in:3</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">13</P>
+    <P Name="Src">56#out:1</P>
+    <P Name="Points">[0, -225; -10, 0]</P>
+    <P Name="Dst">47#in:4</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">14</P>
+    <P Name="Src">58#out:1</P>
+    <P Name="Points">[105, 0; 0, -335]</P>
+    <P Name="Dst">47#in:5</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">15</P>
+    <P Name="Src">47#out:1</P>
+    <P Name="Points">[45, 0; 0, -5]</P>
+    <P Name="Dst">48#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">16</P>
+    <P Name="Src">51#out:1</P>
+    <P Name="Points">[0, -75; -50, 0]</P>
+    <P Name="Dst">48#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">17</P>
+    <P Name="Src">48#out:1</P>
+    <P Name="Points">[15, 0; 0, -5]</P>
+    <P Name="Dst">49#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">18</P>
+    <P Name="Src">60#out:1</P>
+    <P Name="Dst">50#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">19</P>
+    <P Name="Src">50#out:1</P>
+    <P Name="Points">[35, 0; 0, -10]</P>
+    <P Name="Dst">45#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">20</P>
+    <P Name="Src">63#out:1</P>
+    <P Name="Points">[10, 0; 0, -10]</P>
+    <P Name="Dst">46#in:1</P>
   </Line>
 </System>
 
@@ -1608,10 +1628,9 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_root.xml
 <?xml version="1.0" encoding="utf-8"?>
 <System>
   <P Name="Location">[-1, -7, 2049, 1105]</P>
-  <P Name="ZoomFactor">500</P>
   <P Name="ReportName">simulink-default.rpt</P>
-  <P Name="SIDHighWatermark">75</P>
-  <Block BlockType="SubSystem" Name="Cum1_SteeringColumn" SID="1">
+  <P Name="SIDHighWatermark">73</P>
+  <Block BlockType="SubSystem" Name="SteeringColumn" SID="1">
     <PortCounts in="3" out="5"/>
     <P Name="Position">[50, 49, 150, 91]</P>
     <P Name="ZOrder">1</P>
@@ -1638,26 +1657,26 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       <Object PropName="ExplorerBarInfo" ObjectID="4" ClassName="Simulink.ExplorerBarInfo">
         <P Name="Visible" Class="logical">0</P>
       </Object>
-      <Array PropName="EditorsInfo" Type="Simulink.EditorInfo" Dimension="1*4">
+      <Array PropName="EditorsInfo" Type="Simulink.EditorInfo" Dimension="1*5">
         <Object ObjectID="5">
           <P Name="IsActive" Class="logical">1</P>
           <P Name="IsTabbed" Class="logical">1</P>
           <P Name="ViewObjType" Class="char">SimulinkSubsys</P>
-          <P Name="LoadSaveID" Class="char">1</P>
+          <P Name="LoadSaveID" Class="char">21</P>
           <P Name="Extents" Class="double">[2447.0, 1140.0]</P>
-          <P Name="ZoomFactor" Class="double">1.5</P>
-          <P Name="Offset" Class="double">[-345.55006605879856, -103.54623706634902]</P>
-          <P Name="SceneRectInView" Class="double">[-345.55006605879856, -103.54623706634902, 1305.0666666666666, 608.0]</P>
+          <P Name="ZoomFactor" Class="double">2.7387208373990948</P>
+          <P Name="Offset" Class="double">[-33.111875518242186, 90.998911691542276]</P>
+          <P Name="SceneRectInView" Class="double">[-33.111875518242186, 90.998911691542276, 714.78625103648437, 333.00217661691545]</P>
         </Object>
         <Object ObjectID="6">
           <P Name="IsActive" Class="logical">0</P>
           <P Name="IsTabbed" Class="logical">0</P>
-          <P Name="ViewObjType" Class="char">SimulinkTopLevel</P>
-          <P Name="LoadSaveID" Class="char">0</P>
+          <P Name="ViewObjType" Class="char">SimulinkSubsys</P>
+          <P Name="LoadSaveID" Class="char">39</P>
           <P Name="Extents" Class="double">[2447.0, 1140.0]</P>
-          <P Name="ZoomFactor" Class="double">5.0</P>
-          <P Name="Offset" Class="double">[4.57333333333338, 2.4866666666667214]</P>
-          <P Name="SceneRectInView" Class="double">[4.57333333333338, 2.4866666666667214, 391.52, 182.4]</P>
+          <P Name="ZoomFactor" Class="double">1.0</P>
+          <P Name="Offset" Class="double">[-488.61875, -202.0]</P>
+          <P Name="SceneRectInView" Class="double">[-488.61875, -202.0, 1957.6, 912.0]</P>
         </Object>
         <Object ObjectID="7">
           <P Name="IsActive" Class="logical">0</P>
@@ -1665,23 +1684,33 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
           <P Name="ViewObjType" Class="char">SimulinkSubsys</P>
           <P Name="LoadSaveID" Class="char">12</P>
           <P Name="Extents" Class="double">[2447.0, 1140.0]</P>
-          <P Name="ZoomFactor" Class="double">1.75</P>
-          <P Name="Offset" Class="double">[-183.47589285714258, -32.514285714285684]</P>
-          <P Name="SceneRectInView" Class="double">[-183.47589285714258, -32.514285714285684, 1118.6285714285714, 521.14285714285711]</P>
+          <P Name="ZoomFactor" Class="double">2.0</P>
+          <P Name="Offset" Class="double">[-311.7999999999999, -149.56041485991463]</P>
+          <P Name="SceneRectInView" Class="double">[-311.7999999999999, -149.56041485991463, 978.8, 456.0]</P>
         </Object>
         <Object ObjectID="8">
           <P Name="IsActive" Class="logical">0</P>
           <P Name="IsTabbed" Class="logical">0</P>
-          <P Name="ViewObjType" Class="char">SimulinkSubsys</P>
-          <P Name="LoadSaveID" Class="char">37</P>
+          <P Name="ViewObjType" Class="char">SimulinkTopLevel</P>
+          <P Name="LoadSaveID" Class="char">0</P>
           <P Name="Extents" Class="double">[2447.0, 1140.0]</P>
-          <P Name="ZoomFactor" Class="double">1.8981616968951733</P>
-          <P Name="Offset" Class="double">[-227.375557110282, 5.5309811618987794]</P>
-          <P Name="SceneRectInView" Class="double">[-227.375557110282, 5.5309811618987794, 1031.313614220564, 480.46486318407966]</P>
+          <P Name="ZoomFactor" Class="double">1.0</P>
+          <P Name="Offset" Class="double">[-351.2, -202.9]</P>
+          <P Name="SceneRectInView" Class="double">[-351.2, -202.9, 1957.6, 912.0]</P>
+        </Object>
+        <Object ObjectID="9">
+          <P Name="IsActive" Class="logical">0</P>
+          <P Name="IsTabbed" Class="logical">0</P>
+          <P Name="ViewObjType" Class="char">SimulinkSubsys</P>
+          <P Name="LoadSaveID" Class="char">1</P>
+          <P Name="Extents" Class="double">[2447.0, 1140.0]</P>
+          <P Name="ZoomFactor" Class="double">1.75</P>
+          <P Name="Offset" Class="double">[-109.1023470098134, 2.0662410216065723]</P>
+          <P Name="SceneRectInView" Class="double">[-109.1023470098134, 2.0662410216065723, 1118.6285714285714, 521.14285714285711]</P>
         </Object>
       </Array>
       <Array PropName="DockComponentsInfo" Type="Simulink.DockComponentInfo" Dimension="1*2">
-        <Object ObjectID="9">
+        <Object ObjectID="10">
           <P Name="Type" Class="char">GLUE2:PropertyInspector</P>
           <P Name="ID" Class="char">Property Inspector</P>
           <P Name="Visible" Class="logical">1</P>
@@ -1693,7 +1722,7 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
           <P Name="Height" Class="int32">384</P>
           <P Name="Minimized" Class="char">On</P>
         </Object>
-        <Object ObjectID="10">
+        <Object ObjectID="11">
           <P Name="Type" Class="char">Simulink:Editor:ReferencedFiles</P>
           <P Name="ID" Class="char">Referenced Files</P>
           <P Name="Visible" Class="logical">0</P>
@@ -1711,7 +1740,7 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       <Array PropName="PersistedApps" Type="Cell" Dimension="0*1"/>
       <P Name="WindowUuid" Class="char">43a7fe24-6618-44b7-a6c4-7acfaa3515db</P>
     </Object>
-    <P Name="BDUuid" Class="char">dadc1603-bbdd-4007-80fc-0a7573d5eef1</P>
+    <P Name="BDUuid" Class="char">553bfd8b-7067-46b6-b752-b838359f2a7f</P>
   </Object>
 </WindowsInfo>
 

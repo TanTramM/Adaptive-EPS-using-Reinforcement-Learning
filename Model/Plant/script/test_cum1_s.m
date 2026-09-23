@@ -1,6 +1,6 @@
-function test_cum1()
-%TEST_CUM1 Verify the SteeringColumn.mdl model (Cluster 1, hand-formatted
-%from the auto-built version - WITH torsion spring, two inertias).
+function test_cum1_s()
+%TEST_CUM1_S Verify the SteeringColumn_s.mdl model (Cluster 1, auto-built
+%by build_cum1.m - WITH torsion spring, two inertias).
 %
 %   Requires the root subsystem to expose ports named:
 %   In: T_d, T_a, T_r | Out: theta1, theta1_dot, theta2, theta2_dot, T_s.
@@ -20,7 +20,7 @@ function test_cum1()
 %                                 ways of computing it must agree - self
 %                                 checked below)
 
-modelFileName = 'SteeringColumn';
+modelFileName = 'SteeringColumn_s';
 
 scriptDir = fileparts(mfilename('fullpath'));   % Plant/script
 plantDir  = fileparts(scriptDir);               % Plant/
@@ -32,7 +32,7 @@ load_system(fullfile(plantDir, [modelFileName '.mdl']));
 
 dut = findRootSubsystem(modelFileName);
 
-harnessName = 'test_cum1_harness';
+harnessName = 'test_cum1_s_harness';
 if bdIsLoaded(harnessName)
     close_system(harnessName, 0);
 end

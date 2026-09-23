@@ -19,8 +19,9 @@ này không làm thay bước đó.
 Trích dẫn dạng [n] khớp số trong Documents/References.txt - không lặp lại
 tên tài liệu đầy đủ trong file này.
 
-Đầu vào: theta (từ Cụm 1), beta, gamma (từ Cụm 3), v (đo được), mu (KHÔNG đo
-được - biến ngoại sinh, không phải tham số cố định của cụm này).
+Đầu vào: theta2 (từ Cụm 1 - góc phía SAU thanh xoắn, khối J2), beta, gamma
+(từ Cụm 3), v (đo được), mu (KHÔNG đo được - biến ngoại sinh, không phải
+tham số cố định của cụm này).
 Đầu ra: F_yf, F_yr (-> Cụm 3), T_r (-> Cụm 1).
 Không có biến trạng thái - đây là khối ĐẠI SỐ thuần túy, mọi đầu ra tính
 trực tiếp từ đầu vào hiện tại, không tích phân theo thời gian.
@@ -195,12 +196,13 @@ LÝ GIẢI CHỌN e_p0 = 0.048 m VÀ CÔNG THỨC K_tr(alpha_f, mu) ĐỘNG
 
 1.1. Góc bẻ bánh xe trước (nhận từ Cụm 1)
 
-  Cụm 1 quy đổi góc vô-lăng theta thành góc bẻ bánh xe thực tế qua tỷ số
-  truyền cơ cấu lái r_p/l_am = 1/n_st (Cum1_CEPS.txt không cần biết tỷ số
-  này - chỉ dùng ở đây):
+  Cụm 1 quy đổi góc cột lái theta2 (góc phía SAU thanh xoắn, khối J2 - KHÔNG
+  phải theta1 của vô-lăng) thành góc bẻ bánh xe thực tế qua tỷ số truyền cơ
+  cấu lái r_p/l_am = 1/n_st (Cum1_CEPS.txt không cần biết tỷ số này - chỉ
+  dùng ở đây):
 
-    delta_f = (r_p/l_am) * theta = theta / n_st
-    [ \delta_f = \dfrac{r_p}{l_{am}}\theta = \dfrac{\theta}{n_{st}} ]
+    delta_f = (r_p/l_am) * theta2 = theta2 / n_st
+    [ \delta_f = \dfrac{r_p}{l_{am}}\theta_2 = \dfrac{\theta_2}{n_{st}} ]
 
 1.2. Góc trượt lốp trước (alpha_f)
 
@@ -329,14 +331,14 @@ hiệu, không thế số - tra Bảng tham số ở trên hoặc params_plant.x
 giá trị)
 ================================================================================
 
-Khối đại số - không có biến trạng thái. Đầu vào: theta, beta, gamma, v, mu.
+Khối đại số - không có biến trạng thái. Đầu vào: theta2, beta, gamma, v, mu.
 
 --------------------------------------------------------------------------------
 Mục 1. Góc trượt lốp
 --------------------------------------------------------------------------------
 
-  (1)  delta_f = theta / n_st
-  [ \delta_f = \dfrac{\theta}{n_{st}} ]
+  (1)  delta_f = theta2 / n_st
+  [ \delta_f = \dfrac{\theta_2}{n_{st}} ]
 
   (2)  alpha_f = delta_f - beta - l_f*gamma/v
   [ \alpha_f = \delta_f-\beta-\dfrac{l_f\gamma}{v} ]
