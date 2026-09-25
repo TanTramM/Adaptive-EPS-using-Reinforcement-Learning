@@ -1,0 +1,81 @@
+3.1. MÔ HÌNH ĐỘNG LỰC HỌC CỘT LÁI C-EPS (STEERING COLUMN DYNAMICS)
+
+3.1.1. Phương trình vi phân cân bằng mô-men tổng quát
+Theo Định luật II Newton cho chuyển động quay quanh trục vô-lăng, tổng các mô-men ngoại lực ∑T(t) tác dụng lên cột lái bằng tích giữa tổng mô-men quán tính quy đổi J_total và gia tốc góc xoay vô-lăng θ̈(t):
+
+J_total × θ̈(t) = ∑ T(t)
+
+Khai triển các thành phần mô-men chủ động (+ cùng chiều bẻ lái) và mô-men cản (- ngược chiều bẻ lái) tác dụng lên cột lái, ta thu được phương trình cân bằng mô-men ban đầu:
+
+(1)  J_total × θ̈(t) = T_d(t) + T_a(t) - T_b(t) - T_f(t) - T_r(t)
+
+Trong đó:
+- J_total: Tổng mô-men quán tính quy đổi về trục vô-lăng (kg·m²).
+- θ̈(t): Gia tốc góc xoay vô-lăng (rad/s²).
+- T_d(t): Mô-men bẻ tay do tài xế tác dụng lên vành vô-lăng (N·m).
+- T_a(t): Mô-men trợ lực do động cơ điện (motor) cấp (Biến điều khiển đầu ra) (N·m).
+- T_b(t): Mô-men cản do ma sát nhớt trong cột lái và động cơ (N·m).
+- T_f(t): Mô-men cản do ma sát khô Coulomb phi tuyến (N·m).
+- T_r(t): Mô-men cản phản lực mặt đường dội ngược từ thước lái lên pinion (N·m).
+
+
+3.1.2. Mô hình ma sát nội tại và cản ma sát nhớt
+Hai thành phần mô-men cản nội tại T_b(t) và T_f(t) trong phương trình (1) được khai triển chi tiết thông qua các phương trình mô tả ma sát nhớt và ma sát khô Coulomb:
+
+* Phương trình mô-men ma sát nhớt:
+(2)  T_b(t) = B_total × θ̇(t)
+(với B_total là tổng hệ số ma sát nhớt quy đổi, θ̇(t) là vận tốc góc xoay vô-lăng).
+
+* Phương trình mô-men ma sát khô Coulomb phi tuyến (làm mịn bằng hàm tanh):
+(3)  T_f(t) = T_f,total × tanh(c × θ̇(t))
+(với T_f,total là tổng mô-men ma sát Coulomb quy đổi, c = 100 là hệ số dốc làm mịn để triệt tiêu hiện tượng rung giật chattering).
+
+
+3.1.3. Phương trình quy đổi các tham số quán tính và ma sát gộp
+Các tham số gộp J_total, B_total, T_f,total trong phương trình (1), (2), (3) được tính toán từ các tham số hình học và khối lượng thô dựa trên bảo toàn động năng và tỷ số truyền:
+
+* Phương trình tổng mô-men quán tính quy đổi về trục vô-lăng (J_total):
+(4)  J_total = J_c + J_p_eq = (m_sw × r_sw² + 0.5 × m_sh × r_sh²) + [ 0.5 × m_rt × r_rt² + g_w² × J_m + r_p² × (m_rraw + 2 × m_wh × (r_wh / l_am)²) ]
+(gộp quán tính vành vô-lăng m_sw, trục lái m_sh, rotor motor J_m qua tỷ số truyền g_w = z₂/z₁, và khối lượng thanh răng m_rraw qua bán kính pinion r_p).
+
+* Phương trình tổng hệ số ma sát nhớt quy đổi (B_total):
+(5)  B_total = b_c + g_w² × b_m + r_p² × b_r
+(gộp ma sát nhớt cột lái b_c, rotor motor b_m, và cản nhớt thước lái b_r).
+
+* Phương trình tổng mô-men ma sát khô Coulomb quy đổi (T_f,total):
+(6)  T_f,total = t_fc + T_fp_eq
+(gộp ma sát khô cột lái t_fc và ma sát khô quy đổi tại pinion T_fp_eq).
+
+
+3.1.4. Phương trình hình học cơ cấu lái và cảm biến mô-men
+Để Cụm 1 xuất tín hiệu liên kết cơ học sang Cụm 2 (Lốp Pacejka) và phản hồi về bộ điều khiển, ta sử dụng các phương trình đại số:
+
+* Phương trình quy đổi hình học ra góc bẻ bánh xe trước (δ_f):
+(7)  δ_f(t) = θ(t) / G_sc = (r_p / l_am) × θ(t)
+(với G_sc = l_am / r_p là tỷ số truyền cơ cấu lái, l_am là đòn bẩy bẻ lái).
+
+* Phương trình tín hiệu mô-men cảm biến thanh xoắn (T_s):
+(8)  T_s(t) = T_d(t)
+(áp dụng giả thuyết trục cứng hợp nhất T_d = T_s khi không xét biến dạng đàn hồi thanh xoắn).
+
+
+3.1.5. Hệ phương trình trạng thái mô tả động lực học cột lái
+Thế trực tiếp các phương trình ma sát (2) và (3) từ mục 3.1.2 vào phương trình cân bằng mô-men ban đầu (1) từ mục 3.1.1, ta thu được phương trình vi phân tổng quát:
+
+(9)  J_total × θ̈(t) = T_d(t) + T_a(t) - B_total × θ̇(t) - T_f,total × tanh(c × θ̇(t)) - T_r(t)
+
+Chia cả 2 vế của phương trình (9) cho tổng quán tính J_total để cô lập gia tốc góc θ̈(t):
+
+(10)  θ̈(t) = [ T_d(t) + T_a(t) - B_total × θ̇(t) - T_f,total × tanh(c × θ̇(t)) - T_r(t) ] / J_total
+
+Đặt 2 biến trạng thái liên tục cho Cụm 1:
+- x₁(t) = θ(t) (Góc xoay vô-lăng, rad)
+- x₂(t) = θ̇(t) (Vận tốc góc xoay vô-lăng, rad/s)
+
+Biểu diễn phương trình (10) thành Hệ 2 phương trình vi phân trạng thái bậc nhất chuẩn:
+
+* Phương trình vi phân trạng thái 1 - Động học góc bẻ lái:
+(11)  dx₁/dt = dθ/dt = x₂(t)
+
+* Phương trình vi phân trạng thái 2 - Động lực học vận tốc bẻ lái:
+(12)  dx₂/dt = dθ̇/dt = [ T_d(t) + T_a(t) - B_total × x₂(t) - T_f,total × tanh(c × x₂(t)) - T_r(t) ] / J_total

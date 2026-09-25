@@ -1,0 +1,132 @@
+==============================================================================================================================================================================================
+BIÊN VẬN HÀNH CỦA PLANT VÀ GIỚI HẠN TRỢ LỰC (BOUNDARIES)
+PHẦN 4 CỦA CHƯƠNG PLANT: ĐỨNG SAU CỤM 1-3 VÀ HỆ PHƯƠNG TRÌNH TỔNG HỢP
+==============================================================================================================================================================================================
+  Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết; bản đưa vào luận văn là các bảng và kết luận ở mục 2, 4 và 5. Quy ước: mỗi công thức có thêm 1 dòng LaTeX trong ngoặc [ ] để dán vào Word.
+  Trích dẫn [n] khớp Documents/References.txt. Công thức chỉ viết dạng ký hiệu; giá trị số chỉ nằm trong các bảng.
+  Mục đích: chốt MỘT chỗ duy nhất cho các giới hạn vận hành của mô hình (a_y tối đa theo tốc độ và mu) và giới hạn trợ lực T_a,max, để mọi thí nghiệm (hiệu chỉnh bản đồ EPS, đo Kcu, so sánh
+  over-assist) dùng chung một vùng làm việc. Các giả định chi tiết của từng cụm nằm ở Cum2_Pacejka.txt (Mục 4) và Cum3_2DOF.txt.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Phạm vi vận hành
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  - Tốc độ v từ 20 đến 100 km/h, theo dải dữ liệu tham chiếu T_d,ref (Bảng 4 của [7]); dưới 20 km/h không có mục tiêu để điều khiển bám và mô hình lốp tức thời không còn phù hợp.
+  - Hệ số bám mu từ 0.2 đến 0.8, theo dải mô phỏng tham khảo {0.2, 0.4, 0.6, 0.8} của [6]; mu là biến ngoại sinh không đo được.
+  - Chỉ xét gia tốc ngang a_y ở trạng thái xác lập; trong mô phỏng động a_y có thể vượt tạm thời.
+  - Biên của PLANT (mục 2) chỉ gồm hai điều kiện: giới hạn bám mu*g và giới hạn góc nhỏ. Bảng 4 KHÔNG phải biên của Plant: nó chỉ là điểm đặt (setpoint) của bài toán điều khiển và chỉ được dùng ở
+    mục 4.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Giới hạn a_y của Plant
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  2.1. Giới hạn theo bám: a_y không vượt mu*g. Lực bên mỗi cầu không vượt đỉnh Magic Formula của cầu đó (Cụm 2, các phương trình D_f, D_r):
+
+    F_yf <= D_f = mu*F_zf,   F_yr <= D_r = mu*F_zr
+    [ F_{yf}\le D_f=\mu F_{zf},\qquad F_{yr}\le D_r=\mu F_{zr} ]
+
+  Với mô hình góc nhỏ của Cụm 3 (m*a_y = F_yf + F_yr) và F_zf + F_zr = m*g, suy ra:
+
+    a_y = (F_yf + F_yr)/m <= mu*(F_zf + F_zr)/m = mu*g
+    [ a_y=\dfrac{F_{yf}+F_{yr}}{m}\le\dfrac{\mu(F_{zf}+F_{zr})}{m}=\mu g ]
+
+  Giới hạn này đạt được vì hai cầu bão hòa đồng thời: cân bằng mô-men quanh trục thẳng đứng (l_f*F_yf = l_r*F_yr) cho F_yf/F_yr = l_r/l_f, đúng bằng tỉ số đỉnh của hai cầu:
+
+    D_f/D_r = F_zf/F_zr = l_r/l_f
+    [ \dfrac{D_f}{D_r}=\dfrac{F_{zf}}{F_{zr}}=\dfrac{l_r}{l_f} ]
+
+  Trên đồ thị a_y theo góc bẻ bánh, giới hạn này là điểm gập (điểm nhánh xác lập kết thúc): vượt nó xe không còn trạng thái cân bằng (trượt văng). Không có dự trữ an toàn nào được cộng thêm (hệ
+  số 0.9*mu*g đã bỏ theo quyết định), nên vận hành đúng tại điểm gập là biên ổn định.
+
+  2.2. Giới hạn góc nhỏ. Cụm 2 và Cụm 3 dùng dạng góc nhỏ của [5] (Chương 2, tr.30, công thức (2.29), (2.30)), có sai số tương đối cỡ x^2/3 với tan, nên còn khoảng 1% khi góc dưới khoảng 10 độ.
+  Tiêu chí: góc bẻ bánh trước delta_f và góc trượt hông beta đều không vượt 10 độ (ngưỡng 10 độ là lựa chọn thiết kế, không có nguồn):
+
+    max(|delta_f|, |beta|) <= 10 deg
+    [ \max(|\delta_f|,|\beta|)\le 10^\circ ]
+
+  2.3. Giới hạn a_y của Plant là giá trị nhỏ hơn trong hai giới hạn, a_y,10 là a_y xác lập tại đó tiêu chí góc nhỏ chạm 10 độ:
+
+    a_y,max(v, mu) = min(mu*g, a_y,10(v, mu))
+    [ a_{y,max}(v,\mu)=\min\big(\mu g,\;a_{y,10^\circ}(v,\mu)\big) ]
+
+  Cách tính (script tạm, chưa vào repo): với mỗi (v, mu) tăng dần góc bẻ bánh delta_f, giải trạng thái xác lập (beta, gamma) của Plant (mô hình góc nhỏ, Magic Formula cả hai cầu, e_p chặn dưới ở
+  0), theo dõi a_y và max(|delta_f|, |beta|); điểm chạm 10 độ tìm bằng chia đôi 40 lần. Bảng dưới đây tính cho v = 20-100 km/h bước 5 km/h và mu = 0.2-0.8 bước 0.1, đơn vị g. Ô có dấu * do tiêu
+  chí góc nhỏ chặn (giá trị tính bằng số); ô còn lại do giới hạn bám mu*g chặn (giá trị lý thuyết mu*g, quét số cho kết quả thấp hơn tối đa 0.002 do dung sai bộ giải gần điểm gập).
+
+    v [km/h]   mu 0.2   mu 0.3   mu 0.4   mu 0.5   mu 0.6   mu 0.7   mu 0.8
+    20         0.192*   0.196*   0.197*   0.197*   0.197*   0.197*   0.197*
+    25         0.200    0.290*   0.298*   0.299*   0.300*   0.300*   0.301*
+    30         0.200    0.300    0.394*   0.413*   0.418*   0.419*   0.420*
+    35         0.200    0.300    0.400    0.498*   0.536*   0.546*   0.550*
+    40         0.200    0.300    0.400    0.500    0.600    0.657*   0.678*
+    45         0.200    0.300    0.400    0.500    0.600    0.700    0.773*
+    50-100     0.200    0.300    0.400    0.500    0.600    0.700    0.800
+
+  Nhận xét: (a) từ 50 km/h trở lên góc nhỏ không chặn ở mọi mu, giới hạn là mu*g; (b) ở 20-25 km/h tiêu chí góc chặn với hầu hết mu, vì cần góc bẻ bánh lớn để đạt cùng a_y ở tốc độ thấp; (c) ở
+  gần điểm gập của mu cao, góc lớn nhất lên tới 10 độ (ví dụ 45 km/h, mu = 0.8), nhưng nhỏ hơn 7 độ từ 70 km/h trở lên.
+
+  2.4. Một kết quả đi kèm: trên nhánh xác lập góc trượt lốp trước alpha_f không bao giờ đạt góc trượt hoàn toàn alpha_sl (điểm e_p = 0, Cụm 2, phương trình (9a)), vì đỉnh của Magic Formula
+  (khoảng 13 độ ở mu = 0.8, khoảng 5 độ ở mu = 0.3) nhỏ hơn alpha_sl (15.3 và 5.8 độ). Phép chặn dưới e_p ở 0 vì vậy chỉ hoạt động ngoài nhánh xác lập (quá độ, trượt văng), không phải ở các điểm
+  vận hành của bảng trên.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Biên phía điều khiển (không thuộc Plant)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Điểm đặt T_d,ref(v, a_y) lấy từ Bảng 4 của [7] chỉ được định nghĩa cho a_y đến 0.4 g và tốc độ 20-100 km/h. Đây là giới hạn của bài toán điều khiển, không phải của Plant. Vùng thử nghiệm điều
+  khiển vì vậy là giao của hai vùng:
+
+    a_y,lim(v, mu) = min(a_y,max(v, mu), 0.4 g)
+    [ a_{y,lim}(v,\mu)=\min\big(a_{y,max}(v,\mu),\,0.4\,g\big) ]
+
+  Cận 0.4 g chỉ làm thay đổi các ô của bảng mục 2.3 có a_y,max lớn hơn 0.4 g (từ 30 km/h trở lên với mu từ 0.5 đến 0.8, và mu = 0.4 ở 30 km/h chỉ 0.394 nên không đổi); ở các ô còn lại a_y,lim =
+  a_y,max. Ví dụ ở 20 km/h, mu = 0.8: a_y,lim = 0.197 g; ở 100 km/h, mu = 0.8: a_y,lim = 0.400 g dù a_y,max = 0.800 g.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Giới hạn trợ lực T_a,max
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  T_a,max(v) là mô-men trợ lực lớn nhất mà bộ điều khiển có thể phải cung cấp ở tốc độ v. Theo Multi-Map [6] (công thức (6)), T_a,max = T_r,max - T_d,max; ta tính từ Plant: T_a cần thiết ở một
+  điểm vận hành là T_r - T_d,ref (ở xác lập T_s = T_r - T_a nên để T_s = T_d,ref cần T_a = T_r - T_d,ref), và T_a,max là giá trị lớn nhất trên vùng a_y hợp lệ ở đường khô mu = 0.8 (T_r lớn nhất ở
+  mu = 0.8):
+
+    T_a,max(v) = max over a_y <= a_y,lim(v) of [ T_r(v, a_y) - T_d,ref(v, a_y) ]
+    [ T_{a,max}(v)=\max_{a_y\le a_{y,lim}(v)}\big[T_r(v,a_y)-T_{d,ref}(v,a_y)\big] ]
+
+  T_r - T_d,ref tăng theo a_y nên giá trị lớn nhất nằm tại a_y = a_y,lim(v) với a_y,lim lấy ở mu = 0.8. Bảng dưới (N.m, mu = 0.8, trạng thái xác lập; T_d,ref nội suy tuyến tính Bảng 4 theo v và
+  a_y):
+
+    v [km/h]   a_y,lim [g]   T_r      T_d,ref   T_a,max
+    20         0.197         4.926    1.484     3.442
+    25         0.301         7.147    1.776     5.371
+    30         0.400         8.996    2.100     6.896
+    35         0.400         8.996    2.250     6.746
+    40         0.400         8.996    2.400     6.596
+    45         0.400         8.996    2.525     6.471
+    50         0.400         8.996    2.650     6.346
+    55         0.400         8.996    2.775     6.221
+    60         0.400         8.996    2.900     6.096
+    65         0.400         8.996    3.000     5.996
+    70         0.400         8.996    3.100     5.896
+    75         0.400         8.996    3.200     5.796
+    80         0.400         8.996    3.300     5.696
+    85         0.400         8.996    3.325     5.671
+    90         0.400         8.996    3.350     5.646
+    95         0.400         8.996    3.375     5.621
+    100        0.400         8.996    3.400     5.596
+
+  Cần nói rõ: (a) đây là NHU CẦU trợ lực ước lượng từ Plant, chưa phải công suất motor (không có số liệu motor, nên chưa kiểm tra motor có sinh được T_a,max); (b) T_r tỉ lệ với e_p0 (pneumatic
+  trail danh nghĩa, số tự chọn, Cụm 2) nên T_a,max cũng tỉ lệ với e_p0; (c) các giá trị cũ (ví dụ 7.196 N.m ở 20 km/h) tính ở a_y = 0.4 g, ngoài vùng góc nhỏ ở tốc độ thấp, và bị thay bằng bảng
+  này; (d) ở 20 và 25 km/h a_y,lim bị tiêu chí góc nhỏ chặn nên T_a,max thấp hơn hẳn.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Việc còn lại
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  - Dữ liệu: các bảng ở mục 2.3 và 4 được lưu ở Documents/Boundaries.xlsx (các trang a_y_max_g, a_y_binding, T_a_max, README) và Model/data/boundaries.json (hai trường a_y và T_a) để các script
+    sau này đọc chung. Giá trị được tính một lần bằng script tạm ngoài repo (chưa có script tính lại và chưa có test trong repo).
+  - Ngưỡng 10 độ và việc vận hành tại điểm gập là lựa chọn thiết kế; có thể đổi ngưỡng hoặc thêm dự trữ và tính lại.
+  - Bảng chỉ cho a_y xác lập, chưa có giới hạn cho quá độ; chưa có hình học lái phi tuyến, trượt kết hợp, chiều dài nới lỏng lốp (Cum2_Pacejka.txt, Mục 4).
+  - PID đã dùng bảng T_a,max (DieuKhien_PID.txt); còn cần cập nhật SMC và bản đồ EPS (Model/Map) theo bảng ở mục 4.
+==============================================================================================================================================================================================

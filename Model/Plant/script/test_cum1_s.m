@@ -1,29 +1,29 @@
 function test_cum1_s()
-%TEST_CUM1_S Verify the SteeringColumn_s.mdl model (Cluster 1, auto-built
-%by build_cum1.m - WITH torsion spring, two inertias).
+%TEST_CUM1_S Verify SteeringColumn_s.mdl (Cluster 1, auto-built by
+%build_cum1.m - torsion spring, two inertias, steering ANGLE theta1 as input).
 %
 %   Requires the root subsystem to expose ports named:
-%   In: T_d, T_a, T_r | Out: theta1, theta1_dot, theta2, theta2_dot, T_s.
+%   In : theta1, T_a, T_r | Out: T_s, theta2, theta2_dot.
 %
-%   Applies a T_d step, T_a=0, T_r=0, and simulates. WITH T_a=T_r=0, the
-%   system does NOT settle at a fixed ANGLE (nothing holds either mass
-%   still) - instead both masses converge to the SAME steady ANGULAR
-%   VELOCITY omega (rotating together, with a constant angle offset
-%   theta1-theta2). Steady-state condition (set x2=x4=omega, all
-%   derivatives=0, in Eq.(1),(2) of Documents/Cum1_CEPS.txt, cancelling
-%   the K*(x1-x3) term between the two equations):
+%   Two cases, each compared with an analytic reference computed here
+%   from params.json (NOT from the base workspace, so it also catches
+%   errors in load_plant/load_derived):
 %
-%     (C1+C2)*omega + T_f*tanh(c*omega) = T_d          (same form as the
-%                                                        old rigid-shaft
-%                                                        model, B_total=C1+C2)
-%     T_s_ss = T_d - C1*omega   (= C2*omega + T_f*tanh(c*omega), the two
-%                                 ways of computing it must agree - self
-%                                 checked below)
+%   A) theta1 held constant, T_a and T_r constant. Nothing rotates
+%      (x4=0, tanh(0)=0), so Eq.(2) gives T_s = T_r - T_a, then
+%      theta2 = theta1 - T_s/K.
+%   B) theta1 = w*t (ramp). theta2 follows at the same rate (x4 = w), so
+%      T_s = T_r - T_a + T_f*tanh(c*w) + C_col*w and theta2_dot = w.
 
 modelFileName = 'SteeringColumn_s';
 
 scriptDir = fileparts(mfilename('fullpath'));   % Plant/script
 plantDir  = fileparts(scriptDir);               % Plant/
+modelDir  = fileparts(plantDir);                % Model/
+
+raw = jsondecode(fileread(fullfile(modelDir, 'data', 'params.json')));
+K  = raw.cum1.K.value;   C_col = raw.cum1.C_col.value;
+T_f = raw.cum1.T_f.value; c = raw.cum1.c.value;
 
 if bdIsLoaded(modelFileName)
     close_system(modelFileName, 0);
@@ -40,86 +40,72 @@ new_system(harnessName);
 open_system(harnessName);
 
 add_block(dut, [harnessName '/DUT']);
-set_param([harnessName '/DUT'], 'Position', [200 100 400 300]);
+set_param([harnessName '/DUT'], 'Position', [300 100 500 300]);
 dutInHarness = [harnessName '/DUT'];
 
-add_block('simulink/Sources/Step', [harnessName '/Td_step']);
-set_param([harnessName '/Td_step'], 'Time', '0.1', 'After', '3', 'Before', '0', ...
-    'Position', [50 110 80 130]);
-add_block('simulink/Sources/Constant', [harnessName '/Ta_zero']);
-set_param([harnessName '/Ta_zero'], 'Value', '0', 'Position', [50 200 80 220]);
-add_block('simulink/Sources/Constant', [harnessName '/Tr_zero']);
-set_param([harnessName '/Tr_zero'], 'Value', '0', 'Position', [50 260 80 280]);
+add_block('simulink/Sources/Ramp', [harnessName '/th1_ramp']);
+add_block('simulink/Sources/Constant', [harnessName '/Ta_src']);
+add_block('simulink/Sources/Constant', [harnessName '/Tr_src']);
+add_line(harnessName, 'th1_ramp/1', portRef(dutInHarness, 'theta1'));
+add_line(harnessName, 'Ta_src/1',   portRef(dutInHarness, 'T_a'));
+add_line(harnessName, 'Tr_src/1',   portRef(dutInHarness, 'T_r'));
 
-add_block('simulink/Sinks/To Workspace', [harnessName '/theta1_out']);
-set_param([harnessName '/theta1_out'], 'VariableName', 'theta1_log', 'Position', [450 110 520 130]);
-add_block('simulink/Sinks/To Workspace', [harnessName '/theta1_dot_out']);
-set_param([harnessName '/theta1_dot_out'], 'VariableName', 'theta1_dot_log', 'Position', [450 150 520 170]);
-add_block('simulink/Sinks/To Workspace', [harnessName '/theta2_out']);
-set_param([harnessName '/theta2_out'], 'VariableName', 'theta2_log', 'Position', [450 190 520 210]);
-add_block('simulink/Sinks/To Workspace', [harnessName '/theta2_dot_out']);
-set_param([harnessName '/theta2_dot_out'], 'VariableName', 'theta2_dot_log', 'Position', [450 230 520 250]);
-add_block('simulink/Sinks/To Workspace', [harnessName '/Ts_out']);
-set_param([harnessName '/Ts_out'], 'VariableName', 'Ts_log', 'Position', [450 270 520 290]);
+outs = {'T_s', 'theta2', 'theta2_dot'};
+for i = 1:numel(outs)
+    blk = [harnessName '/' outs{i} '_out'];
+    add_block('simulink/Sinks/To Workspace', blk);
+    set_param(blk, 'VariableName', [outs{i} '_log'], 'SaveFormat', 'Timeseries');
+    add_line(harnessName, portRef(dutInHarness, outs{i}), [outs{i} '_out/1']);
+end
 
-add_line(harnessName, 'Td_step/1', portRef(dutInHarness, 'T_d'), 'autorouting', 'on');
-add_line(harnessName, 'Ta_zero/1', portRef(dutInHarness, 'T_a'), 'autorouting', 'on');
-add_line(harnessName, 'Tr_zero/1', portRef(dutInHarness, 'T_r'), 'autorouting', 'on');
-add_line(harnessName, portRef(dutInHarness, 'theta1'), 'theta1_out/1', 'autorouting', 'on');
-add_line(harnessName, portRef(dutInHarness, 'theta1_dot'), 'theta1_dot_out/1', 'autorouting', 'on');
-add_line(harnessName, portRef(dutInHarness, 'theta2'), 'theta2_out/1', 'autorouting', 'on');
-add_line(harnessName, portRef(dutInHarness, 'theta2_dot'), 'theta2_dot_out/1', 'autorouting', 'on');
-add_line(harnessName, portRef(dutInHarness, 'T_s'), 'Ts_out/1', 'autorouting', 'on');
+% MaxStep is REQUIRED: the steep tanh(c*x4) term (c=100) distorts logged
+% data if the variable-step solver takes large steps after settling.
+set_param(harnessName, 'MaxStep', '0.005');
 
-% MaxStep is REQUIRED: the default variable-step solver picks steps too
-% large once the system has settled, interacting badly with the steep
-% tanh(c*x4) term (c=100) - this distorts logged data (looks like a slow,
-% undamped oscillation, but is NOT real physics - verified: forcing
-% MaxStep=0.01 makes it converge EXACTLY to the analytic value from t~3s
-% onward, staying perfectly stable).
-set_param(harnessName, 'StopTime', '6', 'MaxStep', '0.01');
-simOut = sim(harnessName);
+%% ----- Case A: constant angle -----
+th1 = 0.1; Ta = 0.5; Tr = 2;
+simOut = runCase(harnessName, 0, th1, Ta, Tr, 15);
+TsA_ref = Tr - Ta;
+[Ts, th2, ~] = lastValues(simOut);
+checkClose('A: T_s',    Ts,  TsA_ref,         1e-3);
+checkClose('A: theta2', th2, th1 - TsA_ref/K, 1e-5);
 
-theta1_log = simOut.get('theta1_log');
-theta1_dot_log = simOut.get('theta1_dot_log');
-theta2_dot_log = simOut.get('theta2_dot_log');
-Ts_log = simOut.get('Ts_log');
+%% ----- Case B: ramp -----
+w = 0.1; Ta = 0.5; Tr = 2;
+simOut = runCase(harnessName, w, 0, Ta, Tr, 10);
+TsB_ref = Tr - Ta + T_f*tanh(c*w) + C_col*w;
+[Ts, ~, th2dot] = lastValues(simOut);
+checkClose('B: T_s',        Ts,     TsB_ref, 1e-3);
+checkClose('B: theta2_dot', th2dot, w,       1e-4);
 
-assert(~any(isnan(theta1_log.Data)), 'theta1 contains NaN');
-assert(~any(isnan(theta1_dot_log.Data)), 'theta1_dot contains NaN');
-assert(~any(isnan(theta2_dot_log.Data)), 'theta2_dot contains NaN');
-assert(~any(isnan(Ts_log.Data)), 'T_s contains NaN');
-assert(theta1_log.Data(end) > 0, 'theta1 expected > 0 (positive Td step)');
-
-C1 = evalin('base', 'C1');
-C2 = evalin('base', 'C2');
-T_f = evalin('base', 'T_f');
-c  = evalin('base', 'c');
-Td_final = 3;
-
-omega_ref = fzero(@(w) (C1+C2)*w + T_f*tanh(c*w) - Td_final, 0.5);
-Ts_ref = Td_final - C1*omega_ref;
-Ts_ref_check = C2*omega_ref + T_f*tanh(c*omega_ref);
-assert(abs(Ts_ref - Ts_ref_check) < 1e-9, ...
-    'Internal error: the 2 ways of computing Ts_ref disagree (%.6g vs %.6g)', Ts_ref, Ts_ref_check);
-
-assert(abs(theta1_dot_log.Data(end) - omega_ref) < 1e-3, ...
-    'theta1_dot steady state does not match analytic solution (model=%.6g, analytic=%.6g)', ...
-    theta1_dot_log.Data(end), omega_ref);
-assert(abs(theta2_dot_log.Data(end) - omega_ref) < 1e-3, ...
-    'theta2_dot steady state does not match analytic solution (model=%.6g, analytic=%.6g)', ...
-    theta2_dot_log.Data(end), omega_ref);
-assert(abs(Ts_log.Data(end) - Ts_ref) < 1e-3, ...
-    'T_s steady state does not match analytic solution (model=%.6g, analytic=%.6g)', ...
-    Ts_log.Data(end), Ts_ref);
-
-fprintf(['[%s] TEST PASS: omega(end)=%.6g rad/s (analytic=%.6g), ' ...
-    'T_s(end)=%.6g N.m (analytic=%.6g)\n'], ...
-    modelFileName, theta1_dot_log.Data(end), omega_ref, Ts_log.Data(end), Ts_ref);
+fprintf('[%s] TEST PASS: A) T_s=%.5g theta2=%.6g | B) T_s=%.5g theta2_dot=%.5g\n', ...
+    modelFileName, TsA_ref, th1 - TsA_ref/K, TsB_ref, w);
 
 close_system(harnessName, 0);
 close_system(modelFileName, 0);
 end
+
+%% ===================== Utility functions =====================
+function simOut = runCase(h, slope, x0, Ta, Tr, stopTime)
+    set_param([h '/th1_ramp'], 'Slope', sprintf('%.15g', slope), ...
+        'X0', sprintf('%.15g', x0), 'start', '0');
+    set_param([h '/Ta_src'], 'Value', sprintf('%.15g', Ta));
+    set_param([h '/Tr_src'], 'Value', sprintf('%.15g', Tr));
+    set_param(h, 'StopTime', sprintf('%.15g', stopTime));
+    simOut = sim(h);
+end
+
+function [Ts, th2, th2dot] = lastValues(simOut)
+    a = simOut.get('T_s_log');        Ts     = a.Data(end);
+    assert(~any(isnan(a.Data)), 'T_s contains NaN');
+    a = simOut.get('theta2_log');     th2    = a.Data(end);
+    a = simOut.get('theta2_dot_log'); th2dot = a.Data(end);
+end
+
+function checkClose(label, actual, ref, tol)
+    assert(abs(actual - ref) < tol, '%s: model=%.6g, analytic=%.6g', label, actual, ref);
+end
+
 
 %% ===================== Utility functions =====================
 function subPath = findRootSubsystem(modelFileName)
@@ -130,6 +116,8 @@ function subPath = findRootSubsystem(modelFileName)
 end
 
 function ref = portRef(subPath, portName)
+% "<BlockNameInParent>/<PortNumber>" of the Inport/Outport named portName
+% inside subPath - ports are found BY NAME, never by assumed order.
     parts = strsplit(subPath, '/');
     blockNameInParent = parts{end};
     ports = find_system(subPath, 'SearchDepth', 1, 'BlockType', 'Inport');

@@ -40,10 +40,10 @@ __MWOPC_PART_BEGIN__ /metadata/coreProperties.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <cp:category>model</cp:category>
-  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-18T13:42:12Z</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-25T08:51:42Z</dcterms:created>
   <dc:creator>Tan_Tram</dc:creator>
   <cp:lastModifiedBy>Tan_Tram</cp:lastModifiedBy>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-18T13:42:19Z</dcterms:modified>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-25T08:51:49Z</dcterms:modified>
   <cp:revision>1.1</cp:revision>
   <cp:version>R2023a</cp:version>
 </cp:coreProperties>
@@ -106,7 +106,7 @@ __MWOPC_PART_BEGIN__ /simulink/blockdiagram.xml
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
   <Model>
-    <P Name="ModelUUID">92a0aa37-078b-47e5-81e1-e4ddd4c8e7af</P>
+    <P Name="ModelUUID">db054134-bacc-4b9b-821d-57f536ff000c</P>
     <P Name="LastSavedArchitecture">win64</P>
     <ConfigManagerSettings>
       <P Name="ModifiedByFormat">%&lt;Auto&gt;</P>
@@ -937,8 +937,8 @@ __MWOPC_PART_BEGIN__ /simulink/hdlParams.xml
 __MWOPC_PART_BEGIN__ /simulink/modelDictionary.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <MF0 version="1.1" defaultPackage="slid" packageUris="http://schema.mathworks.com/mf0/slid/R2023a_20220628">
-  <System type="System" uuid="8054542f-7f17-48a2-ab62-e5f0bb4e6c1e">
-    <Interface type="Interface" uuid="58bc6144-8822-423b-a6a5-54110b774f3c"/>
+  <System type="System" uuid="3c112bef-ef5d-4e00-b10b-69db9ca28a86">
+    <Interface type="Interface" uuid="56c4fc49-72c8-4371-a75a-ea2f2a9fd75c"/>
   </System>
 </MF0>
 __MWOPC_PART_BEGIN__ /simulink/ScheduleCore.xml
@@ -974,6 +974,12 @@ __MWOPC_PART_BEGIN__ /simulink/ScheduleEditor.xml
     <type>graph.Graph</type>
   </diagram.editor.model.Diagram>
 </sltp_editor>
+__MWOPC_PART_BEGIN__ /simulink/systems/_rels/system_1.xml.rels
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="system_9" Target="system_9.xml" Type="http://schemas.mathworks.com/simulink/2010/relationships/system"/>
+</Relationships>
+
 __MWOPC_PART_BEGIN__ /simulink/systems/_rels/system_root.xml.rels
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -984,8 +990,8 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_1.xml
 <?xml version="1.0" encoding="utf-8"?>
 <System>
   <P Name="Location">[433, 403, 931, 703]</P>
-  <Block BlockType="Inport" Name="T_d" SID="4">
-    <P Name="Position">[40, 38, 70, 52]</P>
+  <Block BlockType="Inport" Name="T_s" SID="4">
+    <P Name="Position">[40, 58, 70, 72]</P>
     <P Name="ZOrder">1</P>
   </Block>
   <Block BlockType="Inport" Name="v" SID="5">
@@ -994,19 +1000,129 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_1.xml
     <P Name="Port">2</P>
   </Block>
   <Block BlockType="Inport" Name="a_y" SID="6">
-    <P Name="Position">[40, 358, 70, 372]</P>
+    <P Name="Position">[40, 258, 70, 272]</P>
     <P Name="ZOrder">3</P>
     <P Name="Port">3</P>
   </Block>
-  <Block BlockType="Abs" Name="Abs_ay" SID="9">
-    <P Name="Position">[200, 360, 230, 390]</P>
+  <Block BlockType="SubSystem" Name="Cal T_d_ref" SID="9">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[260, 199, 360, 241]</P>
     <P Name="ZOrder">6</P>
+    <P Name="ContentPreviewEnabled">on</P>
+    <System Ref="system_9"/>
+  </Block>
+  <Block BlockType="From" Name="From" SID="24">
+    <P Name="Position">[480, 111, 520, 139]</P>
+    <P Name="ZOrder">9</P>
+    <P Name="GotoTag">T_d_ref</P>
+  </Block>
+  <Block BlockType="From" Name="From1" SID="25">
+    <P Name="Position">[620, 221, 660, 249]</P>
+    <P Name="ZOrder">10</P>
+    <P Name="GotoTag">T_d_ref</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto" SID="23">
+    <P Name="Position">[440, 200, 480, 230]</P>
+    <P Name="ZOrder">8</P>
+    <P Name="GotoTag">T_d_ref</P>
+  </Block>
+  <Block BlockType="Sum" Name="Sum_eT" SID="22">
+    <PortCounts in="2" out="1"/>
+    <P Name="Position">[560, 72, 590, 103]</P>
+    <P Name="ZOrder">7</P>
+    <P Name="IconShape">rectangular</P>
+    <P Name="Inputs">+-</P>
+  </Block>
+  <Block BlockType="Outport" Name="e_T" SID="7">
+    <P Name="Position">[700, 68, 730, 82]</P>
+    <P Name="ZOrder">4</P>
+  </Block>
+  <Block BlockType="Outport" Name="T_d_ref" SID="8">
+    <P Name="Position">[700, 218, 730, 232]</P>
+    <P Name="ZOrder">5</P>
+    <P Name="Port">2</P>
+  </Block>
+  <Line>
+    <P Name="ZOrder">2</P>
+    <P Name="Src">5#out:1</P>
+    <P Name="Points">[85, 0; 0, 5]</P>
+    <P Name="Dst">9#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">3</P>
+    <P Name="Src">6#out:1</P>
+    <P Name="Points">[85, 0; 0, -35]</P>
+    <P Name="Dst">9#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">4</P>
+    <P Name="Src">9#out:1</P>
+    <P Name="Points">[30, 0; 0, -5]</P>
+    <P Name="Dst">23#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">5</P>
+    <P Name="Src">24#out:1</P>
+    <P Name="Points">[10, 0; 0, -30]</P>
+    <P Name="Dst">22#in:2</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">6</P>
+    <P Name="Src">25#out:1</P>
+    <P Name="Points">[10, 0; 0, -10]</P>
+    <P Name="Dst">8#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">7</P>
+    <P Name="Src">4#out:1</P>
+    <P Name="Points">[235, 0; 0, 15]</P>
+    <P Name="Dst">22#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">8</P>
+    <P Name="Src">22#out:1</P>
+    <P Name="Points">[45, 0; 0, -15]</P>
+    <P Name="Dst">7#in:1</P>
+  </Line>
+</System>
+
+__MWOPC_PART_BEGIN__ /simulink/systems/system_9.xml
+<?xml version="1.0" encoding="utf-8"?>
+<System>
+  <P Name="Location">[433, 403, 931, 703]</P>
+  <Block BlockType="Inport" Name="v" SID="12">
+    <P Name="Position">[40, 58, 70, 72]</P>
+    <P Name="ZOrder">1</P>
+  </Block>
+  <Block BlockType="Inport" Name="a_y" SID="13">
+    <P Name="Position">[40, 158, 70, 172]</P>
+    <P Name="ZOrder">2</P>
+    <P Name="Port">2</P>
+  </Block>
+  <Block BlockType="Abs" Name="Abs_ay" SID="18">
+    <P Name="Position">[200, 100, 230, 130]</P>
+    <P Name="ZOrder">7</P>
     <P Name="SaturateOnIntegerOverflow">off</P>
   </Block>
-  <Block BlockType="Lookup_n-D" Name="LUT_Tdref" SID="11">
+  <Block BlockType="From" Name="From" SID="16">
+    <P Name="Position">[120, 101, 160, 129]</P>
+    <P Name="ZOrder">5</P>
+    <P Name="GotoTag">a_y</P>
+  </Block>
+  <Block BlockType="From" Name="From1" SID="17">
+    <P Name="Position">[300, 201, 340, 229]</P>
+    <P Name="ZOrder">6</P>
+    <P Name="GotoTag">a_y</P>
+  </Block>
+  <Block BlockType="Goto" Name="Goto" SID="15">
+    <P Name="Position">[120, 160, 160, 190]</P>
+    <P Name="ZOrder">4</P>
+    <P Name="GotoTag">a_y</P>
+  </Block>
+  <Block BlockType="Lookup_n-D" Name="LUT_Tdref" SID="20">
     <PortCounts in="2" out="1"/>
-    <P Name="Position">[320, 198, 385, 262]</P>
-    <P Name="ZOrder">8</P>
+    <P Name="Position">[300, 58, 365, 122]</P>
+    <P Name="ZOrder">9</P>
     <P Name="InputPortMap">u0,u1</P>
     <P Name="BreakpointsForDimension1">Tdref_v_bp_ms</P>
     <P Name="BreakpointsForDimension2">Tdref_ay_bp_ms2</P>
@@ -1015,97 +1131,65 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_1.xml
     <P Name="InternalRulePriority">Speed</P>
     <P Name="RndMeth">Simplest</P>
   </Block>
-  <Block BlockType="Product" Name="Product_Tdref" SID="12">
+  <Block BlockType="Product" Name="Prod_Tdref" SID="21">
     <PortCounts in="2" out="1"/>
-    <P Name="Position">[500, 202, 530, 233]</P>
-    <P Name="ZOrder">9</P>
+    <P Name="Position">[460, 72, 490, 103]</P>
+    <P Name="ZOrder">10</P>
     <P Name="Inputs">**</P>
   </Block>
-  <Block BlockType="Signum" Name="Sign_ay" SID="10">
-    <P Name="Position">[200, 460, 230, 490]</P>
-    <P Name="ZOrder">7</P>
+  <Block BlockType="Signum" Name="Sign_ay" SID="19">
+    <P Name="Position">[380, 200, 410, 230]</P>
+    <P Name="ZOrder">8</P>
   </Block>
-  <Block BlockType="Sum" Name="Sum_eT" SID="13">
-    <PortCounts in="2" out="1"/>
-    <P Name="Position">[780, 102, 810, 133]</P>
-    <P Name="ZOrder">10</P>
-    <P Name="IconShape">rectangular</P>
-    <P Name="Inputs">+-</P>
-  </Block>
-  <Block BlockType="Outport" Name="T_d_ref" SID="7">
-    <P Name="Position">[700, 198, 730, 212]</P>
-    <P Name="ZOrder">4</P>
-  </Block>
-  <Block BlockType="Outport" Name="e_T" SID="8">
-    <P Name="Position">[900, 58, 930, 72]</P>
-    <P Name="ZOrder">5</P>
-    <P Name="Port">2</P>
+  <Block BlockType="Outport" Name="T_d_ref" SID="14">
+    <P Name="Position">[560, 68, 590, 82]</P>
+    <P Name="ZOrder">3</P>
   </Block>
   <Line>
+    <P Name="ZOrder">2</P>
+    <P Name="Src">13#out:1</P>
+    <P Name="Points">[15, 0; 0, 10]</P>
+    <P Name="Dst">15#in:1</P>
+  </Line>
+  <Line>
     <P Name="ZOrder">3</P>
-    <P Name="Src">6#out:1</P>
-    <P Name="Points">[0, 0]</P>
-    <Branch>
-      <P Name="ZOrder">2</P>
-      <P Name="Points">[55, 0; 0, 10]</P>
-      <P Name="Dst">9#in:1</P>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">4</P>
-      <P Name="Points">[55, 0; 0, 110]</P>
-      <P Name="Dst">10#in:1</P>
-    </Branch>
+    <P Name="Src">12#out:1</P>
+    <P Name="Points">[105, 0; 0, 10]</P>
+    <P Name="Dst">20#in:1</P>
+  </Line>
+  <Line>
+    <P Name="ZOrder">4</P>
+    <P Name="Src">16#out:1</P>
+    <P Name="Dst">18#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">5</P>
-    <P Name="Src">5#out:1</P>
-    <P Name="Points">[115, 0; 0, 10]</P>
-    <P Name="Dst">11#in:1</P>
+    <P Name="Src">18#out:1</P>
+    <P Name="Points">[25, 0; 0, -10]</P>
+    <P Name="Dst">20#in:2</P>
   </Line>
   <Line>
     <P Name="ZOrder">6</P>
-    <P Name="Src">9#out:1</P>
-    <P Name="Points">[35, 0; 0, -130]</P>
-    <P Name="Dst">11#in:2</P>
+    <P Name="Src">17#out:1</P>
+    <P Name="Dst">19#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">7</P>
-    <P Name="Src">10#out:1</P>
-    <P Name="Points">[250, 0]</P>
-    <P Name="Dst">12#in:1</P>
+    <P Name="Src">20#out:1</P>
+    <P Name="Points">[35, 0; 0, -10]</P>
+    <P Name="Dst">21#in:1</P>
   </Line>
   <Line>
     <P Name="ZOrder">8</P>
-    <P Name="Src">11#out:1</P>
-    <P Name="Points">[95, 0]</P>
-    <P Name="Dst">12#in:2</P>
+    <P Name="Src">19#out:1</P>
+    <P Name="Points">[15, 0; 0, -120]</P>
+    <P Name="Dst">21#in:2</P>
   </Line>
   <Line>
-    <P Name="ZOrder">11</P>
-    <P Name="Src">12#out:1</P>
-    <P Name="Points">[0, 0]</P>
-    <Branch>
-      <P Name="ZOrder">9</P>
-      <P Name="Points">[75, 0; 0, -15]</P>
-      <P Name="Dst">7#in:1</P>
-    </Branch>
-    <Branch>
-      <P Name="ZOrder">12</P>
-      <P Name="Points">[115, 0; 0, -95]</P>
-      <P Name="Dst">13#in:2</P>
-    </Branch>
-  </Line>
-  <Line>
-    <P Name="ZOrder">10</P>
-    <P Name="Src">4#out:1</P>
-    <P Name="Points">[345, 0; 0, 65]</P>
-    <P Name="Dst">13#in:1</P>
-  </Line>
-  <Line>
-    <P Name="ZOrder">13</P>
-    <P Name="Src">13#out:1</P>
-    <P Name="Points">[35, 0; 0, -55]</P>
-    <P Name="Dst">8#in:1</P>
+    <P Name="ZOrder">9</P>
+    <P Name="Src">21#out:1</P>
+    <P Name="Points">[25, 0; 0, -15]</P>
+    <P Name="Dst">14#in:1</P>
   </Line>
 </System>
 
@@ -1115,7 +1199,7 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_root.xml
   <P Name="Location">[23, 11, 1017, 770]</P>
   <P Name="Open">on</P>
   <P Name="ReportName">simulink-default.rpt</P>
-  <P Name="SIDHighWatermark">13</P>
+  <P Name="SIDHighWatermark">25</P>
   <Block BlockType="SubSystem" Name="Reference" SID="1">
     <PortCounts in="3" out="2"/>
     <P Name="Position">[50, 49, 150, 91]</P>
@@ -1184,7 +1268,7 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       <Array PropName="PersistedApps" Type="Cell" Dimension="0*1"/>
       <P Name="WindowUuid" Class="char">43a7fe24-6618-44b7-a6c4-7acfaa3515db</P>
     </Object>
-    <P Name="BDUuid" Class="char">86bfab1e-768d-44bd-aab2-f4371c8ffd13</P>
+    <P Name="BDUuid" Class="char">1c87d93a-82e9-40c3-b883-28dca40c4e84</P>
   </Object>
 </WindowsInfo>
 

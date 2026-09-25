@@ -1,17 +1,16 @@
-function test_cum3(modelFileName)
-%TEST_CUM3 Kiem chung khoi Bike2DOF (Cum 3).
-%   test_cum3() - test ban vua build (Bike2DOF_s.mdl, mac dinh).
-%   test_cum3('Bike2DOF') - test ban da tu format tay.
+function test_cum3()
+%TEST_CUM3 Verify Bike2DOF.mdl (Cluster 3, hand-formatted from the
+%build_cum3.m output).
 %
-%   Chi doi hoi model co DUNG 1 subsystem cap goc voi cac cong TEN:
+%   Requires the root subsystem to expose ports named:
 %   In: F_yf, F_yr, v | Out: beta, gamma, a_y.
 %
-%   Cap F_yf, F_yr, v HANG SO, so sanh nghiem beta(t), gamma(t) voi nghiem
-%   giai tich cua he tuyen tinh bac 2 hang so (dung expm).
+%   Feeds CONSTANT F_yf, F_yr, v and compares beta(t), gamma(t) with the
+%   analytic solution of the constant-coefficient 2nd-order linear system
+%   (expm), a_y with (F_yf+F_yr)/m. Parameters are read INDEPENDENTLY from
+%   data/params.json.
 
-if nargin < 1
-    modelFileName = 'Bike2DOF_s';
-end
+modelFileName = 'Bike2DOF';
 
 scriptDir = fileparts(mfilename('fullpath'));   % Plant/script
 plantDir  = fileparts(scriptDir);               % Plant/
@@ -22,7 +21,7 @@ if bdIsLoaded(modelFileName)
 end
 load_system(fullfile(plantDir, [modelFileName '.mdl']));
 
-dut = subsystemDuyNhat(modelFileName);
+dut = findRootSubsystem(modelFileName);
 
 harnessName = 'test_cum3_harness';
 if bdIsLoaded(harnessName)
@@ -90,26 +89,28 @@ err_gamma = max(abs(gamma_sim.Data - gamma_ref));
 err_ay    = max(abs(ay_sim.Data - ay_ref));
 
 tol = 1e-4;
-assert(err_beta < tol, 'beta sai lech vuot nguong');
-assert(err_gamma < tol, 'gamma sai lech vuot nguong');
-assert(err_ay < 1e-6, 'a_y sai lech vuot nguong');
+assert(err_beta < tol, 'beta error exceeds tolerance');
+assert(err_gamma < tol, 'gamma error exceeds tolerance');
+assert(err_ay < 1e-6, 'a_y error exceeds tolerance');
 
-fprintf('[%s] TEST PASS: beta(end)=%.6g gamma(end)=%.6g a_y=%.6g (khop giai tich, sai_lech<%.0e)\n', ...
+fprintf('[%s] TEST PASS: beta(end)=%.6g gamma(end)=%.6g a_y=%.6g (matches analytic, error<%.0e)\n', ...
     modelFileName, beta_sim.Data(end), gamma_sim.Data(end), ay_sim.Data(end), tol);
 
 close_system(harnessName, 0);
 close_system(modelFileName, 0);
 end
 
-%% ===================== Ham tien ich =====================
-function subPath = subsystemDuyNhat(modelFileName)
+%% ===================== Utility functions =====================
+function subPath = findRootSubsystem(modelFileName)
     subs = find_system(modelFileName, 'SearchDepth', 1, 'BlockType', 'SubSystem');
-    assert(numel(subs) == 1, 'Model %s phai co dung 1 subsystem cap goc, tim thay %d', ...
+    assert(numel(subs) == 1, 'Model %s must have exactly 1 root subsystem, found %d', ...
         modelFileName, numel(subs));
     subPath = subs{1};
 end
 
 function ref = portRef(subPath, portName)
+% "<BlockNameInParent>/<PortNumber>" of the Inport/Outport named portName
+% inside subPath - ports are found BY NAME, never by assumed order.
     parts = strsplit(subPath, '/');
     blockNameInParent = parts{end};
     ports = find_system(subPath, 'SearchDepth', 1, 'BlockType', 'Inport');
@@ -126,5 +127,5 @@ function ref = portRef(subPath, portName)
             return;
         end
     end
-    error('Khong tim thay cong ten "%s" trong %s', portName, subPath);
+    error('Port named "%s" not found in %s', portName, subPath);
 end

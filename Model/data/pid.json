@@ -1,0 +1,7 @@
+{
+  "_note": "Tham số thiết kế bộ điều khiển PID (Documents/DieuKhien_PID.txt). Chỉ chứa LỰA CHỌN và số ĐO ĐƯỢC; Kp, Ki, Kd được TÍNH từ Kcu, Pu bằng quy tắc Ziegler-Nichols trong load_pid.m. Kcu, Pu lấy ở điều kiện XẤU NHẤT trên lưới đo trong vùng biên (Result/PID/PID_Kcu_grid.csv, Sim/script/scan_kcu_grid.m): v = 80 km/h, mu = 0.2, a_y = 0.1 g.",
+  "Ts_ctrl":  { "value": 0.01,   "unit": "s", "desc": "Chu kỳ lấy mẫu bộ điều khiển số (ECU), ZOH ở đầu vào", "ref": "tự chọn" },
+  "Kcu":      { "value": 2.677,  "unit": "-", "desc": "Độ lợi tới hạn NHỎ NHẤT trên lưới điều kiện trong vùng biên (v 20-100 km/h, mu 0.2-0.8, a_y = 0.5 và 1 lần giới hạn): hệ số P lớn nhất trước khi vòng kín mất ổn định (chỉ có khâu P). ĐO bằng Sim/script/scan_kcu_grid.m (dùng find_ultimate_gain.m)", "ref": "đo mô phỏng, Seborg (cycling method)" },
+  "Pu":       { "value": 0.0940, "unit": "s", "desc": "Chu kỳ dao động tại độ lợi tới hạn ở điều kiện có Kcu nhỏ nhất (10.6 Hz). ĐO bằng scan_kcu_grid.m", "ref": "đo mô phỏng, Seborg (cycling method)" },
+  "alpha_D":  { "value": 0.1,    "unit": "-", "desc": "Hệ số lọc khâu D: T_filt = max(alpha_D*tau_D, Ts_ctrl)", "ref": "Seborg Eq. 8-12 (0.05-0.2, thường 0.1)" }
+}

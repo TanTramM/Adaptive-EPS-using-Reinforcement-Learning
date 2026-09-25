@@ -4,6 +4,8 @@ Luận văn Thạc sĩ (HCMUT, GVHD: TS. Phùng Thanh Huy, HV: Trần Minh Tân)
 Đề tài: điều khiển trợ lực lái điện thích ứng (Adaptive C-EPS) khắc phục hiện
 tượng trợ lực thừa (over-assist) khi hệ số bám mu thay đổi, dùng RL.
 
+**ĐẦU MỖI PHIÊN: đọc `History_Chat.md` (thư mục gốc) TRƯỚC KHI làm việc.** File đó ghi lại toàn bộ cuộc trò chuyện và trạng thái hiện tại của dự án. **CUỐI MỖI LƯỢT hỏi-đáp: thêm 1 mục "Lượt N" vào cuối `History_Chat.md` (và sửa mục "TRẠNG THÁI HIỆN TẠI" nếu có thay đổi)** - người dùng dựa vào file này để chuyển sang phiên mới khi hết token.
+
 Toàn bộ giao tiếp, tài liệu, code comment (nếu có) đều bằng **tiếng Việt**,
 trừ tên biến/ký hiệu kỹ thuật giữ nguyên tiếng Anh/công thức gốc.
 
@@ -23,9 +25,9 @@ trừ tên biến/ký hiệu kỹ thuật giữ nguyên tiếng Anh/công thức
 - `References/` - paper tham khảo (Rajamani Vehicle Dynamics and Control,
   Multi-Map EPS, CEPS ANFIS-FOC, Road_Identification_BP-NN, Saifia2015 =
   Fuzzy_Control_EPS_Constraints (trùng file), Process_Control.pdf - Seborg).
-- `Model/` - Simulink/S-Function. Hiện ĐANG TRỐNG (đã xóa toàn bộ để làm lại
-  từ đầu sau khi 3 file cụm ở Documents/ được chốt xong). Chỉ code lại khi cả
-  3 cụm đã hoàn thiện và được xác nhận.
+- `Model/` - Simulink + script MATLAB (code `.m` bằng TIẾNG ANH): `data/` (params.json, ref.json, pid.json, smc.json, map.json, boundaries.json), `load_plant.m` (+ `load_derived.m`), `load_ref.m`, `load_pid.m`, `load_smc.m`, `load_map.m` (mỗi file bộ điều khiển tự gọi load_plant và load_ref), `Model_PID_s.mdl`, `Model_SMC_s.mdl`, `Model_Map_s.mdl` (vòng kín chạy được), `Plant/` (SteeringColumn, Tires, Bike2DOF, Plant), `Ref/` (Reference), `PID/`, `SMC/`, `Map/` (bản đồ EPS tra bảng, baseline), `Sim/` (vòng kín, so sánh, đo Kcu/Pu, ước lượng T_a,max). Chi tiết: `History_Chat.md`.
+- `tools/reflow_txt.ps1` - gộp/ngắt dòng file `.txt` theo quy tắc 190 ký tự (xem `History_Chat.md`).
+- `old/` - bản cũ người dùng để tham chiếu (old/TB = bản thanh xoắn). Không sửa.
 
 ## Triết lý làm việc (QUAN TRỌNG - áp dụng cho MỌI việc, không riêng vật lý)
 
@@ -66,6 +68,40 @@ Quy tắc bắt buộc trong phần "KẾT QUẢ":
 - Không lặp lại suy diễn đã có ở cụm khác (vd phương trình hình học delta_f
   chỉ xuất hiện ở Cụm 2 - nơi nó THỰC SỰ được dùng - dù về mặt cơ khí nó phát
   sinh từ Cụm 1).
+
+## Quy tắc diễn đạt (trả lời và tài liệu)
+
+- Mọi từ viết tắt hoặc thuật ngữ chuyên ngành phải được GIẢI THÍCH ngay lần đầu xuất hiện (viết đầy đủ + một câu nói nghĩa là gì), ví dụ "Ziegler-Nichols (ZN, quy tắc chỉnh PID đơn giản: ...)". Không xếp nhiều viết tắt liền nhau trong một câu; ưu tiên câu văn thường. Ký hiệu toán (K_eff, tau_c...) nêu ý nghĩa vật lý bên cạnh.
+
+## Quy tắc định dạng file `.txt` trong `Documents/`
+
+**Độ rộng dòng: 190 ký tự (+-10%, tức 180-200).** Người dùng đọc các file này
+trong editor rộng, nên KHÔNG xuống dòng sớm ở khoảng 80 ký tự - làm vậy khiến
+mỗi đoạn dài ra theo chiều dọc và trống 1 bên màn hình.
+- Chỉ được xuống dòng khi dòng đã đạt **ít nhất 180** ký tự và **không quá
+  200** ký tự. Ngắt ở ranh giới từ gần 190 nhất (tùy độ dài từ, miễn nằm
+  trong 180-200), không cắt giữa từ, giữa ký hiệu, hay giữa công thức.
+- Áp dụng cho MỌI đoạn văn xuôi trong `.txt` khi tạo mới hoặc sửa. Khi sửa
+  1 đoạn có sẵn, gộp/ngắt lại cả đoạn theo quy tắc này, không để lẫn dòng
+  ngắn cũ với dòng dài mới.
+- KHÔNG áp dụng cho: dòng đầu mục hoặc dòng gạch ngang phân cách (`----`,
+  `====`, tiêu đề mục), dòng công thức ASCII và dòng LaTeX `[ ... ]` (mỗi
+  công thức giữ 1 dòng riêng như quy ước file cụm), bảng, danh sách ngắn mỗi
+  mục 1 dòng, và dòng thụt lề của danh sách con (giữ thụt lề khi ngắt dòng
+  tiếp theo của cùng mục).
+- Dòng gạch ngang phân cách dài đúng khoảng 190 ký tự để làm thước đo trực
+  quan (người dùng đã kiểm tra: dòng 190 gạch ngang vừa chạm gần cuối màn
+  hình).
+- Không đo bằng mắt: khi ghi file, kiểm tra lại bằng lệnh đếm độ dài dòng
+  trước khi báo xong. Phải đếm KÝ TỰ, không đếm byte (tiếng Việt có dấu chiếm
+  nhiều byte/ký tự) - ví dụ PowerShell: `Get-Content -Encoding UTF8 file.txt |
+  ForEach-Object { $_.Length }`.
+
+## Quy tắc lưu kết quả (`Result/`)
+
+- Mọi kết quả (hình `.png`, bảng `.csv`, `.mat`) lưu dưới `Result/` ở thư mục gốc, MỖI đối tượng một thư mục: `Result/Plant/`, `Result/Reference/`, `Result/PID/`, `Result/SMC/` (kết quả của MỘT bộ điều khiển hoặc một thành phần), `Result/Compare/<A>_vs_<B>/` (kết quả so sánh nhiều bộ điều khiển, ví dụ `PID_vs_SMC`). Bộ điều khiển mới thêm thì tạo `Result/<Tên>/`.
+- Tên file theo ý nghĩa: `<Đối tượng>_<nội dung>_<điều kiện>.<đuôi>`, ví dụ `PID_S1_hold_angle_mu_step_time_response.png`, `PID_vs_SMC_scenario_metrics.csv`, `Plant_Ta_max_by_speed_mu0p8.csv`. Tên kịch bản có nghĩa (`S1_hold_angle_mu_step`, `S2_sine_steering_mu_step`), điều kiện số dùng `0p8` thay dấu chấm.
+- Mọi script xuất kết quả dùng `Model/result_dir.m` để lấy đường dẫn (chỗ DUY NHẤT biết gốc `Result/`) và `Model/save_run_results.m` để xuất tín hiệu + hình một lần chạy; KHÔNG ghi đường dẫn cứng. Model `Model_<Ctrl>_s.mdl` có `StopFcn` tự gọi `save_run_results` khi chạy tay (file `<Ctrl>_manual_run_*`), nên `ReturnWorkspaceOutputs = off`; script chạy model bằng `sim(Simulink.SimulationInput(tên))` để luôn nhận được đối tượng kết quả.
 
 ## Quy tắc dựng model Simulink (áp dụng cho MỌI `build_*.m` trong `Model/`)
 
@@ -181,25 +217,9 @@ Chỉ tài liệu (`.txt`, `.md`) và hội thoại mới dùng tiếng Việt.
   cho harness - solver bước-thay-đổi mặc định chọn bước quá lớn sau khi hệ
   ổn định, gây méo số liệu log (đã gặp thật ở Cụm 1).
 
-## Trạng thái hiện tại (cập nhật khi có thay đổi lớn)
+## Trạng thái hiện tại
 
-- **Bài toán điều khiển** đã dựng lại từ đầu theo khung Seborg (Blueprint
-  mục 1.2-1.4): MV = T_a; CV = T_s (mô-men cảm biến); DV không đo được =
-  {T_d (mô-men tay tài xế), mu}; DV đo được = v. Sai số: e_T = T_s - T_d,ref.
-- **Phạm vi đã THU HẸP**: chỉ xét khắc phục over-assist, KHÔNG xét chỉ tiêu
-  "mượt"/độ êm (Blueprint mục 1.4(d)).
-- **Cụm 1 đã đổi sang mô hình 2 khối quán tính có THANH XOẮN** (bỏ giả thiết
-  trục cứng): tham số K, J1, C1, J2, C2, T_f từ Lee 2018 [1]. Lý do: trục
-  cứng làm T_a không tác động thật lên CV. Biến trạng thái Cụm 1: theta1,
-  theta1_dot, theta2, theta2_dot (toàn hệ thành 6 biến, không còn 4).
-- **Cụm 2** giữ nguyên vật lý, chỉ đổi cổng vào `theta` -> `theta2` (góc phía
-  sau thanh xoắn).
-- Model/: Cụm 1 và Cụm 2 đã dựng lại xong theo quy tắc trên, test PASS khớp
-  giải tích. CHƯA làm: `build_plant.m`, `build_cum3.m` (rà lại),
-  `build_reference.m` (đổi T_d -> T_s), các `sweep_*.m`.
-- CÒN TREO: T_a,max chưa có giá trị số - phương pháp đã chốt là tự xác định
-  từ Plant sau khi ghép xong (0.9 x ngưỡng mất ổn định, Blueprint mục 1.4c).
-- CÒN TREO: `params_cum1.csv` chưa cập nhật theo bộ tham số mới.
+Xem mục "TRẠNG THÁI HIỆN TẠI" trong `History_Chat.md` (luôn được cập nhật, chính xác hơn mục này). Tóm tắt: Plant 4 trạng thái (theta2, theta2_dot, beta, gamma) với góc vô-lăng theta1 là đầu vào; đã có PID (Ziegler-Nichols) và SMC bậc 1 + lớp biên sat cùng bộ so sánh; T_a,max ước lượng 5.6-7.2 N.m nhưng CHƯA áp giới hạn; RL chưa làm.
 
 ## Ghi chú khác
 

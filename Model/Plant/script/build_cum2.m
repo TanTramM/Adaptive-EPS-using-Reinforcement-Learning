@@ -3,29 +3,30 @@
 % interaction) as its own subsystem, saved as Tires_s.mdl RIGHT INSIDE the
 % Plant/ folder - the "_s" suffix distinguishes it from the hand-formatted
 % version (Tires.mdl, same folder). Matches Documents/Cum2_Pacejka.txt,
-% Eq.(1)-(11):
+% Eq.(1)-(14):
 %
 %   Section 1 - Tire slip angles:
 %     delta_f = theta2/n_st
 %     alpha_f = delta_f - beta - l_f*gamma/v
 %     alpha_r = -beta + l_r*gamma/v
-%   Section 2 - Static load + tire lateral forces:
-%     F_zf = m*g*l_r/(l_f+l_r)   (precomputed once - see load_derived.m)
-%     D    = mu*F_zf
-%     B    = C_alpha_f/(C*D)
-%     F_yf = D*sin(C*atan(u - E*(u - atan(u))))  with  u = B*alpha_f
-%     F_yr = C_r*alpha_r
+%   Section 2 - Static loads + tire lateral forces (same Magic Formula, both axles):
+%     F_zf = m*g*l_r/(l_f+l_r),  F_zr = m*g*l_f/(l_f+l_r)   (precomputed once - see load_derived.m)
+%     D_f  = mu*F_zf,  B_f = C_alpha_f/(C*D_f)
+%     F_yf = D_f*sin(C*atan(u - E*(u - atan(u))))  with  u = B_f*alpha_f
+%     D_r  = mu*F_zr,  B_r = C_r/(C*D_r)
+%     F_yr = D_r*sin(C*atan(u - E*(u - atan(u))))  with  u = B_r*alpha_r
 %   Section 3 - Road reaction (aligning) torque:
-%     e_p  = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)
+%     e_p  = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf))
+%            (floored at 0: brush model, trail is zero once the tire slides fully)
 %     K_tr = e_p/n_st
 %     T_r  = K_tr*F_yf
 %
-% INPUT ANGLE: the root input is theta2 (angle on the FAR side of the
-% torsion spring, J2 block) - NOT theta1 (steering-wheel angle). See
-% Cum1_CEPS.txt and Blueprint section 2.2/2.3.
+% INPUT ANGLE: the root input is theta2 (angle on the FAR side of the torsion
+% spring, the column block J_col) - NOT theta1 (steering-wheel angle, the plant input
+% chosen by the driver). See Cum1_CEPS.txt.
 %
-% HIERARCHY (see CLAUDE.md, "Quy tac dung model Simulink" - one subsystem
-% per NAMED quantity that is reused by more than one downstream consumer;
+% HIERARCHY (see Claude.md, "Quy tac dung model Simulink" - one subsystem
+% per NAMED quantity of the equations (D_f, B_f, F_yf, D_r, B_r, F_yr);
 % pure single-use algebra intermediates, like the Magic Formula's internal
 % t1..t4 terms, stay as plain blocks inside their parent, not split out):
 %
@@ -38,26 +39,28 @@
 %     +-- TireForces      (Section 2)
 %     |     In : alpha_f, alpha_r, mu     Out: F_yf, F_yr
 %     |     |
-%     |     +-- D          In: mu          Out: D     (F_zf read via
+%     |     +-- D_f        In: mu          Out: D_f   (F_zf read via
 %     |     |                                          Constant inside -
 %     |     |                                          precomputed once by
 %     |     |                                          load_derived.m, NOT
 %     |     |                                          a port anywhere)
-%     |     +-- B          In: D           Out: B
-%     |     +-- Cal F_yf   In: D, B, alpha_f            Out: F_yf
-%     |     +-- Cal F_yr   In: alpha_r                  Out: F_yr
+%     |     +-- B_f        In: D_f         Out: B_f
+%     |     +-- Cal F_yf   In: D_f, B_f, alpha_f        Out: F_yf
+%     |     +-- D_r        In: mu          Out: D_r   (F_zr read via Constant)
+%     |     +-- B_r        In: D_r         Out: B_r
+%     |     +-- Cal F_yr   In: D_r, B_r, alpha_r        Out: F_yr
 %     |
 %     +-- AligningTorque  (Section 3)
-%           In : alpha_f, F_yf, mu         Out: T_r     (F_zf read via
+%           In : alpha_f, mu, F_yf         Out: T_r     (F_zf read via
 %                                                        Constant inside,
-%                                                        same as D above -
+%                                                        same as D_f above -
 %                                                        no F_zf port)
 %
-% Parameters are read from the base workspace - run Model/load_params.m
+% Parameters are read from the base workspace - run Model/load_plant.m
 % BEFORE building.
 %
 % Usage (run from this folder, Plant/script/):
-%   >> run('../../load_params.m')
+%   >> run('../../load_plant.m')
 %   >> build_cum2
 
 modelName = 'Tires_s';
@@ -125,8 +128,12 @@ add_line(sub, [f_af_tf '/1'], 'TireForces/1', 'autorouting', 'on');
 f_af_at = addFrom(sub, 'alpha_f', 500, 410);
 add_line(sub, [f_af_at '/1'], 'AligningTorque/1', 'autorouting', 'on');
 
-% alpha_r is only used by Section 2 -> wire directly
-add_line(sub, 'SlipAngles/2', 'TireForces/2', 'autorouting', 'on');
+% alpha_r is a named quantity (Eq.(3)) consumed by Section 2 -> Goto/From
+% (tag even for 1 destination - Claude.md rule 4)
+g_ar = addGoto(sub, 'alpha_r', 460, 150);
+add_line(sub, 'SlipAngles/2', [g_ar '/1'], 'autorouting', 'on');
+f_ar_tf = addFrom(sub, 'alpha_r', 500, 250);
+add_line(sub, [f_ar_tf '/1'], 'TireForces/2', 'autorouting', 'on');
 
 % mu is used by BOTH Section 2 and Section 3 -> Goto/From
 g_mu = addGoto(sub, 'mu', 150, 320);
@@ -134,7 +141,7 @@ add_line(sub, 'mu/1', [g_mu '/1'], 'autorouting', 'on');
 f_mu_tf = addFrom(sub, 'mu', 500, 190);
 add_line(sub, [f_mu_tf '/1'], 'TireForces/3', 'autorouting', 'on');
 f_mu_at = addFrom(sub, 'mu', 500, 500);
-add_line(sub, [f_mu_at '/1'], 'AligningTorque/3', 'autorouting', 'on');
+add_line(sub, [f_mu_at '/1'], 'AligningTorque/2', 'autorouting', 'on');
 
 % F_yf goes to the cluster output AND into Section 3 -> Goto/From
 g_fyf = addGoto(sub, 'F_yf', 900, 100);
@@ -142,7 +149,7 @@ add_line(sub, 'TireForces/1', [g_fyf '/1'], 'autorouting', 'on');
 f_fyf_out = addFrom(sub, 'F_yf', 1100, 100);
 add_line(sub, [f_fyf_out '/1'], 'F_yf/1', 'autorouting', 'on');
 f_fyf_at = addFrom(sub, 'F_yf', 500, 460);
-add_line(sub, [f_fyf_at '/1'], 'AligningTorque/2', 'autorouting', 'on');
+add_line(sub, [f_fyf_at '/1'], 'AligningTorque/3', 'autorouting', 'on');
 
 % F_yr, T_r: only 1 destination each -> wire directly
 add_line(sub, 'TireForces/2', 'F_yr/1', 'autorouting', 'on');
@@ -193,7 +200,11 @@ function buildSlipAngles(sa)
     add_line(sa, [f_gam1 '/1'], 'Prod_lfg/2', 'autorouting', 'on');
     add_line(sa, 'Prod_lfg/1', 'Div_lfg_v/1', 'autorouting', 'on');
     add_line(sa, [f_v1 '/1'],  'Div_lfg_v/2', 'autorouting', 'on');
-    add_line(sa, 'Div_delta/1', 'Sum_af/1', 'autorouting', 'on');
+    % delta_f is a named quantity (Eq.(1)) -> Goto/From even for 1 destination
+    g_df = addGoto(sa, 'delta_f', 280, 60);
+    add_line(sa, 'Div_delta/1', [g_df '/1'], 'autorouting', 'on');
+    f_df = addFrom(sa, 'delta_f', 420, 90);
+    add_line(sa, [f_df '/1'], 'Sum_af/1', 'autorouting', 'on');
     add_line(sa, 'beta/1',      'Sum_af/2', 'autorouting', 'on');
     add_line(sa, 'Div_lfg_v/1', 'Sum_af/3', 'autorouting', 'on');
     add_line(sa, 'Sum_af/1',    'alpha_f/1', 'autorouting', 'on');
@@ -218,165 +229,184 @@ end
 
 %% ===================== Section 2: tire lateral forces =====================
 function buildTireForces(tf)
+% Both axles use the same Magic Formula (front: D_f, B_f, alpha_f -> F_yf;
+% rear: D_r, B_r, alpha_r -> F_yr). Two rows, front on top, rear below.
+% mu is used by both rows -> Goto/From.
     addInport(tf, 'alpha_f', 1,  40,  60);
-    addInport(tf, 'alpha_r', 2,  40, 360);
-    addInport(tf, 'mu',      3,  40, 140);
+    addInport(tf, 'alpha_r', 2,  40, 420);
+    addInport(tf, 'mu',      3,  40, 240);
 
     addOutport(tf, 'F_yf', 1, 1180, 100);
     addOutport(tf, 'F_yr', 2, 1180, 360);
 
-    % --- D: In mu -> Out D (top row) ---
-    dSub = [tf '/D'];
-    createSubsystem(dSub);
-    moveBlock(dSub, 220, 100);
-    buildD(dSub);
-    add_line(tf, 'mu/1', 'D/1', 'autorouting', 'on');
+    g_mu = addGoto(tf, 'mu', 120, 240);
+    add_line(tf, 'mu/1', [g_mu '/1'], 'autorouting', 'on');
 
-    % --- B: In D -> Out B (continues the same row) ---
-    bSub = [tf '/B'];
-    createSubsystem(bSub);
-    moveBlock(bSub, 420, 100);
-    buildB(bSub);
+    % ----- front row: D_f -> B_f -> Cal F_yf -----
+    dfSub = [tf '/D_f'];
+    createSubsystem(dfSub);
+    moveBlock(dfSub, 220, 100);
+    buildD(dfSub, 'D_f', 'F_zf');
+    f_mu_f = addFrom(tf, 'mu', 160, 100);
+    add_line(tf, [f_mu_f '/1'], 'D_f/1', 'autorouting', 'on');
 
-    g_D = addGoto(tf, 'D', 380, 100);
-    add_line(tf, 'D/1', [g_D '/1'], 'autorouting', 'on');
-    f_D_b = addFrom(tf, 'D', 400, 100);
-    add_line(tf, [f_D_b '/1'], 'B/1', 'autorouting', 'on');
+    bfSub = [tf '/B_f'];
+    createSubsystem(bfSub);
+    moveBlock(bfSub, 420, 100);
+    buildB(bfSub, 'D_f', 'B_f', 'C_alpha_f');
 
-    % --- Cal F_yf: In D, B, alpha_f -> Out F_yf (row continues right) ---
+    g_Df = addGoto(tf, 'D_f', 380, 100);
+    add_line(tf, 'D_f/1', [g_Df '/1'], 'autorouting', 'on');
+    f_Df_b = addFrom(tf, 'D_f', 400, 100);
+    add_line(tf, [f_Df_b '/1'], 'B_f/1', 'autorouting', 'on');
+
     fyfSub = [tf '/Cal F_yf'];
     createSubsystem(fyfSub);
     moveBlock(fyfSub, 640, 60);
-    buildCalFyf(fyfSub);
+    buildCalF(fyfSub, 'D_f', 'B_f', 'alpha_f', 'F_yf');
 
-    f_D_fyf = addFrom(tf, 'D', 600, 200);   % D is consumed late inside
-    add_line(tf, [f_D_fyf '/1'], 'Cal F_yf/1', 'autorouting', 'on');
-    g_B = addGoto(tf, 'B', 580, 100);
-    add_line(tf, 'B/1', [g_B '/1'], 'autorouting', 'on');
-    f_B_fyf = addFrom(tf, 'B', 600, 60);
-    add_line(tf, [f_B_fyf '/1'], 'Cal F_yf/2', 'autorouting', 'on');
+    f_Df_fyf = addFrom(tf, 'D_f', 600, 200);   % D_f is consumed late inside
+    add_line(tf, [f_Df_fyf '/1'], 'Cal F_yf/1', 'autorouting', 'on');
+    g_Bf = addGoto(tf, 'B_f', 580, 100);
+    add_line(tf, 'B_f/1', [g_Bf '/1'], 'autorouting', 'on');
+    f_Bf_fyf = addFrom(tf, 'B_f', 600, 60);
+    add_line(tf, [f_Bf_fyf '/1'], 'Cal F_yf/2', 'autorouting', 'on');
     add_line(tf, 'alpha_f/1', 'Cal F_yf/3', 'autorouting', 'on');
     add_line(tf, 'Cal F_yf/1', 'F_yf/1', 'autorouting', 'on');
 
-    % --- Cal F_yr: In alpha_r -> Out F_yr (own row, independent) ---
+    % ----- rear row: D_r -> B_r -> Cal F_yr (same shape, own row) -----
+    drSub = [tf '/D_r'];
+    createSubsystem(drSub);
+    moveBlock(drSub, 220, 340);
+    buildD(drSub, 'D_r', 'F_zr');
+    f_mu_r = addFrom(tf, 'mu', 160, 340);
+    add_line(tf, [f_mu_r '/1'], 'D_r/1', 'autorouting', 'on');
+
+    brSub = [tf '/B_r'];
+    createSubsystem(brSub);
+    moveBlock(brSub, 420, 340);
+    buildB(brSub, 'D_r', 'B_r', 'C_r');
+
+    g_Dr = addGoto(tf, 'D_r', 380, 340);
+    add_line(tf, 'D_r/1', [g_Dr '/1'], 'autorouting', 'on');
+    f_Dr_b = addFrom(tf, 'D_r', 400, 340);
+    add_line(tf, [f_Dr_b '/1'], 'B_r/1', 'autorouting', 'on');
+
     fyrSub = [tf '/Cal F_yr'];
     createSubsystem(fyrSub);
-    moveBlock(fyrSub, 640, 360);
-    buildCalFyr(fyrSub);
-    add_line(tf, 'alpha_r/1', 'Cal F_yr/1', 'autorouting', 'on');
+    moveBlock(fyrSub, 640, 300);
+    buildCalF(fyrSub, 'D_r', 'B_r', 'alpha_r', 'F_yr');
+
+    f_Dr_fyr = addFrom(tf, 'D_r', 600, 440);   % D_r is consumed late inside
+    add_line(tf, [f_Dr_fyr '/1'], 'Cal F_yr/1', 'autorouting', 'on');
+    g_Br = addGoto(tf, 'B_r', 580, 340);
+    add_line(tf, 'B_r/1', [g_Br '/1'], 'autorouting', 'on');
+    f_Br_fyr = addFrom(tf, 'B_r', 600, 300);
+    add_line(tf, [f_Br_fyr '/1'], 'Cal F_yr/2', 'autorouting', 'on');
+    add_line(tf, 'alpha_r/1', 'Cal F_yr/3', 'autorouting', 'on');
     add_line(tf, 'Cal F_yr/1', 'F_yr/1', 'autorouting', 'on');
 end
 
-function buildD(dSub)
-% D = mu*F_zf. F_zf is precomputed once (load_derived.m) - read here via a
-% plain Constant, NOT passed in as a port from anywhere.
+function buildD(dSub, outName, FzVar)
+% D_f = mu*F_zf (front) / D_r = mu*F_zr (rear). The static axle load is
+% precomputed once (load_derived.m) - read here via a plain Constant, NOT
+% passed in as a port from anywhere.
     addInport(dSub, 'mu', 1, 40, 60);
-    addOutport(dSub, 'D', 1, 300, 60);
+    addOutport(dSub, outName, 1, 300, 60);
 
-    hFzf = addConstant(dSub, 'F_zf', 160, 140);   % right below Prod_D
+    hFz = addConstant(dSub, FzVar, 160, 140);   % right below Prod_D
     addProduct(dSub, 'Prod_D', '**', 200, 60);
 
     add_line(dSub, 'mu/1',     'Prod_D/1', 'autorouting', 'on');
-    add_line(dSub, [hFzf '/1'], 'Prod_D/2', 'autorouting', 'on');
-    add_line(dSub, 'Prod_D/1', 'D/1', 'autorouting', 'on');
+    add_line(dSub, [hFz '/1'], 'Prod_D/2', 'autorouting', 'on');
+    add_line(dSub, 'Prod_D/1', [outName '/1'], 'autorouting', 'on');
 end
 
-function buildB(bSub)
-% B = C_alpha_f/(C*D)
-    addInport(bSub, 'D', 1, 40, 60);
-    addOutport(bSub, 'B', 1, 400, 60);
+function buildB(bSub, inName, outName, CaVar)
+% B_f = C_alpha_f/(C*D_f) (front) / B_r = C_r/(C*D_r) (rear)
+    addInport(bSub, inName, 1, 40, 60);
+    addOutport(bSub, outName, 1, 400, 60);
 
-    hC   = addConstant(bSub, 'C',         160, 140);   % near Prod_CD
-    hCaf = addConstant(bSub, 'C_alpha_f', 280, 140);   % near Div_B
+    hC   = addConstant(bSub, 'C',   160, 140);   % near Prod_CD
+    hCa  = addConstant(bSub, CaVar, 280, 140);   % near Div_B
 
     addProduct(bSub, 'Prod_CD', '**', 200, 60);
     addProduct(bSub, 'Div_B',   '*/', 320, 60);
 
-    add_line(bSub, 'D/1',       'Prod_CD/1', 'autorouting', 'on');
-    add_line(bSub, [hC '/1'],   'Prod_CD/2', 'autorouting', 'on');
-    add_line(bSub, [hCaf '/1'], 'Div_B/1', 'autorouting', 'on');
-    add_line(bSub, 'Prod_CD/1', 'Div_B/2', 'autorouting', 'on');
-    add_line(bSub, 'Div_B/1',   'B/1', 'autorouting', 'on');
+    add_line(bSub, [inName '/1'], 'Prod_CD/1', 'autorouting', 'on');
+    add_line(bSub, [hC '/1'],     'Prod_CD/2', 'autorouting', 'on');
+    add_line(bSub, [hCa '/1'],    'Div_B/1', 'autorouting', 'on');
+    add_line(bSub, 'Prod_CD/1',   'Div_B/2', 'autorouting', 'on');
+    add_line(bSub, 'Div_B/1',     [outName '/1'], 'autorouting', 'on');
 end
 
-function buildCalFyf(fyfSub)
-% u = B*alpha_f
-% F_yf = D*sin(C*atan(u - E*(u - atan(u))))
-% Main line, one straight row: Prod_u -> Trig_atan_u -> Sum_t1 -> Prod_t2
-% -> Sum_t3 -> Trig_atan_t3 -> Prod_t4 -> Trig_sin_t4 -> Prod_Fyf. B and
-% alpha_f drive the start of the chain (true left edge); D is only needed
-% at the very end (Prod_Fyf) - placed near there instead of the left
-% column (layout exception).
-    addInport(fyfSub, 'D',       1, 700, 160);   % used late -> near Prod_Fyf
-    addInport(fyfSub, 'B',       2,  40,  60);
-    addInport(fyfSub, 'alpha_f', 3,  40, 160);
+function buildCalF(sub, dName, bName, alphaName, outName)
+% u = B*alpha
+% F_y = D*sin(C*atan(u - E*(u - atan(u))))
+% Same block for both axles (front: D_f, B_f, alpha_f -> F_yf; rear: D_r,
+% B_r, alpha_r -> F_yr). Main line, one straight row: Prod_u -> Trig_atan_u
+% -> Sum_t1 -> Prod_t2 -> Sum_t3 -> Trig_atan_t3 -> Prod_t4 -> Trig_sin_t4
+% -> Prod_Fy. B and alpha drive the start of the chain (true left edge); D
+% is only needed at the very end (Prod_Fy) - placed near there instead of
+% the left column (layout exception).
+    addInport(sub, dName,     1, 700, 160);   % used late -> near Prod_Fy
+    addInport(sub, bName,     2,  40,  60);
+    addInport(sub, alphaName, 3,  40, 160);
 
-    addOutport(fyfSub, 'F_yf', 1, 1020, 60);
+    addOutport(sub, outName, 1, 1020, 60);
 
-    addProduct(fyfSub, 'Prod_u',       '**',  180,  60);
-    addTrigFcn(fyfSub, 'Trig_atan_u',  'atan', 280,  60);
-    addSum    (fyfSub, 'Sum_t1',       '+-',   380,  80);
-    addProduct(fyfSub, 'Prod_t2',      '**',   460, 100);
-    addSum    (fyfSub, 'Sum_t3',       '+-',   540,  80);
-    addTrigFcn(fyfSub, 'Trig_atan_t3', 'atan', 620,  80);
-    addProduct(fyfSub, 'Prod_t4',      '**',   700,  60);
-    addTrigFcn(fyfSub, 'Trig_sin_t4',  'sin',  800,  60);
-    addProduct(fyfSub, 'Prod_Fyf',     '**',   900,  60);
+    addProduct(sub, 'Prod_u',       '**',  180,  60);
+    addTrigFcn(sub, 'Trig_atan_u',  'atan', 280,  60);
+    addSum    (sub, 'Sum_t1',       '+-',   380,  80);
+    addProduct(sub, 'Prod_t2',      '**',   460, 100);
+    addSum    (sub, 'Sum_t3',       '+-',   540,  80);
+    addTrigFcn(sub, 'Trig_atan_t3', 'atan', 620,  80);
+    addProduct(sub, 'Prod_t4',      '**',   700,  60);
+    addTrigFcn(sub, 'Trig_sin_t4',  'sin',  800,  60);
+    prodFy = ['Prod_' strrep(outName, '_', '')];   % Prod_Fyf / Prod_Fyr
+    addProduct(sub, prodFy,         '**',   900,  60);
 
-    hE = addConstant(fyfSub, 'E', 460, 180);   % right below Prod_t2
-    hC = addConstant(fyfSub, 'C', 700, 160);   % right below Prod_t4
+    hE = addConstant(sub, 'E', 460, 180);   % right below Prod_t2
+    hC = addConstant(sub, 'C', 700, 160);   % right below Prod_t4
 
-    add_line(fyfSub, 'B/1',       'Prod_u/1', 'autorouting', 'on');
-    add_line(fyfSub, 'alpha_f/1', 'Prod_u/2', 'autorouting', 'on');
-    add_line(fyfSub, 'Prod_u/1',  'Trig_atan_u/1', 'autorouting', 'on');
+    add_line(sub, [bName '/1'],     'Prod_u/1', 'autorouting', 'on');
+    add_line(sub, [alphaName '/1'], 'Prod_u/2', 'autorouting', 'on');
+    add_line(sub, 'Prod_u/1',  'Trig_atan_u/1', 'autorouting', 'on');
 
     % u is used twice more (Sum_t1 and Sum_t3) -> Goto/From
-    g_u = addGoto(fyfSub, 'u', 240, 60);
-    add_line(fyfSub, 'Prod_u/1', [g_u '/1'], 'autorouting', 'on');
-    f_u1 = addFrom(fyfSub, 'u', 340, 100);
-    f_u2 = addFrom(fyfSub, 'u', 500, 120);
-    add_line(fyfSub, [f_u1 '/1'], 'Sum_t1/1', 'autorouting', 'on');
-    add_line(fyfSub, 'Trig_atan_u/1', 'Sum_t1/2', 'autorouting', 'on');
-    add_line(fyfSub, [hE '/1'],   'Prod_t2/1', 'autorouting', 'on');
-    add_line(fyfSub, 'Sum_t1/1',  'Prod_t2/2', 'autorouting', 'on');
-    add_line(fyfSub, [f_u2 '/1'], 'Sum_t3/1', 'autorouting', 'on');
-    add_line(fyfSub, 'Prod_t2/1', 'Sum_t3/2', 'autorouting', 'on');
-    add_line(fyfSub, 'Sum_t3/1',  'Trig_atan_t3/1', 'autorouting', 'on');
-    add_line(fyfSub, [hC '/1'],   'Prod_t4/1', 'autorouting', 'on');
-    add_line(fyfSub, 'Trig_atan_t3/1', 'Prod_t4/2', 'autorouting', 'on');
-    add_line(fyfSub, 'Prod_t4/1', 'Trig_sin_t4/1', 'autorouting', 'on');
-    add_line(fyfSub, 'D/1',       'Prod_Fyf/1', 'autorouting', 'on');
-    add_line(fyfSub, 'Trig_sin_t4/1', 'Prod_Fyf/2', 'autorouting', 'on');
-    add_line(fyfSub, 'Prod_Fyf/1', 'F_yf/1', 'autorouting', 'on');
-end
-
-function buildCalFyr(fyrSub)
-% F_yr = C_r*alpha_r
-    addInport(fyrSub, 'alpha_r', 1, 40, 60);
-    addOutport(fyrSub, 'F_yr', 1, 300, 60);
-
-    hCr = addConstant(fyrSub, 'C_r', 160, 140);   % right below Prod_Fyr
-    addProduct(fyrSub, 'Prod_Fyr', '**', 200, 60);
-
-    add_line(fyrSub, 'alpha_r/1', 'Prod_Fyr/1', 'autorouting', 'on');
-    add_line(fyrSub, [hCr '/1'],  'Prod_Fyr/2', 'autorouting', 'on');
-    add_line(fyrSub, 'Prod_Fyr/1', 'F_yr/1', 'autorouting', 'on');
+    g_u = addGoto(sub, 'u', 240, 60);
+    add_line(sub, 'Prod_u/1', [g_u '/1'], 'autorouting', 'on');
+    f_u1 = addFrom(sub, 'u', 340, 100);
+    f_u2 = addFrom(sub, 'u', 500, 120);
+    add_line(sub, [f_u1 '/1'], 'Sum_t1/1', 'autorouting', 'on');
+    add_line(sub, 'Trig_atan_u/1', 'Sum_t1/2', 'autorouting', 'on');
+    add_line(sub, [hE '/1'],   'Prod_t2/1', 'autorouting', 'on');
+    add_line(sub, 'Sum_t1/1',  'Prod_t2/2', 'autorouting', 'on');
+    add_line(sub, [f_u2 '/1'], 'Sum_t3/1', 'autorouting', 'on');
+    add_line(sub, 'Prod_t2/1', 'Sum_t3/2', 'autorouting', 'on');
+    add_line(sub, 'Sum_t3/1',  'Trig_atan_t3/1', 'autorouting', 'on');
+    add_line(sub, [hC '/1'],   'Prod_t4/1', 'autorouting', 'on');
+    add_line(sub, 'Trig_atan_t3/1', 'Prod_t4/2', 'autorouting', 'on');
+    add_line(sub, 'Prod_t4/1', 'Trig_sin_t4/1', 'autorouting', 'on');
+    add_line(sub, [dName '/1'],     [prodFy '/1'], 'autorouting', 'on');
+    add_line(sub, 'Trig_sin_t4/1',  [prodFy '/2'], 'autorouting', 'on');
+    add_line(sub, [prodFy '/1'], [outName '/1'], 'autorouting', 'on');
 end
 
 %% ===================== Section 3: road reaction torque ====================
 function buildAligningTorque(at)
-% e_p  = e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)
+% e_p  = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf))
 % K_tr = e_p/n_st ; T_r = K_tr*F_yf
 % e_p, K_tr are pure single-use algebra intermediates (never reused outside
 % this formula) - stay as plain blocks, same treatment as t1..t4 inside
 % Cal F_yf, no separate subsystem. F_zf: read via Constant (same pattern
-% as D above), not a port. F_yf is only needed at the very end (Prod_Tr) -
+% as D_f above), not a port. F_yf is only needed at the very end (Prod_Tr) -
 % placed near there, not at the left column (layout exception).
     addInport(at, 'alpha_f', 1,  40,  60);
     addInport(at, 'mu',      2,  40, 300);
-    addInport(at, 'F_yf',    3, 700, 200);   % used late -> near Prod_Tr
+    addInport(at, 'F_yf',    3, 820, 200);   % used late -> near Prod_Tr
 
-    addOutport(at, 'T_r', 1, 940, 100);
+    addOutport(at, 'T_r', 1, 1020, 100);
 
     % alpha_f is used twice (sgn and tan) -> Goto/From
     g_af = addGoto(at, 'alpha_f', 120, 60);
@@ -404,10 +434,13 @@ function buildAligningTorque(at)
     hep0b = addConstant(at, 'e_p0', 560, 180);        % near Sum_ep
     addSum(at, 'Sum_ep', '+-', 640, 100);             % e_p0 - frac
 
-    hnst = addConstant(at, 'n_st', 640, 180);   % near Div_Ktr
-    addProduct(at, 'Div_Ktr', '*/', 720, 100);        % e_p/n_st
+    addMinMax(at, 'Max_ep', 'max', 720, 100);         % max(0, e_p0 - frac)
+    h0 = addConstant(at, '0', 720, 180);              % floor value, near Max_ep
 
-    addProduct(at, 'Prod_Tr', '**', 820, 100);        % K_tr*F_yf
+    hnst = addConstant(at, 'n_st', 800, 180);   % near Div_Ktr
+    addProduct(at, 'Div_Ktr', '*/', 800, 100);        % e_p/n_st
+
+    addProduct(at, 'Prod_Tr', '**', 900, 100);        % K_tr*F_yf
 
     add_line(at, [hep0a '/1'], 'Prod_ep0C/1', 'autorouting', 'on');
     add_line(at, [hCaf '/1'],  'Prod_ep0C/2', 'autorouting', 'on');
@@ -427,7 +460,9 @@ function buildAligningTorque(at)
     add_line(at, [hep0b '/1'], 'Sum_ep/1', 'autorouting', 'on');
     add_line(at, 'Div_frac/1', 'Sum_ep/2', 'autorouting', 'on');
 
-    add_line(at, 'Sum_ep/1',  'Div_Ktr/1', 'autorouting', 'on');
+    add_line(at, 'Sum_ep/1',  'Max_ep/1', 'autorouting', 'on');
+    add_line(at, [h0 '/1'],   'Max_ep/2', 'autorouting', 'on');
+    add_line(at, 'Max_ep/1',  'Div_Ktr/1', 'autorouting', 'on');
     add_line(at, [hnst '/1'], 'Div_Ktr/2', 'autorouting', 'on');
 
     add_line(at, 'Div_Ktr/1', 'Prod_Tr/1', 'autorouting', 'on');
@@ -435,7 +470,7 @@ function buildAligningTorque(at)
     add_line(at, 'Prod_Tr/1', 'T_r/1', 'autorouting', 'on');
 end
 
-%% ===================== Shared utility functions ============================
+%% ===================== Shared utility functions ========================
 function moveBlock(blk, x, y)
 % Move a block to (x,y), KEEPING its default size.
     pos = get_param(blk, 'Position');
@@ -445,6 +480,7 @@ function moveBlock(blk, x, y)
 end
 
 function createSubsystem(path)
+% Create an empty Subsystem (removes the default In1->Out1 pair).
     add_block('simulink/Ports & Subsystems/Subsystem', path);
     delete_line(path, 'In1/1', 'Out1/1');
     delete_block([path '/In1']);
@@ -452,7 +488,8 @@ function createSubsystem(path)
 end
 
 function addInport(sys, name, port, x, y)
-% Ports keep MEANINGFUL names - they ARE the physical variable name.
+% Ports keep MEANINGFUL names - they ARE the physical variable name and are
+% looked up by name in test_*.m.
     full = [sys '/' name];
     add_block('simulink/Sources/In1', full);
     set_param(full, 'Port', num2str(port));
@@ -468,9 +505,7 @@ end
 
 function nm = addConstant(sys, baseWorkspaceVar, x, y)
 % Constant block, DEFAULT name (Constant, Constant1, ...); Value points
-% STRAIGHT to a base-workspace variable name. Note: '3' is a literal, not a
-% base-workspace variable, but the same helper works (Value is just a
-% string Simulink evaluates).
+% STRAIGHT to a base-workspace variable name (or a literal such as '3').
     h = add_block('simulink/Sources/Constant', [sys '/Constant'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'Value', baseWorkspaceVar);
@@ -489,6 +524,7 @@ function nm = addGoto(sys, tag, x, y)
 end
 
 function nm = addFrom(sys, tag, x, y)
+% From block, DEFAULT name.
     h = add_block('simulink/Signal Routing/From', [sys '/From'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'GotoTag', tag);
@@ -497,7 +533,7 @@ function nm = addFrom(sys, tag, x, y)
 end
 
 function addProduct(sys, name, inputsStr, x, y)
-% Computation blocks DO get meaningful names: Prod_<result>, Div_<result>.
+% Prod_<result or operands>, Div_<result> (Inputs='*/').
     full = [sys '/' name];
     add_block('simulink/Math Operations/Product', full);
     set_param(full, 'Inputs', inputsStr);
@@ -524,5 +560,20 @@ function addSignBlock(sys, name, x, y)
 % Sign_<argument>
     full = [sys '/' name];
     add_block('simulink/Math Operations/Sign', full);
+    moveBlock(full, x, y);
+end
+
+function addMinMax(sys, name, fcn, x, y)
+% Max_<result> / Min_<result>: 2-input MinMax block (fcn = 'max' or 'min')
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/MinMax', full);
+    set_param(full, 'Function', fcn, 'Inputs', '2');
+    moveBlock(full, x, y);
+end
+
+function addIntegrator(sys, name, x, y)
+% Int_<state variable>
+    full = [sys '/' name];
+    add_block('simulink/Continuous/Integrator', full);
     moveBlock(full, x, y);
 end

@@ -1,0 +1,96 @@
+================================================================================
+DANH MỤC TÀI LIỆU THAM KHẢO - DÙNG CHUNG TOÀN LUẬN VĂN
+================================================================================
+Quy ước: đánh số theo THỨ TỰ XUẤT HIỆN LẦN ĐẦU qua các file cụm (Cum1, Cum2,
+Cum3...). Khi 1 cụm dùng thêm nguồn MỚI (chưa từng xuất hiện ở cụm trước), số
+tiếp theo được cấp và ghi thêm vào cuối danh mục này - KHÔNG đánh số lại toàn
+bộ. Nếu 1 cụm dùng lại nguồn đã có số, dùng lại đúng số đó, không cấp số mới.
+
+Các file Cum1_CEPS.txt, Cum2_Pacejka.txt... trích dẫn bằng ký hiệu [n] khớp
+với số trong danh mục này, kèm theo diễn giải ngắn tại chỗ dùng (số bảng,
+phương trình... cụ thể) - danh mục này chỉ giữ thông tin xuất bản đầy đủ,
+không lặp lại chi tiết dùng ở đâu.
+
+--------------------------------------------------------------------------------
+[1] Lee, D., Kim, K.-S., Kim, S. (2018). "Controller Design of an Electric
+    Power Steering System." IEEE Transactions on Control Systems Technology.
+    File: References/lee2018.pdf.
+    Dùng ở: Cụm 1 (J_total, B_total, T_f,total - PT(14) và Table III).
+
+[2] Ge, Q., Li, S.E., Sun, Q., Zheng, S. (2020). "Numerically Stable Dynamic
+    Bicycle Model for Discrete-time Control." arXiv:2011.09612.
+    KHÔNG CÒN DÙNG - đã thay bằng [5] (Rajamani) để tránh trộn nhiều xe khác
+    nhau cho cùng 1 hệ thân xe/lốp. Giữ số [2] trong danh mục để không xáo
+    trộn thứ tự các số khác, không cấp lại cho nguồn mới.
+
+[3] Pacejka, H.B. (2006). Tyre and Vehicle Dynamics. 2nd ed. Elsevier.
+    File: References/Tyre and Vehicle Dynamics.pdf.
+    Dùng ở: Cụm 2 (C, E - Table 4.2, tr.196 - "hypothetical parameter
+    values", tác giả ghi rõ không fit theo lốp thật cụ thể).
+
+[4] Gröndahl, A. (2018). "Functional Modelling and Simulation of an Electric
+    Power Assisted Steering." Chalmers University of Technology, Master's
+    Thesis 2018:51 (thực hiện tại CEVT).
+    KHÔNG CÒN DÙNG - n_st đổi sang tự chọn (không nguồn), vì đã rà hết
+    References/ (Rajamani, Pacejka...) mà không tìm được sách/paper nào cho
+    số/dải tỷ số truyền lái. Giữ số [4] trong danh mục để không xáo trộn thứ
+    tự các số khác.
+
+[5] Rajamani, R. (2012). Vehicle Dynamics and Control. 2nd ed. Springer
+    (Mechanical Engineering Series). Chương 3, tr.48.
+    File: References/Vehicle_Dynamics_and_Control.pdf.
+    Dùng ở: Cụm 2 (m, l_f, l_r, C_alpha_f, C_r); Cụm 3 (m, Iz, l_f, l_r, C_r)
+    - bộ số ví dụ tác giả ghi rõ "representative of parameters for a
+    passenger sedan" (đại diện cho xe sedan phổ thông, không gắn 1 xe thật
+    cụ thể nào) - dùng để thay thế Ge et al. [2] (đã bỏ, tránh trộn nhiều xe
+    khác nhau cho cùng 1 hệ thân xe/lốp).
+
+[6] Li, Y., Yang, Z., Zhai, D., He, J., Fan, J. (2023). "Study on Control
+    Strategy of Electric Power Steering for Commercial Vehicle Based on
+    Multi-Map." World Electric Vehicle Journal, 14, 33.
+    File: References/Multi-Map EPS.pdf.
+    Dùng ở: Cụm 2 (công thức pneumatic trail động e_p(alpha_f, mu), PT(4)
+    trong bài; dải mu tham khảo {0.2,0.4,0.6,0.8}).
+    LƯU Ý TRUNG THỰC: PT(4) trong bài này được trình bày ngay sau PT(3)
+    (trích [11] Guan et al. 2021 và [12] Pugi et al. 2020 - nhưng 2 trích
+    dẫn đó chỉ gắn cho PT(3), quan hệ tổng quát T_z=F_Y*e, KHÔNG gắn cho
+    PT(4)). Đã tải và đọc trực tiếp Guan et al. (2021) - xác nhận bài đó
+    KHÔNG có PT(4), không đề cập mu/adhesion coefficient, coi trail là hằng
+    số. Vậy PT(4) là công thức riêng của Multi-Map, không truy được nguồn
+    xa hơn - trích dẫn thẳng Multi-Map, không trích [11]/[12].
+
+[7] (tác giả không rõ - bài trích lại từ 1 viện nghiên cứu khác, không tự
+    đo). "Road Identification..." - Table 4 "Driver's average favored
+    steering wheel ideal torque".
+    File: References/Road Identification BP-NN.pdf.
+    Dùng ở: Blueprint mục 1.3 (T_d,ref(v,a_y) - CV cho bài toán over-assist),
+    Table 4: lưới 5 tốc độ (20-100 km/h) x 4 mức a_y (0.1-0.4g), xe ước tính
+    khối lượng ~1.53 tấn (không rõ nguồn gốc chi tiết hơn, bài chỉ "trích
+    lại"). Từng dự kiến dùng hiệu chỉnh K_tr hằng số - đã BỎ hướng đó vì
+    K_tr chuyển sang công thức động theo [6].
+
+[8] Ren, X.A., Deng, Z.X. (2014). "Research on Ideal Steering Wheel Effort
+    Characteristics of Driver." China Mechanical Engineering, 25(16),
+    2261-2265.
+    File: References/Research on Ideal Steering Wheel Effort Characteristics
+    of Driver.pdf.
+    Dùng ở: (a) Blueprint mục 1.3 - căn cứ để dùng THẲNG số liệu Bảng 4 của
+    [7] làm T_d,ref cho xe của ta (Rajamani [5], 1.573 tấn): bài đo thực
+    nghiệm trên 3 xe thật (1.5-1.9 tấn: 1.9, 1.5, 1.7) và kết luận "khi lái trên cùng 1
+    mặt đường, T_ideal của tài xế HẦU NHƯ KHÔNG PHỤ THUỘC loại xe, MIỄN LÀ
+    các xe có kích thước/khối lượng gần nhau" - xe của [7] (~1.53 tấn) và xe
+    Rajamani (1.573 tấn) đủ gần để áp dụng kết luận này, không còn coi là
+    trộn nguồn. (b) Cụm 2 - Bảng 1 của bài cho tỷ số truyền lái thực đo trên
+    3 xe (i=16.5, 19, 24.7) - dùng làm CĂN CỨ KIỂM CHỨNG CHÉO bổ sung cho
+    n_st=16 (tự chọn), gần khớp xe có i=16.5.
+    LƯU Ý: công thức T_ideal(v,a_y,theta) chi tiết của bài (10 hệ số fit
+    K1,K2,l1,l2,a1,a2,b1,b2,c1,c2 + ngưỡng tốc độ v0) là fit RIÊNG cho 3 xe
+    thử nghiệm của họ - KHÔNG dùng lại các hệ số này (sẽ là trộn nguồn),
+    chỉ dùng 2 kết luận định tính nêu trên.
+
+================================================================================
+CÒN TREO - CHƯA DÙNG CHÍNH THỨC (dự kiến dùng ở bước sau, chưa cấp số)
+================================================================================
+
+(không còn mục nào)
+================================================================================

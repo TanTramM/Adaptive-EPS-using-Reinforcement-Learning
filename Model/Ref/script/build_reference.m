@@ -1,40 +1,46 @@
 %% build_reference.m
-% Dung khoi "Reference" (T_d,ref(v,a_y)) va sai so dieu khien e_T, khop
-% Blueprint_OverAssist_RL.txt muc 1.3 (CV = e_T = T_d - T_d,ref) va so do
-% khoi trang 3 Thesis.pdf (block "Reference" nhan v + tin hieu phan hoi,
-% cong voi nut tru cho T_d).
+% Build the "Reference" block (T_d,ref(v,a_y)) and the tracking error e_T,
+% saved as Reference_s.mdl RIGHT INSIDE the Ref/ folder - the "_s" suffix
+% distinguishes it from a hand-formatted version (Reference.mdl). Matches
+% Blueprint_OverAssist_RL.txt section 1.3:
 %
-%   T_d,ref(v, a_y) = noi suy 2D tren Bang 4 [7] (Road_Identification_BP-NN.pdf)
-%   e_T = T_d - T_d,ref
+%   T_d,ref(v, a_y) = sgn(a_y) * LUT(v, |a_y|)   (2-D interpolation on
+%                     Table 4 of [7], Road_Identification_BP-NN.pdf)
+%   e_T = T_s - T_d,ref                           (T_s = sensor torque, the
+%                                                   CV, output of the Plant)
 %
-% Du lieu Bang 4 (v_bp, a_y_bp, bang so) KHONG nhung cung trong script nay
-% - doc tu Model/data/ref.json qua Model/load_ref.m (rieng, khong chung
-% Model/load_params.m), khoi 2-D Lookup Table CHI THAM CHIEU TEN BIEN base
-% workspace (Tdref_v_bp_ms, Tdref_ay_bp_ms2, Tdref_table) - sua so lieu chi
-% can sua data/ref.json + chay lai load_ref, KHONG can sua file build nay.
+% Table 4 data are NOT embedded here - read from Model/data/ref.json by
+% Model/load_ref.m (separate from load_plant.m); the 2-D Lookup Table only
+% references base-workspace variable names (Tdref_v_bp_ms,
+% Tdref_ay_bp_ms2, Tdref_table).
 %
-% Bang 4 chi co du lieu a_y DUONG (do do lon |a_y|, khong phan biet chieu
-% quay). QUYET DINH KY THUAT (tu chon, khong tu nguon): tra bang theo
-% |a_y|, sau do nhan lai dau sign(a_y) de T_d,ref cung dau voi T_d thuc te
-% (mo-men tay lai doi chieu theo chieu quay vo-lang).
+% Table 4 only has POSITIVE a_y (magnitude, no turning direction).
+% ENGINEERING DECISION (self-chosen, not from the source): look up with
+% |a_y|, then multiply by sign(a_y) so T_d,ref has the same sign as the
+% actual steering torque.
 %
-% Quy uoc dung khoi (giong build_cum1/2/3.m):
-%   - Moi khoi giu NGUYEN kich thuoc mac dinh - chi doi VI TRI (dichKhoi()).
-%   - Phep nhan dung khoi Product (khong dung Gain).
-%   - abs(.) dung khoi Abs, sgn(.) dung khoi Sign (khong dung Fcn).
-%   - Noi suy 2D dung khoi chuan "2-D Lookup Table".
+% HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
-% Cach dung (chay tu thu muc nay, Ref/script/):
+%   Reference
+%     In : T_s, v, a_y      Out: T_d_ref, e_T
+%     |
+%     +-- Cal T_d_ref   In : v, a_y   Out: T_d_ref
+%     |                 (named quantity; "Cal " prefix because the parent
+%     |                  also has an output port named T_d_ref)
+%     +-- Sum_eT        (e_T = T_s - T_d_ref, the cluster output itself)
+%
+% Usage (run from this folder, Ref/script/):
 %   >> run('../../load_ref.m')
 %   >> build_reference
-%   (model Reference_s.mdl duoc tao trong thu muc Ref/, hau to "_s" de
-%   phan biet voi ban tu format tay - neu co - cung ten khong hau to)
 
 modelName = 'Reference_s';
 
 if bdIsLoaded(modelName)
     close_system(modelName, 0);
 end
+
+assert(evalin('base', 'exist(''Tdref_table'', ''var'')') == 1, ...
+    'ref.json not loaded - run load_ref before build_reference.');
 
 scriptDir = fileparts(mfilename('fullpath'));   % Ref/script
 refDir    = fileparts(scriptDir);               % Ref/
@@ -46,107 +52,179 @@ end
 new_system(modelName);
 open_system(modelName);
 
+%% ===================== Root subsystem: Reference =======================
 sub = [modelName '/Reference'];
-add_block('simulink/Ports & Subsystems/Subsystem', sub);
-delete_line(sub, 'In1/1', 'Out1/1');
-delete_block([sub '/In1']);
-delete_block([sub '/Out1']);
-dichKhoi(sub, 50, 50);
+createSubsystem(sub);
+moveBlock(sub, 50, 50);
 
-%% ----- Dau vao: T_d, v, a_y -----
-in_Td = addIn(sub, 'T_d', 1, 40, 40);
-in_v  = addIn(sub, 'v',   2, 40, 200);
-in_ay = addIn(sub, 'a_y', 3, 40, 360);
+addInport(sub, 'T_s', 1, 40,  60);
+addInport(sub, 'v',   2, 40, 200);
+addInport(sub, 'a_y', 3, 40, 260);
 
-%% ----- Dau ra: T_d_ref, e_T -----
-out_Tdref = addOut(sub, 'T_d_ref', 1, 700, 200);
-out_eT    = addOut(sub, 'e_T',     2, 900, 60);
+addOutport(sub, 'e_T',     1, 700,  70);
+addOutport(sub, 'T_d_ref', 2, 700, 220);
 
-%% ----- |a_y| va sgn(a_y) -----
-b_abs = addBlock(sub, 'Abs_ay', 'simulink/Math Operations/Abs', 200, 360);
-b_sgn = addBlock(sub, 'Sign_ay', 'simulink/Math Operations/Sign', 200, 460);
+tdr = [sub '/Cal T_d_ref'];
+createSubsystem(tdr);
+moveBlock(tdr, 260, 200);
+buildCalTdref(tdr);
 
-%% ----- T_d,ref(v, |a_y|) - 2-D Lookup Table, doc ten bien tu load_ref.m -----
-assert(evalin('base', 'exist(''Tdref_table'', ''var'')') == 1, ...
-    'Chua nap ref.json - chay load_ref truoc khi build_reference.');
+addSum(sub, 'Sum_eT', '+-', 560, 70);   % T_s - T_d_ref
 
-b_lut = addBlock(sub, 'LUT_Tdref', 'simulink/Lookup Tables/2-D Lookup Table', 320, 200);
-lutFull = [sub '/' b_lut];
-set_param(lutFull, 'Table', 'Tdref_table');
-set_param(lutFull, 'BreakpointsForDimension1', 'Tdref_v_bp_ms');
-set_param(lutFull, 'BreakpointsForDimension2', 'Tdref_ay_bp_ms2');
-set_param(lutFull, 'InterpMethod', 'Linear');
-set_param(lutFull, 'ExtrapMethod', 'Clip');
+add_line(sub, 'v/1',   'Cal T_d_ref/1', 'autorouting', 'on');
+add_line(sub, 'a_y/1', 'Cal T_d_ref/2', 'autorouting', 'on');
 
-%% ----- T_d_ref = sgn(a_y) * LUT(v, |a_y|) -----
-p_Tdref = addProd(sub, 'Product_Tdref', '**', 500, 200);
+% T_d_ref is a named quantity used by Sum_eT and the output -> Goto/From
+g_tdr = addGoto(sub, 'T_d_ref', 440, 200);
+add_line(sub, 'Cal T_d_ref/1', [g_tdr '/1'], 'autorouting', 'on');
+f_tdr_e = addFrom(sub, 'T_d_ref', 480, 110);
+add_line(sub, [f_tdr_e '/1'], 'Sum_eT/2', 'autorouting', 'on');
+f_tdr_o = addFrom(sub, 'T_d_ref', 620, 220);
+add_line(sub, [f_tdr_o '/1'], 'T_d_ref/1', 'autorouting', 'on');
 
-%% ----- e_T = T_d - T_d_ref -----
-a_eT = addAdd(sub, 'Sum_eT', '+-', 780, 100);
-
-%% ----- Noi day -----
-add_line(sub, [in_ay '/1'], [b_abs '/1'], 'autorouting', 'on');
-add_line(sub, [in_ay '/1'], [b_sgn '/1'], 'autorouting', 'on');
-
-add_line(sub, [in_v '/1'],  [b_lut '/1'], 'autorouting', 'on');
-add_line(sub, [b_abs '/1'], [b_lut '/2'], 'autorouting', 'on');
-
-add_line(sub, [b_sgn '/1'], [p_Tdref '/1'], 'autorouting', 'on');
-add_line(sub, [b_lut '/1'], [p_Tdref '/2'], 'autorouting', 'on');
-add_line(sub, [p_Tdref '/1'], [out_Tdref '/1'], 'autorouting', 'on');
-
-add_line(sub, [in_Td '/1'],   [a_eT '/1'], 'autorouting', 'on');
-add_line(sub, [p_Tdref '/1'], [a_eT '/2'], 'autorouting', 'on');
-add_line(sub, [a_eT '/1'], [out_eT '/1'], 'autorouting', 'on');
+add_line(sub, 'T_s/1',    'Sum_eT/1', 'autorouting', 'on');
+add_line(sub, 'Sum_eT/1', 'e_T/1',    'autorouting', 'on');
 
 save_system(modelName, modelPath);
 close_system(modelName, 0);
 
-fprintf('Da tao: %s\n', modelPath);
+fprintf('Created: %s\n', modelPath);
 
-%% ===================== Ham tien ich (giu kich thuoc mac dinh) =====================
-function dichKhoi(blockPath, x, y)
-    pos = get_param(blockPath, 'Position');
+%% ===================== T_d_ref = sgn(a_y) * LUT(v, |a_y|) ===============
+function buildCalTdref(tdr)
+% Main line: LUT_Tdref -> Prod_Tdref -> T_d_ref. v enters the LUT directly;
+% a_y is used twice (Abs and Sign) -> Goto/From. Sign_ay joins Prod_Tdref
+% from below.
+    addInport(tdr, 'v',   1, 40,  60);
+    addInport(tdr, 'a_y', 2, 40, 160);
+
+    addOutport(tdr, 'T_d_ref', 1, 560, 70);
+
+    g_ay = addGoto(tdr, 'a_y', 120, 160);
+    add_line(tdr, 'a_y/1', [g_ay '/1'], 'autorouting', 'on');
+    f_ay_abs = addFrom(tdr, 'a_y', 120, 100);
+    f_ay_sgn = addFrom(tdr, 'a_y', 300, 200);
+
+    full = [tdr '/Abs_ay'];
+    add_block('simulink/Math Operations/Abs', full);
+    moveBlock(full, 200, 100);
+    addSignBlock(tdr, 'Sign_ay', 380, 200);
+
+    full = [tdr '/LUT_Tdref'];
+    add_block('simulink/Lookup Tables/2-D Lookup Table', full);
+    set_param(full, 'Table', 'Tdref_table', ...
+        'BreakpointsForDimension1', 'Tdref_v_bp_ms', ...
+        'BreakpointsForDimension2', 'Tdref_ay_bp_ms2', ...
+        'InterpMethod', 'Linear', 'ExtrapMethod', 'Clip');
+    moveBlock(full, 300, 60);
+
+    addProduct(tdr, 'Prod_Tdref', '**', 460, 70);   % sgn(a_y) * LUT
+
+    add_line(tdr, 'v/1',           'LUT_Tdref/1', 'autorouting', 'on');
+    add_line(tdr, [f_ay_abs '/1'], 'Abs_ay/1',    'autorouting', 'on');
+    add_line(tdr, 'Abs_ay/1',      'LUT_Tdref/2', 'autorouting', 'on');
+    add_line(tdr, [f_ay_sgn '/1'], 'Sign_ay/1',   'autorouting', 'on');
+    add_line(tdr, 'LUT_Tdref/1',   'Prod_Tdref/1', 'autorouting', 'on');
+    add_line(tdr, 'Sign_ay/1',     'Prod_Tdref/2', 'autorouting', 'on');
+    add_line(tdr, 'Prod_Tdref/1',  'T_d_ref/1',   'autorouting', 'on');
+end
+
+%% ===================== Shared utility functions ========================
+function moveBlock(blk, x, y)
+% Move a block to (x,y), KEEPING its default size.
+    pos = get_param(blk, 'Position');
     w = pos(3) - pos(1);
     h = pos(4) - pos(2);
-    set_param(blockPath, 'Position', [x, y, x + w, y + h]);
+    set_param(blk, 'Position', [x, y, x + w, y + h]);
 end
 
-function h = addIn(sub, name, port, x, y)
-    full = [sub '/' name];
+function createSubsystem(path)
+% Create an empty Subsystem (removes the default In1->Out1 pair).
+    add_block('simulink/Ports & Subsystems/Subsystem', path);
+    delete_line(path, 'In1/1', 'Out1/1');
+    delete_block([path '/In1']);
+    delete_block([path '/Out1']);
+end
+
+function addInport(sys, name, port, x, y)
+% Ports keep MEANINGFUL names - they ARE the physical variable name and are
+% looked up by name in test_*.m.
+    full = [sys '/' name];
     add_block('simulink/Sources/In1', full);
     set_param(full, 'Port', num2str(port));
-    dichKhoi(full, x, y);
-    h = name;
+    moveBlock(full, x, y);
 end
 
-function h = addOut(sub, name, port, x, y)
-    full = [sub '/' name];
+function addOutport(sys, name, port, x, y)
+    full = [sys '/' name];
     add_block('simulink/Sinks/Out1', full);
     set_param(full, 'Port', num2str(port));
-    dichKhoi(full, x, y);
-    h = name;
+    moveBlock(full, x, y);
 end
 
-function h = addProd(sub, name, inputsStr, x, y)
-    full = [sub '/' name];
+function nm = addConstant(sys, baseWorkspaceVar, x, y)
+% Constant block, DEFAULT name (Constant, Constant1, ...); Value points
+% STRAIGHT to a base-workspace variable name (or a literal such as '3').
+    h = add_block('simulink/Sources/Constant', [sys '/Constant'], ...
+        'MakeNameUnique', 'on');
+    set_param(h, 'Value', baseWorkspaceVar);
+    moveBlock(h, x, y);
+    nm = get_param(h, 'Name');
+end
+
+function nm = addGoto(sys, tag, x, y)
+% Goto block, DEFAULT name; LOCAL scope only. tag is the plain variable
+% name, no suffix.
+    h = add_block('simulink/Signal Routing/Goto', [sys '/Goto'], ...
+        'MakeNameUnique', 'on');
+    set_param(h, 'GotoTag', tag, 'TagVisibility', 'local');
+    moveBlock(h, x, y);
+    nm = get_param(h, 'Name');
+end
+
+function nm = addFrom(sys, tag, x, y)
+% From block, DEFAULT name.
+    h = add_block('simulink/Signal Routing/From', [sys '/From'], ...
+        'MakeNameUnique', 'on');
+    set_param(h, 'GotoTag', tag);
+    moveBlock(h, x, y);
+    nm = get_param(h, 'Name');
+end
+
+function addProduct(sys, name, inputsStr, x, y)
+% Prod_<result or operands>, Div_<result> (Inputs='*/').
+    full = [sys '/' name];
     add_block('simulink/Math Operations/Product', full);
     set_param(full, 'Inputs', inputsStr);
-    dichKhoi(full, x, y);
-    h = name;
+    moveBlock(full, x, y);
 end
 
-function h = addAdd(sub, name, inputsStr, x, y)
-    full = [sub '/' name];
+function addSum(sys, name, inputsStr, x, y)
+% Sum_<result>
+    full = [sys '/' name];
     add_block('simulink/Math Operations/Add', full);
     set_param(full, 'Inputs', inputsStr);
-    dichKhoi(full, x, y);
-    h = name;
+    moveBlock(full, x, y);
 end
 
-function h = addBlock(sub, name, blockType, x, y)
-    full = [sub '/' name];
-    add_block(blockType, full);
-    dichKhoi(full, x, y);
-    h = name;
+function addTrigFcn(sys, name, op, x, y)
+% Trig_<function>_<argument>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Trigonometric Function', full);
+    set_param(full, 'Operator', op);
+    moveBlock(full, x, y);
+end
+
+function addSignBlock(sys, name, x, y)
+% Sign_<argument>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Sign', full);
+    moveBlock(full, x, y);
+end
+
+function addIntegrator(sys, name, x, y)
+% Int_<state variable>
+    full = [sys '/' name];
+    add_block('simulink/Continuous/Integrator', full);
+    moveBlock(full, x, y);
 end

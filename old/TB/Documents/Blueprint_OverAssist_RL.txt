@@ -1,0 +1,381 @@
+================================================================================
+BẢN THIẾT KẾ CHI TIẾT (BLUEPRINT) LUẬN VĂN THẠC SĨ - PHIÊN BẢN 3
+ĐỀ TÀI: ĐIỀU KHIỂN TRỢ LỰC LÁI ĐIỆN THÍCH ỨNG (ADAPTIVE C-EPS)
+        NHẰM KHẮC PHỤC HIỆN TƯỢNG TRỢ LỰC THỪA (OVER-ASSIST) KHI HỆ SỐ BÁM THAY ĐỔI
+Học viên: Trần Minh Tân
+Người hướng dẫn: TS. Phùng Thanh Huy
+Đơn vị: Đại học Bách Khoa TP.HCM (HCMUT)
+================================================================================
+
+Quy ước đọc tài liệu:
+  [ĐÃ CÓ]     = đã cài đặt trong Model/code và đã kiểm chứng bằng mô phỏng.
+  [CẦN SỬA]   = đã có nhưng phải đổi theo blueprint này.
+  [CẦN LÀM]   = chưa có.
+  [CẦN CHỌN]  = tham số/thiết kế chưa chốt, phải hiệu chỉnh hoặc tìm nguồn.
+Tài liệu tham khảo dẫn theo tên file trong thư mục References/. Mục 1.2 dẫn
+theo Process_Control.pdf (Seborg, Edgar, Mellichamp, Doyle - Process Dynamics
+and Control, Ch.1 - định nghĩa CV/MV/DV), số chương/mục ghi kèm để tra cứu
+lại nguyên bản.
+
+Phạm vi file này: (1) xác lập bài toán điều khiển theo đúng khung Seborg
+(CV/MV/DV, điểm đặt, chiến lược FF/FB) [Phần 1], (2) xác lập phương trình vi
+phân của đối tượng [Phần 2], (3) hiện thực hóa Model/ Simulink [Mục 2.6].
+
+PHẦN 1 VỪA ĐƯỢC DỰNG LẠI TỪ ĐẦU (mục 1.2-1.4), thay cho bản trước: phát hiện
+T_d từng bị xếp vai trò sai (vừa là "nhiễu đo được" vừa là thành phần trong
+CV) - nguyên nhân là chưa tách bạch mô-men TAY TÀI XẾ (không đo được) khỏi
+mô-men CẢM BIẾN (đo được). Hệ quả kéo theo: Cụm 1 (mục 2.2) CẦN VIẾT LẠI
+theo mô hình có thanh xoắn (thay trục cứng) - ĐÃ CHỐT hướng, CHƯA GHI FILE.
+
+PHẠM VI ĐÃ THU HẸP: chỉ xét khắc phục over-assist, KHÔNG xét chỉ tiêu "mượt"/
+độ êm (xem mục 1.4(d) và lý do). Thiết kế bộ điều khiển (PID/SMC/RL) và
+phương pháp kiểm chứng (Phần cũ 3, 4) đã bị xóa trước đó, CHƯA viết lại - sẽ
+làm sau khi Phần 1, 2 và Model/ được cập nhật xong theo Cụm 1 mới.
+
+--------------------------------------------------------------------------------
+PHẦN 1. PHẠM VI BÀI TOÁN
+--------------------------------------------------------------------------------
+1.1. Hiện tượng cần khắc phục: Trợ lực thừa (Over-assist)
+  - C-EPS thương mại dùng bản đồ trợ lực tĩnh (LUT) T_a = f(T_s, v), hiệu chỉnh
+    cho điều kiện bất lợi nhất: đường khô (mu ~ 0.8) và tải cầu trước lớn nhất
+    [Multi-Map EPS.pdf].
+  - Khi mu giảm (đường mưa, băng), mô-men cản mặt đường T_r giảm, nhưng LUT không
+    "biết" mu nên vẫn trợ lực như đường khô. Kết quả: mô-men tay tài xế T_d giảm
+    mạnh, vô-lăng nhẹ bẫng, mất cảm giác mặt đường, dễ bẻ quá tay
+    [Multi-Map EPS.pdf].
+
+1.2. Xác định bài toán điều khiển (khung Seborg Ch.1: CV/MV/DV)  [ĐÃ CHỐT]
+  Dựng lại từ đầu, thay hẳn bản cũ (bản cũ xếp T_d vào DV nhưng lại dùng
+  chính T_d làm CV ở mục 1.3 - mâu thuẫn, đã phát hiện và sửa).
+
+  Liệt kê biến quá trình (chưa phân loại):
+    T_a    - mô-men motor trợ lực.
+    T_d    - mô-men TAY TÀI XẾ thật, tác dụng lên vô-lăng (khối J1, xem
+             thanh xoắn ở mục 2.2). KHÔNG đo được - không cảm biến nào đặt
+             trong cổ tay tài xế.
+    T_s    - mô-men CẢM BIẾN, đo tại thanh xoắn giữa vô-lăng và cột lái:
+             T_s = K*(theta1-theta2). ĐÂY là "steering wheel torque" mà
+             mọi nguồn thực đo (Bảng 4 [7], Multi-Map, Lee) - KHÔNG phải
+             T_d.
+    v      - tốc độ xe, đo được.
+    mu     - hệ số bám mặt đường, KHÔNG đo được.
+    theta1, theta2, beta, gamma, a_y - các trạng thái/đầu ra khác của Plant,
+             đo được qua cảm biến góc/gia tốc kế trên xe.
+
+  Phân loại đúng 3 định nghĩa Seborg (CV = biến muốn điều khiển, phải đo
+  được để feedback; MV = biến chỉnh được; DV = ảnh hưởng CV nhưng không
+  chỉnh được, có loại đo được có loại không):
+    MV: T_a - "van" duy nhất chỉnh được.
+    DV KHÔNG đo được: T_d, mu.
+    DV đo được: v.
+    CV: T_s.
+
+  Vì sao CV = T_s chứ không phải T_d: Bảng 4 [7] (và các bảng tương tự -
+  Guan 2021, [7] Bảng 2/3) đo ở điều kiện TỰA-TĨNH (quay vô-lăng cực chậm,
+  0.01g/s - [7] tự ghi "the simulation process ignored the steering dynamic
+  impact on the steering wheel torque"). Tại tựa-tĩnh, gia tốc và vận tốc
+  góc vô-lăng ~0 nên phương trình J1 (mục 2.2) rút gọn còn T_d = T_s - dữ
+  liệu Bảng 4 đúng cho cả 2 tên như nhau tại điều kiện đo. Nhưng bộ điều
+  khiển hoạt động cả ở chế độ động (mu đổi đột ngột - mục 1.4(e)), lúc đó
+  T_d != T_s, và bộ điều khiển CHỈ đo được T_s theo thời gian thực (không
+  có cảm biến cho T_d) - nên CV = T_s là lựa chọn vừa khớp cách đo ra Bảng
+  4, vừa khả thi để triển khai.
+
+  Chiến lược FF/FB (nguyên lý Seborg: feedforward CHỈ bù được nhiễu đo
+  được): T_d và mu đều KHÔNG đo được -> vòng FEEDBACK trên CV=T_s BẮT BUỘC.
+  v đo được, có 2 vai trò tách biệt:
+    (i) Lên lịch điểm đặt T_d,ref(v,a_y) - đã dùng, xem mục 1.3. KHÔNG phải
+        feedforward cổ điển (không bù nhiễu tác động lên CV, mà định nghĩa
+        lại mục tiêu).
+    (ii) Nhiễu tác động THẬT lên động lực học lốp (v xuất hiện trong công
+        thức góc trượt alpha_f, alpha_r - Cum2_Pacejka.txt mục 1.2-1.3) ->
+        F_yf, F_yr -> T_r -> T_s. CÓ THỂ dùng feedforward cổ điển từ kênh
+        này, KHÔNG bắt buộc như (i) - để dành quyết định cho lúc thiết kế
+        bộ điều khiển [CẦN CHỌN].
+
+1.3. CV và điểm đặt  [ĐÃ CHỐT]
+
+  e_T(t) = T_s(t) - T_d,ref(v,a_y),   điểm đặt e_T = 0.
+
+  T_d,ref lấy theo a_y (gia tốc ngang), không theo theta - vì đã có sẵn Bảng
+  4 trong [7] (Road Identification BP-NN.pdf) tra theo (v, a_y). T_d,ref(v,
+  a_y) = nội suy 2D trên lưới 5 tốc độ (20-100 km/h) x 4 mức a_y (0.1-0.4g)
+  của Bảng 4, [7].
+
+  LÝ DO CHỐT dùng TRỰC TIẾP Bảng 4 (đã giải quyết mối lo "trộn nguồn" ban
+  đầu): Bảng 4 đo trên 1 xe ước tính ~1.53 tấn (không rõ nguồn gốc chi tiết,
+  [7] chỉ "trích lại"), khác xe Rajamani ([5], 1.573 tấn) đang dùng cho Cụm
+  2/3 của ta - ban đầu coi đây là rủi ro trộn nguồn. Đã xác nhận qua [8]
+  (Ren, Deng (2014), đo thực nghiệm trên 3 xe thật 1.5-1.9 tấn: 1.9, 1.5,
+  1.7): "khi lái trên cùng 1 mặt đường, mô-men lý tưởng cảm nhận ở tay lái
+  của tài xế HẦU NHƯ KHÔNG PHỤ THUỘC loại xe, MIỄN LÀ các xe có kích thước/
+  khối lượng GẦN NHAU". Xe của [7] (~1.53 tấn) và xe Rajamani (1.573 tấn)
+  đủ gần khối lượng - áp dụng kết luận này, dùng thẳng Bảng 4 có căn cứ
+  trích dẫn cho phép tổng quát hóa giữa các xe cùng phân khúc.
+
+  Nguồn Bảng 4: [7] (Road Identification BP-NN.pdf), Table 4 "Driver's
+  average favored steering wheel ideal torque".
+
+1.4. Đặc điểm bài toán và ràng buộc  [ĐÃ CHỐT khung, giá trị số CẦN CHỌN]
+
+  (a) Đây là bài toán TRACKING (không phải regulation): điểm đặt T_d,ref
+    đổi liên tục theo (v, a_y) trong lúc lái, không phải 1 hằng số.
+
+  (b) T_a có 2 đường tác động lên CV=T_s, khác tốc độ - ĐÂY LÀ CƠ CHẾ VẬT
+    LÝ THẬT của over-assist, không phải lỗ hổng cần sửa:
+      - Đường NHANH: T_a -> theta2 -> T_s trực tiếp qua lò xo K (mục 2.2).
+      - Đường CHẬM: T_a -> theta2 -> delta_f -> alpha_f -> F_yf -> beta,
+        gamma -> a_y -> DỊCH CHUYỂN CHÍNH ĐIỂM ĐẶT T_d,ref(v,a_y).
+    (Ở bản trục cứng cũ, CHỈ có đường chậm tồn tại, khiến T_a không tác
+    động thật lên CV - lý do chính buộc chuyển sang mô hình có thanh xoắn,
+    mục 2.2.)
+
+  (c) Ràng buộc MV:
+      |T_a| <= T_a,max(v)
+      sign(T_a) = sign(T_s)   (không phải T_d - T_d không đo được, không
+                                kiểm tra được trong vòng điều khiển)
+      Không đẩy hệ vượt ngưỡng mất ổn định (mục 3.9 - SẼ ĐO LẠI sau khi có
+      Cụm 1 mới, vì ngưỡng 1.94 N.m cũ đo trên bản trục cứng, không còn
+      đúng)
+
+    T_a,max(v): KHÔNG có nguồn actuator thật phù hợp xe ta - đã rà soát và
+    LOẠI: Multi-Map (T_a,max=23N.m, xe tải 16t, sai phân khúc), [7] Bảng 5
+    (KHÔNG PHẢI giới hạn actuator - chỉ là "T_a cần có tại a_y=0.4g", từng
+    trích nhầm thành T_a,max, đã sửa lại ở đây), Nguyen (đúng phân khúc xe
+    con nhưng chưa đối chiếu được với ngưỡng mất ổn định của mô hình ta.
+    PHƯƠNG PHÁP đã chốt: tự xác định từ chính Plant, SAU KHI có Cụm 1 mới:
+      T_a,max(v) := 0.9 * nguong_mat_on_dinh(v, mu=0.2)
+    (0.9 tương đương "lùi 10% biên", dùng lại đúng quy ước đã áp dụng ở
+    mục 3.9/sweep_Ta_mu.m để nhất quán nội bộ - hệ số 0.9 TỰ CHỌN, không có
+    nguồn.) Giá trị số cụ thể: [CẦN CHỌN - chờ Cụm 1 mới + sweep lại theo v].
+
+  (d) PHẠM VI: CHỈ xét khắc phục over-assist. KHÔNG xét chỉ tiêu "mượt"/độ
+    êm (rung, chattering) - quyết định thu hẹp phạm vi, không đưa vào mục
+    tiêu thiết kế lẫn phương pháp kiểm chứng sau này. Hệ quả: KHÔNG cần
+    thêm động học trễ motor, KHÔNG cần thêm trễ lốp (relaxation length,
+    Pacejka Eq.1.41) - cả 2 chỉ có lý do tồn tại nếu xét độ êm/cộng hưởng
+    (tần số riêng thanh xoắn ~5.7Hz trùng dải trễ lốp 3-9Hz), nay không cần.
+
+  (e) mu phải là tín hiệu ĐỘNG theo thời gian (bậc, dốc), xử lý được mu đổi
+    bất chợt giữa chừng khi đang lái  [ĐÃ CHỐT]. Plant đã có cổng mu (mục
+    3.5), chỉ cần thiết kế kịch bản test phù hợp sau này. Trong các nguồn
+    đã đọc, không bài nào thử mu đổi giữa chừng (Multi-Map: mỗi ca thử 1 mu
+    cố định).
+    Giới hạn CHẤP NHẬN của mô hình hiện tại (không sửa - ảnh hưởng nhỏ tới
+    over-assist, chỉ quan trọng nếu xét độ êm hoặc vùng giới hạn bám):
+      - Lốp sau vẫn tuyến tính, không có mu (Cum2 mục 4) - chỉ sai khi vượt
+        giới hạn bám (vùng của ESC/VDC, ngoài phạm vi mục 2.4).
+    Thay bằng CỜ GIÁM SÁT vùng hợp lệ (chi phí thấp, dùng khi kiểm chứng,
+    KHÔNG sửa Plant): alpha_f vượt đỉnh Magic Formula; a_y ra ngoài dải
+    Bảng 4 (0.1-0.4g); lực lốp sau F_yr vượt mu*F_zr.
+
+--------------------------------------------------------------------------------
+PHẦN 2. MÔ HÌNH ĐỐI TƯỢNG (PLANT)
+--------------------------------------------------------------------------------
+2.0. Cách tổ chức: THEO CỤM (không theo từng số hạng T trong PT mô-men)
+  Lý do: T_r trong PT cân bằng mô-men Cụm 1 phụ thuộc F_yf -> alpha_f ->
+  (theta, beta, gamma, mu) - kéo theo toàn bộ Cụm 2+3 nếu tách theo số hạng,
+  gây đứt mạch trình bày. Theo cụm thì mỗi cụm = đúng 1 bậc tự do vật lý =
+  đúng 1 file S-Function code, khớp Ch.2 Process_Control.pdf (mô hình hóa
+  theo từng đơn vị quá trình vật lý, không theo từng số hạng phương trình).
+
+2.1. Biến trạng thái   [CẦN SỬA - do Cụm 1 đổi sang thanh xoắn, xem 2.2]
+  Bản CŨ (trục cứng, đang có trong file): x = [theta, theta_dot, beta,
+  gamma], 4 biến.
+  Bản MỚI (thanh xoắn): x = [theta1, theta1_dot, theta2, theta2_dot, beta,
+  gamma], 6 biến - theta1 (vô-lăng, khối J1) và theta2 (cột lái/pinion,
+  khối J2) TÁCH RIÊNG thay vì 1 theta chung. Không thêm y, psi (lập luận cũ
+  vẫn giữ, chưa ghi lại đây). CHƯA áp dụng vào Cum1_CEPS.txt/
+  HeThongPlant_TongHop.txt.
+
+2.2. Cụm 1 - Cơ cấu lái (steering column)   [CẦN LÀM LẠI - thanh xoắn]
+  File: Documents/Cum1_CEPS.txt - NỘI DUNG HIỆN TẠI CÒN LÀ BẢN TRỤC CỨNG,
+  ĐÃ SAI theo quyết định mục 1.2/1.4(b) (T_a không tác động thật lên CV
+  nếu trục cứng) - CHƯA GHI FILE MỚI, chỉ mới thảo luận/nháp.
+
+  QUYẾT ĐỊNH MỚI [ĐÃ CHỐT HƯỚNG, CHƯA GHI FILE]: bỏ giả thiết trục cứng,
+  dùng mô hình 2 khối quán tính nối qua thanh xoắn của Lee, Kim, Kim (2018)
+  - nguồn [1], PT(14): K=143.24 N.m/rad, J1=0.044 kg.m^2, C1=0.25 N.m.s/rad
+  (khối J1 - vô-lăng, phía tài xế), J2=0.11 kg.m^2, C2=1.35 N.m.s/rad (khối
+  J2 - cột lái+motor+rack quy đổi, phía cơ cấu chấp hành). T_f (ma sát khô
+  bánh răng, Table III cùng nguồn, giá trị 2 N.m kế thừa từ bản cũ) đặt ở
+  phương trình J2.
+
+  Lý do đổi: bản trục cứng khiến T_a KHÔNG tác động thật lên CV (mục 1.4(b),
+  đường NHANH không tồn tại - T_a và T_d cộng tuyến tính trong cùng 1
+  phương trình, T_a chỉ đổi được CV gián tiếp qua a_y). Thanh xoắn mở ra
+  đường tác động thật T_a -> theta2 -> T_s = K*(theta1-theta2), và tách
+  bạch được T_d (mô-men tay, không đo được) khỏi T_s (CV, đo được) - không
+  cần chọn thêm mô hình tài xế nào khác: T_d là ngoại sinh áp thẳng vào J1,
+  giống cách toàn bộ project đã làm từ đầu (không cần ghim góc vô-lăng hay
+  thêm lò xo-giảm chấn mô phỏng tay người).
+
+  2 phương trình (Lagrange, 2 bậc tự do theta1, theta2):
+    J1*theta1_ddot + C1*theta1_dot + K*(theta1-theta2) = T_d
+    J2*theta2_ddot + C2*theta2_dot + K*(theta2-theta1)
+      = T_a - T_r - T_f*tanh(c*theta2_dot)
+    T_s = K*(theta1-theta2)                       <- CV, đưa sang Cụm 2 + e_T
+
+  theta2 (KHÔNG PHẢI theta1) là góc dùng ở Cụm 2 để tính hình học delta_f -
+  ẢNH HƯỞNG GIAO DIỆN Cụm 2 (mục 2.3), CHƯA áp dụng.
+
+2.3. Cụm 2 - Lốp Pacejka   [ĐÃ LÀM LẠI - xem file riêng; CẦN SỬA giao diện]
+  Nội dung đầy đủ: Documents/Cum2_Pacejka.txt
+  Khối đại số (không biến trạng thái riêng). Đầu vào: theta (Cụm 1), beta,
+  gamma (Cụm 3), v, mu. Đầu ra: F_yf (-> Cụm 3), T_r (-> Cụm 1).
+  [CẦN SỬA] Đầu vào đổi theta -> theta2 (mục 2.2, thanh xoắn) - CHƯA áp
+  dụng vào Cum2_Pacejka.txt.
+  - Góc trượt lốp alpha_f, alpha_r suy từ hình học (delta_f, beta, gamma, v).
+  - F_zf (tải tĩnh cầu trước) từ cân bằng mô-men quanh trục sau.
+  - Lốp trước: Pacejka Magic Formula phi tuyến, với D_f = mu*F_zf và
+    B_f = C_alpha_f/(Cf*D_f) PHỤ THUỘC mu (giữ độ cứng lốp thật C_alpha_f
+    không đổi, chỉ đổi điểm bão hòa) - đây là cơ chế vật lý cốt lõi gây
+    over-assist khi mu thay đổi.
+  - Lốp sau: tuyến tính F_yr = C_r*alpha_r (không cần Pacejka đầy đủ).
+  - T_r = K_tr*F_yf quy đổi về trục theta, đưa ngược vào Cụm 1. K_tr KHÔNG
+    còn là hằng số - ĐÃ LÀM: mở rộng thành K_tr(alpha_f, mu) = e_p/n_st, với
+    e_p(alpha_f, mu) theo PT(4) của [6] (pneumatic trail động).
+
+2.4. Cụm 3 - Động lực học thân xe   [ĐÃ LÀM LẠI - xem file riêng]
+  Nội dung đầy đủ: Documents/Cum3_2DOF.txt
+  Mô hình 2-DOF (beta, gamma), suy từ Newton (lực ngang + mô-men Yaw quanh
+  trọng tâm), KHÔNG dùng Lagrange (khác Cụm 1) vì không có quy đổi tỷ số
+  truyền nào ở cụm này. Giả thiết: bỏ qua roll/load transfer ngang (đã bàn
+  riêng - hợp lệ trong dải lái thường, ngoài phạm vi ESC/VDC cực hạn), v hằng
+  số từng bước, góc nhỏ, single-track (gộp 2 bánh/cầu). Đầu ra phụ: a_y =
+  v*(beta_dot+gamma), dùng làm tham số tra T_d,ref(v,a_y) ở mục 1.3.
+
+2.5. Tổng hợp hệ phương trình plant (đủ 4 vi phân + toàn bộ đại số)
+  [CẦN SỬA] Số phương trình vi phân đổi 4 -> 6 theo mục 2.1/2.2 - CHƯA áp
+  dụng vào file dưới đây.
+  Nội dung đầy đủ: Documents/HeThongPlant_TongHop.txt
+  Ghép nối thuần túy 3 cụm trên - KHÔNG có suy diễn mới, chỉ liệt kê lại 4
+  phương trình vi phân (Cụm 1+3) và toàn bộ phương trình đại số (Cụm 2), và
+  trình bày lại dưới dạng hệ phương trình trạng thái chuẩn cho điều khiển
+  (định nghĩa x, u, dạng affine-in-control x_dot=f(x,v,mu)+g*T_a+g*T_d).
+
+--------------------------------------------------------------------------------
+MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ - xem Model/, NHƯNG XEM GHI
+CHÚ CẬP NHẬT NGAY DƯỚI ĐÂY]
+(Đánh số 3.x nội bộ trong mục này - KHÔNG phải cấp blueprint, chỉ đánh số
+nội bộ cho các khối Simulink)
+--------------------------------------------------------------------------------
+
+GHI CHÚ QUAN TRỌNG - CẦN SỬA SAU KHI CÓ CỤM 1 MỚI: toàn bộ mục 2.6 dưới đây
+(3.2, 3.5, 3.6, 3.8, 3.9) mô tả Model/ ĐÃ CÓ, dựa trên Cụm 1 TRỤC CỨNG (T_d
+là input duy nhất, T_s=T_d luôn đúng). Sau khi viết lại Cụm 1 (mục 2.2 -
+thanh xoắn), các khối sau CẦN SỬA, CHƯA làm:
+  - 3.2 SteeringColumn: Out thêm theta1, theta1_dot, T_s (T_s là CV mới,
+    không còn trùng T_d).
+  - 3.5 Plant: Out thêm T_s.
+  - 3.6 Reference: In đổi T_d -> T_s; công thức e_T = T_s - T_d,ref (mục
+    1.3), không còn T_d - T_d,ref.
+  - 3.8, 3.9: ngưỡng mất ổn định ~1.94 N.m đo trên bản trục cứng CŨ - CẦN ĐO
+    LẠI trên Plant mới (dùng ngay cho T_a,max, mục 1.4(c)).
+Nội dung 3.2-3.9 dưới đây GIỮ NGUYÊN như đã kiểm chứng (lịch sử), chưa sửa.
+3.0. Cấu trúc thư mục Model/ (theo module, mỗi module tự chứa model + script)
+
+  Model/
+    data/
+      params.json   - tham số thô Cụm 1+2+3 (nguồn [1][3][5], xem mục 2.2-2.4)
+      ref.json      - Bảng 4 [7] (T_d,ref(v,a_y)), RIÊNG với params.json
+    load_params.m    - nạp data/params.json vào base workspace
+    load_ref.m        - nạp data/ref.json vào base workspace (đổi đơn vị SI)
+    Plant/
+      SteeringColumn.mdl, Tires.mdl, Bike2DOF.mdl, Plant.mdl
+        (bản đã tự tay format layout - "nguồn xác thực" dùng để lắp ráp)
+      SteeringColumn_s.mdl, Tires_s.mdl, Bike2DOF_s.mdl, Plant_s.mdl
+        (bản do script sinh tự động - hậu tố "_s" - dùng đối chiếu)
+      script/
+        build_cum1.m, build_cum2.m, build_cum3.m, build_plant.m
+        test_cum1.m, test_cum2.m, test_cum3.m, test_plant.m
+        sweep_v_mu.m
+    Ref/
+      Reference_s.mdl
+      script/ build_reference.m, test_reference.m
+
+3.1. Quy ước dựng khối Simulink (áp dụng mọi build_*.m)
+  - Kích thước khối GIỮ MẶC ĐỊNH - chỉ dịch chuyển vị trí, không kéo dãn/co
+    lại (hàm tiện ích dichKhoi()).
+  - Phép nhân/chia dùng khối Product (Divide = Product với Inputs='*/'),
+    KHÔNG dùng Gain.
+  - Hàm sin/atan/tan dùng khối Trigonometric Function chuyên dụng; sgn(.)
+    dùng khối Sign; |.| dùng khối Abs - KHÔNG dùng Fcn/MATLAB Function.
+  - Mỗi tham số thô là 1 khối Constant riêng, tham chiếu THẲNG tên biến
+    base workspace (không nhúng số/công thức gộp).
+
+3.2. Khối Cụm 1 (SteeringColumn) - khớp Cum1_CEPS.txt
+  Subsystem "Cum1_SteeringColumn": In=[T_d,T_a,T_r], Out=[theta,theta_dot].
+  Test: T_d bước nhảy, T_a=T_r=0 -> theta_dot xác lập khớp TUYỆT ĐỐI
+  nghiệm giải tích B_total*w+T_f_total*tanh(c*w)=T_d (fzero).
+
+3.3. Khối Cụm 2 (Tires) - khớp Cum2_Pacejka.txt PT(1)-(11)
+  Subsystem "Tires": In=[theta,beta,gamma,v,mu], Out=[F_yf,F_yr,T_r].
+  Test: 1 điểm làm việc cố định -> F_yf, F_yr, T_r khớp TUYỆT ĐỐI (sai
+  lệch=0) công thức giải tích PT(1)-(11) tính trực tiếp từ params.json.
+
+3.4. Khối Cụm 3 (Bike2DOF) - khớp Cum3_2DOF.txt PT(1)-(5)
+  Subsystem "Cum3_2DOF": In=[F_yf,F_yr,v], Out=[beta,gamma,a_y].
+  Test: F_yf,F_yr,v hằng số -> nghiệm beta(t),gamma(t) khớp nghiệm giải
+  tích hệ ODE tuyến tính bậc 2 hằng số (expm), sai lệch ~1e-15 (số học).
+
+3.5. Ghép Plant (Plant) - khớp HeThongPlant_TongHop.txt
+  Subsystem "Plant": In=[T_d,T_a,v,mu], Out=[theta,theta_dot,beta,gamma,a_y].
+  Ghép SteeringColumn+Tires+Bike2DOF, nối đúng 2 vòng hồi tiếp (T_r và
+  beta/gamma) bằng build_plant.m - dò cổng theo TÊN (không hard-code số
+  thứ tự cổng), nên chạy đúng cho cả bản "_s" lẫn bản tự format tay.
+  Test: mô phỏng vòng kín, không NaN, cả 2 vòng hồi tiếp hoạt động.
+
+3.6. Khối Reference (T_d,ref + e_T) - khớp mục 1.3
+  Subsystem "Reference": In=[T_d,v,a_y], Out=[T_d_ref,e_T].
+  T_d,ref = sgn(a_y)*tra_bảng(v,|a_y|) qua khối 2-D Lookup Table (đọc thẳng
+  data/ref.json qua load_ref.m, Interp=Linear, Extrap=Clip). e_T=T_d-T_d,ref.
+  Test: 4 trường hợp (gồm a_y âm, 1 trường hợp ngoài dải kiểm tra Clip) khớp
+  TUYỆT ĐỐI interp2 tính tay.
+
+3.7. Quy ước test: hàm nhận tên file model làm tham số
+  Mọi test_*.m là HÀM (không phải script trần) nhận modelFileName (mặc
+  định = bản "_s"), TỰ DÒ subsystem gốc + cổng vào/ra THEO TÊN (không giả
+  định thứ tự/tên nội bộ) - nên 1 hàm test dùng được cho CẢ bản build script
+  sinh ra LẪN bản người dùng tự format tay, miễn khớp tên cổng đặc tả.
+
+3.8. Kiểm chứng bổ sung: quét (v, mu) xác nhận cơ chế over-assist
+  Script: Model/Plant/script/sweep_v_mu.m.
+  Quét v={20,40,60,80,100}km/h x mu={0.2,0.4,0.6,0.8} ([6] Multi-Map), T_d
+  cố định (bước nhảy), T_a=0. KẾT QUẢ: |T_r| TĂNG ĐƠN ĐIỆU theo mu tại MỌI
+  tốc độ (kiểm tra tự động PASS) - đúng cơ chế over-assist kỳ vọng. Độ lớn
+  hiệu ứng tăng theo tốc độ/a_y (v=20km/h: ~1.8% chênh lệch T_r giữa mu=0.8
+  và 0.2; v=100km/h: ~11.5%) - phù hợp trực giác (lốp còn tuyến tính ở góc
+  trượt nhỏ, kém nhạy với mu).
+  LƯU Ý CHƯA GIẢI QUYẾT: mô phỏng dừng ở t=8s CHƯA chắc đã tới điểm xác lập
+  thật sự (T_r(t) vẫn còn tăng nhẹ cuối khoảng mô phỏng, do K_tr nhỏ nên
+  đáp ứng "giống lò xo" chậm) - số % chênh lệch nêu trên là ước lượng tại
+  t=8s, CHƯA phải giá trị xác lập chính xác. Muốn số chính xác cho luận văn
+  cần giải xác lập bằng fsolve trên hệ đại số (thay vì mô phỏng theo thời
+  gian) - CHƯA LÀM, để bước sau nếu cần.
+
+3.9. Kiểm chứng bổ sung 2: quét (T_a, mu) - có trợ lực
+  Script: Model/Plant/script/sweep_Ta_mu.m.
+  Lý do: sweep_v_mu.m đặt T_a=0 (vòng hở, KHÔNG trợ lực) nên góc lái đạt
+  được nhỏ, lốp còn gần tuyến tính, hiệu ứng mu mờ nhạt. Quét này cho T_a
+  khác 0 để mô phỏng gần tình huống EPS thật hơn.
+  Quét: T_a (10 mức) x mu={0.2,0.4,0.6,0.8,1.0}, v=60km/h, T_d=3N.m.
+  KẾT QUẢ: chênh lệch |T_r| giữa mu=1.0 và mu=0.2 TĂNG theo mức trợ lực -
+  từ ~7.7% (T_a=0) lên ~26.7% (T_a=1.75N.m). Xác nhận: trợ lực càng mạnh,
+  góc trượt càng lớn, vùng phi tuyến Pacejka càng lộ, độ nhạy theo mu càng
+  nghiêm trọng.
+  PHÁT HIỆN QUAN TRỌNG - MẤT ỔN ĐỊNH VÒNG HỞ: khi T_a vượt ~1.94 N.m (tại
+  mu=0.2, v=60km/h, T_d=3N.m), hệ MẤT ỔN ĐỊNH: mô-men cản T_r không còn đủ
+  cân bằng T_d+T_a (vì F_yf theo Magic Formula đạt đỉnh rồi GIẢM ở góc
+  trượt lớn - hệ số E âm), theta chạy trốn, alpha_f tiến tới 90 độ làm
+  tan(alpha_f) trong PT e_p phân kỳ -> solver không hội tụ. Script tự dò
+  ngưỡng này bằng bisection và chỉ quét trong vùng ổn định (lùi 10% biên).
+  => RÀNG BUỘC AN TOÀN cho bộ điều khiển: T_a KHÔNG ĐƯỢC đẩy hệ vượt ngưỡng
+  này (xem mục 1.4(c) - dùng ngưỡng này để tính T_a,max).
+  LƯU Ý VỀ TÊN GỌI: con số % nói trên là ĐỘ NHẠY CỦA T_r THEO MU tại cùng 1
+  mức mô-men lái tổng - KHÔNG PHẢI "% over-assist". Muốn tính over-assist
+  đúng nghĩa cần có bản đồ trợ lực/bộ điều khiển cụ thể để so sánh với giá
+  trị "đáng lẽ phải có" - chưa có (chưa làm Controller).
+
+
+

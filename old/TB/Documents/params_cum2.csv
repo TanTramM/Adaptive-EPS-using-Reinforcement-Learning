@@ -1,0 +1,11 @@
+ten_dai_luong,gia_tri,don_vi,y_nghia_vat_ly,nguon
+m,1412,kg,Khối lượng xe,"Trích dẫn - Ge, Li, Sun, Zheng (2020), arXiv:2011.09612, Table I, xe CarSim C-Class Hatchback 2017"
+l_f,1.06,m,Khoảng cách trọng tâm xe (CG) đến cầu trước,"Trích dẫn - Ge et al. (2020), arXiv:2011.09612, Table I"
+l_r,1.85,m,Khoảng cách trọng tâm xe (CG) đến cầu sau,"Trích dẫn - Ge et al. (2020), arXiv:2011.09612, Table I"
+g,9.81,m/s^2,Gia tốc trọng trường,Hằng số vật lý
+C_alpha_f,128916,N/rad,Độ cứng góc trượt lốp trước (cấp cả cầu - front axle equivalent sideslip stiffness),"Trích dẫn - Ge et al. (2020), arXiv:2011.09612, Table I (k_f)"
+C_r,85944,N/rad,Độ cứng góc trượt lốp sau (cấp cả cầu),"Trích dẫn - Ge et al. (2020), arXiv:2011.09612, Table I (k_r)"
+Cf,1.9,không thứ nguyên,Hệ số hình dạng đường cong Pacejka Magic Formula,"Trích dẫn - MATLAB Vehicle Dynamics Blockset, khối ""Tire (Magic Formula)"", chế độ ""Constant Magic Formula coefficients"""
+Ef,0.97,không thứ nguyên,Hệ số độ cong đường cong Pacejka Magic Formula,"Trích dẫn - MATLAB Vehicle Dynamics Blockset, khối ""Tire (Magic Formula)"""
+n_st,15.9,không thứ nguyên,Tỷ số truyền cơ cấu lái tổng (góc vô-lăng / góc bánh xe),"Trích dẫn - Gröndahl, A. (2018), Chalmers University of Technology, Master's Thesis 2018:51 (thực hiện tại CEVT), tham số ""Steering ratio, nst"""
+F_zf,8806.1,N,Tải trọng tĩnh CẢ CẦU TRƯỚC (không phải 1 bánh) - cân bằng mô-men quanh trục sau,"Derived - từ m, g, l_f, l_r (PT F_zf = m*g*l_r/(l_f+l_r))"

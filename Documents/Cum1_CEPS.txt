@@ -1,265 +1,179 @@
-================================================================================
+==============================================================================================================================================================================================
 CỤM 1: ĐỘNG LỰC HỌC CƠ CẤU LÁI (STEERING COLUMN)
-CÓ THANH XOẮN ĐÀN HỒI - HAI KHỐI QUÁN TÍNH (THAY HẲN BẢN TRỤC CỨNG TRƯỚC ĐÂY)
-================================================================================
-Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết - KHÔNG chép nguyên vào
-luận văn. Bản rút gọn để đưa vào luận văn nằm ở PHẦN CUỐI file này.
+THANH XOẮN ĐÀN HỒI + KHỐI CỘT LÁI J_col, GÓC VÔ-LĂNG theta1 LÀ ĐẦU VÀO
+==============================================================================================================================================================================================
+  Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết, KHÔNG chép nguyên vào luận văn. Bản rút gọn đưa vào luận văn nằm ở PHẦN CUỐI file này.
+  Quy ước: mỗi công thức có thêm 1 dòng LaTeX trong ngoặc [ ]. Dán dòng đó vào ô công thức Word (Insert > Equation, chế độ nhập LaTeX bật) - Word 2016+ tự dựng thành công thức chuẩn. Trích dẫn
+  [n] khớp Documents/References.txt. Công thức chỉ viết dạng ký hiệu; giá trị số chỉ xuất hiện trong Bảng tham số.
 
-Quy ước: mỗi công thức có thêm 1 dòng dạng LaTeX trong ngoặc [ ]. Dán dòng đó
-vào ô công thức Word (Insert > Equation, hoặc Alt+=) với chế độ nhập LaTeX
-đang bật (Equation > mũi tên góc > LaTeX thay vì UnicodeMath) - Word 2016+ tự
-dựng thành công thức chuẩn.
+VẤN ĐỀ VÀ GIẢI PHÁP
+  - Vấn đề 1 (bản trục cứng cũ): T_s = T_d luôn đúng nên T_a không tác động được lên CV = T_s.
+  - Giải pháp 1: thêm thanh xoắn độ cứng K giữa vô-lăng và cột lái. Khi đó T_s = K*(theta1 - theta2) và T_a tác động trực tiếp qua theta2. Thanh xoắn cũng chính là vị trí đặt cảm biến mô-men trên
+    xe thật.
+  - Vấn đề 2: nếu coi mô-men tay T_d là đầu vào cho trước thì ở xác lập (vận tốc và gia tốc vô-lăng bằng 0) T_s = T_d, T_a vẫn không đổi được CV. Đã kiểm chứng trên Plant: T_d = 2 N.m cố định,
+    T_a = 0..1 N.m, mu = 0.8 và 0.3 đều cho T_s ~ 1.9994 N.m (thí nghiệm chạy trên bản Plant cũ còn cổng T_d; model hiện tại đã bỏ cổng này nên không tái lập được bằng model hiện hành).
+  - Giải pháp 2 (tài xế động học): tài xế giữ GÓC, theta1(t) là đầu vào và T_d là kết quả. Cách này giống [6] (góc lái bậc/dốc) và [1] (mục IV.A: "the steering angle is an input command"). Trên
+    xe chỉ có cảm biến góc vô-lăng, nên theta1_dot và theta1_ddot KHÔNG là đầu vào.
+  - Hệ quả: chuyển động vô-lăng bị áp đặt nên chỉ còn khối cột lái là động lực học thật. Phương trình khối vô-lăng chỉ còn định nghĩa T_d (mục 1b), không cấp cho phương trình nào khác, T_d không
+    đo được và không được điều khiển nên KHÔNG dựng trong model.
+  - Giới hạn: tài xế cứng vô hạn (cho được góc bất kể mô-men), không phản ứng theo cảm giác lái. Chấp nhận trong phạm vi over-assist (Blueprint mục 1.4).
 
-LÝ DO THAY BẢN CŨ (xem đầy đủ: Documents/Blueprint_OverAssist_RL.txt mục
-1.2, 1.4(b), 2.2): bản trục cứng (T_s = T_d luôn đúng) khiến T_a KHÔNG tác
-động thật lên CV - T_a và T_d cộng tuyến tính trong cùng 1 phương trình, T_a
-chỉ đổi được CV gián tiếp qua a_y (dịch chuyển điểm đặt), không phải đường
-tác động động lực học thật. Thanh xoắn mở ra đường tác động trực tiếp: T_a
--> theta2 -> T_s = K(theta1-theta2).
+CÁC KÝ HIỆU T (PHẢI PHÂN BIỆT)
+  - T_d: mô-men tay tài xế thật tác dụng lên vô-lăng. KHÔNG đo được, là đầu ra phụ thuộc, không dựng trong model.
+  - T_s = K*(theta1 - theta2): mô-men cảm biến tại thanh xoắn. Đây là "steering wheel torque" mà mọi nguồn ([1], [6], [7]) đo được và là CV của bài toán. T_s = T_d chỉ ở xác lập tuyệt đối; Bảng 4
+    [7] đo ở điều kiện tựa-tĩnh nên hai tên trùng nhau tại đó.
 
-Giả thiết: cơ cấu lái gồm 2 khối quán tính nối qua thanh xoắn đàn hồi:
-  - J1: vô-lăng (phía tài xế).
-  - J2: cột lái + motor trợ lực (quy đổi qua tỷ số truyền) + thước lái/
-    pinion (quy đổi qua bán kính pinion) - GỘP thành 1 khối, đúng cách Lee
-    (2018) lượng hóa "assist side" của hệ.
-Hai khối nối bởi thanh xoắn độ cứng K - đây LÀ vị trí đặt cảm biến mô-men
-trên xe thật.
+CỤM 1 KHỚP VÀO VÒNG LẶP
+  - Đầu vào: theta1 (góc vô-lăng, đo bằng cảm biến góc), T_a (MV, từ bộ điều khiển), T_r (từ Cụm 2).
+  - Đầu ra: T_s (CV, tới e_T Blueprint 1.3), theta2 (tới Cụm 2 để tính delta_f), theta2_dot.
+  - Biến trạng thái (2): x1 = theta2, x2 = theta2_dot. Đánh số riêng cho cụm này; Cụm 3 dùng x3 = beta, x4 = gamma, nên toàn Plant có x = [x1, x2, x3, x4] = [theta2, theta2_dot, beta, gamma]
+    (Blueprint mục 2.1). theta1 là đầu vào nên không phải trạng thái.
+  [ x_1=	heta_2 quad x_2=dot	heta_2 ]
+  - Đo được trên xe thật (quy ước, chưa đối chiếu nguồn): theta1 (cảm biến góc), theta2 (encoder motor/cột lái), theta2_dot (vi phân/lọc từ encoder), T_s (cảm biến mô-men).
 
-QUAN TRỌNG - 2 ký hiệu T dễ nhầm, PHẢI phân biệt (xem Blueprint mục 1.2):
-  - T_d(t): mô-men TAY TÀI XẾ THẬT, tác dụng lên vô-lăng (J1) - NGOẠI SINH,
-    tùy ý đặt (bước nhảy, sin...), KHÔNG đo được (không sensor nào đặt
-    trong cổ tay tài xế).
-  - T_s(t): mô-men CẢM BIẾN, đo tại thanh xoắn - ĐÂY là "steering wheel
-    torque" mà mọi số liệu trong References/ (Bảng 4 [7], Multi-Map, Lee)
-    thực đo được. Dùng làm CV xuyên suốt phần còn lại của project (e_T,
-    Reference...). T_s = T_d CHỈ tại trạng thái xác lập tuyệt đối
-    (theta1_dot=theta1_ddot=0) - Bảng 4 [7] đo ở điều kiện tựa-tĩnh này nên
-    2 tên trùng nhau tại đó (xem Blueprint mục 1.2).
-
-Biến trạng thái: x1=theta1, x2=theta1_dot, x3=theta2, x4=theta2_dot.
-  [ x_1=\theta_1 \quad x_2=\dot\theta_1 \quad x_3=\theta_2 \quad x_4=\dot\theta_2 ]
-Đầu vào: T_d (tài xế, ngoại sinh), T_a (trợ lực, vào J2), T_r (phản hồi mặt
-đường từ Cụm 2, vào J2).
-Đầu ra: T_s (-> e_T, mục 1.3 Blueprint), theta2 (-> Cụm 2, hình học
-delta_f - THAY theta cũ của bản trục cứng), theta2_dot.
-
---------------------------------------------------------------------------------
-BẢNG THAM SỐ CỤM 1 (nguồn [1] Lee, Kim, Kim (2018), PT(14) + Table III - xem
-đầy đủ tại Documents/References.txt)
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BẢNG THAM SỐ CỤM 1 (nguồn [1] Lee, Kim, Kim (2018), PT(14) và Table III; chi tiết: params_plant.xlsx, sheet Cum1)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     K          = 143.24 N.m/rad      (độ cứng thanh xoắn)
-    J1         = 0.044  kg.m^2       (quán tính vô-lăng)
-    C1         = 0.25   N.m.s/rad    (hệ số cản/damping vô-lăng)
-    J2         = 0.11   kg.m^2       (quán tính cột lái+motor+rack, quy đổi)
-    C2         = 1.35   N.m.s/rad    (hệ số cản/damping phía J2, quy đổi)
-    T_f        = 2      N.m          (ma sát khô Coulomb bánh răng, phía J2)
-    c          = 100    (không thứ nguyên)  (hệ số làm mịn tanh, tự chọn)
+    J_col      = 0.11   kg.m^2       (quán tính cột lái + motor + thước lái, quy đổi; ký hiệu J2 trong [1])
+    C_col      = 1.35   N.m.s/rad    (hệ số cản/damping phía cột lái; ký hiệu C2 trong [1])
+    T_f        = 2      N.m          (ma sát khô Coulomb bánh răng, phía cột lái; Table III [1])
+    c          = 100    (không thứ nguyên)   (hệ số làm mịn tanh, tự chọn)
 
-  6 tham số trên đều là THAM SỐ THÔ - lấy TRỰC TIẾP từ nguồn [1], KHÔNG
-  gộp/tách thêm (khác bản trục cứng cũ, từng gộp J_total=J1+J2,
-  B_total=C1+C2 - bản này dùng thẳng cả 5 số K,J1,C1,J2,C2 riêng biệt).
+  Đây đều là THAM SỐ THÔ lấy trực tiếp từ [1] (riêng c tự chọn), không gộp/tách thêm. J_col và C_col là tên trong code; giữ đối chiếu J2, C2 của [1] khi trích dẫn.
+  J1 = 0.044 kg.m^2 và C1 = 0.25 N.m.s/rad (vô-lăng, [1]) chỉ xuất hiện trong định nghĩa T_d (mục 1b), không nằm trong params.json vì model không dùng.
+  GHI CHÚ THUẬT NGỮ (đã đối chiếu [1]): Lee gọi C1, C2 là "damping coefficient" (hệ số cản), KHÔNG phải ma sát nhớt; ma sát khô Coulomb là T_f riêng, đo riêng ở Table III.
 
---------------------------------------------------------------------------------
-1. Hệ 2 bậc tự do nối qua thanh xoắn - phương trình chuyển động (Lagrange)
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Hệ 2 khối quán tính nối qua thanh xoắn (Lagrange)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  2 tọa độ suy rộng theta1, theta2 (KHÔNG quy đổi tỷ số truyền nào thêm ở
-  đây - J1, J2 đã là quán tính quy đổi sẵn theo nguồn [1]).
+  2 tọa độ suy rộng theta1, theta2 (J1, J_col đã là quán tính quy đổi sẵn theo [1], không quy đổi tỷ số truyền thêm ở đây). Động năng E, thế năng đàn hồi U của thanh xoắn, hàm tiêu tán Rayleigh F
+  (cản từng khối, KHÁC ma sát khô T_f):
 
-  Động năng, thế năng đàn hồi (thanh xoắn), hàm tiêu tán Rayleigh (hệ số
-  cản/damping từng khối - KHÁC ma sát khô T_f, xem "GHI CHÚ THUẬT NGỮ" ở
-  mục 4 dưới đây):
-
-    E = 0.5*J1*theta1_dot^2 + 0.5*J2*theta2_dot^2
-    [ E=\tfrac12 J_1\dot\theta_1^2+\tfrac12 J_2\dot\theta_2^2 ]
+    E = 0.5*J1*theta1_dot^2 + 0.5*J_col*theta2_dot^2
+    [ E=\tfrac12 J_1\dot\theta_1^2+\tfrac12 J_{col}\dot\theta_2^2 ]
 
     U = 0.5*K*(theta1-theta2)^2
     [ U=\tfrac12 K(\theta_1-\theta_2)^2 ]
 
-    F = 0.5*C1*theta1_dot^2 + 0.5*C2*theta2_dot^2
-    [ \mathcal F=\tfrac12 C_1\dot\theta_1^2+\tfrac12 C_2\dot\theta_2^2 ]
+    F = 0.5*C1*theta1_dot^2 + 0.5*C_col*theta2_dot^2
+    [ \mathcal F=\tfrac12 C_1\dot\theta_1^2+\tfrac12 C_{col}\dot\theta_2^2 ]
 
-  Lagrange tổng quát có tiêu tán, cho 2 bậc tự do (L=E-U):
+  Lagrange có tiêu tán, L = E - U, i = 1, 2:
 
-    d/dt(dL/d(theta1_dot)) - dL/d(theta1) + dF/d(theta1_dot) = Q1
-    d/dt(dL/d(theta2_dot)) - dL/d(theta2) + dF/d(theta2_dot) = Q2
-    [ \frac{d}{dt}\frac{\partial L}{\partial\dot\theta_i}-\frac{\partial L}{\partial\theta_i}
-      +\frac{\partial\mathcal F}{\partial\dot\theta_i}=Q_i,\quad i=1,2 ]
+    d/dt(dL/d(theta_i_dot)) - dL/d(theta_i) + dF/d(theta_i_dot) = Q_i
+    [ \frac{d}{dt}\frac{\partial L}{\partial\dot\theta_i}-\frac{\partial L}{\partial\theta_i}+\frac{\partial\mathcal F}{\partial\dot\theta_i}=Q_i,\quad i=1,2 ]
 
-  Tính từng số hạng cho theta1:
-
-    dL/d(theta1_dot) = J1*theta1_dot  =>  d/dt(...) = J1*theta1_ddot
-    dL/d(theta1) = -dU/d(theta1) = -K*(theta1-theta2)
-    dF/d(theta1_dot) = C1*theta1_dot
-
-  => J1*theta1_ddot + K*(theta1-theta2) + C1*theta1_dot = Q1
-
-  Tính từng số hạng cho theta2:
-
-    dL/d(theta2_dot) = J2*theta2_dot  =>  d/dt(...) = J2*theta2_ddot
-    dL/d(theta2) = -dU/d(theta2) = K*(theta1-theta2) = -K*(theta2-theta1)
-    dF/d(theta2_dot) = C2*theta2_dot
-
-  => J2*theta2_ddot + K*(theta2-theta1) + C2*theta2_dot = Q2
-
-  Q1, Q2 là mô-men KHÔNG đến từ E/U bậc 2 - cộng thẳng như ngoại lực suy
-  rộng, đúng cách xử lý T_r, ma sát khô ở bản trục cứng cũ:
-
-    Q1 = T_d                                      (chỉ tài xế tác động J1)
-    Q2 = T_a - T_r - T_f*tanh(c*theta2_dot)        (trợ lực, cản mặt đường,
-                                                     ma sát khô - đều tác
-                                                     động J2, đúng cấu trúc
-                                                     PT(6) của [1])
-
-  Ma sát khô dùng tanh(c*theta2_dot) làm mịn thay sign(theta2_dot) gián
-  đoạn - lý do giữ nguyên như bản trục cứng cũ: tanh tiến nhanh về +-1 khi
-  |theta2_dot| lớn (giữ đúng bản chất vật lý Coulomb), nhưng liên tục và có
-  đạo hàm tại theta2_dot=0 (bộ giải số không bị kẹt).
-
-  => Hệ phương trình chuyển động đầy đủ:
+  Q_i là mô-men không đến từ E, U bậc 2, cộng thẳng như ngoại lực suy rộng: Q1 = T_d (tài xế tác động khối vô-lăng); Q2 = T_a - T_r - T_f*tanh(c*theta2_dot) (trợ lực, cản mặt đường, ma sát khô,
+  đều tác động khối cột lái). T_a (mô-men motor nhân tỉ số truyền) và T_r (T_r = K_tr*F_yf với K_tr = e_p/n_st, Cụm 2) đều đã QUY ĐỔI VỀ TRỤC CỘT LÁI nên cộng thẳng được vào Q2. Ma sát khô dùng
+  tanh làm mịn sign(theta2_dot): tiến nhanh về +-1 khi |theta2_dot| lớn (đúng bản chất Coulomb) nhưng liên tục và khả vi tại 0 (bộ giải số không bị kẹt).
+  Đạo hàm từng số hạng cho ra hệ phương trình chuyển động đầy đủ:
 
     J1*theta1_ddot + C1*theta1_dot + K*(theta1-theta2) = T_d
     [ J_1\ddot\theta_1+C_1\dot\theta_1+K(\theta_1-\theta_2)=T_d ]
 
-    J2*theta2_ddot + C2*theta2_dot + K*(theta2-theta1)
-      = T_a - T_r - T_f*tanh(c*theta2_dot)
-    [ J_2\ddot\theta_2+C_2\dot\theta_2+K(\theta_2-\theta_1)=T_a-T_r-T_f\tanh(c\dot\theta_2) ]
+    J_col*theta2_ddot + C_col*theta2_dot + K*(theta2-theta1) = T_a - T_r - T_f*tanh(c*theta2_dot)
+    [ J_{col}\ddot\theta_2+C_{col}\dot\theta_2+K(\theta_2-\theta_1)=T_a-T_r-T_f\tanh(c\dot\theta_2) ]
 
---------------------------------------------------------------------------------
-2. Mô-men cảm biến (đầu ra dùng làm CV, e_T - Blueprint mục 1.3)
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1b. Áp điều kiện theta1 là đầu vào
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    T_s(t) = K*(theta1(t) - theta2(t))
-    [ T_s(t)=K(\theta_1-\theta_2) ]
+  theta1(t) do tài xế cho trước. Phương trình thứ hai vẫn là phương trình vi phân của theta2 (theta1 là hàm thời gian đã biết trong số hạng lò xo). Phương trình thứ nhất KHÔNG còn là phương trình
+  vi phân của hệ, chỉ cho mô-men tay cần có để tạo ra theta1 đã cho:
 
-  Đây là đại lượng "steering wheel torque" mà mọi nguồn (Bảng 4 [7],
-  Multi-Map, Lee) đo được - KHÁC T_d (mô-men tay thật, không đo được), chỉ
-  trùng T_d tại trạng thái xác lập tuyệt đối (xem đầu file).
+    T_d = J1*theta1_ddot + C1*theta1_dot + T_s
+    [ T_d=J_1\ddot\theta_1+C_1\dot\theta_1+T_s ]
 
---------------------------------------------------------------------------------
-3. Kiểm tra chéo: cân bằng mô-men tổng ở trạng thái xác lập
---------------------------------------------------------------------------------
+  Quan hệ MỘT CHIỀU: T_d phụ thuộc theta2, nhưng theta2 không phụ thuộc T_d. Ở xác lập T_d = T_s. Rút gọn từ mô hình 2 khối của [1] khi theta1 cho trước là CHÍNH XÁC, không xấp xỉ; K, J_col,
+  C_col do [1] định danh cùng bộ dữ liệu với J1, C1 nên vẫn hợp lệ.
 
-  Cộng 2 phương trình chuyển động ở trạng thái xác lập (mọi đạo hàm = 0, số
-  hạng K*(theta1-theta2) trong PT1 và K*(theta2-theta1) trong PT2 triệt
-  tiêu lẫn nhau):
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Mô-men cảm biến (CV)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    T_d = T_r - T_a   <=>   T_r = T_d + T_a
-    [ T_r=T_d+T_a ]
+    T_s = K*(theta1 - theta2)
+    [ T_s=K(\theta_1-\theta_2) ]
 
-  Khớp TUYỆT ĐỐI với PT(1) của Multi-Map EPS.pdf [6] ("Tr = Td + Ta") -
-  xác nhận mô hình 2 khối không phá vỡ quan hệ cân bằng mô-men cơ bản đã
-  biết trong văn liệu, chỉ thêm động học quá độ (quán tính, thanh xoắn) mà
-  văn liệu đó bỏ qua.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Kiểm tra chéo: cân bằng xác lập
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
-4. Cách Lee 2018 [1] đo ra K, J1, C1, J2, C2 (tóm tắt phương pháp)
---------------------------------------------------------------------------------
+  Cộng 2 phương trình ở xác lập (mọi đạo hàm = 0, số hạng lò xo triệt tiêu nhau): T_r = T_d + T_a. Khớp tuyệt đối PT(1) của Multi-Map [6]: mô hình chỉ thêm quá độ (quán tính, thanh xoắn, ma sát)
+  mà [6] bỏ qua.
 
-  Xe thử nghiệm: Hyundai i30. Điều kiện: xe kích bánh trước lên (lift-on),
-  tài xế buông tay lái (free-handle) - đảm bảo T_d=0 và T_r=0, cô lập hoàn
-  toàn ảnh hưởng của motor.
+    T_r = T_d + T_a   <=>   T_s = T_r - T_a
+    [ T_r=T_d+T_a \;\Leftrightarrow\; T_s=T_r-T_a ]
 
-  Motor được kích thích bằng dòng điện dạng SIN, quét qua nhiều tần số. Đo
-  đồng thời góc cột lái, dòng điện motor, mô-men cảm biến tại MỖI tần số
-  kích thích - dựng được Bode plot thực nghiệm (biên độ + pha theo tần số).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Cách [1] định danh K, J1, C1, J_col, C_col (tóm tắt)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  Mô hình lý thuyết của họ (đúng 2 khối quán tính J1=vô-lăng, J2=cột lái+
-  motor+rack gộp qua tỷ số truyền, nối qua thanh xoắn K - giống hệt cấu
-  trúc file này) cho hàm truyền dạng closed-form theo (J1,C1,K,J2,C2). Họ
-  dùng bình phương tối thiểu khớp hàm truyền lý thuyết với Bode plot đo
-  được, tìm ra bộ tham số khớp tốt nhất - đây là PHÉP ĐO GIÁN TIẾP (system
-  identification), không cần tháo rời từng chi tiết cơ khí ra cân/đo riêng.
+  Xe Hyundai i30, kích bánh trước lên (lift-on), tài xế buông tay lái (free-handle) để T_d = 0 và T_r = 0. Kích thích motor bằng dòng điện sin quét nhiều tần số, đo góc cột lái, dòng motor,
+  mô-men cảm biến để dựng Bode plot thực nghiệm. Khớp bình phương tối thiểu với hàm truyền của mô hình 2 khối cho bộ tham số ở Bảng tham số (system identification, không cần tháo rời từng chi
+  tiết cơ khí). T_f lấy từ Table III của cùng bài (ma sát khô giữa các cặp bánh răng motor-cột lái và thước lái-pinion, dùng trong mô phỏng Simulink của họ).
+  Lưu ý điều kiện biên: [1] định danh với vô-lăng buông TỰ DO (T_d = 0), còn ta kẹp cứng theta1 làm đầu vào. K, J_col, C_col, T_f là tham số vật lý của cùng cơ cấu nên dùng lại được, nhưng đây là
+  hai điều kiện biên khác nhau và [1] không kiểm chứng trực tiếp trường hợp kẹp cứng.
 
-  Kết quả PT(14) của họ: K=143.24 N.m/rad, J1=0.044 kg.m^2, C1=0.25
-  N.m.s/rad, J2=0.11 kg.m^2, C2=1.35 N.m.s/rad. File này DÙNG THẲNG cả 5 số
-  này, KHÔNG gộp lại (khác bản trục cứng cũ, từng gộp K->vô cùng).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Đặc tính động học suy ra từ tham số (chi tiết: KẾT QUẢ, Mục 5)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  T_f = 2 N.m lấy từ Table III của cùng bài - hệ số ma sát khô Coulomb giữa
-  các cặp bánh răng (motor-cột lái, thước lái-pinion) mà chính nhóm tác giả
-  dùng trong mô phỏng Simulink của họ để tái tạo hành vi xe thật.
+  Bộ điều khiển (PID, SMC) đều dựa vào hai chế độ của cột lái, nên ghi lại ở đây: (a) cột lái DÍNH khi giữ góc, do độ dốc ma sát khô T_f*c = 200 N.m.s/rad lớn hơn cản nhớt C_col = 1.35 N.m.s/rad
+  hàng trăm lần, đáp ứng gần bậc 1 với tau_st = (C_col + T_f*c)/K ~ 1.4 s; (b) cột lái TRƯỢT khi đánh lái, tanh bão hòa, dao động yếu với omega_n = sqrt(K/J_col) ~ 36 rad/s (5.7 Hz) và zeta =
+  C_col/(2*sqrt(K*J_col)) ~ 0.17. Số liệu và công thức đầy đủ ở Mục 5 của KẾT QUẢ.
 
-  GHI CHÚ THUẬT NGỮ (đã kiểm tra lại nguyên bản [1]): Lee gọi C1, C2 là
-  "damping coefficient" (hệ số cản), KHÔNG gọi là "friction" - bài tách
-  bạch hẳn 2 khái niệm: damping (PT(6)-(7), C1, C2, đo bằng system
-  identification, không khẳng định cơ chế vật lý cụ thể) và ma sát khô/gear
-  friction (Table III, T_f, đo riêng). File này TỪNG dịch nhầm C1, C2 thành
-  "ma sát nhớt" - đã sửa lại thành "hệ số cản/damping" cho đúng nguồn, tránh
-  gây hiểu lầm có 2 loại ma sát tách biệt trong khi Lee chỉ có 1 số hạng ma
-  sát (T_f) và 1 số hạng cản riêng (C).
+==============================================================================================================================================================================================
+KẾT QUẢ ĐƯA VÀO LUẬN VĂN
+==============================================================================================================================================================================================
+  Bản rút gọn: chỉ nêu công thức và giải thích ngắn, không lặp lại suy diễn Lagrange. Giá trị số tra Bảng tham số ở trên hoặc params_plant.xlsx.
 
-================================================================================
-KẾT QUẢ ĐƯA VÀO LUẬN VĂN (bản rút gọn - chỉ nêu công thức + giải thích ngắn,
-không lặp lại suy diễn Lagrange ở trên)
-================================================================================
-
-Bảng tham số (nguồn [1] - Lee, Kim, Kim (2018), IEEE TCST, PT(14) và Table
-III - xem đầy đủ tại References.txt):
-
-    K          = 143.24 N.m/rad
-    J1         = 0.044  kg.m^2
-    C1         = 0.25   N.m.s/rad
-    J2         = 0.11   kg.m^2
-    C2         = 1.35   N.m.s/rad
-    T_f        = 2      N.m
-    c          = 100    (tự chọn)
-
---------------------------------------------------------------------------------
-Mục 1. Hệ phương trình vi phân 2 bậc tự do
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 1. Phương trình chuyển động và điều kiện theta1 là đầu vào
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   (1)  J1*theta1_ddot + C1*theta1_dot + K*(theta1-theta2) = T_d
   [ J_1\ddot\theta_1+C_1\dot\theta_1+K(\theta_1-\theta_2)=T_d ]
 
-  (2)  J2*theta2_ddot + C2*theta2_dot + K*(theta2-theta1)
-         = T_a - T_r - T_f*tanh(c*theta2_dot)
-  [ J_2\ddot\theta_2+C_2\dot\theta_2+K(\theta_2-\theta_1)=T_a-T_r-T_f\tanh(c\dot\theta_2) ]
+  (2)  J_col*theta2_ddot + C_col*theta2_dot + K*(theta2-theta1) = T_a - T_r - T_f*tanh(c*theta2_dot)
+  [ J_{col}\ddot\theta_2+C_{col}\dot\theta_2+K(\theta_2-\theta_1)=T_a-T_r-T_f\tanh(c\dot\theta_2) ]
 
---------------------------------------------------------------------------------
-Mục 2. Mô-men cảm biến (CV, dùng trong e_T - Blueprint mục 1.3)
---------------------------------------------------------------------------------
+  T_a (mô-men motor nhân tỉ số truyền) và T_r (T_r = K_tr*F_yf với K_tr = e_p/n_st, Cụm 2) đều là mô-men QUY ĐỔI VỀ TRỤC CỘT LÁI nên cộng thẳng được vào vế phải của (2).
+
+  theta1 do tài xế cho trước nên (2) là phương trình động lực học duy nhất của cụm; (1) chỉ định nghĩa T_d (không đo được, không được điều khiển, không dựng trong model):
+
+  (1')  T_d = J1*theta1_ddot + C1*theta1_dot + T_s
+  [ T_d=J_1\ddot\theta_1+C_1\dot\theta_1+T_s ]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 2. Mô-men cảm biến (CV, dùng trong e_T, Blueprint mục 1.3)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   (3)  T_s = K*(theta1 - theta2)
   [ T_s=K(\theta_1-\theta_2) ]
 
---------------------------------------------------------------------------------
-Mục 3. Kiểm tra chéo cân bằng mô-men xác lập
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 3. Kiểm tra chéo cân bằng xác lập
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  (4)  T_r = T_d + T_a    (trạng thái xác lập - khớp PT(1) Multi-Map [6])
+  (4)  T_r = T_d + T_a   (khớp PT(1) Multi-Map [6])
   [ T_r=T_d+T_a ]
 
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Mục 4. Hệ phương trình trạng thái
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Biến trạng thái: x1=theta1, x2=theta1_dot, x3=theta2, x4=theta2_dot.
-  [ x_1=\theta_1 \quad x_2=\dot\theta_1 \quad x_3=\theta_2 \quad x_4=\dot\theta_2 ]
+  Biến trạng thái x1 = theta2, x2 = theta2_dot (theta1 là đầu vào). Thế (3) vào (2) được 2 phương trình bậc 1:
 
-Thế (1), (2) thành 4 phương trình bậc 1:
-
-  (5) dx1/dt = x2
-  (6) dx2/dt = [T_d - K*(x1-x3) - C1*x2] / J1
-  (7) dx3/dt = x4
-  (8) dx4/dt = [T_a - T_r - T_f*tanh(c*x4) - C2*x4 - K*(x3-x1)] / J2
+  (5)  dx1/dt = x2
+  (6)  dx2/dt = [T_a - T_r + T_s - T_f*tanh(c*x2) - C_col*x2] / J_col,   T_s = K*(theta1 - x1)
 
   [ \begin{cases}
       \dot x_1=x_2\\[4pt]
-      \dot x_2=\dfrac{T_d-K(x_1-x_3)-C_1x_2}{J_1}\\[6pt]
-      \dot x_3=x_4\\[4pt]
-      \dot x_4=\dfrac{T_a-T_r-T_f\tanh(cx_4)-C_2x_4-K(x_3-x_1)}{J_2}
+      \dot x_2=\dfrac{T_a-T_r+T_s-T_f\tanh(cx_2)-C_{col}x_2}{J_{col}},\quad T_s=K(\theta_1-x_1)
     \end{cases} ]
 
-Thay số (K=143.24, J1=0.044, C1=0.25, J2=0.11, C2=1.35, T_f=2, c=100):
-
-  dx2/dt = [T_d - 143.24*(x1-x3) - 0.25*x2] / 0.044
-  dx4/dt = [T_a - T_r - 2*tanh(100*x4) - 1.35*x4 - 143.24*(x3-x1)] / 0.11
-
-  [ \dot x_2=\dfrac{T_d-143.24(x_1-x_3)-0.25x_2}{0.044} ]
-  [ \dot x_4=\dfrac{T_a-T_r-2\tanh(100x_4)-1.35x_4-143.24(x_3-x_1)}{0.11} ]
-
-(theta2 - KHÔNG PHẢI theta1 - là góc dùng ở Cụm 2 để tính hình học delta_f,
-vì J2 đại diện cột lái+rack/pinion, gần bánh xe hơn J1. Phương trình hình
-học delta_f trình bày trong Cụm 2 - đó là nơi nó thực sự được dùng.)
-================================================================================
+  Đầu vào: theta1, T_a, T_r. Đầu ra: T_s, theta2 (= x1), theta2_dot (= x2). theta2, không phải theta1, là góc dùng ở Cụm 2 để tính hình học delta_f (khối cột lái/thước lái gần bánh xe hơn
+  vô-lăng); phương trình delta_f trình bày ở Cụm 2, nơi nó thực sự được dùng. T_a và T_r cộng thẳng vào phương trình (2) nên đều là mô-men QUY ĐỔI VỀ TRỤC CỘT LÁI (xem mục 1).

@@ -1,0 +1,28 @@
+{
+  "_note": "Tham số plant (Cụm 1+2+3), khớp Documents/Cum1_CEPS.txt, Cum2_Pacejka.txt, Cum3_2DOF.txt và Documents/params_plant.xlsx. Số [n] tra Documents/References.txt. Bộ số cũ (Bảng 3.1, Documents/Gemini_old/) ĐÃ BỎ HẲN - chứa trích dẫn không xác thực.",
+  "cum1": {
+    "K":  { "value": 143.24, "unit": "N.m/rad",   "desc": "Độ cứng thanh xoắn nối J1 (vô-lăng) và J2 (cột lái+motor+rack quy đổi)", "ref": "[1]" },
+    "J1": { "value": 0.044,  "unit": "kg.m^2",    "desc": "Quán tính vô-lăng (phía tài xế)",                                       "ref": "[1]" },
+    "C1": { "value": 0.25,   "unit": "N.m.s/rad", "desc": "Hệ số cản (damping) phía vô-lăng (J1) - KHÔNG phải ma sát nhớt",       "ref": "[1]" },
+    "J2": { "value": 0.11,   "unit": "kg.m^2",    "desc": "Quán tính cột lái+motor+rack quy đổi (phía cơ cấu chấp hành)",         "ref": "[1]" },
+    "C2": { "value": 1.35,   "unit": "N.m.s/rad", "desc": "Hệ số cản (damping) phía J2 - KHÔNG phải ma sát nhớt",                 "ref": "[1]" },
+    "T_f": { "value": 2,     "unit": "N.m",       "desc": "Mô-men ma sát khô Coulomb tại các cặp bánh răng, đặt ở phương trình J2", "ref": "[1]" },
+    "c":  { "value": 100,    "unit": "-",         "desc": "Hệ số làm mịn tanh (chống chattering ma sát khô)",                      "ref": "tự chọn" }
+  },
+  "cum2": {
+    "m":         { "value": 1573,  "unit": "kg",     "desc": "Khối lượng xe",                                   "ref": "[5]" },
+    "l_f":       { "value": 1.1,   "unit": "m",      "desc": "Khoảng cách trọng tâm (CG) đến cầu trước",        "ref": "[5]" },
+    "l_r":       { "value": 1.58,  "unit": "m",      "desc": "Khoảng cách trọng tâm (CG) đến cầu sau",          "ref": "[5]" },
+    "g":         { "value": 9.81,  "unit": "m/s^2",  "desc": "Gia tốc trọng trường",                            "ref": "hằng số vật lý" },
+    "C_alpha_f": { "value": 80000, "unit": "N/rad",  "desc": "Độ cứng góc trượt lốp trước (cấp cả cầu)",        "ref": "[5]" },
+    "C_r":       { "value": 80000, "unit": "N/rad",  "desc": "Độ cứng góc trượt lốp sau (cấp cả cầu)",          "ref": "[5]" },
+    "C":         { "value": 1.3,   "unit": "-",      "desc": "Hệ số hình dạng đường cong Pacejka (lực ngang)",  "ref": "[3]" },
+    "E":         { "value": -1,    "unit": "-",      "desc": "Hệ số độ cong đường cong Pacejka (lực ngang)",    "ref": "[3]" },
+    "n_st":      { "value": 16,    "unit": "-",      "desc": "Tỷ số truyền cơ cấu lái tổng (góc vô-lăng/góc bánh xe)", "ref": "tự chọn, kiểm chứng chéo [7][8]" },
+    "e_p0":      { "value": 0.048, "unit": "m",      "desc": "Pneumatic trail danh nghĩa tại bánh xe ở góc trượt nhỏ, dùng cho K_tr(alpha_f,mu) động", "ref": "tự chọn" }
+  },
+  "cum3": {
+    "Iz": { "value": 2873, "unit": "kg.m^2", "desc": "Mô-men quán tính Yaw quanh trục thẳng đứng qua trọng tâm", "ref": "[5]" }
+  },
+  "_cum3_reused_from_cum2": ["m", "l_f", "l_r"]
+}

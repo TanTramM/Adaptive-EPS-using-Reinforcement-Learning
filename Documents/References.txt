@@ -28,15 +28,7 @@ không lặp lại chi tiết dùng ở đâu.
     Dùng ở: Cụm 2 (C, E - Table 4.2, tr.196 - "hypothetical parameter
     values", tác giả ghi rõ không fit theo lốp thật cụ thể).
 
-[4] Gröndahl, A. (2018). "Functional Modelling and Simulation of an Electric
-    Power Assisted Steering." Chalmers University of Technology, Master's
-    Thesis 2018:51 (thực hiện tại CEVT).
-    KHÔNG CÒN DÙNG - n_st đổi sang tự chọn (không nguồn), vì đã rà hết
-    References/ (Rajamani, Pacejka...) mà không tìm được sách/paper nào cho
-    số/dải tỷ số truyền lái. Giữ số [4] trong danh mục để không xáo trộn thứ
-    tự các số khác.
-
-[5] Rajamani, R. (2012). Vehicle Dynamics and Control. 2nd ed. Springer
+[4] Rajamani, R. (2012). Vehicle Dynamics and Control. 2nd ed. Springer
     (Mechanical Engineering Series). Chương 3, tr.48.
     File: References/Vehicle_Dynamics_and_Control.pdf.
     Dùng ở: Cụm 2 (m, l_f, l_r, C_alpha_f, C_r); Cụm 3 (m, Iz, l_f, l_r, C_r)
@@ -45,7 +37,7 @@ không lặp lại chi tiết dùng ở đâu.
     cụ thể nào) - dùng để thay thế Ge et al. [2] (đã bỏ, tránh trộn nhiều xe
     khác nhau cho cùng 1 hệ thân xe/lốp).
 
-[6] Li, Y., Yang, Z., Zhai, D., He, J., Fan, J. (2023). "Study on Control
+[5] Li, Y., Yang, Z., Zhai, D., He, J., Fan, J. (2023). "Study on Control
     Strategy of Electric Power Steering for Commercial Vehicle Based on
     Multi-Map." World Electric Vehicle Journal, 14, 33.
     File: References/Multi-Map EPS.pdf.
@@ -59,8 +51,7 @@ không lặp lại chi tiết dùng ở đâu.
     số. Vậy PT(4) là công thức riêng của Multi-Map, không truy được nguồn
     xa hơn - trích dẫn thẳng Multi-Map, không trích [11]/[12].
 
-[7] (tác giả không rõ - bài trích lại từ 1 viện nghiên cứu khác, không tự
-    đo). "Road Identification..." - Table 4 "Driver's average favored
+[6] Qiang Li, Changgao Xia. Research of Electric Power Steering System Assistance Characteristic Based on The Identification of The Road "Road Identification..." - Table 4 "Driver's average favored
     steering wheel ideal torque".
     File: References/Road Identification BP-NN.pdf.
     Dùng ở: Blueprint mục 1.3 (T_d,ref(v,a_y) - CV cho bài toán over-assist),
@@ -69,14 +60,14 @@ không lặp lại chi tiết dùng ở đâu.
     lại"). Từng dự kiến dùng hiệu chỉnh K_tr hằng số - đã BỎ hướng đó vì
     K_tr chuyển sang công thức động theo [6].
 
-[8] Ren, X.A., Deng, Z.X. (2014). "Research on Ideal Steering Wheel Effort
+[7] Ren, X.A., Deng, Z.X. (2014). "Research on Ideal Steering Wheel Effort
     Characteristics of Driver." China Mechanical Engineering, 25(16),
     2261-2265.
     File: References/Research on Ideal Steering Wheel Effort Characteristics
     of Driver.pdf.
     Dùng ở: (a) Blueprint mục 1.3 - căn cứ để dùng THẲNG số liệu Bảng 4 của
     [7] làm T_d,ref cho xe của ta (Rajamani [5], 1.573 tấn): bài đo thực
-    nghiệm trên 3 xe thật (1.5-1.9 tấn: 1.9, 1.5, 1.7) và kết luận "khi lái trên cùng 1
+    nghiệm trên 3 xe thật (1.31-1.42 tấn) và kết luận "khi lái trên cùng 1
     mặt đường, T_ideal của tài xế HẦU NHƯ KHÔNG PHỤ THUỘC loại xe, MIỄN LÀ
     các xe có kích thước/khối lượng gần nhau" - xe của [7] (~1.53 tấn) và xe
     Rajamani (1.573 tấn) đủ gần để áp dụng kết luận này, không còn coi là

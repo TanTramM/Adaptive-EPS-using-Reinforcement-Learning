@@ -1,0 +1,156 @@
+==============================================================================================================================================================================================
+BỘ ĐIỀU KHIỂN PID (CHỈNH ĐỊNH BẰNG ZIEGLER-NICHOLS) CHO TRỢ LỰC LÁI - BÁM MÔ-MEN CẢM BIẾN T_s THEO T_d,ref
+==============================================================================================================================================================================================
+  Tài liệu thiết kế cho riêng người viết. Quy ước: mỗi công thức kèm 1 dòng LaTeX trong [ ]; trích dẫn [n] khớp Documents/References.txt; "Seborg" là sách References/Process_Control.pdf. Plant và
+  Reference: Blueprint mục 2, Cum1/2/3; biên vận hành của Plant và T_a,max: Documents/Boundaries.txt. Code: Model/PID/, Model/load_pid.m, Model/data/pid.json, Model/Model_PID_s.mdl,
+  Model/Sim/script/find_ultimate_gain.m và scan_kcu_grid.m (đo Kcu trên lưới, xuất CSV vào Result/PID/), so sánh ở Model/Sim/.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Mục tiêu và tín hiệu
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  - Mục tiêu (Blueprint 1.3): đưa sai số e_T = T_s - T_d,ref (mô-men vô-lăng đo được trừ mô-men mong muốn) về 0 khi hệ số bám mu thay đổi mà bộ điều khiển không biết mu. Đại lượng điều khiển là
+    T_a, mô-men motor trợ lực.
+  - PID đọc HAI tín hiệu: e_T, lấy từ khối Reference (dùng T_s đo bằng cảm biến mô-men, cùng a_y và v), và v (tốc độ xe) để tra giới hạn T_a,max(v).
+  - Bộ điều khiển là bộ số: cứ mỗi Ts = 10 ms nó đọc e_T một lần (ECU là máy tính điều khiển trên xe, thường chạy chu kỳ cỡ này). Trong Simulink việc này làm bằng khối ZOH (Zero-Order Hold, "giữ
+    bậc không"): lấy giá trị e_T tại thời điểm mẫu rồi giữ nguyên đến mẫu kế tiếp.
+  - Áp giới hạn |T_a| <= T_a,max(v), bảng ở Documents/Boundaries.txt (mục 4, data/boundaries.json, trường T_a), kèm chống bão hòa tích phân (anti-windup); T_a,max là nhu cầu trợ lực ước lượng từ
+    Plant, chưa phải công suất motor. Giá trị lớn nhất của T_a được báo cáo ở mục 6.
+  - Dấu: e_T > 0 nghĩa là vô-lăng quá NẶNG nên cần tăng T_a; plant có dT_s/dT_a < 0, nên T_a = +PID(e_T) với mọi hệ số dương.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. PID là gì
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  PID là bộ điều khiển kinh điển gồm ba phần cộng lại, tất cả tính từ sai số e_T:
+  - P (tỉ lệ, hệ số Kp): sai số càng lớn thì T_a đẩy càng mạnh. Phản ứng tức thời nhưng để lại sai số tĩnh nếu chỉ dùng riêng nó.
+  - I (tích phân, hệ số Ki): cộng dồn sai số theo thời gian nên sai số kéo dài sẽ bị "xóa" dần về 0.
+  - D (vi phân, hệ số Kd): nhìn tốc độ thay đổi của sai số để phanh sớm khi sai số đang giảm nhanh; nhạy với nhiễu nên phải qua bộ lọc.
+
+    T_a(t) = Kp*e_T(t) + Ki*integral(e_T dt) + Kd*d(e_T)/dt
+    [ T_a(t)=K_pe_T(t)+K_i\int e_T\,dt+K_d\dfrac{de_T}{dt} ]
+
+  Đơn vị: Kp không thứ nguyên (N.m trên N.m), Ki tính bằng 1/s, Kd tính bằng s. Hai đại lượng thời gian hay dùng: thời gian tích phân tau_I = Kp/Ki và thời gian vi phân tau_D = Kd/Kp.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Cách xác định Kp, Ki, Kd: quy tắc Ziegler-Nichols (ZN)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  ZN (Ziegler và Nichols, 1942) là cách chỉnh PID đơn giản nhất, không cần mô hình toán của plant, có trong Seborg (mục "Cycling Method of Ziegler and Nichols", chương 12). Ý tưởng: đo hai số
+  trên chính hệ thống rồi tra bảng.
+  Bước 1. Chỉ dùng phần P (đặt Ki = 0, Kd = 0).
+  Bước 2. Tăng dần Kp trong mô phỏng vòng kín. Kp nhỏ thì sai số tắt dần; tới một mức thì vòng kín bắt đầu dao động ngày càng lớn (mất ổn định). Mức Kp ngay tại ranh giới đó gọi là độ lợi tới hạn
+  Kcu; chu kỳ dao động tại đó gọi là Pu.
+  Bước 3. Tra bảng ZN cho PID (Seborg):
+
+    Kp = 0.6*Kcu,     tau_I = Pu/2,     tau_D = Pu/8
+    [ K_p=0.6K_{cu},\qquad \tau_I=\dfrac{P_u}{2},\qquad \tau_D=\dfrac{P_u}{8} ]
+
+    Ki = Kp/tau_I,     Kd = Kp*tau_D
+    [ K_i=\dfrac{K_p}{\tau_I},\qquad K_d=K_p\tau_D ]
+
+  Thí nghiệm mẫu ở điều kiện gốc (script Model/Sim/script/find_ultimate_gain.m, chạy trên vòng kín Model_PID_s): góc lái tăng mượt lên 0.4 rad trong 1 s rồi giữ, v = 20 m/s, mu = 0.8 không đổi;
+  đo biên độ e_T trong hai cửa sổ [3, 6] s và [9, 12] s, tỉ số muộn/sớm nhỏ hơn 1 là tắt dần. Bộ giải cố định bước 0.5 ms để vòng kín mất ổn định không làm bộ giải dừng.
+
+    Kp    0.5    1      2      3      3.25    3.5 trở lên
+    e_T   tắt    tắt    tắt    tắt    tắt     phát tán (tăng gấp hàng tỉ lần trong vài giây)
+
+  Chia đôi giữa 3.25 và 3.5 cho Kcu = 3.275 (Kp = 3.2736 còn tắt, 3.2746 đã phát tán). Chu kỳ dao động đo được ở vùng phát tán gần biên: Pu = 0.0862 s (11.6 Hz).
+  Tính ra cho thí nghiệm mẫu ở điều kiện gốc này: Kp = 0.6 x 3.275 = 1.965; tau_I = 0.0431 s nên Ki = 45.59 1/s; tau_D = 0.01077 s nên Kd = 0.02117 s.
+  Lưu ý về Pu: 11.6 Hz gần gấp đôi cộng hưởng của cột lái (5.97 Hz). Tôi chưa phân tích nguyên nhân; có thể do độ trễ của việc lấy mẫu 10 ms và giữ tín hiệu cùng với ma sát khô cùng quyết định
+  ranh giới ổn định, không chỉ cộng hưởng cơ khí. Ranh giới ổn định của ta cũng dốc đứng (tắt hẳn ở 3.27 rồi phát tán ở 3.28) chứ không có vùng dao động đều kéo dài như plant tuyến tính, do ma
+  sát khô làm hệ phi tuyến.
+  Kcu phụ thuộc điều kiện làm việc vì Plant phi tuyến (tốc độ, mức a_y, độ cứng lốp), nên một điểm đo không đủ. Ta đo Kcu trên một lưới điều kiện nằm trong vùng biên của Plant
+  (Documents/Boundaries.txt) bằng Model/Sim/script/scan_kcu_grid.m: v = 20, 40, 60, 80, 100 km/h, mu = 0.2, 0.5, 0.8, a_y = 0.5 và 1 lần giới hạn a_y,lim(v, mu) = min(bảng a_y tối đa, 0.4 g); góc
+  lái theta1 chọn để có đúng a_y đó khi e_T = 0. Kết quả 30 điều kiện (Result/PID/PID_Kcu_grid.csv): Kcu từ 2.677 đến 4.077, Pu từ 0.079 đến 0.094 s; độ chính xác của Kcu khoảng 0.5-1% (6 bước
+  chia đôi).
+  Chọn MỘT bộ hệ số duy nhất theo điều kiện xấu nhất: Kcu = 2.677 và Pu = 0.0940 s (v = 80 km/h, mu = 0.2, a_y = 0.1 g), ghi trong data/pid.json. Không lập bảng hệ số theo tốc độ: khâu tích phân
+  vẫn triệt sai số tĩnh nên Kp thấp hơn mức tối ưu ở vài điều kiện chỉ làm phục hồi chậm hơn, còn Kcu không đổi đơn điệu theo tốc độ (còn phụ thuộc a_y).
+  Tính ra bộ hệ số chính thức: Kp = 0.6 x 2.677 = 1.606; tau_I = 0.047 s nên Ki = 34.17 1/s; tau_D = 0.01175 s nên Kd = 0.01887 s. Bộ hệ số cũ (Kcu = 3.275 ở điều kiện gốc, Kp = 1.965, Ki =
+  45.59, Kd = 0.02117) chỉ còn dự trữ 1.36 lần ở điều kiện xấu nhất trên lưới (Kcu/Kp = 2.677/1.965).
+
+  Kcu đo trên lưới (a_y ở hai mức f = 0.5 và f = 1 lần a_y,lim; với f = 1: a_y,lim = 0.192, 0.197, 0.197 g ở 20 km/h cho mu = 0.2, 0.5, 0.8, còn từ 40 km/h là 0.2 g cho mu = 0.2 và 0.4 g cho mu =
+  0.5, 0.8; file đầy đủ Result/PID/PID_Kcu_grid.csv):
+
+              mu = 0.2        mu = 0.5        mu = 0.8
+    v         f=0.5  f=1      f=0.5  f=1      f=0.5  f=1
+    20 km/h   3.297  2.925    3.297  2.944    3.297  2.962
+    40 km/h   4.077  3.607    3.824  3.096    3.841  3.110
+    60 km/h   3.000  3.859    3.464  3.673    3.464  3.739
+    80 km/h   2.677  3.387    2.981  3.773    2.981  3.790
+    100 km/h  2.906  2.981    2.888  3.312    2.888  3.267
+
+  - mu ảnh hưởng ít khi a_y còn xa giới hạn (ví dụ 40 km/h, f = 1, mu 0.5 và 0.8: 3.096 và 3.110) vì độ cứng lốp ở góc trượt nhỏ không phụ thuộc mu; ở a_y sát giới hạn của mu = 0.2, Kcu cao hơn
+    (60 km/h: 3.859 so với 3.464) vì độ dốc lốp giảm khi gần bão hòa.
+  - Ảnh hưởng của tốc độ không đơn điệu: ở a_y = a_y,lim, Kcu nhỏ nhất ở 20 km/h (2.925-2.962); ở a_y thấp (f = 0.5) nhỏ nhất ở 80-100 km/h. Giá trị nhỏ nhất toàn lưới là 2.677 (80 km/h, mu =
+    0.2, a_y = 0.1 g). Chưa đo a_y dưới 0.1 g.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Rời rạc hóa và bộ lọc khâu D
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Với e[k] là e_T tại mẫu thứ k (cách nhau Ts = 10 ms), dùng công thức Euler tiến (xấp xỉ tích phân bằng hình chữ nhật):
+
+    u_P[k] = Kp*e[k]
+    [ u_P[k]=K_p e[k] ]
+
+    w[k] = (e[k] - x[k])/T_filt,   x[k+1] = x[k] + Ts*w[k],   u_D[k] = Kd*w[k]
+    [ w[k]=\dfrac{e[k]-x[k]}{T_{filt}},\quad x[k+1]=x[k]+T_sw[k],\quad u_D[k]=K_dw[k] ]
+
+    T_a,unsat[k] = u_P[k] + u_I[k] + u_D[k]
+    [ T_{a,unsat}[k]=u_P[k]+u_I[k]+u_D[k] ]
+
+  Giới hạn trợ lực: T_a bị chặn ở +-T_a,max(v), tra bảng theo tốc độ đo được (Documents/Boundaries.txt, mục 4; ngoài dải 20-100 km/h giữ giá trị ở biên):
+
+    T_a[k] = max( -T_a,max(v[k]), min( T_a,unsat[k], T_a,max(v[k]) ) )
+    [ T_a[k]=\max\!\big(-T_{a,max}(v[k]),\,\min(T_{a,unsat}[k],\,T_{a,max}(v[k]))\big) ]
+
+  Chống bão hòa tích phân (anti-windup) kiểu tính ngược: khi T_a bị chặn, tích phân được kéo lại một lượng tỉ lệ với phần bị cắt; khi chưa bị chặn thì T_a - T_a,unsat = 0 và tích phân chạy như
+  cũ. Hệ số Kaw = 1/tau_I (hằng số thời gian bám bằng tau_I):
+
+    u_I[k+1] = u_I[k] + Ts*( Ki*e[k] + Kaw*(T_a[k] - T_a,unsat[k]) ),   Kaw = 1/tau_I
+    [ u_I[k+1]=u_I[k]+T_s\big(K_ie[k]+K_{aw}(T_a[k]-T_{a,unsat}[k])\big),\quad K_{aw}=\dfrac{1}{\tau_I} ]
+
+  Khâu D lấy đạo hàm nên khuếch đại nhiễu; vì thế cho qua bộ lọc bậc 1 với hằng số thời gian T_filt (Seborg Eq. 8-12, thường T_filt = 0.1*tau_D). Ở ta 0.1*tau_D = 1.2 ms nhỏ hơn cả chu kỳ lấy mẫu
+  (10 ms), mà công thức Euler tiến của bộ lọc chỉ ổn định khi T_filt > Ts/2, nên chốt T_filt = max(0.1*tau_D, Ts) = 10 ms. Khi tau_D xấp xỉ Ts, khâu D thực chất chỉ còn tác dụng rất nhẹ.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Hiện thực Simulink và kiểm chứng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  - Model/PID/PID_s.mdl (sinh bởi PID/script/build_pid.m, đúng quy tắc Claude.md): subsystem PID, vào e_T và v, ra T_a; ZOH_e, ZOH_v rồi 4 subsystem u_P, u_I (nhận thêm tín hiệu chống bão hòa
+    aw), u_D và T_a_max (bảng tra 1 chiều theo v); T_a_unsat, T_a_max, T_a và aw đi qua Goto/From; phép chặn bằng hai khối MinMax (Min_Ta, Max_Ta); tích phân dùng khối Discrete-Time Integrator
+    (Euler tiến, chu kỳ Ts_ctrl).
+  - Hệ số Kp, Ki, Kd, T_filt, Kaw do Model/load_pid.m tính từ Kcu, Pu ghi trong data/pid.json (hai số này đo bằng scan_kcu_grid.m, lấy điều kiện xấu nhất trên lưới); load_pid.m còn nạp bảng
+    T_a,max (bnd_v_bp, bnd_Ta_max) từ data/boundaries.json rồi chạy tiếp load_plant.m và load_ref.m.
+  - test_pid_s.m: đưa chuỗi e_T và v ngẫu nhiên giữ hằng giữa các mẫu (e_T đủ lớn để bão hòa ở 321 trên 400 mẫu, v từ 10 đến 110 km/h để thử cả phần chặn của bảng), so T_a tại mọi mẫu với công
+    thức mục 4 viết lại độc lập bằng m-code (bảng T_a,max đọc thẳng từ boundaries.json): sai lệch lớn nhất 8.9e-16 (PASS). Test chỉ kiểm cài đặt, không kiểm việc chỉnh định.
+  - Vòng kín: Model/Model_PID_s.mdl (Plant_s + Reference_s + PID_s, chạy được với nguồn kịch bản sc_theta1, sc_v, sc_mu), sinh bởi PID/script/build_model_pid.m, kiểm tra bằng test_model_pid_s.m
+    (e_T = T_s - T_d_ref, T_d_ref khớp Bảng 4, xác lập khớp nghiệm Newton, trị tuyệt đối e_T cuối < 0.02: PASS, e_T cuối 9.5e-5 N.m). So sánh các bộ điều khiển: Sim/script/compare_controllers.m.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. Kết quả mô phỏng (v = 20 m/s, chỉ tiêu tính trên t >= 2 s)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Kịch bản: S1 giữ góc lái (theta1 tăng mượt lên 0.4 rad trong 1 s rồi giữ), mu giảm từ 0.8 xuống 0.3 tại t = 5 s. S2 lái hình sin (theta1 = 0.35 + 0.15*sin(2*pi*0.5*(t-2))), mu giảm từ 0.8 xuống
+  0.3 tại t = 6.25 s. Hình: Result/PID/PID_S1_hold_angle_mu_step_time_response.png và PID_S2_sine_steering_mu_step_time_response.png. TV là tổng mức T_a thay đổi mỗi giây (càng nhỏ càng êm). Kết
+  quả dưới đây là bộ hệ số chính thức (mục 3) CÓ giới hạn T_a,max(v) và anti-windup.
+
+    Kịch bản   RMS e_T   max|e_T| sau bước mu   phục hồi (|e_T| < 0.1)   RMS T_a   max|T_a|   TV(T_a) [N.m/s]   sign(T_a) != sign(T_s)
+    S1         0.056     0.199                  1.03 s                   2.31      3.92       1.32              0 %
+    S2         0.342     1.314                  5.69 s                   3.00      5.86       10.1              36 %
+
+  - Giới hạn T_a,max ở v = 20 m/s (72 km/h) tra bảng là 5.856 N.m. Ở S2, T_a chạm giới hạn (max|T_a| = 5.86, trước khi có giới hạn là 6.60); ở S1 T_a luôn dưới giới hạn nên kết quả gần như không
+    đổi so với PID không giới hạn (cùng bộ hệ số: S1 RMS e_T 0.056; S2 RMS 0.340, TV 10.4).
+  - S1: khi mu giảm, e_T chỉ lệch tối đa 0.20 N.m và trở về dưới 0.1 N.m sau 1.03 s. PID có khâu I nên xóa được sai số kéo dài.
+  - S2: e_T dao động nhỏ (RMS 0.34) nhưng mỗi lần đổi chiều lái ma sát khô đổi dấu nên e_T có gai ~1 N.m; chỉ tiêu "phục hồi" vì thế lớn (5.69 s) dù sai số trung bình nhỏ.
+  - Quá độ đầu (0-2 s, không tính trong chỉ tiêu): khi chưa có giới hạn, T_a lên tới khoảng 14.8 N.m (cả S1 và S2) và max|e_T| = 4.23 (S1), 3.76 (S2). Với giới hạn và anti-windup, T_a không vượt
+    5.86 N.m và max|e_T| = 3.41 (S1), 3.33 (S2): quá độ đầu tốt hơn, T_a nằm trong nhu cầu ước lượng.
+  - Ràng buộc dấu sign(T_a) = sign(T_s) bị vi phạm 36% thời gian ở S2 (T_a "làm nặng thêm" vô-lăng); chưa áp ràng buộc.
+  - So với bộ hệ số cũ (Kp = 1.965, Ki = 45.59, Kd = 0.02117, chỉnh ở một điều kiện, không giới hạn T_a): S1 RMS e_T 0.047, phục hồi 0.88 s; S2 RMS 0.282, phục hồi 5.66 s. Bộ mới kém hơn nhẹ về
+    độ chính xác và chậm hơn ở S1, đổi lấy dự trữ ổn định 1.67 lần ở điều kiện xấu nhất của lưới (bộ cũ chỉ 1.36 lần); T_a mượt hơn (TV S1 1.32 so với 1.43, S2 10.1 so với 12.9).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. Hạn chế và việc còn lại
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  - ZN nổi tiếng cho bộ điều khiển mạnh, dễ vọt lố; ở đây kết quả tốt nhưng biên ổn định không rộng: Kp = 1.606 chỉ bằng 0.6 lần Kcu nhỏ nhất, Ki khá lớn (tau_I = 47 ms). Chưa kiểm biên độ lợi của
+    vòng PID đầy đủ.
+  - Kcu, Pu đo trên lưới 30 điều kiện trong vùng biên (mục 3) nhưng chưa đo ở a_y dưới 0.1 g (Kcu có thể thấp hơn nữa), chưa thử kiểu lái hình sin, chưa thử khi tham số Plant sai lệch.
+  - Đã có giới hạn T_a,max(v) và anti-windup tính ngược với Kaw = 1/tau_I (chưa khảo sát giá trị Kaw khác). T_a,max là nhu cầu trợ lực ước lượng từ Plant, chưa phải công suất motor; chưa có ràng
+    buộc dấu sign(T_a) = sign(T_s) và chưa có bù trước theo tín hiệu đo được.
+  - So sánh với SMC: Documents/DieuKhien_SMC.txt và Blueprint mục 4.
+==============================================================================================================================================================================================

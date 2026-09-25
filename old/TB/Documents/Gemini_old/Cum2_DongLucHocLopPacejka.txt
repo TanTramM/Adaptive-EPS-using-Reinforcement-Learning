@@ -1,0 +1,91 @@
+================================================================================
+3.2. MÔ HÌNH ĐỘNG LỰC HỌC LỐP PACEJKA VÀ PHẢN LỰC MẶT ĐƯỜNG (TIRE DYNAMICS & ROAD RESISTANCE TORQUE)
+================================================================================
+
+3.2.1. Phương trình mô-men cản phản lực mặt đường tổng quát
+Mô-men cản phản lực mặt đường T_r(t) là lực cản dội ngược từ mặt đường qua lốp xe, thước lái và bánh răng pinion lên cột lái. Phương trình tổng quát biểu diễn quan hệ giữa mô-men cản T_r(t) và lực bên lốp trước F_yf(t) được xác định như sau:
+
+(1)  T_r(t) = K_tr × F_yf(α_f)
+
+Trong đó:
+* T_r(t): Mô-men cản phản lực mặt đường dội ngược lên thước lái (N·m).
+* F_yf(α_f): Lực bên phi tuyến lốp trước sinh ra do góc trượt lốp α_f (N).
+* K_tr: Hệ số quy đổi mô-men phản lực mặt đường từ lực bên lốp trước về bánh răng pinion (m).
+
+--------------------------------------------------------------------------------
+
+3.2.2. Phương trình hình học góc trượt lốp xe
+Góc trượt lốp là góc lệch giữa hướng chuyển động thực tế của tâm bánh xe và phương dọc của vành bánh xe. 
+
+* Phương trình phụ (2) - Góc trượt lốp trước (α_f):
+  (2)  α_f(t) = β(t) + (l_f × γ(t) / v) - δ_f(t)
+  
+  Thế phương trình hình học góc bẻ bánh xe trước δ_f(t) = (r_p / l_am) × θ(t) từ Cụm 1 vào (2):
+  (3)  α_f(t) = β(t) + (l_f × γ(t) / v) - (r_p / l_am) × θ(t)
+
+* Phương trình phụ (4) - Góc trượt lốp sau (α_r):
+  (4)  α_r(t) = β(t) - (l_r × γ(t) / v)
+
+Trong đó:
+* α_f(t): Góc trượt lốp trước (rad).
+* α_r(t): Góc trượt lốp sau (rad).
+* β(t): Góc trượt hông thân xe tại trọng tâm CG (rad).
+* γ(t): Vận tốc góc Yaw quay quanh trục đứng thân xe (rad/s).
+* v: Vận tốc dọc chuyển động của xe (m/s).
+* l_f, l_r: Khoảng cách từ trọng tâm xe (CG) đến cầu trước và cầu sau (m).
+* r_p: Bán kính bánh răng pinion (m).
+* l_am: Cánh tay đòn đòn bẩy bẻ lái (m).
+* θ(t): Góc xoay vô-lăng (rad).
+
+--------------------------------------------------------------------------------
+
+3.2.3. Mô hình lực bên lốp trước phi tuyến Pacejka Magic Formula
+Lực bên lốp trước F_yf(t) phụ thuộc phi tuyến gắt vào góc trượt lốp trước α_f(t) và được mô hình hóa theo công thức thực nghiệm Pacejka Magic Formula:
+
+(5)  F_yf(α_f) = D_f × sin( C_f × arctan( B_f × α_f - E_f × ( B_f × α_f - arctan(B_f × α_f) ) ) )
+
+Các hệ số đặc tính lốp trước trong công thức Pacejka (5) được xác định thông qua các phương trình phụ:
+
+* Phương trình phụ (6) - Hệ số đỉnh Lực bên lốp trước (D_f):
+  (6)  D_f = μ × F_zf
+  *(với μ là hệ số bám mặt đường, F_zf là tải trọng thẳng đứng tác dụng lên bánh xe trước)*.
+
+* Phương trình phụ (7) - Hệ số hình dạng lốp trước (C_f):
+  (7)  C_f = 1.30  (Giá trị chuẩn cho lực bên lốp xe du lịch).
+
+* Phương trình phụ (8) - Hệ số độ cứng góc trượt lốp trước (B_f):
+  (8)  B_f = C_αf / (C_f × D_f)
+  *(với C_αf là độ cứng góc trượt tuyến tính của lốp trước)*.
+
+* Phương trình phụ (9) - Hệ số độ cong đỉnh lốp trước (E_f):
+  (9)  E_f = -0.10  (Đặc trưng cho vùng bão hòa lực bên lốp khi góc trượt lớn).
+
+--------------------------------------------------------------------------------
+
+3.2.4. Mô hình lực bên lốp sau và tải trọng thẳng đứng cầu trước
+Để hoàn thiện tương tác động lực học ngang của xe và tính toán lực lốp, ta sử dụng các phương trình phụ đại số xác định lực bên lốp sau và tải trọng tĩnh bánh xe:
+
+* Phương trình phụ (10) - Lực bên lốp sau tuyến tính (F_yr):
+  (10)  F_yr(t) = - C_r × α_r(t) = C_r × ( - β(t) + (l_r × γ(t) / v) )
+  *(với C_r là độ cứng góc trượt lốp sau, α_r là góc trượt lốp sau)*.
+
+* Phương trình phụ (11) - Tải trọng tĩnh thẳng đứng tác dụng lên 01 bánh xe cầu trước (F_zf):
+  (11)  F_zf = (m × g × l_r) / (2 × (l_f + l_r))
+  *(với m là tổng khối lượng xe, g = 9.81 m/s² là gia tốc trọng trường)*.
+
+* Phương trình phụ (12) - Hệ số quy đổi cánh tay đòn phản lực mặt đường (K_tr):
+  (12)  K_tr = [ 2 × r_p × (t_p + t_m) ] / l_am
+  *(với t_p là cánh tay đòn đàn hồi lốp, t_m là cánh tay đòn cơ khí Caster)*.
+
+--------------------------------------------------------------------------------
+
+3.2.5. Hệ phương trình đại số liên kết phản lực mặt đường dội ngược thước lái
+Thế toàn bộ các phương trình phụ hình học góc trượt (3), các hệ số Pacejka (6)-(9) và hệ số quy đổi (12) vào phương trình mô-men cản tổng quát (1), ta thu được hệ phương trình đại số liên kết hoàn chỉnh xác định mô-men cản mặt đường T_r(t) phản hồi về Cụm 1:
+
+(13)  α_f(t) = β(t) + (l_f × γ(t) / v) - (r_p / l_am) × θ(t)
+
+(14)  F_yf(t) = (μ × F_zf) × sin( C_f × arctan( B_f × α_f(t) - E_f × ( B_f × α_f(t) - arctan(B_f × α_f(t)) ) ) )
+
+(15)  T_r(t) = [ (2 × r_p × (t_p + t_m)) / l_am ] × F_yf(t)
+
+================================================================================

@@ -14,12 +14,11 @@
 %
 % NOTE ON F_yf+F_yr: Cum3_2DOF.txt does not give this sum its own symbol,
 % but it is used in BOTH Eq.(4) (beta_dot) and Eq.(3) (a_y) - exactly the
-% same situation as T_s in Cum1 (used by both Upper and Lower) or D/B in
-% Cum2 (used by multiple downstream consumers). Following that same
-% pattern, it is factored into its own "Cal Fsum" subsystem so it is
-% computed once, not duplicated.
+% same situation as D/B in Cum2 (used by multiple downstream consumers).
+% Following that pattern, it is factored into its own "Cal Fsum" subsystem
+% so it is computed once, not duplicated.
 %
-% HIERARCHY (see CLAUDE.md, "Quy tac dung model Simulink"):
+% HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
 %   Bike2DOF
 %     In : F_yf, F_yr, v          Out: beta, gamma, a_y
@@ -32,19 +31,17 @@
 %     +-- Beta       In : F_sum, v, gamma   Out: beta    (Eq.(4), needs
 %                                                         gamma from
 %                                                         Gamma - one-way
-%                                                         coupling, unlike
-%                                                         Cum1's mutual
-%                                                         theta1/theta2)
+%                                                         coupling)
 %
 % F_yf, F_yr, F_sum, gamma each reach 2 destinations -> routed via
 % Goto/From. v reaches only Beta (1 destination) -> wired directly.
 %
 % Parameters (m, l_f, l_r, Iz) are read from the base workspace - m, l_f,
 % l_r are the SAME variables already loaded for Cluster 2 (not redefined
-% here). Run Model/load_params.m BEFORE building.
+% here). Run Model/load_plant.m BEFORE building.
 %
 % Usage (run from this folder, Plant/script/):
-%   >> run('../../load_params.m')
+%   >> run('../../load_plant.m')
 %   >> build_cum3
 
 modelName = 'Bike2DOF_s';
@@ -245,7 +242,7 @@ function buildBeta(be)
     add_line(be, 'Int_beta/1', 'beta/1', 'autorouting', 'on');
 end
 
-%% ===================== Shared utility functions ==========================
+%% ===================== Shared utility functions ========================
 function moveBlock(blk, x, y)
 % Move a block to (x,y), KEEPING its default size.
     pos = get_param(blk, 'Position');
@@ -255,6 +252,7 @@ function moveBlock(blk, x, y)
 end
 
 function createSubsystem(path)
+% Create an empty Subsystem (removes the default In1->Out1 pair).
     add_block('simulink/Ports & Subsystems/Subsystem', path);
     delete_line(path, 'In1/1', 'Out1/1');
     delete_block([path '/In1']);
@@ -262,7 +260,8 @@ function createSubsystem(path)
 end
 
 function addInport(sys, name, port, x, y)
-% Ports keep MEANINGFUL names - they ARE the physical variable name.
+% Ports keep MEANINGFUL names - they ARE the physical variable name and are
+% looked up by name in test_*.m.
     full = [sys '/' name];
     add_block('simulink/Sources/In1', full);
     set_param(full, 'Port', num2str(port));
@@ -278,8 +277,7 @@ end
 
 function nm = addConstant(sys, baseWorkspaceVar, x, y)
 % Constant block, DEFAULT name (Constant, Constant1, ...); Value points
-% STRAIGHT to a base-workspace variable name. m, l_f, l_r reuse the SAME
-% variable names already loaded for Cluster 2 - no redefinition here.
+% STRAIGHT to a base-workspace variable name (or a literal such as '3').
     h = add_block('simulink/Sources/Constant', [sys '/Constant'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'Value', baseWorkspaceVar);
@@ -298,6 +296,7 @@ function nm = addGoto(sys, tag, x, y)
 end
 
 function nm = addFrom(sys, tag, x, y)
+% From block, DEFAULT name.
     h = add_block('simulink/Signal Routing/From', [sys '/From'], ...
         'MakeNameUnique', 'on');
     set_param(h, 'GotoTag', tag);
@@ -306,7 +305,7 @@ function nm = addFrom(sys, tag, x, y)
 end
 
 function addProduct(sys, name, inputsStr, x, y)
-% Computation blocks DO get meaningful names: Prod_<result>, Div_<result>.
+% Prod_<result or operands>, Div_<result> (Inputs='*/').
     full = [sys '/' name];
     add_block('simulink/Math Operations/Product', full);
     set_param(full, 'Inputs', inputsStr);
@@ -318,6 +317,21 @@ function addSum(sys, name, inputsStr, x, y)
     full = [sys '/' name];
     add_block('simulink/Math Operations/Add', full);
     set_param(full, 'Inputs', inputsStr);
+    moveBlock(full, x, y);
+end
+
+function addTrigFcn(sys, name, op, x, y)
+% Trig_<function>_<argument>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Trigonometric Function', full);
+    set_param(full, 'Operator', op);
+    moveBlock(full, x, y);
+end
+
+function addSignBlock(sys, name, x, y)
+% Sign_<argument>
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/Sign', full);
     moveBlock(full, x, y);
 end
 

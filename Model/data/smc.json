@@ -1,0 +1,8 @@
+{
+  "_note": "Tham số thiết kế bộ điều khiển SMC bậc 1 + lớp biên sat (Documents/DieuKhien_SMC.txt). Dùng nguyên giá trị trong load_smc.m.",
+  "Ts_ctrl":  { "value": 0.01, "unit": "s",       "desc": "Chu kỳ lấy mẫu bộ điều khiển số (ECU), ZOH ở đầu vào", "ref": "tự chọn" },
+  "lambda":   { "value": 30,   "unit": "1/s",     "desc": "Tốc độ hội tụ e_T trên mặt trượt (< w_n = 37.5 rad/s; lớn hơn thì sai số trong lớp biên nhỏ hơn)", "ref": "tự chọn" },
+  "tau_f":    { "value": 0.02, "unit": "s",       "desc": "Hằng số thời gian bộ vi phân có lọc ước lượng theta1_dot", "ref": "tự chọn" },
+  "k_sw":     { "value": 80,   "unit": "rad/s^2", "desc": "Độ lợi chuyển mạch, phải lớn hơn cận nhiễu gộp |psi|max (~70)", "ref": "tự chọn (quét mô phỏng)" },
+  "Phi":      { "value": 0.6,  "unit": "rad/s",   "desc": "Bề rộng lớp biên sat(s/Phi); phải thỏa k_sw*Ts_ctrl/Phi < 2 để rời rạc ổn định", "ref": "tự chọn (quét mô phỏng)" }
+}

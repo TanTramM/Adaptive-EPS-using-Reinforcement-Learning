@@ -4,15 +4,17 @@
 % (they only depend on fixed vehicle parameters, not on v/mu/dynamic
 % states). Computed ONCE here instead of every Simulink simulation step.
 %
-% NOT meant to be run directly - called AUTOMATICALLY by load_params.m (at
+% NOT meant to be run directly - called AUTOMATICALLY by load_plant.m (at
 % the end of that script), after raw parameters are already in the base
 % workspace.
 %
 % Derived quantities:
-%   F_zf = m*g*l_r/(l_f+l_r)   - static front-axle load (Eq.(7),
+%   F_zf = m*g*l_r/(l_f+l_r)   - static front-axle load (Eq.(4),
 %                                 Documents/Cum2_Pacejka.txt, Section 2).
-%                                 Used in Cluster2/TireForces AND
+%                                 Used in Cluster2/TireForces (D_f) AND
 %                                 Cluster2/AligningTorque (build_cum2.m).
+%   F_zr = m*g*l_f/(l_f+l_r)   - static rear-axle load (Eq.(5)), used in
+%                                 Cluster2/TireForces (D_r).
 
 m_   = evalin('base', 'm');
 g_   = evalin('base', 'g');
@@ -22,4 +24,7 @@ l_r_ = evalin('base', 'l_r');
 F_zf = m_ * g_ * l_r_ / (l_f_ + l_r_);
 assignin('base', 'F_zf', F_zf);
 
-fprintf('Computed derived quantities (load_derived.m): F_zf=%.6g N\n', F_zf);
+F_zr = m_ * g_ * l_f_ / (l_f_ + l_r_);
+assignin('base', 'F_zr', F_zr);
+
+fprintf('Computed derived quantities (load_derived.m): F_zf=%.6g N, F_zr=%.6g N\n', F_zf, F_zr);
