@@ -40,10 +40,10 @@ __MWOPC_PART_BEGIN__ /metadata/coreProperties.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <cp:category>model</cp:category>
-  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-25T17:59:53Z</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-27T16:49:10Z</dcterms:created>
   <dc:creator>Tan_Tram</dc:creator>
   <cp:lastModifiedBy>Tan_Tram</cp:lastModifiedBy>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-25T17:59:54Z</dcterms:modified>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-27T16:49:11Z</dcterms:modified>
   <cp:revision>1.1</cp:revision>
   <cp:version>R2023a</cp:version>
 </cp:coreProperties>
@@ -106,7 +106,7 @@ __MWOPC_PART_BEGIN__ /simulink/blockdiagram.xml
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
   <Model>
-    <P Name="ModelUUID">8c3bdd83-2181-4dc6-9a38-8f0ab7ea8e6b</P>
+    <P Name="ModelUUID">4005845b-c8bf-447b-b66b-acbb49d4b2e8</P>
     <P Name="LastSavedArchitecture">win64</P>
     <ConfigManagerSettings>
       <P Name="ModifiedByFormat">%&lt;Auto&gt;</P>
@@ -937,8 +937,8 @@ __MWOPC_PART_BEGIN__ /simulink/hdlParams.xml
 __MWOPC_PART_BEGIN__ /simulink/modelDictionary.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <MF0 version="1.1" defaultPackage="slid" packageUris="http://schema.mathworks.com/mf0/slid/R2023a_20220628">
-  <System type="System" uuid="a78527a2-1bba-4316-bfdd-9fb63a17a2b9">
-    <Interface type="Interface" uuid="8e1be969-5320-41a5-8abe-9c0bfd09ad57"/>
+  <System type="System" uuid="54886301-2198-4f83-82da-f1e794f091fc">
+    <Interface type="Interface" uuid="3a83a1fc-88ba-4bd1-a4a3-90160d2d5867"/>
   </System>
 </MF0>
 __MWOPC_PART_BEGIN__ /simulink/ScheduleCore.xml
@@ -2697,7 +2697,7 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       <Array PropName="PersistedApps" Type="Cell" Dimension="0*1"/>
       <P Name="WindowUuid" Class="char">43a7fe24-6618-44b7-a6c4-7acfaa3515db</P>
     </Object>
-    <P Name="BDUuid" Class="char">ffb95ff2-61e2-4c40-825c-680fc4614e3e</P>
+    <P Name="BDUuid" Class="char">955b8955-c37c-4c54-95dd-e7fca1fd44f0</P>
   </Object>
 </WindowsInfo>
 

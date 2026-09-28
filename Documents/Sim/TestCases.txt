@@ -1,0 +1,94 @@
+==============================================================================================================================================================================================
+KỊCH BẢN MÔ PHỎNG ĐÁNH GIÁ
+==============================================================================================================================================================================================
+Mọi bộ điều khiển trong luận văn, từ bản đồ trợ lực truyền thống tới các bộ điều khiển đề xuất, được đánh giá trên cùng hai ca thử chuẩn, chạy trên mô hình Simulink gồm đối tượng điều khiển, khối giá trị đặt và bộ điều khiển (mô phỏng mô hình trong vòng lặp, Model-in-the-Loop: kiểm chứng thuật toán trên mô hình, chưa sinh mã và chưa chạy trên chip thật). Ca thứ nhất kiểm tra độ chính xác trên đường khô, là điều kiện thiết kế của bản đồ trợ lực truyền thống. Ca thứ hai là một hành trình liên tục mô phỏng việc chạy xe thực tế, trong đó góc lái, vận tốc và hệ số bám cùng thay đổi. Vì đầu vào của hai ca không phụ thuộc bộ điều khiển, mọi khác biệt trong kết quả đều do bộ điều khiển gây ra.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Nguyên tắc xây dựng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1.1. Góc vô-lăng độc lập với bộ điều khiển
+Tài xế được mô hình hóa bằng góc vô-lăng (mục 1.4 chương mô hình). Góc vô-lăng của mỗi ca được sinh từ một gia tốc ngang mục tiêu $a^*(t)$: tại mỗi thời điểm, góc vô-lăng là góc làm xe đạt đúng gia tốc ngang mục tiêu ở trạng thái xác lập trên đường khô, khi mô-men cảm biến bằng giá trị đặt (trợ lực lý tưởng):
+
+  (1)  theta1(t) = sgn(a*(t)) * theta1_ss(v(t), |a*(t)|),   theta1_ss = n_st*delta_f + T_d,ref/K
+  [ \theta_1(t)=\mathrm{sgn}\big(a^*(t)\big)\,\theta_{1,ss}\big(v(t),|a^*(t)|\big),\qquad \theta_{1,ss}=n_{st}\,\delta_f+\dfrac{T_{d,ref}}{K} ]
+
+trong đó $\delta_f$ là góc bẻ bánh giải từ trạng thái xác lập của mô hình ở $\mu = 0.8$, còn $T_{d,ref}/K$ là góc xoắn của thanh xoắn khi mô-men cảm biến bằng giá trị đặt. Góc này được tính trước trên lưới vận tốc 20 km/h đến 100 km/h và gia tốc ngang 0 đến 0.4 g, rồi nội suy. Cách làm này có hai hệ quả. Thứ nhất, mọi bộ điều khiển nhận đúng cùng một chuỗi góc vô-lăng, nên kết quả so sánh được với nhau. Thứ hai, khi hệ số bám giảm, tài xế giữ nguyên góc như trên đường khô vì không biết mặt đường đã đổi; đây đúng là tình huống sinh ra trợ lực thừa.
+1.2. Thay đổi êm và vùng hợp lệ
+Gia tốc ngang mục tiêu và vận tốc chuyển giữa các giá trị bằng đường cong dạng $(1 - \cos)/2$, có độ dốc bằng không ở hai đầu, để không tạo bước nhảy nhân tạo. Hệ số bám thay đổi dạng bậc (vào hoặc ra khỏi mặt đường trơn) hoặc dạng dốc ngắn. Gia tốc dọc lớn nhất khoảng 2.2 m/s², là mức tăng tốc thông thường của xe con, và chỉ xuất hiện khi xe đi thẳng; nhờ vậy giả thiết vận tốc thay đổi chậm của mô hình thân xe vẫn được giữ. Gia tốc ngang mục tiêu luôn nằm trong giới hạn $a_{y,lim}(v)$ của phương trình (5) mục 1 chương điều khiển, và nhỏ hơn $\mu g$ của hệ số bám tại thời điểm đó. Chỉ tiêu tính từ giây thứ hai trở đi để bỏ qua lúc khởi động.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Ca thử TC1: kiểm tra hiệu chỉnh trên đường khô
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hệ số bám giữ ở 0.8 trong suốt ca. Xe lần lượt chạy ở năm mức vận tốc 20, 40, 60, 80 và 100 km/h; mỗi mức gồm 2 s đi thẳng, ba bậc gia tốc ngang mục tiêu tăng dần, mỗi bậc gồm 1 s chuyển và 5 s giữ, rồi trả lái về thẳng. Chiều cua đổi giữa hai mức vận tốc liên tiếp để kiểm tra tính đối xứng. Giữa hai mức vận tốc, xe tăng tốc trong 4 s khi đi thẳng. Ở 20 km/h, gia tốc ngang bị giới hạn khoảng 0.2 g (Bảng 5 chương mô hình) nên các bậc được giảm (Bảng 1). Tổng thời gian 129 s. Chỉ tiêu chính là sai số trung bình trong 1 s cuối của mỗi bậc, khi đáp ứng đã xác lập: một bộ điều khiển tốt phải cho sai số gần bằng không ở mọi bậc.
+Bảng 1: Các bậc gia tốc ngang mục tiêu của ca TC1
+$v$ [km/h] | Chiều cua | Bậc 1 [g] | Bậc 2 [g] | Bậc 3 [g]
+20 | Trái | 0.10 | 0.15 | 0.18
+40 | Phải | 0.10 | 0.20 | 0.30
+60 | Trái | 0.10 | 0.20 | 0.30
+80 | Phải | 0.10 | 0.20 | 0.30
+100 | Trái | 0.10 | 0.20 | 0.30
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Ca thử TC2: chạy đường thực tế
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Ca TC2 là một hành trình liên tục 150 s, ghép các tình huống lái thường gặp: vào cua đều, lượn liên tục, chuyển làn, tăng và giảm tốc, và đi vào hoặc ra khỏi mặt đường trơn trong khi đang cua. Các sự kiện đổi hệ số bám được đặt khi xe đang giữ góc vô-lăng trong cua, là lúc trợ lực thừa thể hiện rõ nhất, và ở nhiều mức vận tốc, gia tốc ngang, hệ số bám khác nhau. Bảng 2 liệt kê trình tự hành trình.
+Bảng 2: Trình tự hành trình của ca TC2
+Thời gian [s] | $v$ [km/h] | Gia tốc ngang mục tiêu | $\mu$ | Tình huống
+0 - 3 | 50 | 0 | 0.8 | Đi thẳng
+3 - 15 | 50 | Trái 0.2 g | 0.8 | Vào cua đều trên đường khô
+15 - 25 | 50 | Hình sin 0.15 g, 0.25 Hz | 0.8 | Lượn liên tục trên đường khô
+25 - 35 | 50 → 80 | 0 | 0.8 | Tăng tốc khi đi thẳng
+35 - 52 | 80 | Phải 0.25 g | 0.8 → 0.3 trong 42 - 43 s | Đi vào mặt đường trơn khi đang cua gắt
+52 - 65 | 80 | Chuyển làn một chu kỳ 0.1 g trong 57 - 61 s | 0.3 | Chuyển làn trên đường trơn
+65 - 80 | 80 | Trái 0.15 g | 0.3 → 0.8 tại 72 s | Ra khỏi mặt đường trơn khi đang cua
+85 - 100 | 80 → 100 | 0 | 0.8 | Tăng tốc khi đi thẳng
+100 - 118 | 100 | Phải 0.2 g | 0.8 → 0.5 tại 108 s | Đi vào mặt đường ướt khi đang cua ở tốc độ cao
+120 - 130 | 100 → 60 | 0 | 0.5 → 0.8 tại 125 s | Giảm tốc khi đi thẳng
+130 - 145 | 60 | Hình sin 0.2 g, 0.3 Hz | 0.8 → 0.4 tại 137 s | Lượn liên tục, mặt đường đổi giữa chừng
+145 - 150 | 60 | 0 | 0.4 | Đi thẳng
+
+Mười một cửa sổ đánh giá được đặt ở cuối mỗi đoạn giữ góc (trước và sau mỗi lần đổi hệ số bám) và trên toàn bộ các đoạn lái liên tục (Bảng 3). So sánh cửa sổ trước và sau một lần đổi hệ số bám cho biết bộ điều khiển có giữ được cảm giác lái khi mặt đường thay đổi hay không.
+Bảng 3: Các cửa sổ đánh giá của ca TC2
+Tên | Thời gian [s] | Nội dung
+Cua khô 0.2 g | 11 - 13 | Xác lập trên đường khô, 50 km/h
+Lượn khô | 17 - 25 | Lái liên tục trên đường khô
+Cua 0.25 g, trước | 40 - 42 | Xác lập trước khi vào đường trơn, 80 km/h
+Cua 0.25 g, $\mu = 0.3$ | 48 - 50 | Xác lập sau khi vào đường trơn
+Chuyển làn, $\mu = 0.3$ | 57 - 61 | Lái nhanh trên đường trơn
+Cua 0.15 g, $\mu = 0.3$ | 70 - 72 | Xác lập trên đường trơn
+Cua 0.15 g, sau | 76 - 78 | Xác lập sau khi ra khỏi đường trơn
+Cua 0.2 g, trước | 106 - 108 | Xác lập trước khi vào đường ướt, 100 km/h
+Cua 0.2 g, $\mu = 0.5$ | 114 - 116 | Xác lập sau khi vào đường ướt
+Lượn, $\mu = 0.8$ | 131 - 137 | Lái liên tục trên đường khô, 60 km/h
+Lượn, $\mu = 0.4$ | 139 - 145 | Lái liên tục trên đường trơn
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Chỉ tiêu đánh giá
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Trên toàn ca, tính căn trung bình bình phương (RMS, root mean square) và giá trị lớn nhất của sai số bám $e_T$, căn trung bình bình phương và giá trị lớn nhất của mô-men trợ lực, và tổng biến thiên của mô-men trợ lực chia cho thời gian, là thước đo độ rung của lệnh trợ lực (lệnh càng rung thì motor càng ồn và tài xế càng cảm thấy rung tay):
+
+  (2)  TV(T_a) = sum_k |T_a[k] - T_a[k-1]| / (t_end - 2)
+  [ TV(T_a)=\dfrac{\sum_k\big|T_a[k]-T_a[k-1]\big|}{t_{end}-2} ]
+
+Trong mỗi cửa sổ, tính giá trị RMS của sai số và sai số trung bình quy theo chiều tay lái, chia cho giá trị đặt trung bình:
+
+  (3)  e_rel = sgn(T_d,ref) * mean(e_T) / mean(|T_d,ref|) * 100%
+  [ e_{rel}=\mathrm{sgn}(T_{d,ref})\,\dfrac{\overline{e_T}}{\overline{|T_{d,ref}|}}\times 100\% ]
+
+Theo điều kiện (3) mục 1.4 chương điều khiển, $e_{rel}$ âm nghĩa là tay lái nhẹ hơn mong muốn, tức trợ lực thừa; $e_{rel}$ dương là thiếu trợ lực. Với các cửa sổ giữ góc, $e_{rel}$ là chỉ tiêu chính; với các cửa sổ lái liên tục, giá trị RMS của sai số phản ánh khả năng bám theo giá trị đặt khi đang đánh lái.
+Kết quả mỗi ca được vẽ trên một hình gồm sáu đồ thị theo thời gian: mô-men cảm biến và giá trị đặt, sai số bám, mô-men trợ lực, góc vô-lăng, hệ số bám và vận tốc. Ba đồ thị đầu là đáp ứng của bộ điều khiển; ba đồ thị sau là đầu vào của ca, giống nhau cho mọi bộ điều khiển.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Khả năng đáp ứng của vi điều khiển
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Luận văn dừng ở mô phỏng mô hình trong vòng lặp; khả năng chạy trên vi điều khiển (microcontroller: chip máy tính nhỏ trong hộp điều khiển điện tử ECU của xe) chỉ được ước lượng bằng khối lượng tính toán. Cách ước lượng: đếm số phép tính số thực trong mỗi chu kỳ theo sơ đồ khối, giả định trung bình khoảng 5 chu kỳ máy cho mỗi phép (đã tính nạp dữ liệu và rẽ nhánh), trên một chip tầm trung có bộ tính số thực phần cứng chạy 200 MHz, ví dụ dòng TI C2000 F2837x; bộ nhớ tính với số thực 32 bit. Các con số trong Bảng 4 là ước lượng bậc độ lớn, chưa đo trên chip.
+Bảng 4: Ước lượng tải tính toán của các khối điều khiển
+Khối | Số phép mỗi chu kỳ | Thời gian ở 200 MHz | Tải CPU ở chu kỳ 10 ms | Tải CPU ở chu kỳ 1 ms | Bộ nhớ tham số
+Giá trị đặt (bảng 17 x 17 và dấu) | khoảng 25 | khoảng 0.6 µs | dưới 0.01% | 0.06% | khoảng 1.2 KB
+Bản đồ trợ lực (bảng 17 x 251, hai khâu lead, giới hạn) | khoảng 45 | khoảng 1.1 µs | dưới 0.02% | 0.11% | khoảng 17 KB
+PID, giới hạn và chống bão hòa tích phân | khoảng 35 | khoảng 0.9 µs | dưới 0.01% | 0.09% | khoảng 0.1 KB
+SMC | khoảng 40 đến 45 | khoảng 1.1 µs | dưới 0.02% | 0.11% | khoảng 0.1 KB
+Học tăng cường (giả định mạng 6-64-64-1) | khoảng 4 500 phép nhân cộng và 128 hàm kích hoạt | khoảng 0.15 ms | khoảng 1.5% | khoảng 15% | khoảng 19 KB
+
+Các bộ điều khiển cổ điển gần như không tốn tài nguyên; bảng tra của bản đồ trợ lực chiếm bộ nhớ nhiều nhất trong nhóm này nhưng vẫn nhỏ so với bộ nhớ của chip. Bộ điều khiển học tăng cường với mạng nơ-ron nhỏ (perceptron nhiều lớp: các lớp nơ-ron nối đầy đủ) vẫn nằm gọn trong cả chu kỳ 10 ms và 1 ms; kích thước mạng sẽ cập nhật khi thiết kế. Giới hạn thực tế vì vậy không nằm ở sức tính của chip mà ở tín hiệu và thời gian: trễ của gia tốc ngang truyền qua mạng CAN (Controller Area Network: mạng truyền thông trong xe), nhiễu cảm biến và chu kỳ lấy mẫu. An toàn chức năng theo tiêu chuẩn ISO 26262 khi dùng mạng nơ-ron trong hệ lái nằm ngoài phạm vi luận văn.
+==============================================================================================================================================================================================

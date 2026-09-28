@@ -6,25 +6,28 @@
 %
 %   (all inputs sampled by ZOH at Ts = Ts_ctrl)
 %   theta1_dot_hat = (theta1 - x_f)/tau_f,  x_f[k+1] = x_f[k] + Ts*theta1_dot_hat[k]
-%   s     = theta2_dot - theta1_dot_hat - (lambda/K)*e_T
+%   s     = theta2_dot - theta1_dot_hat - (lambda/K)*e_T      (no integral action)
 %   T_eq  = -T_s + C_col*theta2_dot
 %           + J_col*lambda*(theta1_dot_hat - theta2_dot)
 %   u_sw  = k_sw*sat(s/Phi),      sat(x) = max(-1, min(1, x))
-%   T_a   = T_eq - J_col*u_sw
+%   T_a_unsat = T_eq - J_col*u_sw
+%   T_a   = max(-T_a,max(v), min(T_a_unsat, T_a,max(v)))   (assist limit, Documents/Boundaries.txt;
+%           T_a,max(v) = 1-D table of data/boundaries.json, clipped outside 20-100 km/h)
 %
 % HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
 %   SMC
-%     In : e_T, T_s, theta1, theta2_dot      Out: T_a
+%     In : e_T, T_s, theta1, theta2_dot, v   Out: T_a
 %     |
 %     +-- theta1_dot_hat   In : theta1                          Out: theta1_dot_hat
 %     +-- s                In : theta2_dot, theta1_dot_hat, e_T  Out: s
 %     +-- T_eq             In : T_s, theta2_dot, theta1_dot_hat  Out: T_eq
 %     +-- u_sw             In : s                               Out: u_sw
+%     +-- T_a_max          In : v                               Out: T_a_max
 %
 %   The sampled inputs and every named quantity are routed with Goto/From.
 %
-% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl) are
+% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl, bnd_v_bp, bnd_Ta_max) are
 % read from the base workspace - run Model/load_smc.m (it also runs
 % load_plant, load_ref) BEFORE building.
 %
@@ -53,7 +56,7 @@ sub = [modelName '/SMC'];
 createSubsystem(sub);
 moveBlock(sub, 50, 50);
 
-inNames = {'e_T', 'T_s', 'theta1', 'theta2_dot'};
+inNames = {'e_T', 'T_s', 'theta1', 'theta2_dot', 'v'};
 for i = 1:numel(inNames)
     y = 60 + 80*(i-1);
     addInport(sub, inNames{i}, i, 40, y);
@@ -62,7 +65,7 @@ for i = 1:numel(inNames)
     add_line(sub, [inNames{i} '/1'], ['ZOH_' inNames{i} '/1'], 'autorouting', 'on');
     add_line(sub, ['ZOH_' inNames{i} '/1'], [g '/1'], 'autorouting', 'on');
 end
-addOutport(sub, 'T_a', 1, 1100, 220);
+addOutport(sub, 'T_a', 1, 1500, 220);
 
 %% ----- theta1_dot_hat (filtered derivative of the measured angle) -----
 td = [sub '/theta1_dot_hat'];  createSubsystem(td);  moveBlock(td, 420, 400);
@@ -92,15 +95,33 @@ add_line(sub, [addFrom(sub, 'T_s',            640, 220) '/1'], 'T_eq/1', 'autoro
 add_line(sub, [addFrom(sub, 'theta2_dot',     640, 260) '/1'], 'T_eq/2', 'autorouting', 'on');
 add_line(sub, [addFrom(sub, 'theta1_dot_hat', 640, 300) '/1'], 'T_eq/3', 'autorouting', 'on');
 
-%% ----- T_a = T_eq - J_col*u_sw -----
+%% ----- T_a_unsat = T_eq - J_col*u_sw -----
 addProduct(sub, 'Prod_Jusw', '**', 900, 70);   % J_col*u_sw
 hJ = addConstant(sub, 'J_col', 860, 150);       % right below Prod_Jusw
-addSum(sub, 'Sum_Ta', '+-', 1000, 220);
-add_line(sub, 'u_sw/1',        'Prod_Jusw/1', 'autorouting', 'on');
-add_line(sub, [hJ '/1'],       'Prod_Jusw/2', 'autorouting', 'on');
-add_line(sub, 'T_eq/1',        'Sum_Ta/1',    'autorouting', 'on');
-add_line(sub, 'Prod_Jusw/1',   'Sum_Ta/2',    'autorouting', 'on');
-add_line(sub, 'Sum_Ta/1',      'T_a/1',       'autorouting', 'on');
+addSum(sub, 'Sum_Ta_unsat', '+-', 1000, 220);
+add_line(sub, 'u_sw/1',        'Prod_Jusw/1',    'autorouting', 'on');
+add_line(sub, [hJ '/1'],       'Prod_Jusw/2',    'autorouting', 'on');
+add_line(sub, 'T_eq/1',        'Sum_Ta_unsat/1', 'autorouting', 'on');
+add_line(sub, 'Prod_Jusw/1',   'Sum_Ta_unsat/2', 'autorouting', 'on');
+
+%% ----- assist limit T_a,max(v) -----
+taMax = [sub '/T_a_max']; createSubsystem(taMax); moveBlock(taMax, 720, 480); buildTamax(taMax);
+add_line(sub, [addFrom(sub, 'v', 640, 480) '/1'], 'T_a_max/1', 'autorouting', 'on');
+g_max = addGoto(sub, 'T_a_max', 900, 480);
+add_line(sub, 'T_a_max/1', [g_max '/1'], 'autorouting', 'on');
+f_max1 = addFrom(sub, 'T_a_max', 1100, 300);
+f_max2 = addFrom(sub, 'T_a_max', 1100, 380);
+addMinMax(sub, 'Min_Ta', 'min', 1200, 220);
+add_line(sub, 'Sum_Ta_unsat/1', 'Min_Ta/1', 'autorouting', 'on');
+add_line(sub, [f_max1 '/1'],    'Min_Ta/2', 'autorouting', 'on');
+hNeg = addConstant(sub, '-1', 1200, 440);
+addProduct(sub, 'Prod_Tamin', '**', 1280, 380);   % -T_a_max
+add_line(sub, [f_max2 '/1'], 'Prod_Tamin/1', 'autorouting', 'on');
+add_line(sub, [hNeg '/1'],   'Prod_Tamin/2', 'autorouting', 'on');
+addMinMax(sub, 'Max_Ta', 'max', 1380, 250);
+add_line(sub, 'Min_Ta/1',     'Max_Ta/1', 'autorouting', 'on');
+add_line(sub, 'Prod_Tamin/1', 'Max_Ta/2', 'autorouting', 'on');
+add_line(sub, 'Max_Ta/1',     'T_a/1',    'autorouting', 'on');
 
 save_system(modelName, modelPath);
 close_system(modelName, 0);
@@ -137,7 +158,7 @@ function buildS(sys)
     addInport(sys, 'theta2_dot',     1, 40,  60);
     addInport(sys, 'theta1_dot_hat', 2, 40, 120);
     addInport(sys, 'e_T',            3, 40, 260);
-    addOutport(sys, 's', 1, 560, 90);
+    addOutport(sys, 's', 1, 960, 90);
     hlam = addConstant(sys, 'lambda', 120, 180);
     hK   = addConstant(sys, 'K', 120, 320);
     addProduct(sys, 'Div_lamK',  '*/', 200, 200);   % lambda/K
@@ -147,10 +168,10 @@ function buildS(sys)
     add_line(sys, [hK '/1'],         'Div_lamK/2',   'autorouting', 'on');
     add_line(sys, 'Div_lamK/1',      'Prod_lamKe/1', 'autorouting', 'on');
     add_line(sys, 'e_T/1',           'Prod_lamKe/2', 'autorouting', 'on');
-    add_line(sys, 'theta2_dot/1',    'Sum_s/1',      'autorouting', 'on');
-    add_line(sys, 'theta1_dot_hat/1','Sum_s/2',      'autorouting', 'on');
-    add_line(sys, 'Prod_lamKe/1',    'Sum_s/3',      'autorouting', 'on');
-    add_line(sys, 'Sum_s/1',         's/1',          'autorouting', 'on');
+    add_line(sys, 'theta2_dot/1',    'Sum_s/1',     'autorouting', 'on');
+    add_line(sys, 'theta1_dot_hat/1','Sum_s/2',     'autorouting', 'on');
+    add_line(sys, 'Prod_lamKe/1',    'Sum_s/3',     'autorouting', 'on');
+    add_line(sys, 'Sum_s/1', 's/1', 'autorouting', 'on');
 end
 
 %% ===================== u_sw = k_sw*sat(s/Phi) ============================
@@ -208,6 +229,16 @@ function buildTeq(sys)
     add_line(sys, 'Prod_Ccol/1', 'Sum_Teq/2', 'autorouting', 'on');
     add_line(sys, 'Prod_Jlam/1', 'Sum_Teq/3', 'autorouting', 'on');
     add_line(sys, 'Sum_Teq/1',   'T_eq/1',    'autorouting', 'on');
+end
+
+%% ===================== T_a_max(v) = assist limit table =====================
+function buildTamax(sys)
+% Read from the base workspace: bnd_v_bp [m/s], bnd_Ta_max [N.m] (data/boundaries.json).
+    addInport(sys, 'v', 1, 40, 60);
+    addOutport(sys, 'T_a_max', 1, 300, 60);
+    addLookup1D(sys, 'Lookup_Tamax', 140, 60);
+    add_line(sys, 'v/1',            'Lookup_Tamax/1', 'autorouting', 'on');
+    add_line(sys, 'Lookup_Tamax/1', 'T_a_max/1',      'autorouting', 'on');
 end
 
 %% ===================== Shared utility functions ========================
@@ -335,5 +366,27 @@ function addSaturationBlock(sys, name, x, y)
     full = [sys '/' name];
     add_block('simulink/Discontinuities/Saturation', full);
     set_param(full, 'UpperLimit', '1', 'LowerLimit', '-1');
+    moveBlock(full, x, y);
+end
+
+function addMinMax(sys, name, fcn, x, y)
+% Min_<result> / Max_<result>: 2-input MinMax block (fcn = 'min' or 'max')
+    full = [sys '/' name];
+    add_block('simulink/Math Operations/MinMax', full);
+    set_param(full, 'Function', fcn, 'Inputs', '2');
+    moveBlock(full, x, y);
+end
+
+function addLookup1D(sys, name, x, y)
+% Lookup_<result>: 1-D n-D Lookup Table on the base-workspace variables
+% bnd_v_bp (speed [m/s]) and bnd_Ta_max (T_a,max [N.m]); linear
+% interpolation, clipped outside the breakpoints.
+    full = [sys '/' name];
+    add_block('simulink/Lookup Tables/n-D Lookup Table', full);
+    set_param(full, 'NumberOfTableDimensions', '1', ...
+        'BreakpointsForDimension1', 'bnd_v_bp', ...
+        'Table', 'bnd_Ta_max', ...
+        'InterpMethod', 'Linear point-slope', ...
+        'ExtrapMethod', 'Clip');
     moveBlock(full, x, y);
 end

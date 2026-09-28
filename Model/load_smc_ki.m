@@ -1,0 +1,31 @@
+%% load_smc_ki.m
+% Load everything needed to build/simulate the SMC controller and its
+% closed loop (Model_SMC_KI_s.mdl), in this order:
+%   1. data/smc_ki.json  -> SMC design values (Ts_ctrl, lambda, tau_f, k_sw, Phi),
+%      used exactly as chosen (Documents/DieuKhien_SMC.txt);
+%   2. load_plant.m   -> plant parameters (data/params.json), which itself
+%      calls load_derived.m (F_zf). The SMC also uses K, J_col, C_col from
+%      here in its equivalent control;
+%   3. load_ref.m     -> Table 4 reference data (data/ref.json).
+%
+% Usage: run this SCRIPT from any folder: >> run('<Model>/load_smc_ki.m')
+
+scriptDir = fileparts(mfilename('fullpath'));   % Model/
+addpath(scriptDir);   % result_dir.m, save_run_results.m
+raw = jsondecode(fileread(fullfile(scriptDir, 'data', 'smc_ki.json')));
+
+fn = fieldnames(raw);
+fn = fn(~startsWith(fn, 'x_'));   % skip the "_note" field (jsondecode names it x_note)
+for i = 1:numel(fn)
+    assignin('base', fn{i}, raw.(fn{i}).value);
+end
+
+fprintf('load_smc_ki: first-order SMC with sat boundary layer: lambda=%.4g 1/s, tau_f=%.3g s, k_sw=%.4g, Phi=%.4g, Ts_ctrl=%.3g s\n', ...
+    raw.lambda.value, raw.tau_f.value, raw.k_sw.value, raw.Phi.value, raw.Ts_ctrl.value);
+
+bnd = jsondecode(fileread(fullfile(scriptDir, 'data', 'boundaries.json')));
+assignin('base', 'bnd_v_bp',   bnd.T_a.v_kmh(:)'/3.6);   % assist limit table T_a,max(v)
+assignin('base', 'bnd_Ta_max', bnd.T_a.value(:)');
+
+run(fullfile(scriptDir, 'load_plant.m'));
+run(fullfile(scriptDir, 'load_ref.m'));

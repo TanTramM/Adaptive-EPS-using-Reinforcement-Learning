@@ -3,7 +3,7 @@ function test_smc()
 %hand-formatted from the build_smc.m output).
 %
 %   Requires the root subsystem to expose ports named:
-%   In: e_T, T_s, theta1, theta2_dot | Out: T_a.
+%   In: e_T, T_s, theta1, theta2_dot, v | Out: T_a.
 %
 %   Feeds pseudo-random piecewise-constant inputs (held between samples) and
 %   compares T_a at every sample instant with the same discrete algorithm
@@ -34,8 +34,11 @@ eT   = 0.8*sin(kk/15) + 0.1*randn(N, 1);
 Tsn  = 3 + sin(kk/25) + 0.05*randn(N, 1);
 th1  = 0.3 + 0.1*sin(kk/30);
 th2d = 0.2*sin(kk/10) + 0.02*randn(N, 1);
+vv   = (10 + 100*(0.5 + 0.5*sin(kk/70)))/3.6;   % 10-110 km/h, exercises the table clip
+bnd  = jsondecode(fileread(fullfile(modelDir, 'data', 'boundaries.json')));
+vBp  = bnd.T_a.v_kmh(:)'/3.6; TaMaxTable = bnd.T_a.value(:)';
 tIn = [0; ((1:N-1)' - 0.5)*Ts];
-assignin('base', 'test_smc_in', [tIn eT Tsn th1 th2d]);
+assignin('base', 'test_smc_in', [tIn eT Tsn th1 th2d vv]);
 
 if bdIsLoaded(modelFileName)
     close_system(modelFileName, 0);
@@ -52,13 +55,13 @@ open_system(harnessName);
 add_block(dut, [harnessName '/DUT']);
 dutInHarness = [harnessName '/DUT'];
 
-inNames = {'e_T', 'T_s', 'theta1', 'theta2_dot'};
+inNames = {'e_T', 'T_s', 'theta1', 'theta2_dot', 'v'};
 add_block('simulink/Sources/From Workspace', [harnessName '/in']);
 set_param([harnessName '/in'], 'VariableName', 'test_smc_in', 'Interpolate', 'off', 'OutputAfterFinalValue', 'Holding final value');
 add_block('simulink/Signal Routing/Demux', [harnessName '/demux']);
-set_param([harnessName '/demux'], 'Outputs', '4');
+set_param([harnessName '/demux'], 'Outputs', '5');
 add_line(harnessName, 'in/1', 'demux/1');
-for i = 1:4
+for i = 1:5
     add_line(harnessName, sprintf('demux/%d', i), portRef(dutInHarness, inNames{i}));
 end
 add_block('simulink/Sinks/To Workspace', [harnessName '/Ta_out']);
@@ -71,22 +74,26 @@ simOut = sim(harnessName);
 Ta_sim = simOut.get('Ta_log');
 
 % --- independent reference implementation ---
-Ta_ref = zeros(N, 1); xf = 0;
+Ta_ref = zeros(N, 1); xf = 0; sat = false(N, 1);
 for k = 1:N
     th1dh = (th1(k) - xf)/P.tau_f;
     s = th2d(k) - th1dh - (P.lambda/P.K)*eT(k);
     Teq = -Tsn(k) + P.C_col*th2d(k) + P.J_col*P.lambda*(th1dh - th2d(k));
     usw = P.k_sw*max(-1, min(1, s/P.Phi));
-    Ta_ref(k) = Teq - P.J_col*usw;
+    Tunsat = Teq - P.J_col*usw;
+    TaMax = interp1(vBp, TaMaxTable, min(max(vv(k), vBp(1)), vBp(end)), 'linear');
+    Ta_ref(k) = max(-TaMax, min(Tunsat, TaMax));
+    sat(k) = abs(Tunsat) > TaMax;
     xf = xf + Ts*th1dh;
 end
 
+assert(any(sat) && any(~sat), 'the test signal must saturate at some samples and not at others');
 n = min(numel(Ta_sim), N);
 err = max(abs(Ta_sim(1:n) - Ta_ref(1:n)));
 assert(n == N, 'Expected %d samples, got %d', N, n);
 assert(err < 1e-9, 'T_a differs from the reference algorithm: max err %.3g', err);
-fprintf('[%s] TEST PASS: T_a matches the reference discrete first-order SMC (sat) at %d samples (max err %.2g)\n', ...
-    modelFileName, N, err);
+fprintf('[%s] TEST PASS: T_a matches the reference discrete first-order SMC (sat) with T_a,max(v) limit at %d samples (max err %.2g, %d saturated)\n', ...
+    modelFileName, N, err, nnz(sat));
 
 close_system(harnessName, 0);
 close_system(modelFileName, 0);

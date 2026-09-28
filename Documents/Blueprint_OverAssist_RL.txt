@@ -20,17 +20,17 @@ Quy ước đọc tài liệu:
 PHẦN 1. BÀI TOÁN ĐIỀU KHIỂN
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 1.1. Vấn đề: trợ lực thừa (over-assist)
-  - C-EPS thương mại dùng bản đồ trợ lực tĩnh T_a = f(T_s, v), hiệu chỉnh cho điều kiện bất lợi nhất: đường khô (mu ~ 0.8) và tải cầu trước lớn nhất [6].
+  - C-EPS thương mại dùng bản đồ trợ lực tĩnh T_a = f(T_s, v), hiệu chỉnh cho điều kiện bất lợi nhất: đường khô (mu ~ 0.8) và tải cầu trước lớn nhất [4].
   - Khi mu giảm, mô-men cản mặt đường T_r giảm nhưng bản đồ không biết mu nên vẫn trợ lực như đường khô. Trợ lực thừa làm mô-men vô-lăng nhẹ đi, tài xế mất cảm giác mặt đường và giảm an toàn lái
-    [6].
-  - Cách [6] đánh giá: cho GÓC lái làm đầu vào (bậc/dốc) và đo mô-men vô-lăng. Cùng một góc lái, EPS truyền thống cho mô-men thấp hơn hẳn khi tải cầu trước và mu giảm (tải 4 t, mu 0.2: 8.59 N.m
+    [4].
+  - Cách [4] đánh giá: cho GÓC lái làm đầu vào (bậc/dốc) và đo mô-men vô-lăng. Cùng một góc lái, EPS truyền thống cho mô-men thấp hơn hẳn khi tải cầu trước và mu giảm (tải 4 t, mu 0.2: 8.59 N.m
     so với 21.91 N.m của Multi-Map). Bài thử trên xe tải 16 t nên chỉ dùng xu hướng, không dùng số.
-  - Lưu ý: hệ quả xa hơn "tài xế bẻ quá tay" là suy luận, KHÔNG nằm trong [6]. Luận văn chỉ mô hình hóa nguyên nhân (T_s lệch khỏi giá trị mong muốn).
+  - Lưu ý: hệ quả xa hơn "tài xế bẻ quá tay" là suy luận, KHÔNG nằm trong [4]. Luận văn chỉ mô hình hóa nguyên nhân (T_s lệch khỏi giá trị mong muốn).
 
 1.2. Xác định bài toán điều khiển (Seborg Ch.1: CV / MV / DV)   [ĐÃ CHỐT]
   Biến của bài toán:
   - MV: T_a (mô-men motor trợ lực).
-  - CV: T_s = K*(theta1 - theta2), mô-men cảm biến đo tại thanh xoắn giữa vô-lăng và cột lái. Đây là "steering wheel torque" mà mọi nguồn thực đo ([1], [6], [7]), khác T_d.
+  - CV: T_s = K*(theta1 - theta2), mô-men cảm biến đo tại thanh xoắn giữa vô-lăng và cột lái. Đây là "steering wheel torque" mà mọi nguồn thực đo ([1], [4], [5]), khác T_d.
   - DV đo được: theta1 (góc vô-lăng do tài xế đặt), v (tốc độ xe).
   - DV KHÔNG đo được: mu (hệ số bám).
   - T_d (mô-men tay tài xế thật) KHÔNG đo được và KHÔNG phải DV: với góc theta1 cho trước, T_d chỉ là kết quả tính ra, không cấp cho phương trình nào khác nên không dựng trong model (mục 1.4).
@@ -44,17 +44,17 @@ PHẦN 1. BÀI TOÁN ĐIỀU KHIỂN
 
 1.3. Sai số điều khiển và điểm đặt   [ĐÃ CHỐT]
   e_T(t) = T_s(t) - T_d,ref(v, a_y),   điểm đặt e_T = 0.   Đây là bài toán TRACKING vì T_d,ref đổi theo (v, a_y).
-  - T_d,ref(v, a_y) = nội suy 2D Bảng 4 của [7] ("driver's average favored steering wheel ideal torque"): lưới 5 tốc độ (20-100 km/h) x 4 mức a_y (0.1-0.4 g).
-  - Bảng 4 đo ở điều kiện tựa-tĩnh ([7] ghi rõ bỏ qua ảnh hưởng động lực học lái) nên T_d = T_s tại đó, dùng được cho CV = T_s.
+  - T_d,ref(v, a_y) = nội suy 2D Bảng 4 của [5] ("driver's average favored steering wheel ideal torque"): lưới 5 tốc độ (20-100 km/h) x 4 mức a_y (0.1-0.4 g).
+  - Bảng 4 đo ở điều kiện tựa-tĩnh ([5] ghi rõ bỏ qua ảnh hưởng động lực học lái) nên T_d = T_s tại đó, dùng được cho CV = T_s.
   - Bảng chỉ có a_y dương: tra theo |a_y| rồi nhân sgn(a_y) (quyết định kỹ thuật tự chọn, không có trong nguồn).
-  Vấn đề trộn nguồn: xe của Bảng 4 (~1.53 t) khác xe Rajamani [5] (1.573 t) dùng cho Cụm 2, 3.
-  Giải pháp: [8] (Ren, Deng 2014) đo trên 3 xe thật (1.9 t, 1.5 t, 1.7 t) và kết luận mô-men vô-lăng lý tưởng gần như không phụ thuộc loại xe nếu kích thước và khối lượng gần nhau. Hai xe trên đủ
+  Vấn đề trộn nguồn: xe của Bảng 4 (~1.53 t) khác xe Rajamani [3] (1.573 t) dùng cho Cụm 2, 3.
+  Giải pháp: [6] (Ren, Deng 2014) đo trên 3 xe thật (1.9 t, 1.5 t, 1.7 t) và kết luận mô-men vô-lăng lý tưởng gần như không phụ thuộc loại xe nếu kích thước và khối lượng gần nhau. Hai xe trên đủ
   gần nhau nên dùng thẳng Bảng 4.
 
 1.4. Tài xế: góc lái là đầu vào (tài xế động học)   [ĐÃ CHỐT]
   Vấn đề: nếu coi T_d là mô-men cho trước thì ở xác lập T_s = T_d (phương trình khối vô-lăng khi vận tốc và gia tốc bằng 0), nên T_a không đổi được CV, bài toán không điều khiển được. Đã kiểm
   chứng trên Plant: T_d = 2 N.m cố định, T_a = 0..1 N.m, mu = 0.8 và 0.3 đều cho T_s ~ 1.9994 N.m.
-  Giải pháp: tài xế giữ GÓC, theta1(t) là đầu vào của Plant còn T_d là kết quả. Đây cũng là cách [6] (góc bậc/dốc) và [1] (mục IV.A: "the steering angle is an input command") mô phỏng.
+  Giải pháp: tài xế giữ GÓC, theta1(t) là đầu vào của Plant còn T_d là kết quả. Đây cũng là cách [4] (góc bậc/dốc) và [1] (mục IV.A: "the steering angle is an input command") mô phỏng.
   Giới hạn: tài xế cứng vô hạn, không phản ứng theo cảm giác lái nên mô hình không tái tạo việc bẻ quá tay, chỉ đo nguyên nhân (e_T). Mô hình tài xế vòng kín nằm ngoài phạm vi.
   Kịch bản thử: theta1(t) là hàm trơn (đủ để a_y nằm trong 0.1-0.4 g), v cố định, mu đổi bậc giữa chừng. Đang dùng 2 kịch bản S1 (giữ góc), S2 (lái hình sin) ở Phần 4; bộ kịch bản đầy đủ cho luận
   văn (nhiều v, mu dốc, mu tăng lại): [CẦN CHỌN].
@@ -62,13 +62,13 @@ PHẦN 1. BÀI TOÁN ĐIỀU KHIỂN
 1.5. Ràng buộc, chỉ tiêu và phạm vi
   - Phạm vi: CHỈ khắc phục over-assist. Không xét độ êm (rung, chattering) nên không cần động học motor chi tiết và trễ lốp (relaxation length).
   - Ràng buộc MV: |T_a| <= T_a,max(v) và sign(T_a) = sign(T_s) (dùng T_s vì T_d không đo được).
-  - T_a,max(v): ước lượng NHU CẦU trợ lực từ Plant theo Multi-Map [6] công thức (6): T_a,max = max(T_r - T_d,ref) trên vùng a_y hợp lệ ở mu = 0.8; bảng theo v = 20-100 km/h và vùng a_y hợp lệ
-    (biên của Plant) nằm ở Documents/Boundaries.txt (mục 2 và 4). Chưa phải công suất motor và tỉ lệ với e_p0 (số tự chọn). Đã loại: T_a,max = 23 N.m của [6] (xe tải 16 t), ngưỡng 1.94 N.m của
-    bản cũ (hiện tượng giả).
+  - T_a,max(v): ước lượng NHU CẦU trợ lực từ Plant theo Multi-Map [4] công thức (6): T_a,max = max(T_r - T_d,ref) trên vùng a_y hợp lệ ở mu = 0.8; công thức và bảng theo v = 20-100 km/h nằm ở
+    Documents/Ref/ref.txt mục 1.5 (vùng a_y hợp lệ, tức biên của Plant, nằm ở Documents/Plant/plant.txt mục 6.2). Chưa phải công suất motor và tỉ lệ với e_p0 (số tự chọn). Đã loại: T_a,max = 23 N.m
+    của [4] (xe tải 16 t), ngưỡng 1.94 N.m của bản cũ (hiện tượng giả).
   - Baseline [CẦN LÀM]: bản đồ trợ lực tĩnh T_a = f(T_s, v) hiệu chỉnh ở mu = 0.8 (chọn T_a để T_s = T_d,ref tại các điểm Bảng 4). Over-assist đo được bằng e_T của baseline khi mu giảm.
   - Chỉ tiêu (đang dùng ở Phần 4): RMS(e_T), max|e_T| và thời gian hồi phục sau khi mu đổi bậc, kèm RMS, max và biến thiên toàn phần của T_a. Chưa so với baseline; không đặt ngưỡng tuyệt đối vì
     không có nguồn.
-  - mu là tín hiệu ĐỘNG theo thời gian (bậc, dốc), Plant đã có cổng mu. Không nguồn nào ([1], [6], [7]) thử mu đổi giữa chừng.
+  - mu là tín hiệu ĐỘNG theo thời gian (bậc, dốc), Plant đã có cổng mu. Không nguồn nào ([1], [4], [5]) thử mu đổi giữa chừng.
   - Cờ giám sát vùng hợp lệ [CẦN LÀM] (dùng khi kiểm chứng, không sửa Plant): alpha_f vượt đỉnh Magic Formula, a_y ngoài dải 0.1-0.4 g, F_yr vượt mu*F_zr.
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -91,13 +91,13 @@ PHẦN 2. MÔ HÌNH ĐỐI TƯỢNG (PLANT)
 
 2.3. Cụm 2 - Lốp Pacejka (Cum2_Pacejka.txt)   [ĐÃ CÓ]
   Khối đại số, đầu vào theta2, beta, gamma, v, mu; đầu ra F_yf, F_yr, T_r.
-  - Góc trượt alpha_f, alpha_r từ hình học dạng góc nhỏ của [5] (delta_f = theta2/n_st, beta, gamma, v); giới hạn a_y để giả thiết đúng theo tốc độ: Cum2_Pacejka.txt, Mục 4.
+  - Góc trượt alpha_f, alpha_r từ hình học dạng góc nhỏ của [3] (delta_f = theta2/n_st, beta, gamma, v); giới hạn a_y để giả thiết đúng theo tốc độ: Cum2_Pacejka.txt, Mục 4.
   - Lốp trước: Magic Formula với D_f = mu*F_zf, B_f = C_alpha_f/(C*D_f), nên chỉ điểm bão hòa phụ thuộc mu - đây là cơ chế vật lý cốt lõi của over-assist. F_zf, F_zr tính một lần (load_derived.m).
   - Lốp sau: cùng dạng Magic Formula với D_r = mu*F_zr, B_r = C_r/(C*D_r) và cùng C, E (giả thiết hai cầu cùng loại lốp), để cầu sau cũng có giới hạn bám mu*F_zr.
-  - T_r = K_tr*F_yf với K_tr = e_p/n_st, e_p(alpha_f, mu) là pneumatic trail động theo [6], chặn dưới ở 0 khi lốp trượt hoàn toàn.
+  - T_r = K_tr*F_yf với K_tr = e_p/n_st, e_p(alpha_f, mu) là pneumatic trail động theo [4], chặn dưới ở 0 khi lốp trượt hoàn toàn.
 
 2.4. Cụm 3 - Thân xe 2-DOF (Cum3_2DOF.txt)   [ĐÃ CÓ]
-  Mô hình xe đạp (beta, gamma) suy từ Newton, cùng dạng của [5] Chương 2: beta_dot = (F_yf + F_yr)/(m*v) - gamma, gamma_dot = (l_f*F_yf - l_r*F_yr)/Iz, và a_y = (F_yf + F_yr)/m. Giả thiết: bỏ qua
+  Mô hình xe đạp (beta, gamma) suy từ Newton, cùng dạng của [3] Chương 2: beta_dot = (F_yf + F_yr)/(m*v) - gamma, gamma_dot = (l_f*F_yf - l_r*F_yr)/Iz, và a_y = (F_yf + F_yr)/m. Giả thiết: bỏ qua
   roll và chuyển tải ngang, góc nhỏ (cos delta_f ~ 1), single-track, v hằng số.
 
 2.5. Hệ phương trình tổng hợp (HeThongPlant_TongHop.txt)   [ĐÃ CẬP NHẬT: x = (theta2, theta2_dot, beta, gamma), theta1 là đầu vào, lốp sau Magic Formula]
@@ -111,10 +111,10 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ]
 
   Cấu trúc thư mục:
     Model/data/params.json         - tham số thô Cụm 1, 2, 3
-    Model/data/ref.json            - Bảng 4 [7] (T_d,ref), riêng với params.json
+    Model/data/ref.json            - Bảng 4 [5] (T_d,ref), riêng với params.json
     Model/load_plant.m             - nạp params.json vào base workspace, gọi load_derived.m (tính F_zf một lần)
     Model/load_ref.m               - nạp ref.json (đổi sang SI)
-    Model/data/pid.json, smc.json  - lựa chọn và số đo thiết kế của từng bộ điều khiển (PID: Ts, Kcu, Pu, alpha_D; SMC: Ts, lambda, tau_f, k_sw, Phi)
+    Model/data/pid.json, smc.json  - lựa chọn và số đo thiết kế của từng bộ điều khiển (PID: Ts, Kcu, Pu, alpha_D; SMC: Ts, lambda, tau_f, k_sw, Phi, k_I)
     Model/load_pid.m, load_smc.m   - nạp tham số bộ điều khiển (load_pid TÍNH Kp, Ki, Kd theo Ziegler-Nichols), rồi tự gọi load_plant và load_ref
     Model/Plant/                   - SteeringColumn, Tires, Bike2DOF, Plant (mỗi khối có bản _s)
     Model/Plant/script/            - build_cum1/2/3, build_plant, build_plant_s, test_cum1/2/3(_s), test_plant(_s)
@@ -132,7 +132,7 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ]
     Bike2DOF       : vào F_yf, F_yr, v             ra beta, gamma, a_y
     Plant          : vào theta1, T_a, v, mu         ra T_s, theta2, a_y, gamma, beta, theta2_dot
     PID            : vào e_T                        ra T_a
-    SMC            : vào e_T, T_s, theta1, theta2_dot   ra T_a
+    SMC            : vào e_T, T_s, theta1, theta2_dot, v   ra T_a
     Model_<Controller>_s : vào theta1, v, mu        ra T_s, T_d_ref, e_T, T_a, a_y
     Reference      : vào T_s, v, a_y                ra T_d_ref, e_T   (T_d_ref = sgn(a_y)*LUT(v,|a_y|), e_T = T_s - T_d_ref)
 
@@ -154,12 +154,12 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ]
 PHẦN 3. ĐỘ CHÍNH XÁC MÔ HÌNH VÀ VIỆC CÒN LẠI
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 3.1. Mô hình chính xác tới đâu
-  - ĐÃ KIỂM CHỨNG (verification): model Simulink tính đúng phương trình trong tài liệu, sai lệch ở mức số học; xu hướng định tính đúng cơ chế over-assist (mục 2.6), cùng chiều với [6].
-  - CHƯA THẨM ĐỊNH (validation): chưa đối chiếu độ lớn tuyệt đối T_s, a_y với dữ liệu thực nào. Tham số ghép từ nhiều nguồn: [1] (Hyundai i30) cho cột lái, [5] cho thân xe và độ cứng lốp, [3] cho
-    C, E, Bảng 4 [7], cùng các giá trị tự chọn n_st = 16, e_p0 = 0.048 m, c = 100.
+  - ĐÃ KIỂM CHỨNG (verification): model Simulink tính đúng phương trình trong tài liệu, sai lệch ở mức số học; xu hướng định tính đúng cơ chế over-assist (mục 2.6), cùng chiều với [4].
+  - CHƯA THẨM ĐỊNH (validation): chưa đối chiếu độ lớn tuyệt đối T_s, a_y với dữ liệu thực nào. Tham số ghép từ nhiều nguồn: [1] (Hyundai i30) cho cột lái, [3] cho thân xe và độ cứng lốp, [2] cho
+    C, E, Bảng 4 [5], cùng các giá trị tự chọn n_st = 16, e_p0 = 0.048 m, c = 100.
   - Phép kiểm tra độ lớn làm được ngay [CẦN LÀM]: so T_s không trợ lực (T_a = 0) với T_d,ref của Bảng 4 tại cùng (v, a_y). T_s phải lớn hơn T_d,ref thì mới cần trợ lực.
   - Giới hạn đã biết (chấp nhận trong phạm vi): bỏ qua roll và chuyển tải; tài xế cứng vô hạn; không có động học motor và trễ lốp (chiều dài nới lỏng); C, E dùng chung cho hai cầu (số minh họa của
-    [3]); e_p chỉ theo mô hình brush đơn giản hóa và chặn dưới ở 0.
+    [2]); e_p chỉ theo mô hình brush đơn giản hóa và chặn dưới ở 0.
 
 3.2. Việc còn lại
   - Tài liệu cần cập nhật cho khớp model: Cum1_CEPS.txt, Cum2_Pacejka.txt (cổng theta2), Cum3_2DOF.txt, HeThongPlant_TongHop.txt, References.txt (dùng [1] theo K, J_col, C_col, T_f),
@@ -174,30 +174,27 @@ PHẦN 3. ĐỘ CHÍNH XÁC MÔ HÌNH VÀ VIỆC CÒN LẠI
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 PHẦN 4. BỘ ĐIỀU KHIỂN PID VÀ SMC - SO SÁNH   [ĐÃ CÓ - chi tiết: DieuKhien_PID.txt, DieuKhien_SMC.txt]
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Cả hai là bộ điều khiển số (ZOH, Ts = 10 ms), không biết mu, PID có giới hạn T_a,max(v) và anti-windup, SMC chưa áp giới hạn (T_a,max: Boundaries.txt). Vấn đề chung khi thiết kế: ma sát khô cột
+  Cả hai là bộ điều khiển số (ZOH, Ts = 10 ms), không biết mu, PID và SMC đều có giới hạn T_a,max(v) (Documents/Ref/ref.txt mục 1.5), PID thêm anti-windup. Vấn đề chung khi thiết kế: ma sát khô cột
   lái chia plant thành 2 chế độ - DÍNH khi giữ góc (bậc 1, tau_st = 1.3 s) và TRƯỢT khi đánh lái (cộng hưởng 5.97 Hz, zeta = 0.16).
   - PID (ba khâu P, I, D): chỉnh định bằng quy tắc Ziegler-Nichols (ZN, quy tắc đơn giản không cần mô hình plant): chỉ dùng khâu P, tăng Kp đến ranh giới mất ổn định thì đo độ lợi tới hạn Kcu =
     2.677 (nhỏ nhất trên lưới 30 điều kiện trong vùng biên) và chu kỳ dao động Pu = 0.0940 s, rồi tra bảng Seborg: Kp = 0.6 Kcu = 1.606, Ki = 34.2 1/s (tau_I = Pu/2), Kd = 0.0189 s (tau_D =
     Pu/8). Đọc e_T và v (tra T_a,max(v)), có chống bão hòa tích phân.
-  - SMC bậc 1 đơn giản: mặt trượt s = theta2_dot - theta1_dot_hat - (lambda/K)*e_T, điều khiển tương đương T_eq từ phương trình cột lái, cộng u_sw = k_sw*sat(s/Phi) (lớp biên xử lý chattering);
-    lambda = 30, k_sw = 80, Phi = 0.6. Đọc e_T, T_s, theta1, theta2_dot. Nguồn lý thuyết SMC chưa có trong References/ [CẦN BỔ SUNG].
+  - SMC bậc 1 tích phân: mặt trượt s = s0 + k_I*z, s0 = theta2_dot - theta1_dot_hat - (lambda/K)*e_T, z = tích phân của s0 (kẹp ở +-Phi/k_I); điều khiển tương đương T_eq từ phương trình cột lái, cộng
+    u_sw = k_sw*sat(s/Phi) (lớp biên xử lý chattering); lambda = 30, k_sw = 80, Phi = 0.6, k_I = 10 1/s. Đọc e_T, T_s, theta1, theta2_dot, v. Bản không tích phân cho e_T dừng cách T_d,ref 1.3-1.8 N.m
+    (RMS S1 1.597, S2 1.552) nên đã bổ sung khâu tích phân. Nguồn lý thuyết SMC chưa có trong References/ [CẦN BỔ SUNG].
   Kịch bản (v = 20 m/s): S1 giữ góc 0.4 rad, mu 0.8 -> 0.3 tại 5 s; S2 lái hình sin 0.35 +- 0.15 rad, 0.5 Hz, mu 0.8 -> 0.3 tại 6.25 s. Chỉ tiêu trên t >= 2 s:
 
     Kịch bản  Bộ ĐK   RMS e_T   max|e_T| sau bước mu   phục hồi (|e_T| < 0.1)   max|T_a|   TV(T_a) [N.m/s]   sign(T_a) != sign(T_s)
     S1        PID     0.056     0.199                  1.03 s                   3.92       1.32              0 %
-    S1        SMC     1.597     1.912                  không đạt                1.26       0.17              0 %
+    S1        SMC     0.041     0.175                  0.53 s                   3.49       0.69              0 %
     S2        PID     0.342     1.314                  5.69 s                   5.86       10.1              36 %
-    S2        SMC     1.552     2.352                  không đạt                4.66       6.3               49 %
+    S2        SMC     0.311     0.871                  5.63 s                   5.86       7.1               37 %
 
-  Nhận xét (PID có giới hạn T_a,max(v), SMC chưa áp giới hạn nên hai bộ chưa cùng điều kiện; số SMC chưa chạy lại):
-  - Độ chính xác bám: PID (chỉnh bằng ZN) tốt hơn hẳn SMC đơn giản ở cả hai kịch bản (S1: RMS 0.056 so với 1.60; S2: 0.34 so với 1.55). PID có khâu tích phân nên xóa được sai số kéo dài; SMC bậc
-    1 với lớp biên không có khâu này nên còn sai số tĩnh trong lớp biên, xấp xỉ (K/lambda)*Phi*psi/k_sw (DieuKhien_SMC.txt mục 5): S1 lệch +1.8 N.m trước bước mu và +1.3 N.m sau.
-  - Đánh đổi cố hữu của lớp biên: muốn giảm sai số phải giảm Phi, nhưng Phi > Ts*k_sw/2 (điều kiện rời rạc ổn định), k_sw > |psi| ~ 70 và lambda < w_n = 37.5 rad/s. Ở giới hạn thì T_a rung rời
-    rạc (TV lên hàng trăm N.m/s).
-  - Độ mượt T_a: SMC mượt hơn PID (S1: TV 0.17 so với 1.32; S2: 6.3 so với 10.1), do dùng T_a nhỏ hơn (S1: max 1.26 so với 3.92 N.m). Riêng PID có đoạn khởi động (0.2 s đầu) T_a dao động đến +-18
-    N.m, đã loại khỏi chỉ tiêu.
-  - Khi đánh lái liên tục (S2): cả hai bị chi phối bởi ma sát khô đổi dấu ở mỗi lần đổi chiều lái; PID cho e_T nhỏ (RMS 0.28) nhưng có gai ~1 N.m mỗi lần đổi chiều, SMC dao động quanh sai số ~1.5
-    N.m.
-  - Cả hai vi phạm ràng buộc dấu sign(T_a) = sign(T_s) ở S2 (SMC 49%, PID 37%); chưa áp ràng buộc.
-  - Hướng cải thiện SMC nếu cần (chưa làm): thêm khâu tích phân hoặc bộ quan sát nhiễu, hoặc giảm Ts để cho phép Phi nhỏ hơn. Chưa so với baseline bản đồ trợ lực tĩnh (mục 1.5) nên chưa định
-    lượng được "% over-assist được khắc phục"; chưa kiểm tra ở tốc độ khác và khi tham số mô hình sai lệch.
+  Nhận xét (cả hai có giới hạn T_a,max(v); số liệu chạy lại):
+  - Độ chính xác bám: SMC tích phân nhỉnh hơn PID ở cả hai kịch bản (S1: RMS 0.041 so với 0.056, phục hồi 0.53 s so với 1.03 s; S2: 0.311 so với 0.342, max|e_T| sau bước mu 0.87 so với 1.31). Cả hai
+    đều có khâu tích phân nên sai số tĩnh ~0. Riêng SMC bản không tích phân kém hẳn PID vì sai số lớp biên (K/lambda)*Phi*psi/k_sw (DieuKhien_SMC.txt mục 5).
+  - Độ mượt T_a: SMC mượt hơn PID (S1: TV 0.69 so với 1.32; S2: 7.1 so với 10.1).
+  - Đoạn khởi động 0-2 s (không nằm trong chỉ tiêu): T_a dao động mạnh đến giới hạn chủ yếu do khối Reference đổi dấu T_d,ref khi a_y ~ 0 (sgn(a_y) nhân hàng bảng đã kẹp ở 0.1 g), không phải do góc lái.
+  - Khi đánh lái liên tục (S2): cả hai bị chi phối bởi ma sát khô đổi dấu ở mỗi lần đổi chiều lái; ~36-37% thời gian T_a ngược dấu T_s, chưa áp ràng buộc dấu.
+  - Giới hạn của kết luận: chỉ ở 72 km/h, hai kịch bản, tham số mô hình đúng, k_I chọn 10 (chưa quét). Chưa so với baseline bản đồ trợ lực tĩnh (mục 1.5) nên chưa định lượng được "% over-assist
+    được khắc phục"; chưa kiểm tra ở tốc độ khác và khi tham số mô hình sai lệch.

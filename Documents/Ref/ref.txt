@@ -1,0 +1,102 @@
+==============================================================================================================================================================================================
+BỘ ĐIỀU KHIỂN
+==============================================================================================================================================================================================
+Chương này thiết kế bộ điều khiển mô-men trợ lực cho mô hình ở chương trước. Trước khi chọn luật điều khiển, cần xác định hai điều mà mọi bộ điều khiển trong luận văn dùng chung: giá trị mong muốn của mô-men cảm biến $T_s$ và mô-men trợ lực lớn nhất mà bộ điều khiển có thể phải cung cấp. Mục 1 trình bày hai nội dung này; các mục sau trình bày từng bộ điều khiển.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Giá trị đặt và nhu cầu trợ lực
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1.1. Yêu cầu đối với giá trị đặt
+Theo phát biểu bài toán ở chương trước, biến được điều khiển là mô-men cảm biến $T_s$, đại lượng tài xế cảm nhận qua tay lái. Giá trị đặt $T_{d,ref}$ là mô-men tay lái mà tài xế mong muốn cảm nhận. Để bộ điều khiển dùng được, giá trị đặt phải thỏa ba yêu cầu. Thứ nhất, nó chỉ được phụ thuộc vào các đại lượng đo được trên xe; theo Bảng 1 của chương trước, đó là vận tốc $v$ và gia tốc ngang $a_y$, không phải hệ số bám $\mu$. Thứ hai, nó phải phản ánh đúng thông tin mặt đường: khi mặt đường trơn, gia tốc ngang xe đạt được giảm, nên tay lái nhẹ đi theo gia tốc ngang là thông tin cần thiết cho tài xế, không phải lỗi. Trợ lực thừa chỉ là phần tay lái nhẹ thêm so với mức ứng với gia tốc ngang thực. Thứ ba, nó phải là hàm liên tục theo $v$ và $a_y$, vì bước nhảy của giá trị đặt truyền thẳng thành bước nhảy của sai số và của mô-men trợ lực.
+1.2. Nguồn dữ liệu
+Luận văn dùng Bảng 4 của [5], mô-men vô-lăng lý tưởng mà tài xế trung bình ưa thích, cho theo năm mức vận tốc từ 20 km/h đến 100 km/h và bốn mức gia tốc ngang từ 0.1 g đến 0.4 g (Bảng 1). Mô-men tăng theo gia tốc ngang, vì tài xế cần cảm nhận lực quay vòng lớn dần khi vào cua gấp hơn; mô-men cũng tăng theo vận tốc, vì ở tốc độ cao tay lái cần nặng hơn để xe ổn định hướng. Số liệu được xác định ở điều kiện gần như tĩnh, bỏ qua động học của cơ cấu lái [5]. Ở trạng thái xác lập, mô hình cho $T_d = T_s$ (phương trình (6) của chương trước), nên mô-men vô-lăng của bảng dùng trực tiếp được làm giá trị đặt cho $T_s$. Trong quá độ, $T_d$ và $T_s$ khác nhau một lượng bằng mô-men quán tính và mô-men cản của khối vô-lăng; bộ điều khiển vẫn bám theo $T_s$ vì $T_d$ không đo được.
+Bảng 1: Mô-men vô-lăng lý tưởng $T_{d,ref}$ [N.m] theo Bảng 4 của [5] (hàng $a_y = 0$ là điểm bổ sung, mục 1.3)
+$a_y$ [g] | 20 km/h | 40 km/h | 60 km/h | 80 km/h | 100 km/h
+0 | 0 | 0 | 0 | 0 | 0
+0.1 | 1.0 | 1.7 | 2.1 | 2.3 | 2.6
+0.2 | 1.5 | 2.0 | 2.4 | 2.8 | 3.0
+0.3 | 1.6 | 2.3 | 2.8 | 3.1 | 3.3
+0.4 | 1.8 | 2.4 | 2.9 | 3.3 | 3.4
+
+Xe dùng trong [5] có khối lượng khoảng 1.53 tấn, khác xe của [3] (1.573 tấn) dùng cho mô hình. [6] đo mô-men vô-lăng lý tưởng trên ba xe thật có khối lượng 1.5 tấn, 1.7 tấn và 1.9 tấn và kết luận rằng đặc tính này gần như không phụ thuộc loại xe khi kích thước và khối lượng gần nhau. Hai xe trên chênh nhau chưa đến 3% về khối lượng, nên Bảng 1 được dùng trực tiếp, không hiệu chỉnh.
+1.3. Mở rộng bảng thành hàm liên tục
+Bảng 4 của [5] có ba hạn chế khi dùng làm giá trị đặt: không có điểm dưới 0.1 g, chỉ có giá trị dương và bước lưới thưa (20 km/h và 0.1 g). Nếu chỉ tra bảng rồi giữ giá trị biên khi ra ngoài dải, thì với mọi $|a_y| < 0.1$ g giá trị đặt bằng hàng 0.1 g, từ 1.0 N.m đến 2.6 N.m; khi xe chuyển từ cua trái sang cua phải, giá trị đặt nhảy từ dương sang âm cùng độ lớn, vi phạm yêu cầu thứ ba ở mục 1.1. Ba bước sau khắc phục các hạn chế này.
+Bước thứ nhất, bổ sung điểm $a_y = 0$ với $T_{d,ref} = 0$ ở mọi vận tốc (hàng đầu của Bảng 1). Khi xe đi thẳng, lực bên của lốp bằng không nên không có mô-men phản hồi nào để truyền tới tài xế; giá trị đặt bằng không là hợp lý về vật lý.
+Bước thứ hai, nội suy bảng đã bổ sung bằng đa thức bậc ba từng đoạn bảo toàn tính đơn điệu (PCHIP, Piecewise Cubic Hermite Interpolating Polynomial: nội suy bậc ba đi qua đúng các điểm dữ liệu, chọn độ dốc tại mỗi điểm sao cho đường cong không vượt quá giá trị hai điểm lân cận). Phép nội suy làm lần lượt theo $a_y$ tại từng vận tốc của bảng, rồi theo $v$. So với nội suy tuyến tính, PCHIP cho đường cong trơn (đạo hàm liên tục), không có điểm gãy tại các nút lưới, nhưng vẫn đi qua đúng mọi số liệu của [5] và không tạo cực trị giả. Chênh lệch lớn nhất giữa hai cách nội suy là 0.38 N.m, nằm trong đoạn từ 0 đến 0.1 g ở 100 km/h, nơi PCHIP cho mô-men tăng nhanh ngay quanh vị trí đi thẳng rồi thoải dần. Bảng 2 trích kết quả nội suy; bảng đầy đủ với bước 5 km/h và 0.025 g được lưu trong tệp dữ liệu đi kèm.
+Bước thứ ba, mở rộng sang gia tốc ngang âm bằng tính đối xứng: cua trái và cua phải cho cùng độ lớn mô-men, ngược dấu. Ngoài dải bảng, giá trị đặt được giữ bằng giá trị biên: vận tốc dưới 20 km/h dùng hàng 20 km/h, trên 100 km/h dùng hàng 100 km/h, và $|a_y|$ trên 0.4 g dùng giá trị ở 0.4 g. Giá trị đặt cuối cùng:
+
+  (1)  T_d,ref(v, a_y) = sgn(a_y) * T_hat(v, |a_y|),   T_hat(v, 0) = 0
+  [ T_{d,ref}(v,a_y)=\mathrm{sgn}(a_y)\,\hat T(v,|a_y|),\qquad \hat T(v,0)=0 ]
+
+với $\hat T$ là hàm nội suy PCHIP của Bảng 1. Vì $\hat T(v, 0) = 0$, hàm (1) liên tục khi $a_y$ đổi dấu. Điểm bổ sung $a_y = 0$ là Tự chọn(4), phép nội suy PCHIP là Tự chọn(5).
+Bảng 2: Giá trị đặt $T_{d,ref}$ [N.m] sau khi nội suy PCHIP (bước $v$ là 5 km/h, cùng độ phân giải với Bảng 5 của chương trước; bước $a_y$ là 0.05 g)
+$v$ [km/h] \ $a_y$ [g] | 0 | 0.05 | 0.10 | 0.15 | 0.20 | 0.25 | 0.30 | 0.35 | 0.40
+20 | 0.00 | 0.57 | 1.00 | 1.31 | 1.50 | 1.55 | 1.60 | 1.69 | 1.80
+25 | 0.00 | 0.73 | 1.21 | 1.47 | 1.63 | 1.72 | 1.79 | 1.87 | 1.96
+30 | 0.00 | 0.86 | 1.39 | 1.62 | 1.76 | 1.88 | 1.98 | 2.05 | 2.11
+35 | 0.00 | 0.99 | 1.56 | 1.75 | 1.89 | 2.03 | 2.15 | 2.22 | 2.26
+40 | 0.00 | 1.09 | 1.70 | 1.88 | 2.00 | 2.17 | 2.30 | 2.37 | 2.40
+45 | 0.00 | 1.17 | 1.82 | 1.99 | 2.11 | 2.29 | 2.44 | 2.51 | 2.53
+50 | 0.00 | 1.25 | 1.93 | 2.09 | 2.21 | 2.41 | 2.58 | 2.64 | 2.66
+55 | 0.00 | 1.31 | 2.02 | 2.18 | 2.30 | 2.52 | 2.70 | 2.76 | 2.78
+60 | 0.00 | 1.36 | 2.10 | 2.27 | 2.40 | 2.62 | 2.80 | 2.87 | 2.90
+65 | 0.00 | 1.39 | 2.16 | 2.36 | 2.51 | 2.72 | 2.89 | 2.97 | 3.02
+70 | 0.00 | 1.40 | 2.20 | 2.45 | 2.62 | 2.81 | 2.97 | 3.06 | 3.14
+75 | 0.00 | 1.42 | 2.25 | 2.53 | 2.72 | 2.90 | 3.04 | 3.15 | 3.24
+80 | 0.00 | 1.45 | 2.30 | 2.61 | 2.80 | 2.97 | 3.10 | 3.21 | 3.30
+85 | 0.00 | 1.49 | 2.36 | 2.67 | 2.86 | 3.03 | 3.16 | 3.26 | 3.34
+90 | 0.00 | 1.54 | 2.44 | 2.74 | 2.92 | 3.09 | 3.21 | 3.31 | 3.37
+95 | 0.00 | 1.60 | 2.52 | 2.79 | 2.97 | 3.13 | 3.26 | 3.35 | 3.39
+100 | 0.00 | 1.68 | 2.60 | 2.84 | 3.00 | 3.17 | 3.30 | 3.37 | 3.40
+
+Tự chọn(4): chọn $T_{d,ref} = 0$ tại $a_y = 0$ vì [5] không cho số liệu dưới 0.1 g, còn khi đi thẳng không có mô-men phản hồi mặt đường. Điểm này là điều kiện cần để giá trị đặt liên tục khi đổi chiều cua.
+Tự chọn(5): chọn nội suy PCHIP thay cho nội suy tuyến tính để giá trị đặt có đạo hàm liên tục, nhờ đó sai số bám không có điểm gãy khi gia tốc ngang đi qua các nút lưới; tính bảo toàn đơn điệu bảo đảm mô-men mong muốn luôn tăng theo gia tốc ngang và vận tốc như số liệu gốc.
+1.4. Sai số bám và định nghĩa trợ lực thừa
+Sai số bám là hiệu giữa mô-men cảm biến và giá trị đặt, tính từ các tín hiệu đo được $T_s$, $v$ và $a_y$:
+
+  (2)  e_T = T_s - T_d,ref(v, a_y)
+  [ e_T=T_s-T_{d,ref}(v,a_y) ]
+
+Mục tiêu điều khiển là $e_T = 0$. Vì giá trị đặt thay đổi theo $v$ và $a_y$, đây là bài toán bám (tracking) chứ không phải bài toán giữ một hằng số. Theo (1), $T_s$ và $T_{d,ref}$ cùng dấu với $a_y$ khi xe cua, nên dấu của $e_T$ nhân với dấu của $a_y$ cho biết tay lái nặng hay nhẹ hơn mong muốn. Trợ lực thừa xảy ra khi:
+
+  (3)  sgn(a_y) * e_T < 0   <=>   |T_s| < |T_d,ref|
+  [ \mathrm{sgn}(a_y)\,e_T<0\;\Leftrightarrow\;|T_s|<|T_{d,ref}| ]
+
+tức tay lái nhẹ hơn mức tài xế mong muốn ở cùng vận tốc và gia tốc ngang; trường hợp ngược lại là thiếu trợ lực. Các chỉ tiêu đánh giá dựa trên $e_T$ được trình bày cùng kịch bản mô phỏng ở các mục sau.
+1.5. Nhu cầu trợ lực lớn nhất
+Mô-men trợ lực lớn nhất $T_{a,max}$ là mức mà bộ điều khiển có thể phải cung cấp để đưa $T_s$ về giá trị đặt; nó dùng để đặt giới hạn bão hòa cho mọi bộ điều khiển. Ở trạng thái xác lập, theo (6) của chương trước $T_s = T_r - T_a$, nên để $T_s = T_{d,ref}$ cần:
+
+  (4)  T_a,req(v, a_y, mu) = T_r(v, a_y, mu) - T_d,ref(v, a_y)
+  [ T_{a,req}(v,a_y,\mu)=T_r(v,a_y,\mu)-T_{d,ref}(v,a_y) ]
+
+Mô-men phản hồi $T_r$ lớn nhất trên đường khô, nên nhu cầu trợ lực lớn nhất xét ở $\mu = 0.8$, theo cách [4] xác định mô-men trợ lực lớn nhất từ hiệu giữa mô-men cản lớn nhất và mô-men vô-lăng mong muốn lớn nhất. Gia tốc ngang được xét trên vùng mà cả mô hình và giá trị đặt cùng hợp lệ: không vượt giới hạn $a_{y,max}$ của mô hình (mục 6.2 của chương trước) và không vượt 0.4 g của Bảng 1:
+
+  (5)  a_y,lim(v) = min(a_y,max(v, 0.8), 0.4 g)
+  [ a_{y,lim}(v)=\min\big(a_{y,max}(v,0.8),\;0.4\,g\big) ]
+
+  (6)  T_a,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_d,ref(v, a_y)]
+  [ T_{a,max}(v)=\max_{0\le a_y\le a_{y,lim}(v)}\big[T_r(v,a_y,0.8)-T_{d,ref}(v,a_y)\big] ]
+
+$T_r$ tại mỗi điểm được tính bằng cách giải trạng thái xác lập của mô hình ở gia tốc ngang cho trước. Ở trạng thái xác lập, cân bằng mô-men quanh trọng tâm cho lực bên cầu trước $F_{yf} = m a_y l_r / (l_f + l_r)$; góc trượt cầu trước và pneumatic trail do đó chỉ phụ thuộc $a_y$ và $\mu$, nên $T_r$ không phụ thuộc vận tốc: tại 0.4 g, $T_r = 9.00$ N.m ở mọi tốc độ. Kết quả ở Bảng 3 cho thấy hiệu $T_r - T_{d,ref}$ tăng theo gia tốc ngang, nên giá trị lớn nhất luôn nằm tại $a_{y,lim}$. Từ 30 km/h trở lên, $a_{y,lim} = 0.4$ g và $T_{a,max}$ giảm dần theo vận tốc chỉ vì $T_{d,ref}$ tăng theo vận tốc. Ở 20 km/h và 25 km/h, giới hạn góc nhỏ của mô hình chặn gia tốc ngang dưới 0.4 g nên $T_{a,max}$ thấp hơn hẳn.
+Bảng 3: Nhu cầu trợ lực lớn nhất theo vận tốc ($\mu = 0.8$, trạng thái xác lập)
+$v$ [km/h] | $a_{y,lim}$ [g] | $T_r$ [N.m] | $T_{d,ref}$ [N.m] | $T_{a,max}$ [N.m]
+20 | 0.201 | 5.016 | 1.501 | 3.515
+25 | 0.310 | 7.336 | 1.809 | 5.527
+30 | 0.400 | 8.997 | 2.113 | 6.884
+35 | 0.400 | 8.997 | 2.260 | 6.737
+40 | 0.400 | 8.997 | 2.400 | 6.597
+45 | 0.400 | 8.997 | 2.534 | 6.463
+50 | 0.400 | 8.997 | 2.663 | 6.334
+55 | 0.400 | 8.997 | 2.785 | 6.212
+60 | 0.400 | 8.997 | 2.900 | 6.097
+65 | 0.400 | 8.997 | 3.018 | 5.980
+70 | 0.400 | 8.997 | 3.136 | 5.862
+75 | 0.400 | 8.997 | 3.236 | 5.761
+80 | 0.400 | 8.997 | 3.300 | 5.697
+85 | 0.400 | 8.997 | 3.338 | 5.659
+90 | 0.400 | 8.997 | 3.370 | 5.627
+95 | 0.400 | 8.997 | 3.392 | 5.605
+100 | 0.400 | 8.997 | 3.400 | 5.597
+
+Bảng 3 là nhu cầu trợ lực ước lượng từ mô hình, không phải khả năng của motor: luận văn không có số liệu motor cụ thể, nên giả thiết motor luôn sinh được $T_{a,max}$. Vì $T_r$ tỉ lệ thuận với $e_{p0}$ (Tự chọn(3) của chương trước), độ lớn của $T_{a,max}$ chỉ đúng về bậc độ lớn; điều quan trọng cho bài toán là mọi bộ điều khiển được so sánh với cùng một giới hạn. Ràng buộc đặt lên mô-men trợ lực vì vậy là $|T_a| \le T_{a,max}(v)$, nội suy tuyến tính theo vận tốc giữa các hàng của Bảng 3.
+==============================================================================================================================================================================================

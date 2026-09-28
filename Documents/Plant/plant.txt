@@ -1,0 +1,285 @@
+==============================================================================================================================================================================================
+MÔ HÌNH ĐỐI TƯỢNG ĐIỀU KHIỂN (PLANT)
+==============================================================================================================================================================================================
+Chương này xây dựng mô hình toán của đối tượng điều khiển: hệ trợ lực lái điện đặt trên trục lái (C-EPS, Column-type Electric Power Steering, loại có motor trợ lực gắn trên trục lái) ghép với lốp và thân xe. Mô hình cần tái tạo được hiện tượng trọng tâm của luận văn: khi hệ số bám mặt đường $\mu$ thay đổi, mô-men phản hồi từ mặt đường lên tay lái thay đổi theo, trong khi bản đồ trợ lực thông thường không biết điều đó. Vì vậy mô hình phải chứa đường truyền từ mặt đường, qua lốp và thân xe, ngược về tay lái. Mô hình được chia thành ba cụm vật lý; mỗi cụm nêu giả thiết, định luật dùng để lập phương trình, kết quả và bộ tham số ngay tại chỗ; cuối chương ghép ba cụm thành hệ phương trình trạng thái và xác định phạm vi hợp lệ của mô hình.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Tổng quan mô hình
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1.1. Cấu trúc cơ khí của hệ C-EPS
+Hình 1 trình bày cấu trúc cơ khí của hệ C-EPS. Tài xế tác dụng mô-men lên vô-lăng; vô-lăng nối với trục lái phía trên, rồi qua một thanh xoắn đàn hồi tới trục lái phía dưới. Thanh xoắn có độ cứng xác định nên góc xoắn của nó tỉ lệ với mô-men truyền qua; cảm biến mô-men đo chính góc xoắn này. Motor trợ lực truyền mô-men vào trục lái phía dưới qua hộp giảm tốc, rồi cơ cấu bánh răng - thanh răng biến chuyển động quay thành chuyển động tịnh tiến của thanh răng, đẩy các thanh lái làm quay bánh xe dẫn hướng. Ở chiều ngược lại, lực bên của lốp tạo mô-men quanh trụ quay lái, truyền qua cơ cấu lái về trục lái và chống lại chuyển động của tài xế: đó là mô-men phản hồi mặt đường mà tài xế cảm nhận qua tay lái.
+[Hình 1: Sơ đồ cơ khí hệ trợ lực lái điện đặt trên trục lái (C-EPS)]
+1.2. Sơ đồ khối và hai vòng phản hồi
+Từ cấu trúc cơ khí, mô hình được chia thành ba cụm (Hình 2). Cụm cơ cấu lái mô tả chuyển động quay của vô-lăng và trục lái dưới tác dụng của mô-men tài xế, mô-men trợ lực, mô-men phản hồi mặt đường và ma sát. Cụm lốp tính góc trượt và lực bên của hai cầu cùng mô-men phản hồi mặt đường; đây là khối đại số, không có trạng thái riêng. Cụm thân xe mô tả chuyển động ngang và chuyển động quay quanh trục thẳng đứng (yaw, chuyển động xoay đầu xe) theo mô hình xe một vệt hai bậc tự do (bicycle model).
+[Hình 2: Sơ đồ khối của mô hình: ba cụm và hai vòng phản hồi]
+Ba cụm liên kết với nhau qua hai vòng phản hồi. Vòng thứ nhất: góc trục lái $\theta_2$ quyết định góc bẻ bánh xe, từ đó quyết định lực bên cầu trước $F_{yf}$, và lực này quay về cụm cơ cấu lái dưới dạng mô-men phản hồi $T_r$. Vòng thứ hai: lực bên hai cầu làm thân xe trượt ngang và xoay đầu, góc trượt hông $\beta$ và vận tốc góc yaw $\gamma$ lại quay về cụm lốp để tính góc trượt của lốp ở thời điểm tiếp theo. Chính hai vòng này làm mô-men trên tay lái phụ thuộc vào trạng thái trượt thực của xe và hệ số bám $\mu$; thiếu một trong hai vòng thì mô hình mất cơ chế gây ra hiện tượng trợ lực thừa (over-assist, tay lái nhẹ hơn mức tài xế mong muốn khi mặt đường trơn).
+1.3. Biến trạng thái, đầu vào và đầu ra
+Mô hình có bốn biến trạng thái: hai biến của trục lái (góc và vận tốc góc, vì phương trình chuyển động quay là phương trình bậc hai) và hai biến của thân xe:
+
+  (1)  x = [x1, x2, x3, x4]^T = [theta2, theta2_dot, beta, gamma]^T
+  [ x=\begin{bmatrix}x_1 & x_2 & x_3 & x_4\end{bmatrix}^T=\begin{bmatrix}\theta_2 & \dot\theta_2 & \beta & \gamma\end{bmatrix}^T ]
+
+Bảng 1 liệt kê toàn bộ biến của mô hình. Đầu vào điều khiển duy nhất là mô-men trợ lực $T_a$. Góc vô-lăng $\theta_1$ và vận tốc xe $v$ là đầu vào ngoại sinh đo được; hệ số bám $\mu$ là đầu vào ngoại sinh không đo được và là nguồn gốc của hiện tượng trợ lực thừa. Việc đo được hay không quyết định tín hiệu nào bộ điều khiển được phép sử dụng.
+Bảng 1: Các biến của mô hình
+Ký hiệu | Loại | Đơn vị | Ý nghĩa | Đo được
+$\theta_2$ | Trạng thái | rad | Góc trục lái phía dưới (phía motor, sau thanh xoắn) | Có (cảm biến vị trí motor)
+$\dot\theta_2$ | Trạng thái | rad/s | Vận tốc góc trục lái | Có (cảm biến vị trí motor)
+$\beta$ | Trạng thái | rad | Góc trượt hông tại trọng tâm | Không
+$\gamma$ | Trạng thái | rad/s | Vận tốc góc yaw | Có (con quay yaw)
+$T_a$ | Đầu vào điều khiển | N.m | Mô-men trợ lực quy về trục lái | Là lệnh của bộ điều khiển
+$\theta_1$ | Đầu vào ngoại sinh | rad | Góc vô-lăng do tài xế đặt | Có (cảm biến góc lái)
+$v$ | Đầu vào ngoại sinh | m/s | Vận tốc dọc của xe | Có
+$\mu$ | Đầu vào ngoại sinh | - | Hệ số bám mặt đường | Không
+$T_s$ | Đầu ra | N.m | Mô-men tại thanh xoắn (mô-men cảm biến) | Có (cảm biến mô-men)
+$a_y$ | Đầu ra | m/s² | Gia tốc ngang tại trọng tâm | Có (gia tốc kế)
+
+1.4. Mô hình hóa tài xế bằng góc lái
+Có hai cách đưa tài xế vào mô hình: cho trước mô-men tay $T_d$ hoặc cho trước góc vô-lăng $\theta_1$. Nếu cho trước $T_d$ thì ở trạng thái xác lập, cân bằng mô-men trên vô-lăng cho $T_s = T_d$ (sẽ thấy ở mục 2.3): mô-men cảm biến bị ép bằng mô-men tay bất kể trợ lực, nên $T_a$ không làm thay đổi được đại lượng cần điều khiển và bài toán điều khiển mất ý nghĩa. Vì vậy luận văn mô hình hóa tài xế theo góc: $\theta_1(t)$ là đầu vào đã biết, còn $T_d$ là đại lượng suy ra. Đây cũng là cách [4] (góc lái dạng bậc và dốc) và [1] (góc lái là lệnh đầu vào của mô phỏng) sử dụng. Cách làm này tương ứng với tài xế cứng vô hạn: giữ đúng góc đặt bất kể mô-men cần thiết và không phản ứng theo cảm giác lái; mô hình vì vậy đo được nguyên nhân của trợ lực thừa (mô-men cảm biến lệch khỏi giá trị mong muốn) chứ không mô tả phản ứng của tài xế trước hiện tượng đó.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Cụm cơ cấu lái
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2.1. Giả thiết
+Theo [1], cơ cấu lái C-EPS được mô tả bằng hai khối quán tính nối với nhau qua thanh xoắn. Khối vô-lăng gồm vô-lăng và trục lái phía trên, có mô-men quán tính $J_{sw}$ và hệ số cản $C_{sw}$. Khối trục lái gồm trục lái phía dưới, motor và thước lái đã quy đổi về trục lái, có mô-men quán tính $J_{col}$ và hệ số cản $C_{col}$. Thanh xoắn là lò xo xoắn tuyến tính có độ cứng $K$. Mọi mô-men tác dụng lên khối trục lái đều đã quy về trục lái: mô-men motor nhân tỉ số truyền của hộp giảm tốc thành $T_a$, mô-men do mặt đường truyền về thành $T_r$ (mục 3.5). Ma sát khô tại các cặp bánh răng (motor - trục lái và bánh răng - thanh răng) được gộp thành một mô-men ma sát Coulomb biên độ $T_f$ đặt tại khối trục lái [1]; hàm dấu $\mathrm{sgn}(\dot\theta_2)$ của ma sát Coulomb được thay bằng hàm $\tanh(c\,\dot\theta_2)$ để phương trình liên tục tại $\dot\theta_2 = 0$ và bộ giải số không bị kẹt; hệ số $c$ quyết định độ dốc của vùng chuyển tiếp. Góc vô-lăng $\theta_1$ là đầu vào cho trước (mục 1.4).
+2.2. Phương trình chuyển động
+Áp dụng định luật 2 Newton cho chuyển động quay của vật rắn quanh trục cố định (tổng mô-men ngoại lực bằng mô-men quán tính nhân gia tốc góc) cho từng khối. Khối vô-lăng chịu mô-men tay tài xế, mô-men cản và mô-men đàn hồi của thanh xoắn:
+
+  (2)  J_sw*theta1_ddot = T_d - C_sw*theta1_dot - K*(theta1 - theta2)
+  [ J_{sw}\ddot\theta_1=T_d-C_{sw}\dot\theta_1-K(\theta_1-\theta_2) ]
+
+Khối trục lái chịu mô-men đàn hồi của thanh xoắn theo chiều ngược lại, mô-men trợ lực, mô-men phản hồi mặt đường, mô-men cản và ma sát khô:
+
+  (3)  J_col*theta2_ddot = K*(theta1 - theta2) + T_a - T_r - C_col*theta2_dot - T_f*tanh(c*theta2_dot)
+  [ J_{col}\ddot\theta_2=K(\theta_1-\theta_2)+T_a-T_r-C_{col}\dot\theta_2-T_f\tanh(c\,\dot\theta_2) ]
+
+Mô-men truyền qua thanh xoắn, cũng là giá trị cảm biến mô-men đo được, bằng độ cứng nhân góc xoắn:
+
+  (4)  T_s = K*(theta1 - theta2)
+  [ T_s=K(\theta_1-\theta_2) ]
+
+Vì $\theta_1(t)$ đã cho trước, phương trình (3) là phương trình vi phân duy nhất của cụm ($\theta_1$ xuất hiện như một hàm thời gian đã biết). Phương trình (2) không còn là phương trình động lực học mà chỉ cho mô-men tay cần có để tạo ra góc đã cho:
+
+  (5)  T_d = J_sw*theta1_ddot + C_sw*theta1_dot + T_s
+  [ T_d=J_{sw}\ddot\theta_1+C_{sw}\dot\theta_1+T_s ]
+
+Quan hệ này một chiều: $T_d$ phụ thuộc $\theta_2$ nhưng $\theta_2$ không phụ thuộc $T_d$. Phép rút gọn vì vậy là chính xác, không xấp xỉ, và $T_d$ không cần tính trong mô phỏng; $J_{sw}$, $C_{sw}$ chỉ cần khi muốn biết mô-men tay tài xế.
+2.3. Cân bằng xác lập
+Ở trạng thái xác lập, mọi đạo hàm bằng không (kể cả $\dot\theta_2$ nên ma sát bằng không). Cộng (2) với (3), các số hạng thanh xoắn triệt tiêu; kết hợp với (5):
+
+  (6)  T_s = T_r - T_a,   T_d = T_s
+  [ T_s=T_r-T_a,\qquad T_d=T_s ]
+
+Kết quả trùng với phương trình cân bằng mô-men của [4]; mô hình hai khối chỉ bổ sung phần quá độ (quán tính, thanh xoắn, cản, ma sát). Phương trình (6) nói lên hai điều. Thứ nhất, mô-men trợ lực làm giảm trực tiếp mô-men cảm biến, nên $T_a$ điều khiển được $T_s$. Thứ hai, nếu hệ số bám giảm làm $T_r$ giảm trong khi $T_a$ giữ nguyên, $T_s$ giảm theo: tay lái nhẹ đi so với mong muốn, đó chính là trợ lực thừa.
+2.4. Đặc tính động học
+Phương trình (3) có hai chế độ làm việc tùy theo vận tốc góc trục lái. Khi tài xế giữ vô-lăng ($\dot\theta_2 \approx 0$), hàm $\tanh$ gần tuyến tính nên ma sát tương đương một bộ cản nhớt có hệ số $T_f c$, lớn hơn $C_{col}$ hàng trăm lần. Quán tính khi đó không đáng kể so với cản, khối trục lái trôi chậm về vị trí cân bằng theo đáp ứng gần bậc một với hằng số thời gian:
+
+  (7)  tau_st = (C_col + T_f*c) / K
+  [ \tau_{st}=\dfrac{C_{col}+T_f c}{K} ]
+
+Khi tài xế đánh lái ($|\dot\theta_2|$ lớn), hàm $\tanh$ bão hòa ở $\pm 1$, ma sát trở thành mô-men không đổi $\pm T_f$ đúng bản chất Coulomb, và khối trục lái là hệ bậc hai dao động tắt dần yếu với tần số riêng và hệ số tắt dần:
+
+  (8)  omega_n = sqrt(K/J_col),   zeta = C_col / (2*sqrt(K*J_col))
+  [ \omega_n=\sqrt{\dfrac{K}{J_{col}}},\qquad \zeta=\dfrac{C_{col}}{2\sqrt{K J_{col}}} ]
+
+Với tham số ở Bảng 2: $\tau_{st} \approx 1.4$ s, $\omega_n \approx 36$ rad/s (5.7 Hz) và $\zeta \approx 0.17$. Khi ghép với cụm lốp, mô-men phản hồi $T_r$ tăng theo $\theta_2$ như một lò xo phụ (mục 6.3) nên hằng số thời gian (7) giảm còn khoảng 1.2 s. Chế độ trôi chậm này là hệ quả của việc làm mịn ma sát khô: ma sát khô thật giữ trục lái đứng yên khi mô-men thực nhỏ hơn $T_f$, còn hàm $\tanh$ cho phép trục lái trôi chậm về cân bằng. Hệ quả là các kịch bản giữ vô-lăng nhạy với giá trị $c$, còn các kịch bản đang đánh lái (hàm $\tanh$ bão hòa) gần như không phụ thuộc $c$.
+2.5. Tham số
+Bảng 2: Tham số cụm cơ cấu lái
+Ký hiệu | Giá trị | Đơn vị | Ý nghĩa | Nguồn
+$K$ | 143.24 | N.m/rad | Độ cứng thanh xoắn | [1]
+$J_{sw}$ | 0.044 | kg.m² | Mô-men quán tính khối vô-lăng | [1]
+$C_{sw}$ | 0.25 | N.m.s/rad | Hệ số cản khối vô-lăng | [1]
+$J_{col}$ | 0.11 | kg.m² | Mô-men quán tính khối trục lái (trục dưới, motor, thước lái quy đổi) | [1]
+$C_{col}$ | 1.35 | N.m.s/rad | Hệ số cản khối trục lái | [1]
+$T_f$ | 2 | N.m | Mô-men ma sát khô Coulomb của các cặp bánh răng | [1]
+$c$ | 100 | s/rad | Hệ số làm mịn hàm tanh của ma sát khô | Tự chọn(1)
+
+Các tham số $K$, $J_{sw}$, $C_{sw}$, $J_{col}$, $C_{col}$ được [1] nhận dạng thực nghiệm trên xe Hyundai i30: nâng bánh trước khỏi mặt đất, buông vô-lăng, kích thích motor bằng dòng điện hình sin quét tần số, đo góc trục lái, dòng điện motor và mô-men cảm biến, rồi khớp bình phương tối thiểu đáp ứng tần số của mô hình hai khối. Mô-men ma sát $T_f$ lấy từ bảng tham số mô phỏng của cùng tài liệu. [1] nhận dạng khi buông vô-lăng, còn mô hình này giữ cứng góc vô-lăng; đây là hai điều kiện biên khác nhau của cùng một cơ cấu, nên các tham số vật lý dùng lại được.
+Tự chọn(1): chọn $c = 100$ s/rad để vùng chuyển tiếp của ma sát khô vào khoảng $|\dot\theta_2| < 1/c = 0.01$ rad/s. Vùng này đủ hẹp để ma sát gần đúng Coulomb khi đánh lái; giá trị lớn hơn làm phương trình cứng (stiff) và mô phỏng chậm hơn nhưng không làm thay đổi đáng kể kết quả khi đánh lái.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Cụm lốp
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.1. Giả thiết
+Cụm lốp dùng bốn giả thiết. Thứ nhất, mô hình một vệt: hai bánh của mỗi cầu được gộp thành một bánh đại diện, nên mọi tải thẳng đứng, lực bên và độ cứng lốp đều ở cấp cầu. Thứ hai, tải thẳng đứng lên hai cầu là tải tĩnh, bỏ qua chuyển tải khi vào cua, phanh hay tăng tốc. Thứ ba, lốp tĩnh: lực bên là hàm tức thời của góc trượt, bỏ qua độ trễ hình thành lực bên của lốp. Thứ tư, góc nhỏ: góc bẻ bánh, góc trượt hông và góc trượt lốp đủ nhỏ để $\cos \approx 1$ và $\tan \approx$ góc, theo cách làm của [3] (Chương 2); sai số tương đối của hai phép xấp xỉ này khoảng 1-2% khi góc dưới 10 độ. Ngoài ra hệ số bám $\mu$ là tính chất của mặt đường nên như nhau cho cả hai cầu và đồng đều dọc theo xe. Ảnh hưởng định lượng của giả thiết thứ hai và thứ ba được đánh giá ở mục 6.3.
+3.2. Góc bẻ bánh và góc trượt lốp
+Góc trục lái quy đổi thành góc bẻ bánh xe trước qua tỉ số truyền tổng của cơ cấu lái $n_{st}$ (tỉ số giữa góc quay trục lái và góc quay bánh xe):
+
+  (9)  delta_f = theta2 / n_st
+  [ \delta_f=\dfrac{\theta_2}{n_{st}} ]
+
+Góc trượt của lốp là góc lệch giữa hướng bánh xe đang chỉ và hướng vận tốc thực của tâm bánh xe. Theo công thức vận tốc của một điểm trên vật rắn chuyển động phẳng (vận tốc điểm bằng vận tốc trọng tâm cộng tích vận tốc góc với vectơ vị trí), vận tốc ngang tại tâm bánh trước bằng $v\beta + l_f\gamma$ và tại tâm bánh sau bằng $v\beta - l_r\gamma$; chia cho vận tốc dọc $v$ theo giả thiết góc nhỏ được góc của vectơ vận tốc tại mỗi cầu. Bánh trước bị bẻ góc $\delta_f$, bánh sau không bẻ lái, nên:
+
+  (10) alpha_f = delta_f - beta - l_f*gamma/v
+  [ \alpha_f=\delta_f-\beta-\dfrac{l_f\gamma}{v} ]
+
+  (11) alpha_r = -beta + l_r*gamma/v
+  [ \alpha_r=-\beta+\dfrac{l_r\gamma}{v} ]
+
+3.3. Tải thẳng đứng tĩnh
+Áp dụng điều kiện cân bằng mô-men của xe đứng yên lần lượt quanh điểm tiếp xúc của cầu sau và của cầu trước (trọng lực đặt tại trọng tâm cân bằng với phản lực của cầu đối diện) được tải thẳng đứng của cả cầu trước và cả cầu sau; tổng hai tải bằng trọng lượng xe:
+
+  (12) F_zf = m*g*l_r/(l_f + l_r),   F_zr = m*g*l_f/(l_f + l_r)
+  [ F_{zf}=\dfrac{m g\, l_r}{l_f+l_r},\qquad F_{zr}=\dfrac{m g\, l_f}{l_f+l_r} ]
+
+3.4. Lực bên của lốp
+Quan hệ giữa lực bên và góc trượt của lốp là phi tuyến và không suy ra được từ định luật cơ bản; luận văn dùng Magic Formula của Pacejka [2], một hàm thực nghiệm khớp đường cong lực bên đo được của lốp. Trong công thức, $C$ là hệ số hình dạng, $E$ là hệ số độ cong, $D$ là đỉnh của lực bên (lực bám lớn nhất, bằng hệ số bám nhân tải thẳng đứng) và $B$ là hệ số độ cứng. $B$ được suy ngược từ $D$ sao cho độ dốc ban đầu của đường cong $B C D$ luôn bằng độ cứng góc trượt thật của lốp, không đổi theo $\mu$. Với cầu trước:
+
+  (13) D_f = mu*F_zf,   B_f = C_alpha_f/(C*D_f)
+  [ D_f=\mu F_{zf},\qquad B_f=\dfrac{C_{\alpha f}}{C\,D_f} ]
+
+  (14) F_yf = D_f*sin(C*atan(B_f*alpha_f - E*(B_f*alpha_f - atan(B_f*alpha_f))))
+  [ F_{yf}=D_f\sin\Big(C\arctan\big(B_f\alpha_f-E(B_f\alpha_f-\arctan(B_f\alpha_f))\big)\Big) ]
+
+Cầu sau dùng cùng dạng công thức và cùng $C$, $E$ (giả thiết hai cầu cùng loại lốp), thay tải và độ cứng của cầu sau:
+
+  (15) D_r = mu*F_zr,   B_r = C_alpha_r/(C*D_r)
+  [ D_r=\mu F_{zr},\qquad B_r=\dfrac{C_{\alpha r}}{C\,D_r} ]
+
+  (16) F_yr = D_r*sin(C*atan(B_r*alpha_r - E*(B_r*alpha_r - atan(B_r*alpha_r))))
+  [ F_{yr}=D_r\sin\Big(C\arctan\big(B_r\alpha_r-E(B_r\alpha_r-\arctan(B_r\alpha_r))\big)\Big) ]
+
+Vì độ dốc ban đầu $B C D$ không đổi, ở góc trượt nhỏ lực bên gần như không phụ thuộc $\mu$; khi $\mu$ giảm, đỉnh $D$ giảm nên lốp bão hòa sớm hơn và ở mức thấp hơn. Cầu sau cũng cần giới hạn bám này: nếu dùng mô hình tuyến tính cho cầu sau thì sau khi $\mu$ giảm, lực bên cầu sau và gia tốc ngang bị đánh giá quá cao.
+3.5. Mô-men phản hồi mặt đường
+Lực bên cầu trước không đặt đúng tâm vùng tiếp xúc mà lệch về phía sau một khoảng $e_p$ (pneumatic trail, trong mô hình này gộp cả độ lệch caster của trụ quay lái), tạo mô-men tự cân bằng $M_z = e_p F_{yf}$ quanh trụ quay lái. Theo mô hình chổi (brush model) của lốp [2], khi góc trượt tăng, phần vùng tiếp xúc bị trượt lan rộng và điểm đặt lực dịch dần về tâm, nên $e_p$ giảm theo góc trượt và giảm nhanh hơn khi $\mu$ thấp; [4] đưa ra dạng tuyến tính của quan hệ này:
+
+  (17) e_p = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf))
+  [ e_p=\max\Big(0,\;e_{p0}-\mathrm{sgn}(\alpha_f)\,e_{p0}\dfrac{C_{\alpha f}\tan\alpha_f}{3\mu F_{zf}}\Big) ]
+
+với $e_{p0}$ là giá trị ở góc trượt bằng không. Để quy $M_z$ về trục lái, áp dụng nguyên lý bảo toàn công suất qua cơ cấu truyền động lý tưởng (không tổn hao): công suất của mô-men phản hồi tại trục lái bằng công suất của mô-men tự cân bằng tại bánh xe. Kết hợp với (9):
+
+  (18) T_r*theta2_dot = M_z*delta_f_dot,   M_z = e_p*F_yf
+  [ T_r\dot\theta_2=M_z\dot\delta_f,\qquad M_z=e_p F_{yf} ]
+
+  (19) T_r = K_tr*F_yf,   K_tr = e_p/n_st
+  [ T_r=K_{tr}F_{yf},\qquad K_{tr}=\dfrac{e_p}{n_{st}} ]
+
+$K_{tr}$ là cánh tay đòn hiệu dụng quy về trục lái. Biểu thức trong ngoặc của (17) bằng không tại góc trượt hoàn toàn $\alpha_{sl}$, khi toàn bộ vùng tiếp xúc đã trượt:
+
+  (20) tan(alpha_sl) = 3*mu*F_zf/C_alpha_f
+  [ \tan\alpha_{sl}=\dfrac{3\mu F_{zf}}{C_{\alpha f}} ]
+
+Vượt quá $\alpha_{sl}$, biểu thức đổi dấu; đó là ngoại suy ngoài phạm vi của mô hình chổi, nên $e_p$ được chặn dưới ở không: khi lốp trượt hoàn toàn, điểm đặt lực trùng tâm vùng tiếp xúc [2]. Với tham số ở Bảng 3, lực bên cầu trước đạt đỉnh ở góc trượt khoảng 6.3 độ ($\mu = 0.8$) và 2.4 độ ($\mu = 0.3$), còn $\alpha_{sl}$ khoảng 7.8 độ và 2.9 độ; như vậy $e_p$ về không sau đỉnh lực bên, đúng xu hướng của lốp thật (mô-men tự cân bằng giảm trước khi lực bên bão hòa). Chặn ở không là lựa chọn đơn giản theo mô hình chổi; một số lốp thật có mô-men tự cân bằng đổi dấu ở góc trượt rất lớn, hiện tượng này nằm ngoài phạm vi mô hình.
+Cơ chế trợ lực thừa trong mô hình vì vậy gồm hai hiệu ứng cộng dồn khi $\mu$ giảm: lực bên $F_{yf}$ bão hòa sớm hơn và thấp hơn theo (13)-(14), đồng thời $e_p$ co lại nhanh hơn theo (17). Cả hai làm $T_r$ giảm, và theo (6) mô-men cảm biến giảm nếu trợ lực giữ nguyên.
+3.6. Tham số
+Bảng 3: Tham số cụm lốp
+Ký hiệu | Giá trị | Đơn vị | Ý nghĩa | Nguồn
+$m$ | 1573 | kg | Khối lượng xe | [3]
+$l_f$ | 1.1 | m | Khoảng cách từ trọng tâm tới cầu trước | [3]
+$l_r$ | 1.58 | m | Khoảng cách từ trọng tâm tới cầu sau | [3]
+$g$ | 9.81 | m/s² | Gia tốc trọng trường | Hằng số vật lý
+$C_{\alpha f}$ | 160000 | N/rad | Độ cứng góc trượt cầu trước | [3]
+$C_{\alpha r}$ | 160000 | N/rad | Độ cứng góc trượt cầu sau | [3]
+$C$ | 1.3 | - | Hệ số hình dạng Magic Formula | [2]
+$E$ | -1 | - | Hệ số độ cong Magic Formula | [2]
+$n_{st}$ | 16 | - | Tỉ số truyền tổng cơ cấu lái | Tự chọn(2)
+$e_{p0}$ | 0.048 | m | Pneumatic trail ở góc trượt bằng không | Tự chọn(3)
+
+Khối lượng, vị trí trọng tâm và độ cứng góc trượt lấy từ cùng một bộ số của [3] (Chương 3), được tác giả nêu là đại diện cho một xe sedan phổ thông, nên thân xe và lốp nhất quán với nhau. [3] cho độ cứng góc trượt của mỗi bánh là 80000 N/rad và viết lực bên của một cầu là hai lần độ cứng mỗi bánh nhân góc trượt, hệ số 2 ứng với hai bánh; mô hình một vệt gộp hai bánh nên dùng giá trị cấp cầu 160000 N/rad. $C$ và $E$ lấy từ bảng giá trị minh họa của Magic Formula trong [2]; tác giả nêu rõ các giá trị này không khớp cho một lốp cụ thể. $E$ âm cho hình dạng lực bên tăng, đạt đỉnh rồi giảm nhẹ ở góc trượt lớn.
+Tự chọn(2): chọn $n_{st} = 16$ trong dải thông dụng của xe con; tỉ số quá thấp làm xe quá nhạy ở tốc độ cao, quá cao buộc tài xế xoay nhiều vòng khi quay đầu. Kiểm tra chéo: góc vô-lăng lớn nhất 720 độ [5] ứng với góc bánh lớn nhất 45 độ, hợp lý về hình học; [6] đo tỉ số truyền lái trên ba xe thật được 16.5, 19 và 24.7, cùng bậc với giá trị chọn.
+Tự chọn(3): chọn $e_{p0} = 0.048$ m từ hai ước lượng cùng cho dải 30-60 mm. Ước lượng thứ nhất: mô hình chổi [2] cho pneumatic trail khoảng 0.33-0.46 lần nửa chiều dài vùng tiếp xúc (nửa chiều dài cỡ 50-70 mm), cộng thêm độ lệch caster. Ước lượng thứ hai: mô-men phản hồi cỡ vài N.m ứng với lực bên cỡ vài nghìn N cho cánh tay đòn phía trục lái 0.001-0.005 m, nhân với $n_{st} = 16$ được 16-80 mm. Mô-men phản hồi tỉ lệ thuận với $e_{p0}$, nên độ lớn của $T_r$ chỉ đúng về bậc độ lớn.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Cụm thân xe
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4.1. Giả thiết
+Thân xe chuyển động phẳng: bỏ qua lắc ngang (roll) và chúi (pitch). Vận tốc dọc $v$ không đổi trong phương trình thân xe (được đo và cập nhật như một đầu vào). Trên thân xe chỉ xét lực bên của hai cầu; bỏ qua lực dọc và lực cản khí động. Theo giả thiết góc nhỏ của mục 3.1, thành phần ngang của lực bên cầu trước là $F_{yf}\cos\delta_f \approx F_{yf}$.
+4.2. Phương trình chuyển động
+Gắn hệ trục tọa độ tại trọng tâm, trục dọc theo thân xe và trục ngang vuông góc; hệ trục này quay cùng thân xe với vận tốc góc $\gamma$. Vận tốc ngang tại trọng tâm là $v_y = v\beta$ (góc nhỏ). Theo công thức gia tốc trong hệ trục quay, gia tốc ngang tuyệt đối gồm đạo hàm của vận tốc ngang cộng với thành phần do trục dọc đổi hướng; với $v$ không đổi:
+
+  (21) a_y = v*(beta_dot + gamma)
+  [ a_y=v(\dot\beta+\gamma) ]
+
+Áp dụng định luật 2 Newton cho chuyển động tịnh tiến theo phương ngang và cho chuyển động quay quanh trục thẳng đứng qua trọng tâm (cánh tay đòn của lực bên hai cầu là $l_f$ và $l_r$, ngược chiều nhau):
+
+  (22) m*a_y = F_yf + F_yr
+  [ m\,a_y=F_{yf}+F_{yr} ]
+
+  (23) Iz*gamma_dot = l_f*F_yf - l_r*F_yr
+  [ I_z\dot\gamma=l_f F_{yf}-l_r F_{yr} ]
+
+Thế (21) vào (22) được phương trình của góc trượt hông; gia tốc ngang là đại lượng đầu ra, suy trực tiếp từ (22):
+
+  (24) beta_dot = (F_yf + F_yr)/(m*v) - gamma
+  [ \dot\beta=\dfrac{F_{yf}+F_{yr}}{m v}-\gamma ]
+
+  (25) a_y = (F_yf + F_yr)/m
+  [ a_y=\dfrac{F_{yf}+F_{yr}}{m} ]
+
+4.3. Tham số
+Bảng 4: Tham số cụm thân xe
+Ký hiệu | Giá trị | Đơn vị | Ý nghĩa | Nguồn
+$m$ | 1573 | kg | Khối lượng xe (như Bảng 3) | [3]
+$I_z$ | 2873 | kg.m² | Mô-men quán tính yaw quanh trục thẳng đứng qua trọng tâm | [3]
+$l_f$ | 1.1 | m | Khoảng cách từ trọng tâm tới cầu trước (như Bảng 3) | [3]
+$l_r$ | 1.58 | m | Khoảng cách từ trọng tâm tới cầu sau (như Bảng 3) | [3]
+
+Mô-men quán tính yaw lấy từ cùng bộ số của [3] với các tham số ở Bảng 3, nên cả mô hình dùng số liệu của một xe duy nhất.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Hệ phương trình trạng thái tổng hợp
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5.1. Hệ phương trình trạng thái
+Ghép phương trình (3) của cụm cơ cấu lái với (23) và (24) của cụm thân xe, thay $T_s$ theo (4), được hệ bốn phương trình trạng thái. Hệ phi tuyến (Magic Formula, pneumatic trail có hàm $\tan$ và $\max$, ma sát $\tanh$) nên không viết được dạng tuyến tính; tuy nhiên hệ tuyến tính theo đầu vào điều khiển (dạng affine), vì $T_a$ chỉ xuất hiện một lần, cộng thẳng vào phương trình của $x_2$:
+
+  (26) x_dot = f(x, theta1, v, mu) + g*T_a,   g = [0, 1/J_col, 0, 0]^T
+  [ \dot x=f(x,\theta_1,v,\mu)+g\,T_a,\qquad g=\begin{bmatrix}0 & 1/J_{col} & 0 & 0\end{bmatrix}^T ]
+
+Viết cụ thể theo các biến trạng thái:
+
+  (27) x1_dot = x2
+  [ \dot x_1=x_2 ]
+
+  (28) x2_dot = [K*(theta1 - x1) + T_a - T_r - C_col*x2 - T_f*tanh(c*x2)] / J_col
+  [ \dot x_2=\dfrac{K(\theta_1-x_1)+T_a-T_r-C_{col}x_2-T_f\tanh(c\,x_2)}{J_{col}} ]
+
+  (29) x3_dot = (F_yf + F_yr)/(m*v) - x4
+  [ \dot x_3=\dfrac{F_{yf}+F_{yr}}{m v}-x_4 ]
+
+  (30) x4_dot = (l_f*F_yf - l_r*F_yr)/Iz
+  [ \dot x_4=\dfrac{l_f F_{yf}-l_r F_{yr}}{I_z} ]
+
+5.2. Thứ tự tính các đại lượng đại số
+Các đại lượng ở vế phải là đại số, được tính lại tại mỗi thời điểm từ trạng thái và đầu vào hiện tại theo thứ tự: góc bẻ bánh theo (9) với $\theta_2 = x_1$; góc trượt theo (10) và (11) với $\beta = x_3$, $\gamma = x_4$; tải tĩnh theo (12), là hằng số nên chỉ tính một lần; lực bên theo (13)-(16); pneumatic trail và mô-men phản hồi theo (17) và (19). Các đại lượng này chỉ phụ thuộc trạng thái và đầu vào, không phụ thuộc lẫn nhau theo vòng kín, nên hệ không có vòng đại số và tích phân được trực tiếp.
+5.3. Đầu ra
+Đầu ra chính là mô-men cảm biến $T_s$ theo (4). Các đầu ra còn lại gồm gia tốc ngang $a_y$ theo (25), góc và vận tốc góc trục lái ($x_1$, $x_2$), vận tốc góc yaw ($x_4$) và góc trượt hông ($x_3$). Theo Bảng 1, tất cả đều đo được trên xe trừ góc trượt hông, chỉ dùng để quan sát trong mô phỏng.
+5.4. Phát biểu bài toán điều khiển
+Từ hệ (26)-(30), bài toán điều khiển của luận văn được xác định như sau. Biến điều khiển là mô-men trợ lực $T_a$. Biến được điều khiển là mô-men cảm biến $T_s$, đại lượng tài xế cảm nhận trực tiếp qua tay lái. Góc vô-lăng $\theta_1$ và vận tốc $v$ là nhiễu đo được; hệ số bám $\mu$ là nhiễu không đo được. Theo (6), ở trạng thái xác lập $T_s$ giảm khi $T_a$ tăng; $\theta_2$ dịch theo làm $T_r$ thay đổi một phần nên mức giảm của $T_s$ không đúng bằng mức tăng của $T_a$, nhưng chiều tác động không đổi, do đó $T_a$ điều khiển được $T_s$. Vì $\mu$ không đo được, mọi thay đổi của $T_r$ do mặt đường chỉ thể hiện qua $T_s$, nên bộ điều khiển bắt buộc phải có phản hồi theo $T_s$. Giá trị mong muốn của $T_s$ và giới hạn của $T_a$ được xác định ở các chương sau.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. Phạm vi hợp lệ của mô hình
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6.1. Dải tốc độ và hệ số bám
+Mô hình dùng cho vận tốc từ 20 km/h đến 100 km/h. Dưới 20 km/h, các số hạng chia cho $v$ trong (10), (11), (24) tăng nhanh và giả thiết lốp tĩnh kém chính xác dần (độ trễ của lốp tỉ lệ nghịch với vận tốc), nên mô hình không dùng cho đỗ xe hay chạy rất chậm; dải này cũng trùng với dải dữ liệu mô-men vô-lăng mong muốn [5] dùng ở chương sau. Hệ số bám xét từ 0.2 đến 0.8, theo dải mô phỏng của [4].
+6.2. Giới hạn gia tốc ngang
+Vì lực bên mỗi cầu không vượt đỉnh Magic Formula của cầu đó, $F_{yf} \le D_f = \mu F_{zf}$ và $F_{yr} \le D_r = \mu F_{zr}$, nên theo (25) và (12):
+
+  (31) a_y = (F_yf + F_yr)/m <= mu*(F_zf + F_zr)/m = mu*g
+  [ a_y=\dfrac{F_{yf}+F_{yr}}{m}\le\dfrac{\mu(F_{zf}+F_{zr})}{m}=\mu g ]
+
+Ngoài giới hạn bám này, giả thiết góc nhỏ chỉ đúng khi góc bẻ bánh và góc trượt hông không vượt khoảng 10 độ. Giới hạn gia tốc ngang của mô hình là giá trị nhỏ hơn trong hai giới hạn:
+
+  (32) a_y,max(v, mu) = min(mu*g, a_y,10(v, mu))
+  [ a_{y,max}(v,\mu)=\min\big(\mu g,\;a_{y,10^\circ}(v,\mu)\big) ]
+
+trong đó $a_{y,10^\circ}$ là gia tốc ngang xác lập tại đó góc lớn nhất trong $\delta_f$ và $\beta$ đạt 10 độ. Bảng 5 cho giá trị tính bằng cách giải trạng thái xác lập của (9)-(16), (23), (24) theo góc bẻ bánh tăng dần, với bước $v$ là 5 km/h và bước $\mu$ là 0.1 để thấy rõ vận tốc mà tại đó mỗi hệ số bám chuyển từ giới hạn góc nhỏ sang giới hạn bám. Với $\mu$ cho trước, $a_{y,max}$ tăng theo $v$ (tốc độ cao cần góc bẻ bánh nhỏ hơn để đạt cùng gia tốc ngang) cho tới khi chạm $\mu g$ rồi giữ nguyên; đây là hàm không giảm, không có điểm gãy bất thường. Ở 20 km/h, giới hạn góc nhỏ quyết định với mọi hệ số bám; hệ số bám càng lớn thì vận tốc cần để thoát giới hạn góc nhỏ càng cao, ví dụ $\mu = 0.4$ thoát ở khoảng 30 km/h còn $\mu = 0.8$ thoát ở khoảng 45 km/h; từ 45 km/h trở lên giới hạn bám $\mu g$ luôn quyết định với mọi $\mu$ trong dải xét, nên các hàng từ 45 đến 100 km/h gộp thành một hàng.
+Bảng 5: Gia tốc ngang xác lập lớn nhất $a_{y,max}$ [g] (dấu * : do giới hạn góc nhỏ quyết định)
+v [km/h] | μ = 0.2 | μ = 0.3 | μ = 0.4 | μ = 0.5 | μ = 0.6 | μ = 0.7 | μ = 0.8
+20 | 0.197* | 0.200* | 0.201* | 0.201* | 0.201* | 0.201* | 0.201*
+25 | 0.200 | 0.299* | 0.308* | 0.309* | 0.310* | 0.310* | 0.310*
+30 | 0.200 | 0.300 | 0.400 | 0.435* | 0.438* | 0.439* | 0.440*
+35 | 0.200 | 0.300 | 0.400 | 0.500 | 0.571* | 0.582* | 0.585*
+40 | 0.200 | 0.300 | 0.400 | 0.500 | 0.600 | 0.698* | 0.734*
+45-100 | 0.200 | 0.300 | 0.400 | 0.500 | 0.600 | 0.700 | 0.800
+
+6.3. Ảnh hưởng của các giả thiết
+Mức độ ảnh hưởng của các giả thiết được đánh giá bằng mô phỏng hở vòng, không có bộ điều khiển ($T_a = 0$), ở 40 km/h và 100 km/h, với góc vô-lăng tạo gia tốc ngang 0.2 g trên đường khô. Hai kịch bản được dùng: bẻ lái dạng bậc (góc vô-lăng tăng từ 0 tới giá trị giữ trong 0.2 s) và giảm hệ số bám đột ngột từ 0.8 xuống 0.3 khi giữ vô-lăng. Trong kịch bản thứ hai, mô hình gốc cho mô-men cảm biến giảm 0.90 N.m (khoảng 18% so với 5.0 N.m trước đó) ở cả hai tốc độ; đây là độ lớn của hiện tượng trợ lực thừa khi không có bù trừ.
+Độ trễ hình thành lực bên của lốp được đánh giá bằng cách thêm khâu trễ bậc một lên góc trượt với chiều dài nới lỏng (quãng đường lốp cần lăn để lực bên hình thành) 0.3 m và 0.6 m, cỡ bán kính bánh xe theo [2]. Các giá trị xác lập (mô-men cảm biến, mức giảm mô-men khi $\mu$ giảm) không đổi; đỉnh mô-men cảm biến khi bẻ lái thay đổi dưới 1.5%; thời gian tăng của gia tốc ngang thay đổi dưới 2.5% ở 100 km/h, và tăng tới 14% ở 40 km/h với chiều dài nới lỏng 0.6 m. Như vậy độ trễ của lốp chủ yếu làm chậm đáp ứng của thân xe ở tốc độ thấp, còn mô-men trên tay lái gần như không bị ảnh hưởng.
+Lý do mô-men trên tay lái ít nhạy với các giả thiết ở phía lốp là nhánh phản hồi mặt đường chỉ chiếm một phần nhỏ độ cứng của trục lái. Ở góc trượt nhỏ và khi $\beta$, $\gamma$ chưa kịp thay đổi, lấy đạo hàm (19) theo $\theta_2$ với (9), (14), (17) được độ cứng tương đương của nhánh này:
+
+  (33) k_r = dT_r/dtheta2 = e_p0*C_alpha_f/n_st^2
+  [ k_r=\dfrac{\partial T_r}{\partial\theta_2}=\dfrac{e_{p0}C_{\alpha f}}{n_{st}^2} ]
+
+Với tham số ở Bảng 3, $k_r \approx 30$ N.m/rad, khoảng 21% độ cứng thanh xoắn $K$.
+Chuyển tải ngang khi vào cua được đánh giá bằng cách tách mỗi cầu thành hai bánh có tải lệch nhau theo gia tốc ngang, với chiều cao trọng tâm 0.55 m, vệt bánh 1.55 m và độ nhạy của lốp theo tải là các giá trị giả định của xe con điển hình. Mọi chỉ tiêu thay đổi dưới 1%, vì phần bánh ngoài được thêm tải gần bằng phần bánh trong bị mất, tổng lực bên của một cầu chỉ lệch theo bình phương tỉ số chuyển tải. Chuyển tải dọc khi phanh hoặc tăng tốc mạnh không được xét; ở các kịch bản đó giả thiết tải tĩnh không còn đúng.
+Ma sát khô làm mịn đã được phân tích ở mục 2.4: kết quả ở các kịch bản giữ vô-lăng phụ thuộc hệ số $c$, còn ở các kịch bản đang đánh lái thì không. Các giả thiết còn lại chưa được định lượng và được nêu như hạn chế của mô hình: phương trình (24) coi $v$ không đổi nên chỉ đúng khi vận tốc thay đổi chậm; mô hình một vệt không mô tả được mặt đường có hệ số bám khác nhau giữa hai bên bánh xe; mô-men trợ lực tác động tức thời, bỏ qua động học và giới hạn công suất của motor; mô-men phản hồi chỉ gồm pneumatic trail của bánh trước (độ lệch caster gộp vào $e_{p0}$), bỏ qua lực hồi vị do hình học trụ quay lái; $C$, $E$ là giá trị minh họa dùng chung cho hai cầu; tài xế được coi là cứng vô hạn. Với các hạn chế đó, mô hình hợp lệ trong dải lái thông thường của hệ trợ lực lái và không dùng cho các tình huống mất ổn định cực hạn như trượt văng hay lật xe.
+==============================================================================================================================================================================================

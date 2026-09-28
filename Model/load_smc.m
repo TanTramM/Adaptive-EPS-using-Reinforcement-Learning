@@ -23,5 +23,9 @@ end
 fprintf('load_smc: first-order SMC with sat boundary layer: lambda=%.4g 1/s, tau_f=%.3g s, k_sw=%.4g, Phi=%.4g, Ts_ctrl=%.3g s\n', ...
     raw.lambda.value, raw.tau_f.value, raw.k_sw.value, raw.Phi.value, raw.Ts_ctrl.value);
 
+bnd = jsondecode(fileread(fullfile(scriptDir, 'data', 'boundaries.json')));
+assignin('base', 'bnd_v_bp',   bnd.T_a.v_kmh(:)'/3.6);   % assist limit table T_a,max(v)
+assignin('base', 'bnd_Ta_max', bnd.T_a.value(:)');
+
 run(fullfile(scriptDir, 'load_plant.m'));
 run(fullfile(scriptDir, 'load_ref.m'));

@@ -1,0 +1,102 @@
+==============================================================================================================================================================================================
+BỘ ĐIỀU KHIỂN
+==============================================================================================================================================================================================
+Mục này xây dựng bộ điều khiển trợ lực truyền thống, dùng làm chuẩn so sánh (baseline) cho các bộ điều khiển đề xuất ở các mục sau. Bộ điều khiển được dựng theo đúng cấu trúc mà các tài liệu công nghiệp mô tả, được hiệu chỉnh tốt nhất có thể tại điều kiện thiết kế của nó, và chỉ giữ lại một điểm yếu: điểm yếu vốn có của bản đồ trợ lực truyền thống là không biết hệ số bám mặt đường.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Bản đồ trợ lực truyền thống
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2.1. Vai trò và nguyên tắc xây dựng
+Để chứng minh một bộ điều khiển mới khắc phục được trợ lực thừa, cần so sánh nó với cách hệ trợ lực lái điện đang được làm trên xe. Theo [4], đặc tính trợ lực truyền thống chỉ xét vận tốc xe và mô-men tay lái, được thiết kế ở tải cầu trước lớn nhất và đường khô ($\mu = 0.8$) để bảo đảm tay lái nhẹ trong điều kiện nặng nhất; khi tải hoặc hệ số bám giảm, mô-men cản giảm nhưng bộ điều khiển vẫn cấp mô-men trợ lực như ở đường khô, nên sinh ra trợ lực thừa. Chuẩn so sánh vì vậy phải có đúng tính chất này, và chỉ tính chất này. Nếu chuẩn so sánh bị làm yếu đi ở những khía cạnh khác, chẳng hạn hiệu chỉnh kém ngay trên đường khô hoặc tự dao động, thì phần cải thiện của bộ điều khiển mới sẽ không phản ánh việc khắc phục trợ lực thừa. Do đó bản đồ trợ lực ở mục này tuân theo ba nguyên tắc: cấu trúc giống cấu trúc được mô tả trong [1], [4], [5]; trên đường khô và ở trạng thái xác lập, mô-men cảm biến bằng giá trị đặt $T_{d,ref}$ của mục 1 trong toàn bộ vùng có số liệu; dùng cùng giới hạn trợ lực $T_{a,max}(v)$ và cùng các cảm biến như các bộ điều khiển khác.
+2.2. Cấu trúc bộ điều khiển
+Theo [1] (mục III.A), bộ điều khiển của hệ trợ lực lái điện gồm hai phần nối tiếp: bản đồ mô-men, là quan hệ một-một giữa mô-men cảm biến và mô-men trợ lực, và khâu bù ổn định đặt sau bản đồ (Hình 1). Bản đồ có một vùng chết quanh giá trị không để hệ không phản ứng quá nhạy với mô-men tay, nhất là ở tốc độ cao; độ dốc của bản đồ giảm khi vận tốc tăng, vì khi đỗ xe tài xế cần nhiều trợ lực còn khi chạy nhanh tay lái cần nặng hơn để giữ ổn định; bản đồ trên xe thực tế có dạng đường cong trơn. Khâu bù ổn định là cần thiết vì độ lợi lớn và tính phi tuyến của bản đồ có thể làm hệ mất ổn định và rung [1]. [5] (mục I) cũng nêu các yêu cầu tương tự: có vùng không trợ lực quanh vị trí giữa, mô-men trợ lực giảm khi vận tốc tăng, mô-men trợ lực nhỏ hơn mô-men cản, và đường đặc tính thường có một trong ba dạng: đường thẳng, đường gãy khúc hoặc đường cong. [4] (mục 3.2) dùng dạng đường thẳng có vùng chết, bão hòa ở mô-men trợ lực lớn nhất theo vận tốc.
+[Hình 1: Sơ đồ khối bộ điều khiển trợ lực truyền thống: bản đồ mô-men, khâu bù ổn định và giới hạn trợ lực]
+Bộ điều khiển chỉ đọc hai tín hiệu đo được là mô-men cảm biến $T_s$ và vận tốc $v$, lấy mẫu với chu kỳ $T_{ctl}$. Bản đồ cho mô-men trợ lực theo trị tuyệt đối của mô-men cảm biến, nhân với dấu của nó để trợ lực luôn cùng chiều với mô-men tay:
+
+  (7)  T_a,map = sgn(T_s) * M(v, |T_s|)
+  [ T_{a,map}=\mathrm{sgn}(T_s)\,M(v,|T_s|) ]
+
+Khâu bù ổn định gồm hai khâu sớm pha (lead) giống nhau, là khâu có độ lợi bằng một ở tần số thấp và làm sớm pha ở dải tần số giữa điểm không $z_l$ và điểm cực $p_l$:
+
+  (8)  T_a,c = H(z)^2 * T_a,map,   H(s) = (s/z_l + 1) / (s/p_l + 1)
+  [ T_{a,c}=H(z)^2\,T_{a,map},\qquad H(s)=\dfrac{s/z_l+1}{s/p_l+1} ]
+
+trong đó $H(z)$ là dạng rời rạc của $H(s)$ theo phép biến đổi song tuyến tính (Tustin) với chu kỳ $T_{ctl}$. Cuối cùng mô-men trợ lực bị giới hạn bởi $T_{a,max}(v)$ của Bảng 3, cùng giới hạn áp cho mọi bộ điều khiển:
+
+  (9)  T_a = max(-T_a,max(v), min(T_a,c, T_a,max(v)))
+  [ T_a=\max\big(-T_{a,max}(v),\,\min(T_{a,c},\,T_{a,max}(v))\big) ]
+
+Bộ điều khiển không có khâu tích phân và không biết $\mu$. Vì $H(z)$ có độ lợi bằng một ở tần số không, ở trạng thái xác lập $T_a$ bằng giá trị của bản đồ; toàn bộ việc hiệu chỉnh vì vậy nằm ở hàm $M$.
+2.3. Đường cong trợ lực
+Bản đồ được hiệu chỉnh trên đường khô theo cách của [5] (mục III, Bảng 5 bằng mô-men vô-lăng khi không trợ lực trừ mô-men vô-lăng lý tưởng) và [4] (công thức (6), mô-men trợ lực bằng mô-men cản trừ mô-men tay). Ở trạng thái xác lập, theo phương trình (6) của chương trước $T_s = T_r - T_a$, nên để mô-men cảm biến bằng giá trị đặt thì tại mỗi vận tốc và mỗi gia tốc ngang cần một cặp điểm hiệu chỉnh:
+
+  (10) T_s,cal = T_d,ref(v, a_y),   T_a,cal = T_r(v, a_y, 0.8) - T_d,ref(v, a_y)
+  [ T_{s,cal}=T_{d,ref}(v,a_y),\qquad T_{a,cal}=T_r(v,a_y,0.8)-T_{d,ref}(v,a_y) ]
+
+với $T_r$ là mô-men phản hồi mặt đường ở trạng thái xác lập của mô hình và $a_y$ chạy từ 0.1 g (mức nhỏ nhất có số liệu trong [5]) tới $a_{y,lim}(v)$ của phương trình (5). Cả $T_{d,ref}$ và $T_{a,cal}$ đều tăng theo $a_y$, nên các cặp điểm này tạo thành một đường cong đơn điệu $T_a(T_s)$ cho mỗi vận tốc. Tuy nhiên không thể dùng nguyên đường cong này làm bản đồ, vì độ dốc của nó:
+
+  (11) dT_a/dT_s = (dT_r/da_y) / (dT_d,ref/da_y) - 1
+  [ \dfrac{dT_a}{dT_s}=\dfrac{dT_r/da_y}{dT_{d,ref}/da_y}-1 ]
+
+tăng vọt ở những nơi mô-men vô-lăng mong muốn gần như không đổi theo gia tốc ngang. Trong khoảng 0.1 g đến 0.3 g, độ dốc lớn nhất khoảng 9.5; nhưng gần 0.4 g, nơi $T_{d,ref}$ gần như phẳng, độ dốc lên tới khoảng 50. Độ dốc của bản đồ chính là độ lợi của vòng phản hồi qua $T_s$, và mục 2.4 cho thấy độ lợi lớn như vậy làm vòng lặp mất ổn định. Ngược lại, dạng đường thẳng có vùng chết của [4], nối từ đầu vùng chết tới điểm bão hòa, có độ dốc nhỏ (1.8 đến 3.8) nhưng làm sai lệch giá trị đặt ngay trên đường khô: ở khoảng 0.1 g, mô-men cảm biến thấp hơn giá trị đặt tới 1.47 N.m ở 100 km/h (Hình 3, bên phải). Một chuẩn so sánh như vậy đã trợ lực thừa ngay cả khi mặt đường không đổi, trái với nguyên tắc ở mục 2.1.
+Vì vậy bản đồ được dựng theo dạng đường cong, gồm bốn đoạn. Thứ nhất, vùng chết: $M = 0$ khi $|T_s| \le T_{s0}$, với $T_{s0} = 0.3$ N.m. Thứ hai, đoạn thẳng từ điểm $(T_{s0}, 0)$ tới cặp hiệu chỉnh ở 0.1 g; đây là vùng không có số liệu của [5], nên dùng dạng đơn giản nhất. Thứ ba, đi qua các cặp hiệu chỉnh (10) từ 0.1 g tới $a_{y,lim}(v)$, với độ dốc bị chặn ở $K_{max} = 10$: nếu đoạn nối hai cặp điểm liên tiếp dốc hơn $K_{max}$ thì bản đồ chỉ tăng với độ dốc $K_{max}$. Thứ tư, sau cặp điểm cuối, bản đồ tiếp tục tăng với độ dốc $K_{max}$ cho tới $T_{a,max}(v)$ rồi giữ không đổi, đúng như đặc tính bão hòa của [4]. Bản đồ được lưu thành bảng theo 17 mức vận tốc (20 km/h đến 100 km/h, bước 5 km/h) và 251 mức $|T_s|$ (0 đến 5 N.m, bước 0.02 N.m), tra bằng nội suy tuyến tính và giữ giá trị biên ngoài dải. Bảng 4 trích một số giá trị; Hình 2 vẽ đường cong ở năm mức vận tốc cùng các cặp hiệu chỉnh.
+Bảng 4: Mô-men trợ lực $M(v, |T_s|)$ [N.m] của bản đồ (trích)
+$v$ [km/h] \ $|T_s|$ [N.m] | 0.3 | 0.5 | 1.0 | 1.5 | 2.0 | 2.5 | 3.0 | 3.5 | 4.0
+20 | 0 | 0.46 | 1.62 | 3.50 | 3.52 | 3.52 | 3.52 | 3.52 | 3.52
+40 | 0 | 0.13 | 0.46 | 0.78 | 3.00 | 6.60 | 6.60 | 6.60 | 6.60
+60 | 0 | 0.06 | 0.20 | 0.34 | 0.49 | 3.04 | 6.10 | 6.10 | 6.10
+80 | 0 | 0.03 | 0.11 | 0.19 | 0.27 | 0.85 | 3.35 | 5.70 | 5.70
+100 | 0 | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 2.00 | 5.60 | 5.60
+
+[Hình 2: Bản đồ trợ lực theo vận tốc (đường liền) và các cặp hiệu chỉnh ở đường khô (điểm tròn) | Result/Map/Map_assist_curves_by_speed.png]
+Bản đồ thu được có đúng các tính chất mà [1] và [5] mô tả: có vùng chết quanh giữa; ở cùng mô-men cảm biến, mô-men trợ lực giảm khi vận tốc tăng, và ở 100 km/h gần như không trợ lực khi mô-men tay dưới 2.5 N.m; đường cong trơn và bão hòa ở mô-men trợ lực lớn nhất. Riêng 20 km/h có mức bão hòa thấp hơn 30 km/h vì ở tốc độ này giới hạn góc nhỏ của mô hình chặn gia tốc ngang ở khoảng 0.2 g (Bảng 5 của chương trước); đây là giới hạn của mô hình chứ không phải đặc tính mong muốn, và không ảnh hưởng tới các kịch bản trong dải vận tốc xét.
+Hình 3 (bên trái) cho sai số xác lập $e_T$ của bản đồ trên đường khô, tính bằng cách giải trạng thái xác lập của mô hình có bản đồ trong vòng lặp. Trong khoảng 0.1 g đến 0.3 g, sai số không vượt 0.034 N.m ở mọi vận tốc, tức bản đồ khớp giá trị đặt. Dưới 0.1 g, vùng chết và đoạn thẳng làm mô-men cảm biến lệch khỏi giá trị đặt từ $-0.35$ N.m (100 km/h, 0.05 g) tới $+0.13$ N.m (20 km/h, 0.02 g); gần 0.4 g, giới hạn độ dốc làm mô-men cảm biến cao hơn giá trị đặt tối đa 0.085 N.m. Hai sai lệch này nằm ở vùng không có số liệu gốc hoặc ở sát biên, và là cái giá của vùng chết và của yêu cầu ổn định.
+[Hình 3: Sai số xác lập trên đường khô theo gia tốc ngang: bản đồ thiết kế (trái) và bản đồ đường thẳng có vùng chết của [4] (phải) | Result/Map/Map_dry_road_steady_error.png]
+Tự chọn(6): chọn vùng chết $T_{s0} = 0.3$ N.m theo tỉ lệ của [4]. [4] đặt vùng chết 2 N.m và điểm bão hòa 23 N.m, tức vùng chết bằng khoảng 0.087 lần mô-men tay ở điểm bão hòa; mô-men tay lớn nhất trong giá trị đặt của luận văn là 3.4 N.m, nhân với tỉ lệ trên được khoảng 0.3 N.m. Giá trị này nhỏ hơn giá trị đặt ở 0.1 g tại mọi vận tốc (nhỏ nhất 1.0 N.m), nên vùng chết không lấn vào vùng có số liệu.
+Tự chọn(7): chọn giới hạn độ dốc $K_{max} = 10$ là giá trị nhỏ nhất vẫn giữ nguyên các cặp hiệu chỉnh trong khoảng 0.1 g đến 0.3 g ở mọi vận tốc (độ dốc lớn nhất ở đó là 9.5), đồng thời vẫn ổn định hóa được với độ dự trữ pha theo tiêu chí của [1] (mục 2.4).
+2.4. Ổn định và khâu bù
+Theo [1] (mục III.B), khi xét ổn định, bản đồ được xấp xỉ bằng một độ lợi $K_v$ bằng độ dốc lớn nhất của nó, vì độ lợi lớn là nguồn gây mất ổn định. Tuyến tính hóa cụm cơ cấu lái quanh một điểm làm việc với góc vô-lăng giữ cố định: trục lái đang trượt nên ma sát khô bão hòa và không tạo cản (trường hợp xấu nhất), thân xe coi như chưa kịp thay đổi, và mô-men phản hồi mặt đường được thay bằng độ cứng $k_r$ của phương trình (33) chương trước. Hàm truyền từ mô-men trợ lực tới mô-men cảm biến, bỏ qua dấu âm (trợ lực tăng thì mô-men cảm biến giảm, vòng lặp là phản hồi âm):
+
+  (12) G(s) = K / (J_col*s^2 + C_col*s + K + k_r)
+  [ G(s)=\dfrac{K}{J_{col}s^2+C_{col}s+K+k_r} ]
+
+Vòng hở gồm bộ giữ bậc không (ZOH, giữ giá trị lấy mẫu trong suốt một chu kỳ), $G(s)$, độ lợi $K_v$ và khâu bù $H(z)^2$. $G(s)$ có hai cực phức với hệ số tắt dần khoảng 0.15, nên pha giảm nhanh qua $-180$ độ ngay sau tần số riêng 40 rad/s; độ trễ do lấy mẫu làm pha giảm thêm tỉ lệ với chu kỳ lấy mẫu. Hình 4 cho độ dự trữ pha của vòng hở theo $K_v$. Với chu kỳ 10 ms và không có khâu bù, vòng lặp mất ổn định từ $K_v = 1.96$, trong khi bản đồ cần độ dốc tới 10; các khâu lead thử ở chu kỳ này cũng không đưa được độ dự trữ pha lên 45 độ. Giảm chu kỳ xuống 1 ms thì vòng lặp không bù ổn định nhưng độ dự trữ pha chỉ còn khoảng 3 độ, tức dao động rất yếu tắt. Với chu kỳ 1 ms và hai khâu lead, độ dự trữ pha đạt ít nhất 47.8 độ và độ dự trữ biên ít nhất 8.5 lần (18.6 dB) với mọi $K_v$ từ 0.5 đến $K_{max}$, xét cả $k_r$ của đường khô và $k_r = 0$ (đường rất trơn). Tiêu chí 45 độ và việc dùng hai khâu lead lấy theo [1] (mục IV.B).
+[Hình 4: Độ dự trữ pha của vòng trợ lực tuyến tính hóa theo độ dốc bản đồ | Result/Map/Map_phase_margin_vs_map_slope.png]
+Các tham số của khâu bù được chọn bằng cách quét $z_l$ từ 20 rad/s đến 150 rad/s và tỉ số $p_l / z_l$ từ 2 đến 15, giữ lại các cặp cho độ dự trữ pha từ 45 độ trở lên với mọi $K_v$, rồi chọn cặp có độ lợi ở tần số cao $(p_l / z_l)^2$ nhỏ nhất, vì độ lợi này khuếch đại nhiễu cảm biến [1]. Kết quả là $z_l = 110$ rad/s và $p_l = 275$ rad/s, độ lợi tần số cao chỉ 6.25 lần. Bảng 5 tổng hợp các tham số của bộ điều khiển.
+Bảng 5: Tham số bộ điều khiển trợ lực truyền thống
+Ký hiệu | Giá trị | Đơn vị | Ý nghĩa | Nguồn
+$T_{ctl}$ | 0.001 | s | Chu kỳ lấy mẫu của vòng trợ lực | Tự chọn(8)
+$T_{s0}$ | 0.3 | N.m | Vùng chết của bản đồ | Tự chọn(6)
+$K_{max}$ | 10 | - | Độ dốc lớn nhất của bản đồ | Tự chọn(7)
+$z_l$ | 110 | rad/s | Điểm không của mỗi khâu lead | Thiết kế theo tiêu chí của [1]
+$p_l$ | 275 | rad/s | Điểm cực của mỗi khâu lead | Thiết kế theo tiêu chí của [1]
+$T_{a,max}(v)$ | 3.52 đến 6.88 | N.m | Giới hạn trợ lực | Bảng 3
+
+Tự chọn(8): chọn chu kỳ lấy mẫu 1 ms vì theo phân tích trên, ở 10 ms không ổn định hóa được bản đồ đã hiệu chỉnh với độ dự trữ pha đủ lớn: không có khâu bù thì độ dốc phải dưới 1.96, khi đó bản đồ không còn khớp giá trị đặt trên đường khô, còn các khâu lead đã thử không đạt 45 độ. Chu kỳ này là cho vòng trợ lực của bộ điều khiển truyền thống; chu kỳ của các bộ điều khiển khác được xét ở các mục tương ứng.
+2.5. Kiểm chứng trong vòng kín
+Mô hình Simulink của bộ điều khiển được kiểm tra với tính toán độc lập: tại mọi thời điểm lấy mẫu, mô-men trợ lực của mô hình khớp với bản đồ, hai khâu lead và giới hạn tính lại từ dữ liệu, sai khác dưới $10^{-9}$ N.m. Bộ điều khiển sau đó được ghép với mô hình đối tượng và khối giá trị đặt, và chạy trên hai ca thử chuẩn dùng chung cho mọi bộ điều khiển của luận văn (chương kịch bản mô phỏng đánh giá): ca TC1 kiểm tra hiệu chỉnh trên đường khô và ca TC2 chạy đường thực tế.
+Trong ca TC1 (Hình 5), ở mọi bậc giữ góc của cả năm mức vận tốc và cả hai chiều cua, sai số trung bình trong 1 s cuối không vượt 0.0011 N.m: bản đồ khớp giá trị đặt trên đường khô và đối xứng giữa cua trái và cua phải. Các đỉnh sai số tới 3.6 N.m chỉ xuất hiện trong lúc đánh lái sang bậc mới, khi ma sát khô của trục lái chống lại chuyển động, và tắt dần trong khoảng 1 s đến 2 s theo chế độ trôi chậm của trục lái (mục 2.4 chương mô hình).
+[Hình 5: Ca TC1 với bộ điều khiển trợ lực truyền thống: kiểm tra hiệu chỉnh trên đường khô | Result/Map/Map_TC1_dry_calibration_time_response.png]
+Trong ca TC2 (Hình 6, Bảng 6), sai số ở các cửa sổ giữ góc trên đường khô đều dưới 0.002 N.m. Khi xe đi vào mặt đường $\mu = 0.3$ trong lúc đang cua 0.25 g ở 80 km/h, mô-men cảm biến giảm và giữ ở mức thấp hơn giá trị đặt 0.23 N.m, tức tay lái nhẹ đi 7.9%: đó là trợ lực thừa, và nó kéo dài suốt thời gian xe còn trên mặt đường trơn vì bản đồ không có thông tin nào để phát hiện. Trên cùng mặt đường ở cua nhẹ hơn 0.15 g, trợ lực thừa còn 3.8%; khi xe đi vào mặt đường $\mu = 0.5$ ở 100 km/h với cua 0.2 g, trợ lực thừa 1.3%. Khi xe trở lại đường khô, sai số lập tức về gần không. Trong các đoạn lái liên tục (lượn, chuyển làn), sai số RMS từ 1.5 N.m đến 1.7 N.m và gần như không đổi khi hệ số bám giảm (1.65 N.m ở $\mu = 0.8$ và 1.66 N.m ở $\mu = 0.4$), cho thấy ở các đoạn này sai số bị chi phối bởi ma sát khô chứ không bởi mặt đường; các đoạn này dùng chu kỳ lái đủ dài (4 s trở lên) để tốc độ đánh lái không đổi đột ngột khi vào hoặc ra khỏi đoạn lượn. Mô-men trợ lực không dao động ở bất kỳ đoạn nào, xác nhận khâu bù làm việc đúng trong cả chế độ giữ góc và đánh lái.
+[Hình 6: Ca TC2 với bộ điều khiển trợ lực truyền thống: chạy đường thực tế | Result/Map/Map_TC2_road_time_response.png]
+Bảng 6: Chỉ tiêu của bộ điều khiển trợ lực truyền thống trong các cửa sổ đánh giá của ca TC2
+Cửa sổ | Điều kiện | RMS $e_T$ [N.m] | $e_{rel}$ [%]
+Cua khô 0.2 g | 50 km/h, $\mu = 0.8$ | 0.002 | +0.07
+Lượn khô | 50 km/h, $\mu = 0.8$ | 1.51 | -
+Cua 0.25 g, trước | 80 km/h, $\mu = 0.8$ | 0.000 | -0.02
+Cua 0.25 g, $\mu = 0.3$ | 80 km/h, $\mu = 0.3$ | 0.230 | -7.85
+Chuyển làn, $\mu = 0.3$ | 80 km/h, $\mu = 0.3$ | 1.70 | -
+Cua 0.15 g, $\mu = 0.3$ | 80 km/h, $\mu = 0.3$ | 0.098 | -3.77
+Cua 0.15 g, sau | 80 km/h, $\mu = 0.8$ | 0.001 | -0.04
+Cua 0.2 g, trước | 100 km/h, $\mu = 0.8$ | 0.000 | 0.00
+Cua 0.2 g, $\mu = 0.5$ | 100 km/h, $\mu = 0.5$ | 0.039 | -1.32
+Lượn, $\mu = 0.8$ | 60 km/h, $\mu = 0.8$ | 1.65 | -
+Lượn, $\mu = 0.4$ | 60 km/h, $\mu = 0.4$ | 1.66 | -
+Toàn ca | RMS $T_a$ 1.63 N.m, $TV(T_a)$ 1.55 N.m/s | 0.86 | -
+
+Mức trợ lực thừa trong ca TC2 nhỏ hơn nhiều so với mức giảm 18% của mô-men cảm biến khi không có trợ lực (mục 6.3 chương mô hình), vì bản đồ tự nó là một vòng phản hồi theo $T_s$: khi $T_r$ giảm, $T_s$ giảm, bản đồ giảm theo $T_a$ và bù lại một phần. Với độ dốc $K_v$ tại điểm làm việc, mức giảm của mô-men cảm biến xấp xỉ bằng mức giảm của $T_r$ chia cho $1 + K_v$. Tuy nhiên bản đồ không có thông tin nào để bù phần còn lại. Để thấy mức trợ lực thừa phụ thuộc vào điểm làm việc một cách đầy đủ hơn các cửa sổ của ca TC2, Hình 7 giải trạng thái xác lập trước và sau khi $\mu$ giảm với góc vô-lăng giữ nguyên, ở nhiều mức gia tốc ngang ban đầu, và vẽ phần sai số do $\mu$ gây ra, tức hiệu giữa sai số sau và sai số trên đường khô, chia cho giá trị đặt. Khi $\mu$ giảm xuống 0.3, trợ lực thừa khoảng 2% đến 5% ở gia tốc ngang từ 0.125 g đến 0.2 g, rồi tăng nhanh khi gia tốc ngang tiến gần giới hạn bám mới $0.3 g$: khoảng 10% ở 0.25 g và 16% đến 18% ở 0.3 g tại 40 km/h và 60 km/h, 10% ở 0.3 g tại 100 km/h. Khi $\mu$ chỉ giảm xuống 0.5, trợ lực thừa không vượt 4.4%. Lý do là gần giới hạn bám, lực bên cầu trước bão hòa và pneumatic trail co lại (mục 3.5 chương trước), nên $T_r$ giảm mạnh trong khi bản đồ vẫn cấp mô-men trợ lực theo đường khô. Điểm nhô lên ở 0.1 g là do tại đó điểm làm việc rơi xuống đoạn thẳng dưới 0.1 g, nơi độ dốc bản đồ nhỏ nên phần bù của vòng phản hồi yếu hơn.
+[Hình 7: Trợ lực thừa do hệ số bám gây ra theo gia tốc ngang ban đầu, hệ số bám giảm từ 0.8 xuống 0.5 (trái) và 0.3 (phải) | Result/Map/Map_over_assist_vs_lateral_accel.png]
+Sai số lớn trong các đoạn lái liên tục có nguyên nhân cơ học: mỗi lần đổi chiều đánh lái, ma sát khô 2 N.m của trục lái đổi dấu, mô-men cảm biến nhảy trước giá trị đặt, trong khi bản đồ tĩnh không có phần bù ma sát.
+2.6. Hạn chế
+Bộ điều khiển truyền thống trên xe thực tế thường có thêm các khâu bù ma sát, bù giảm chấn, bù quán tính và trả lái về giữa. Các tài liệu tham khảo của luận văn không mô tả các khâu này; chúng chủ yếu phục vụ cảm giác lái và khả năng trả lái, không liên quan tới trợ lực thừa, nên không được đưa vào. Hệ quả là trong các kịch bản đánh lái liên tục, sai số bám của chuẩn so sánh bị chi phối bởi ma sát khô chứ không bởi hệ số bám; vì vậy việc so sánh khả năng khắc phục trợ lực thừa dựa chủ yếu trên các cửa sổ giữ góc vô-lăng của ca TC2 và trên phần sai số do hệ số bám gây ra như ở Hình 7. Ngoài ra, động học motor được bỏ qua như ở chương mô hình, và mức bão hòa ở 20 km/h thấp hơn ở 30 km/h do giới hạn của mô hình chứ không theo xu hướng của xe thật.
+==============================================================================================================================================================================================

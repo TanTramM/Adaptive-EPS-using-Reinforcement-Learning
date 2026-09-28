@@ -1,0 +1,133 @@
+==============================================================================================================================================================================================
+CỤM 3: ĐỘNG LỰC HỌC THÂN XE (2-DOF BICYCLE MODEL)
+CHUYỂN ĐỘNG PHẲNG - BỎ QUA ROLL/LOAD TRANSFER
+==============================================================================================================================================================================================
+  Tài liệu SUY DIỄN/KIỂM CHỨNG cho riêng người viết, KHÔNG chép nguyên vào luận văn. Bản rút gọn đưa vào luận văn nằm ở PHẦN CUỐI file này.
+  Quy ước: mỗi công thức có thêm 1 dòng LaTeX trong ngoặc [ ]. Dán dòng đó vào ô công thức Word (Insert > Equation, chế độ nhập LaTeX bật) - Word 2016+ tự dựng thành công thức chuẩn. Trích dẫn
+  [n] khớp Documents/References.txt.
+
+CỤM 3 KHỚP VÀO VÒNG LẶP
+  - Biến trạng thái (2): x3 = beta (rad), x4 = gamma (rad/s).
+  [ x_3=\beta \quad x_4=\gamma ]
+  - Đầu vào: F_yf, F_yr (từ Cụm 2), v (đo được, coi hằng số từng bước, không phải biến trạng thái).
+  - Đầu ra: beta, gamma (quay lại Cụm 2 để tính alpha_f, alpha_r ở bước sau) và a_y (đại lượng đầu ra, không phải trạng thái, dùng tra T_d,ref(v, a_y), Blueprint mục 1.3).
+  - Vòng lặp toàn hệ: theta1 (tài xế) -> Cụm 1 (theta2) -> delta_f, alpha_f, alpha_r, F_yf, F_yr (Cụm 2) -> beta, gamma (Cụm này) -> alpha_f, alpha_r (Cụm 2, bước sau). F_yf còn quay về Cụm 1 qua
+    T_r = K_tr*F_yf. Hai đường hồi tiếp này (beta, gamma về Cụm 2 và T_r về Cụm 1) là lý do bắt buộc phải có beta, gamma: thiếu chúng thì không khép được vòng lặp, không có nghĩa vật lý "mô-men
+    dội ngược lại tay lái phụ thuộc xe đang trượt ngang bao nhiêu".
+
+GIẢ THIẾT VÀ PHẠM VI
+  - Chuyển động phẳng: bỏ qua roll, pitch và dịch chuyển tải trọng ngang giữa bánh trái/phải (F_zf, F_zr đối xứng 2 bên, Cụm 2).
+  - Vận tốc dọc v hằng số. Góc nhỏ (cùng cách làm của [3], Chương 2): beta, alpha_f, alpha_r đủ nhỏ để xấp xỉ cos ~ 1, tan ~ góc; giới hạn a_y theo tốc độ: Cụm 2, Mục 4. Gộp 2 bánh mỗi cầu thành
+    một bánh đại diện (single-track).
+  - Hợp lệ trong dải lái thông thường (chưa tới bão hòa lốp hoặc giới hạn lật xe), đúng phạm vi over-assist; không phải kịch bản mất ổn định cực hạn của ESC/VDC.
+
+  Phân biệt 2 loại ký hiệu: m, Iz, l_f, l_r là THAM SỐ THÔ (Bảng tham số). Cụm này không có ký hiệu gộp riêng vì chỉ có 2 phương trình Newton trực tiếp, không có bước quy đổi tỷ số truyền như Cụm
+  1.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BẢNG THAM SỐ CỤM 3 (chi tiết và nguồn: params_plant.xlsx, sheet Cum3)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    m    = 1573    kg        (khối lượng xe, CÙNG giá trị và nguồn với m ở Cụm 2)
+    Iz   = 2873    kg.m^2    (mô-men quán tính Yaw quanh trục thẳng đứng qua trọng tâm)
+    l_f  = 1.1     m         (CG - cầu trước, CÙNG giá trị và nguồn với l_f ở Cụm 2)
+    l_r  = 1.58    m         (CG - cầu sau, CÙNG giá trị và nguồn với l_r ở Cụm 2)
+
+  Cả 4 tham số lấy trực tiếp từ [3] (Rajamani 2012, Chương 3, tr.48), cùng đoạn số liệu "m = 1573, Iz = 2873, l_f = 1.1, l_r = 1.58, C_alpha_f = C_alpha_r = 80000" mà Cụm 2 đã dùng, để không trộn
+  nhiều xe cho cùng một hệ thân xe/lốp. Iz là tham số mới của cụm nhưng cùng nguồn [3], không cấp số trích dẫn mới.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Hệ quy chiếu và gia tốc ngang
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Gắn hệ (x, y) tại trọng tâm, x dọc thân xe (theo v), y ngang. Hệ trục QUAY cùng thân xe với vận tốc góc gamma (không phải hệ quán tính). Vận tốc ngang tại trọng tâm (beta nhỏ nên tan(beta) ~
+  beta):
+
+    v_y = v * beta
+    [ v_y = v\beta ]
+
+  Vì hệ trục quay, gia tốc ngang tuyệt đối (dùng trong Newton) không chỉ là d(v_y)/dt mà còn cộng số hạng v*gamma (trục x đổi hướng với tốc độ gamma làm một phần vận tốc dọc v "tràn" sang phương
+  y). Với v hằng số:
+
+    a_y = v*beta_dot + v*gamma = v*(beta_dot + gamma)
+    [ a_y = v\dot\beta + v\gamma = v(\dot\beta+\gamma) ]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Cân bằng lực ngang (Newton 2, tịnh tiến)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Ngoại lực theo y chỉ gồm lực bên 2 cầu (trọng lực đã cân bằng theo phương thẳng đứng). Đúng ra là F_yf*cos(delta_f), nhưng delta_f nhỏ nên cos ~ 1 (theo giả thiết góc nhỏ):
+
+    m*a_y = F_yf + F_yr
+    [ m\,a_y = F_{yf}+F_{yr} ]
+
+  Thế a_y từ mục 1 và giải ra beta_dot:
+
+    beta_dot = (F_yf + F_yr)/(m*v) - gamma
+    [ \dot\beta = \dfrac{F_{yf}+F_{yr}}{mv} - \gamma ]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Cân bằng mô-men quanh trục thẳng đứng qua trọng tâm (Newton 2, quay)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Mô-men do lực bên mỗi cầu, cánh tay đòn là khoảng cách dọc từ trọng tâm đến cầu (l_f phía trước, l_r phía sau, dấu ngược nhau). Cũng bỏ qua cos(delta_f) ~ 1:
+
+    Iz*gamma_dot = l_f*F_yf - l_r*F_yr
+    [ I_z\dot\gamma = l_f F_{yf} - l_r F_{yr} ]
+
+    gamma_dot = (l_f*F_yf - l_r*F_yr)/Iz
+    [ \dot\gamma = \dfrac{l_f F_{yf}-l_r F_{yr}}{I_z} ]
+
+==============================================================================================================================================================================================
+KẾT QUẢ ĐƯA VÀO LUẬN VĂN
+==============================================================================================================================================================================================
+  Bản rút gọn: chỉ nêu công thức và giải thích ngắn, không lặp lại suy diễn hệ quy chiếu quay và Newton. m, Iz dùng ở đây độc lập với Cụm 1, 2; l_f, l_r chính là l_f, l_r đã dùng ở Cụm 2 (tính
+  F_zf), cùng hai tham số thô, không định nghĩa lại.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 1. Giả thiết và phạm vi áp dụng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Mô hình 2-DOF (bicycle model) mô tả chuyển động phẳng của thân xe qua 2 bậc tự do beta (góc trượt hông tại trọng tâm) và gamma (vận tốc góc Yaw), với các giả thiết:
+  - Bỏ qua roll và dịch chuyển tải trọng ngang giữa bánh trái/phải mỗi cầu.
+  - Vận tốc dọc v hằng số (đo được, không phải trạng thái động).
+  - Góc nhỏ (cùng cách làm của [3], Chương 2): beta, alpha_f, alpha_r đủ nhỏ để xấp xỉ cos ~ 1, tan ~ góc (giới hạn a_y theo tốc độ: Cụm 2, Mục 4).
+  - Gộp 2 bánh mỗi cầu thành một bánh đại diện (single-track).
+  Hợp lệ trong dải lái thông thường của EPS (chưa tới bão hòa lốp hay giới hạn lật xe), đúng phạm vi của bài toán over-assist.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 2. Phương trình vi phân 2-DOF
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  (1)  beta_dot  = (F_yf + F_yr)/(m*v) - gamma
+  [ \dot\beta = \dfrac{F_{yf}+F_{yr}}{mv}-\gamma ]
+
+  (2)  gamma_dot = (l_f*F_yf - l_r*F_yr)/Iz
+  [ \dot\gamma = \dfrac{l_f F_{yf}-l_r F_{yr}}{I_z} ]
+
+  - (1): cân bằng lực ngang tại trọng tâm (Newton 2, tịnh tiến).
+  - (2): cân bằng mô-men quanh trục thẳng đứng qua trọng tâm (Newton 2, quay). m, Iz, l_f, l_r: tham số thô (Bảng tham số).
+  - F_yf, F_yr: lực bên 2 cầu, tính ở Cụm 2 (Pacejka phi tuyến cầu trước, tuyến tính cầu sau).
+  Gia tốc ngang tại trọng tâm suy trực tiếp từ (1), là đại lượng ĐẦU RA (không phải trạng thái), dùng tra T_d,ref(v, a_y) (Blueprint mục 1.3):
+
+  (3)  a_y = v*(beta_dot + gamma) = (F_yf + F_yr)/m
+  [ a_y = v(\dot\beta+\gamma) = \dfrac{F_{yf}+F_{yr}}{m} ]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục 3. Hệ phương trình trạng thái
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Biến trạng thái x3 = beta, x4 = gamma:
+  [ x_3=\beta \quad x_4=\gamma ]
+
+  (4)  dx3/dt = (F_yf + F_yr)/(m*v) - x4
+  (5)  dx4/dt = (l_f*F_yf - l_r*F_yr)/Iz
+
+  [ \begin{cases}
+      \dot x_3 = \dfrac{F_{yf}+F_{yr}}{mv} - x_4 \\[6pt]
+      \dot x_4 = \dfrac{l_f F_{yf}-l_r F_{yr}}{I_z}
+    \end{cases} ]
+
+  F_yf, F_yr để nguyên dạng ký hiệu, tra cụ thể ở Cụm 2: F_yf là hàm Pacejka phi tuyến (sin, arctan) của alpha_f, mà alpha_f lại là hàm của chính x3, x4, nên thế xuống tham số thô chỉ làm công
+  thức dài mà không thêm thông tin.
+==============================================================================================================================================================================================

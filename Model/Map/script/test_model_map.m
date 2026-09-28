@@ -9,12 +9,13 @@ function test_model_map()
 %   data/ref.json (run load_map first - Simulink blocks read the base
 %   workspace):
 %   (1) Reference wiring: e_T = T_s - T_d_ref at every logged sample, and
-%       T_d_ref at the end equals interp2 of Table 4 at (v, a_y_end).
+%       T_d_ref at the end equals interp2 of the fine reference table at (v, a_y_end).
 %   (2) Plant wiring: at the end (steady state, T_a held constant), T_s and
 %       a_y equal the Newton steady state of the plant equations for the
 %       final (theta1, T_a, v, mu).
-%   (3) Map wiring: everything is steady at the end, so T_a(end) equals the assist map evaluated at the final
-%       (v, T_s), computed independently from data/map.json (clipped 2-D interpolation, odd in T_s).
+%   (3) Map wiring: everything is steady at the end and the lead stages have DC gain 1, so T_a(end) equals the
+%       torque map evaluated at the final (v, T_s), saturated at +-T_a,max(v), computed independently from
+%       data/map.json (clipped 2-D interpolation, odd in T_s).
 
 modelFileName = 'Model_Map';
 tEnd = 15;
@@ -61,11 +62,11 @@ assert(all(isfinite(eT.Data)), 'e_T is not finite');
 % (1) Reference wiring
 err1 = max(abs(eT.Data - (Ts.Data - Tref.Data)));
 assert(err1 < 1e-9, '(1) e_T ~= T_s - T_d_ref: max err %.3g', err1);
-v_bp  = rawRef.v_breakpoints_kmh(:)'/3.6;
-ay_bp = rawRef.ay_breakpoints_g(:)'*9.81;
+v_bp  = rawRef.fine.v_breakpoints_kmh(:)'/3.6;
+ay_bp = rawRef.fine.ay_breakpoints_g(:)'*9.81;
 ayEnd = ay.Data(end);
 ayc = min(max(abs(ayEnd), min(ay_bp)), max(ay_bp));
-TrefInd = sign(ayEnd)*interp2(ay_bp, v_bp, rawRef.table_Nm', ayc, min(max(v, min(v_bp)), max(v_bp)), 'linear');
+TrefInd = sign(ayEnd)*interp2(ay_bp, v_bp, rawRef.fine.table_Nm', ayc, min(max(v, min(v_bp)), max(v_bp)), 'linear');
 assert(abs(Tref.Data(end) - TrefInd) < 1e-9, '(1) T_d_ref(end) = %.6g, independent = %.6g', Tref.Data(end), TrefInd);
 
 % (2) Plant wiring: Newton steady state for the final inputs
@@ -77,10 +78,13 @@ assert(abs(ayEnd - ss.a_y) < 5e-3, '(2) a_y(end) = %.6g, steady state = %.6g', a
 mp = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json')));
 vBp = mp.v_breakpoints_kmh(:)'/3.6;  tsBp = mp.Ts_breakpoints_Nm(:)';
 TsEnd = Ts.Data(end);
-TaMap = sign(TsEnd)*interp2(tsBp, vBp, mp.Ta_table_Nm, min(max(abs(TsEnd), tsBp(1)), tsBp(end)), min(max(v, vBp(1)), vBp(end)), 'linear');
+vcl = min(max(v, vBp(1)), vBp(end));
+TaMap = sign(TsEnd)*interp2(tsBp, vBp, mp.Ta_table_Nm, min(max(abs(TsEnd), tsBp(1)), tsBp(end)), vcl, 'linear');
+TaLim = interp1(vBp, mp.Ta_max_Nm(:)', vcl, 'linear');
+TaMap = max(-TaLim, min(TaMap, TaLim));   % lead stages have DC gain 1 -> steady T_a = saturated static map
 assert(abs(Ta.Data(end) - TaMap) < 1e-3, '(3) Map: T_a(end) = %.6g, map at (v, T_s(end)) = %.6g', Ta.Data(end), TaMap);
 
-fprintf(['[%s] TEST PASS: e_T = T_s - T_d_ref (max err %.2g); T_d_ref(end) = %.5g matches Table 4; ' ...
+fprintf(['[%s] TEST PASS: e_T = T_s - T_d_ref (max err %.2g); T_d_ref(end) = %.5g matches the fine reference table; ' ...
     'T_s(end) = %.5g (steady state %.5g), a_y(end) = %.5g (steady state %.5g); e_T(end) = %.4g N.m, T_a(end) = %.4g N.m\n'], ...
     modelFileName, err1, Tref.Data(end), Ts.Data(end), ss.T_s, ayEnd, ss.a_y, eT.Data(end), Ta.Data(end));
 end

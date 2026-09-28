@@ -11,22 +11,59 @@ trừ tên biến/ký hiệu kỹ thuật giữ nguyên tiếng Anh/công thức
 
 ## Cấu trúc thư mục
 
-- `Documents/` - toàn bộ tài liệu suy diễn vật lý + blueprint điều khiển.
-  - `Blueprint_OverAssist_RL.txt` - tài liệu GỐC, chỉ tổng hợp lý thuyết/
-    chiến lược điều khiển (phạm vi bài toán, biến trạng thái, chiến lược FF/
-    FB, trỏ tới các file cụm chi tiết). KHÔNG chứa suy diễn công thức đầy đủ.
-  - `Cum1_CEPS.txt`, `Cum2_Pacejka.txt`, `Cum3_2DOF.txt` - suy diễn vật lý chi
-    tiết từng cụm (xem "Quy ước 1 file cụm" bên dưới).
-  - `HeThongPlant_TongHop.txt` - ghép nối thuần túy 4 phương trình vi phân +
-    toàn bộ đại số của 3 cụm trên thành 1 hệ nhìn tổng quan (không suy diễn
-    mới, chỉ tham chiếu lại).
-  - `Gemini_old/` - tài liệu/code cũ (từ bản Gemini trước), KHÔNG dùng nữa,
-    giữ lại để tham khảo lịch sử. Không sửa/xóa trừ khi được yêu cầu rõ.
+- `Documents/` - toàn bộ tài liệu suy diễn vật lý + blueprint điều khiển, phân
+  tầng theo đúng cấu trúc con của `Model/` (mỗi cụm/bộ điều khiển 1 thư mục
+  con cùng tên, tài liệu và code soi gương nhau).
+  - `Blueprint_OverAssist_RL.txt` (gốc) - tài liệu GỐC, chỉ tổng hợp lý
+    thuyết/chiến lược điều khiển (phạm vi bài toán, biến trạng thái, chiến
+    lược FF/FB, trỏ tới các file con chi tiết). KHÔNG chứa suy diễn công
+    thức đầy đủ.
+  - `References.txt` (gốc) - danh mục tài liệu tham khảo DÙNG CHUNG toàn
+    luận văn, đánh số theo thứ tự xuất hiện lần đầu qua các file con.
+  - `Plant/` - tương ứng `Model/Plant/` + `Model/load_plant.m`.
+    - `plant.txt` - BẢN CHÍNH THỨC đưa vào luận văn (đã gộp suy diễn +
+      kết quả của cả 3 cụm, sắp lại logic, bỏ ghi chú quá trình làm).
+      Là NGOẠI LỆ của quy tắc độ rộng dòng: mỗi đoạn văn 1 dòng (không ngắt
+      180-200), không dùng gạch đầu dòng, ký hiệu trong câu viết `$latex$`;
+      sinh bản Word `plant.docx` bằng `python tools/txt2docx.py` (quy ước
+      định dạng mô tả đầu file tool: tiêu đề `1.`/`1.1.` -> Heading 2/3,
+      dòng `(n) ascii` + dòng `[ latex ]` -> phương trình Word đánh số).
+    - `Cum1_CEPS.txt`, `Cum2_Pacejka.txt`, `Cum3_2DOF.txt` - suy diễn vật
+      lý chi tiết từng cụm cho riêng người viết tự kiểm chứng (xem "Quy ước
+      1 file cụm" bên dưới); `HeThongPlant_TongHop.txt` - ghép nối thuần
+      túy hệ phương trình trạng thái của cả 3 cụm. Cả 4 file này ĐÃ ĐƯỢC
+      GỘP vào `plant.txt`, giữ lại chỉ để tra soát suy diễn gốc.
+    - `params_cum1.csv`, `params_cum2.csv`, `params_plant.xlsx`.
+  - `Ref/` - tương ứng `Model/Ref/` + `Model/load_ref.m`: `ref.txt` (Mục 1 chương Bộ điều khiển: giá trị đặt T_d,ref + T_a,max, cùng quy ước plant.txt, sinh `ref.docx`), `Reference.xlsx` (tab T_d,ref mịn, tab T_a,max); `params_ref.xlsx` (cũ,
+    chỉ Bảng 4 gốc).
+  - (Đã bỏ thư mục `Boundaries/`: biên vận hành của Plant nay nằm ở
+    `Plant/plant.txt` mục 6, giới hạn trợ lực T_a,max nay nằm ở `Ref/ref.txt`
+    mục 1.5. `Model/data/boundaries.json` vẫn còn, PID/SMC/SMC_KI vẫn đọc để
+    lấy T_a,max, nhưng CHƯA cập nhật theo bảng mới của ref.txt - số cũ tính
+    với C_alpha = 80000, thuộc phần điều khiển đang hoãn.)
+  - `PID/` - tương ứng `Model/PID/`: `DieuKhien_PID.txt`.
+  - `SMC/` - tương ứng `Model/SMC/` và `Model/SMC_KI/`: `DieuKhien_SMC.txt`
+    (hiện gộp cả 2 bản SMC, cần tách khi làm SMC_KI đầy đủ).
+  - `Map/` - tương ứng `Model/Map/`: `map.txt` (Mục 2 chương Bộ điều khiển:
+    bản đồ trợ lực truyền thống làm baseline - bản đồ đường cong hiệu chỉnh ở
+    mu = 0.8 + vùng chết + giới hạn độ dốc, 2 khâu lead theo [1], chu kỳ 1 ms;
+    sinh `map.docx` có chèn hình từ `Result/Map/`), `Map.xlsx` (bản đồ đầy đủ,
+    tham số, cặp hiệu chỉnh, bảng kết quả). Số liệu do
+    `Model/Map/script/calibrate_map.m` và `export_map_results.m` sinh ra.
+  - `Sim/` - tương ứng `Model/Sim/`: `TestCases.txt` (+ `TestCases.docx`, định
+    dạng chương luận văn như plant.txt) - HAI ca thử chuẩn dùng chung cho mọi
+    bộ điều khiển: TC1 kiểm tra hiệu chỉnh đường khô, TC2 chạy đường thực tế
+    150 s; code `Model/Sim/script/test_cases.m` (định nghĩa, góc lái độc lập
+    bộ điều khiển) và `run_test_cases.m('<Ctrl>')` (chạy, hình 6 ô, bảng chỉ
+    tiêu vào `Result/<Ctrl>/`).
+  - `Gemini_old/` (gốc) - tài liệu/code cũ (từ bản Gemini trước), KHÔNG dùng
+    nữa, giữ lại để tham khảo lịch sử. Không sửa/xóa trừ khi được yêu cầu rõ.
 - `References/` - paper tham khảo (Rajamani Vehicle Dynamics and Control,
   Multi-Map EPS, CEPS ANFIS-FOC, Road_Identification_BP-NN, Saifia2015 =
   Fuzzy_Control_EPS_Constraints (trùng file), Process_Control.pdf - Seborg).
 - `Model/` - Simulink + script MATLAB (code `.m` bằng TIẾNG ANH): `data/` (params.json, ref.json, pid.json, smc.json, map.json, boundaries.json), `load_plant.m` (+ `load_derived.m`), `load_ref.m`, `load_pid.m`, `load_smc.m`, `load_map.m` (mỗi file bộ điều khiển tự gọi load_plant và load_ref), `Model_PID_s.mdl`, `Model_SMC_s.mdl`, `Model_Map_s.mdl` (vòng kín chạy được), `Plant/` (SteeringColumn, Tires, Bike2DOF, Plant), `Ref/` (Reference), `PID/`, `SMC/`, `Map/` (bản đồ EPS tra bảng, baseline), `Sim/` (vòng kín, so sánh, đo Kcu/Pu, ước lượng T_a,max). Chi tiết: `History_Chat.md`.
 - `tools/reflow_txt.ps1` - gộp/ngắt dòng file `.txt` theo quy tắc 190 ký tự (xem `History_Chat.md`).
+- `tools/txt2docx.py` - chuyển file `.txt` chương luận văn (quy ước như plant.txt) sang `.docx` (python Anaconda: `C:/Users/Admin/anaconda3/python.exe`; tự chuyển LaTeX sang phương trình Word, không cần pandoc). Dòng `[Hình n: chú thích | Result/.../x.png]` chèn ảnh thật (đường dẫn tính từ gốc repo); không có `| đường dẫn` thì để khung trống chờ người dùng vẽ.
 - `old/` - bản cũ người dùng để tham chiếu (old/TB = bản thanh xoắn). Không sửa.
 
 ## Triết lý làm việc (QUAN TRỌNG - áp dụng cho MỌI việc, không riêng vật lý)

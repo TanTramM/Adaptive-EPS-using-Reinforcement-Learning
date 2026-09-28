@@ -5,10 +5,13 @@ function test_reference()
 %   Requires the root subsystem to expose ports named:
 %   In: T_s, v, a_y | Out: T_d_ref, e_T.
 %
-%   Feeds fixed (T_s, v, a_y) cases (incl. negative a_y and points outside
-%   the table range, checking Clip) and compares T_d_ref / e_T with a 2-D
-%   interpolation computed INDEPENDENTLY here with interp2 on the same
-%   data/ref.json data (not the base-workspace variables of load_ref.m).
+%   (1) The fine table in data/ref.json equals Table 4 plus the point
+%       a_y = 0 -> 0, PCHIP-interpolated along a_y then v, recomputed here
+%       from the source table (checks make_ref_table.m).
+%   (2) Feeds fixed (T_s, v, a_y) cases (incl. negative a_y, a_y = 0 and
+%       +-small a_y for continuity, points outside the table range for Clip)
+%       and compares T_d_ref / e_T with sgn(a_y) * interp2 of the fine table
+%       read from data/ref.json (not the base-workspace variables of load_ref.m).
 
 modelFileName = 'Reference';
 
@@ -23,9 +26,18 @@ load_system(fullfile(refDir, [modelFileName '.mdl']));
 dut = findRootSubsystem(modelFileName);
 
 rawRef = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
-v_bp_ms   = rawRef.v_breakpoints_kmh(:)' / 3.6;
-ay_bp_ms2 = rawRef.ay_breakpoints_g(:)' * 9.81;
-tableData = rawRef.table_Nm;   % row=a_y(4), column=v(5)
+v_bp_ms   = rawRef.fine.v_breakpoints_kmh(:)' / 3.6;
+ay_bp_ms2 = rawRef.fine.ay_breakpoints_g(:)' * 9.81;
+tableData = rawRef.fine.table_Nm;   % row = a_y, column = v
+
+% (1) fine table = PCHIP of Table 4 with the added point a_y = 0 -> 0
+a0 = [0; rawRef.ay_breakpoints_g(:)];
+T0 = [zeros(1, numel(rawRef.v_breakpoints_kmh)); rawRef.table_Nm];
+Aind = interp1(a0, T0, rawRef.fine.ay_breakpoints_g(:), 'pchip');
+Tind = interp1(rawRef.v_breakpoints_kmh(:), Aind', rawRef.fine.v_breakpoints_kmh(:), 'pchip')';
+errFine = max(abs(Tind - tableData), [], 'all');
+assert(errFine < 1e-5, 'fine table differs from the PCHIP of Table 4: max err %.3g', errFine);
+assert(all(tableData(1, :) == 0), 'fine table must contain a_y = 0 -> T_d,ref = 0');
 
 harnessName = 'test_reference_harness';
 if bdIsLoaded(harnessName)
@@ -57,6 +69,9 @@ set_param(harnessName, 'StopTime', '0.1');
 testCases = [ 2.5,  15,      1.5;
               2.5,  15,     -1.5;       % negative a_y
               3.0,  25,      3.0;
+              1.0,  20,      0;         % a_y = 0 -> T_d_ref = 0
+              1.0,  20,      0.01;      % +-small a_y: T_d_ref small, continuous through 0
+              1.0,  20,     -0.01;
              -1.0,  10,      0.5*9.81]; % outside range -> Clip
 for i = 1:size(testCases, 1)
     Ts_test = testCases(i, 1); v_test = testCases(i, 2); ay_test = testCases(i, 3);
@@ -76,9 +91,13 @@ for i = 1:size(testCases, 1)
         modelFileName, i, Ts_test, v_test, ay_test, Tdref_sim, Tdref_ref, eT_sim, eT_ref);
     assert(abs(Tdref_sim - Tdref_ref) < 1e-6, 'T_d_ref mismatch in case %d', i);
     assert(abs(eT_sim - eT_ref) < 1e-6, 'e_T mismatch in case %d', i);
+    if abs(ay_test) <= 0.01
+        assert(abs(Tdref_sim) < 0.05, 'T_d_ref not continuous near a_y = 0 in case %d (%.3g)', i, Tdref_sim);
+    end
 end
 
-fprintf('[%s] TEST PASS: matches independent interpolation, both a_y signs, Clip outside range\n', modelFileName);
+fprintf('[%s] TEST PASS: fine table = PCHIP of Table 4 (max err %.2g); matches independent interpolation, both a_y signs, continuous at a_y = 0, Clip outside range\n', ...
+    modelFileName, errFine);
 close_system(harnessName, 0);
 close_system(modelFileName, 0);
 end

@@ -4,8 +4,10 @@
 % distinguishes it from a hand-formatted version (Reference.mdl). Matches
 % Blueprint_OverAssist_RL.txt section 1.3:
 %
-%   T_d,ref(v, a_y) = sgn(a_y) * LUT(v, |a_y|)   (2-D interpolation on
-%                     Table 4 of [7], Road_Identification_BP-NN.pdf)
+%   T_d,ref(v, a_y) = sgn(a_y) * LUT(v, |a_y|)   (2-D linear interpolation on
+%                     the fine table of Documents/Ref/ref.txt section 1.3:
+%                     Table 4 of [5] plus a_y = 0 -> 0, PCHIP-resampled by
+%                     Ref/script/make_ref_table.m)
 %   e_T = T_s - T_d,ref                           (T_s = sensor torque, the
 %                                                   CV, output of the Plant)
 %
@@ -14,10 +16,10 @@
 % references base-workspace variable names (Tdref_v_bp_ms,
 % Tdref_ay_bp_ms2, Tdref_table).
 %
-% Table 4 only has POSITIVE a_y (magnitude, no turning direction).
-% ENGINEERING DECISION (self-chosen, not from the source): look up with
-% |a_y|, then multiply by sign(a_y) so T_d,ref has the same sign as the
-% actual steering torque.
+% Table 4 only has POSITIVE a_y (magnitude, no turning direction): look up
+% with |a_y|, then multiply by sign(a_y) so T_d,ref has the same sign as the
+% actual steering torque. The table contains a_y = 0 -> 0, so the product is
+% continuous when a_y changes sign.
 %
 % HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %

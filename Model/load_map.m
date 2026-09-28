@@ -1,15 +1,18 @@
 %% load_map.m
-% Load everything needed to build/simulate the static EPS map controller and
-% its closed loop (Model_Map_s.mdl), in this order:
-%   1. data/map.json  -> Ts_ctrl and the assist table, written by
-%      Map/script/calibrate_map.m (Documents/DieuKhien_Map.txt). Base workspace
-%      variables: Ts_ctrl [s], map_v_bp [m/s] (speed breakpoints), map_Ts_bp
-%      [N.m] (|T_s| breakpoints), map_Ta_table [N.m] (rows = speed, columns = |T_s|);
-%   2. load_plant.m   -> plant parameters (data/params.json), which itself
-%      calls load_derived.m (F_zf, F_zr);
-%   3. load_ref.m     -> Table 4 reference data (data/ref.json).
-%
-% The map has no tuning parameters: the table is the calibration itself.
+% Load everything needed to build/simulate the conventional EPS assist
+% controller (baseline, Documents/Map/map.txt) and its closed loop
+% (Model_Map_s.mdl), in this order:
+%   1. data/map.json  -> written by Map/script/calibrate_map.m. Base workspace
+%      variables:
+%        Ts_ctrl       [s]   ECU sample time of the assist loop
+%        map_v_bp      [m/s] speed breakpoints
+%        map_Ts_bp     [N.m] |T_s| breakpoints
+%        map_Ta_table  [N.m] torque map, rows = speed, columns = |T_s|
+%        map_Tamax     [N.m] saturation T_a,max at map_v_bp
+%        map_lead_num, map_lead_den   one discrete lead stage (Tustin, Ts_ctrl);
+%                                     the controller uses two identical stages
+%   2. load_plant.m   -> plant parameters (data/params.json) and load_derived.m;
+%   3. load_ref.m     -> reference table T_d,ref (data/ref.json, fine table).
 %
 % Usage: run this SCRIPT from any folder: >> run('<Model>/load_map.m')
 
@@ -21,10 +24,14 @@ assignin('base', 'Ts_ctrl',      raw.Ts_ctrl.value);
 assignin('base', 'map_v_bp',     raw.v_breakpoints_kmh(:)'/3.6);
 assignin('base', 'map_Ts_bp',    raw.Ts_breakpoints_Nm(:)');
 assignin('base', 'map_Ta_table', raw.Ta_table_Nm);
+assignin('base', 'map_Tamax',    raw.Ta_max_Nm(:)');
+assignin('base', 'map_lead_num', raw.lead.num(:)');
+assignin('base', 'map_lead_den', raw.lead.den(:)');
 
-fprintf('load_map: static assist map, %d speeds (%g-%g km/h) x %d |T_s| breakpoints, T_a,max = %s N.m, Ts_ctrl=%.3g s\n', ...
-    numel(raw.v_breakpoints_kmh), raw.v_breakpoints_kmh(1), raw.v_breakpoints_kmh(end), numel(raw.Ts_breakpoints_Nm), ...
-    mat2str(round(raw.Ta_table_Nm(:, end)', 2)), raw.Ts_ctrl.value);
+fprintf(['load_map: torque map %d speeds x %d |T_s| points, dead band %.2g N.m, max slope %g, ' ...
+    'T_a,max %.2f-%.2f N.m, 2 lead stages (zero %g, pole %g rad/s), Ts_ctrl = %.3g s\n'], ...
+    numel(raw.v_breakpoints_kmh), numel(raw.Ts_breakpoints_Nm), raw.Ts0.value, raw.Kmax.value, ...
+    min(raw.Ta_max_Nm), max(raw.Ta_max_Nm), raw.lead.zero_rad_s, raw.lead.pole_rad_s, raw.Ts_ctrl.value);
 
 run(fullfile(scriptDir, 'load_plant.m'));
 run(fullfile(scriptDir, 'load_ref.m'));
