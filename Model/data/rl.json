@@ -1,0 +1,38 @@
+{
+  "x_note": "Pure RL assist controller (Documents/RL/DieuKhien_RL.txt). Read by Model/load_rl.m (block parameters) and by Model/RL/script/rl_env.m and train_rl.m (agent and training). Observation spacing and size: section 2.1a of the RL document (chosen by the user). Reward, termination, discount, network training, exploration, curriculum and the low-pass observation of e_T: chosen by Claude for Train1 (section 2.4a) and revised for Train2 (section 2.4b), with the reasons in those sections; provisional.",
+  "Ts_agent": { "value": 0.001, "unit": "s", "desc": "Agent sample time (decision period), same as the Map and PID controllers" },
+  "obs_signals": { "value": ["e_T", "T_s", "theta1", "theta2_dot", "v", "gamma", "a_y"], "unit": "-", "desc": "Measured signals fed to the agent (Blueprint 1.2), in this order" },
+  "obs_scale": { "value": [2, 5, 2, 5, 27.7778, 1, 3.924], "unit": "same as signal", "desc": "Normalization: observation = signal / scale (N.m, N.m, rad, rad/s, m/s, rad/s, m/s^2); a_y scale = 0.4 g, v scale = 100 km/h; provisional" },
+  "n_hist": { "value": 5, "unit": "samples", "desc": "Current sample plus n_hist-1 previous samples of every signal; window = (n_hist-1)*hist_stride*Ts_agent = 20 ms" },
+  "hist_stride": { "value": 5, "unit": "agent samples", "desc": "Spacing D between the history samples in agent samples (5 = 5 ms): the signals used to estimate the rate of change of T_s must be far enough apart to stay above the sensor quantization noise" },
+  "Ta_scale": { "value": 7.804, "unit": "N.m", "desc": "Normalization of the previous assist torque observation = max T_a,max(v)" },
+  "I_tau": { "value": 1, "unit": "s", "desc": "Time constant of the slow observation I = low-pass filter of the MEASURED e_T: I[k+1] = (1 - Ts/tau)*I[k] + (Ts/tau)*e_T[k]. About the 1.3 s time scale of T_s after a mu change (measured). Equivalent to a leaky integral of e_T divided by tau" },
+  "I_scale": { "value": 2, "unit": "N.m", "desc": "Normalization of the slow observation I (same scale as e_T)" },
+  "reward": {
+    "T_ref": { "value": 10, "unit": "N.m", "desc": "Scale in r = -(e_T/T_ref)^2 - w1*(T_a[k-1]-T_a[k-2])^2 - w2*T_a[k-1]^2 (e_T TRUE): keeps the discounted return of order 10, a range the critic network learns well" },
+    "w1": { "value": 0.0003, "unit": "1/N.m^2", "desc": "Smoothness weight chosen so that the smoothness of the Map (mean (dT_a)^2 per 1 ms sample about 0.33 on the Train1 validation episode) costs as much as a tracking error of 0.1 N.m: (0.1/T_ref)^2 / 0.33 = 3e-4 (Train1 used 0.01, which made smoothness 30 to 12000 times heavier than tracking for Map and PID)" },
+    "w2": { "value": 0, "unit": "1/N.m^2", "desc": "Weight of the assist-torque magnitude: 0 (no reason to penalize the assist itself)" }
+  },
+  "done_eT": { "value": 1000000, "unit": "N.m", "desc": "Early termination switched off (threshold unreachable): 10 N.m cut untrained episodes after 61 steps (step 1); episodes are 10 s long instead" },
+  "use_agent": { "value": 1, "unit": "-", "desc": "1: T_a from the agent; 0: T_a = 0 (wiring check with the open-loop plant)" },
+  "episode_s": { "value": 10, "unit": "s", "desc": "Training episode length (10000 agent steps)" },
+  "train": {
+    "gamma": { "value": 0.999, "unit": "-", "desc": "Discount factor: horizon about 1/(1-gamma) = 1000 steps = 1 s, close to the 1.3 s time scale of T_s after a mu change" },
+    "actor_lr": { "value": 0.0001, "unit": "-", "desc": "Actor learning rate (slower than the critic, as in DDPG/TD3 practice)" },
+    "critic_lr": { "value": 0.0001, "unit": "-", "desc": "Critic learning rate, 10 times smaller than in Train1 (1e-3): the training reward collapsed after about 25 episodes, a typical sign of a diverging critic" },
+    "grad_threshold": { "value": 1, "unit": "-", "desc": "Gradient clipping threshold of both optimizers" },
+    "minibatch": { "value": 256, "unit": "transitions", "desc": "Mini-batch size" },
+    "buffer": { "value": 1000000, "unit": "transitions", "desc": "Experience buffer length = 1000 s of driving = the last 100 episodes" },
+    "noise_corr_time_s": { "value": 0.05, "unit": "s", "desc": "Correlation time of the Ornstein-Uhlenbeck exploration noise: white noise at 1 kHz would be filtered out by the steering column, so the noise must last tens of ms" },
+    "noise_std_start": { "value": 0.3, "unit": "N.m", "desc": "Stationary std of the exploration noise at the start (about 4% of the +-7.8 N.m action range)" },
+    "noise_std_min": { "value": 0.05, "unit": "N.m", "desc": "Stationary std after decay" },
+    "noise_decay_steps": { "value": 2000000, "unit": "steps", "desc": "Steps over which the noise std decays from start to min (exponential)" },
+    "chunk_episodes": { "value": 10, "unit": "episodes", "desc": "Episodes per call of train(); after every chunk the progress, validation and agents are written to Result/RL/<run>" },
+    "trial_episodes": { "value": 20, "unit": "episodes", "desc": "First 2e5 steps = trial: the log records whether the validation cost improved" },
+    "curriculum_stage1_episodes": { "value": 40, "unit": "episodes", "desc": "Episodes in stage 1 of the curriculum: dry road, no friction change, smaller lateral acceleration (rl_scenario_random.m)" },
+    "curriculum_stage2_episodes": { "value": 40, "unit": "episodes", "desc": "Episodes in stage 2: mild friction changes (mu1 0.4-0.8); stage 3 (full range) follows" },
+    "max_hours": { "value": 10, "unit": "h", "desc": "Wall-clock budget of the training run (Train1: 3.5 h gave only 110 episodes)" },
+    "max_steps": { "value": 4000000, "unit": "steps", "desc": "Step budget of the training run" },
+    "rng_seed": { "value": 2, "unit": "-", "desc": "Seed of the MATLAB random generator (network init, scenario and noise seeds drawn per episode); 2 so that Train2 does not replay the Train1 draws" }
+  }
+}

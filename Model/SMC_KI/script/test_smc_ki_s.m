@@ -35,8 +35,8 @@ Tsn  = 3 + sin(kk/25) + 0.05*randn(N, 1);
 th1  = 0.3 + 0.1*sin(kk/30);
 th2d = 0.2*sin(kk/10) + 0.02*randn(N, 1);
 vv   = (10 + 100*(0.5 + 0.5*sin(kk/70)))/3.6;   % 10-110 km/h, exercises the table clip
-bnd  = jsondecode(fileread(fullfile(modelDir, 'data', 'boundaries.json')));
-vBp  = bnd.T_a.v_kmh(:)'/3.6; TaMaxTable = bnd.T_a.value(:)';
+bnd = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));   % T_a,max(v) of Ref (field Ta_max)
+vBp  = bnd.Ta_max.v_kmh(:)'/3.6; TaMaxTable = bnd.Ta_max.Ta_max_Nm(:)';
 tIn = [0; ((1:N-1)' - 0.5)*Ts];
 assignin('base', 'test_smc_ki_in', [tIn eT Tsn th1 th2d vv]);
 

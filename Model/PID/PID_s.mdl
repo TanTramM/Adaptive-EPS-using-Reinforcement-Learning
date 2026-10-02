@@ -40,10 +40,10 @@ __MWOPC_PART_BEGIN__ /metadata/coreProperties.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <cp:category>model</cp:category>
-  <dcterms:created xsi:type="dcterms:W3CDTF">2026-09-27T16:49:15Z</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-10-01T11:15:01Z</dcterms:created>
   <dc:creator>Tan_Tram</dc:creator>
   <cp:lastModifiedBy>Tan_Tram</cp:lastModifiedBy>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-09-27T16:49:16Z</dcterms:modified>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-10-01T11:15:12Z</dcterms:modified>
   <cp:revision>1.1</cp:revision>
   <cp:version>R2023a</cp:version>
 </cp:coreProperties>
@@ -106,7 +106,7 @@ __MWOPC_PART_BEGIN__ /simulink/blockdiagram.xml
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
   <Model>
-    <P Name="ModelUUID">cf87582e-685a-41e0-8796-7b4d1ae48bcb</P>
+    <P Name="ModelUUID">f4922b7a-4dd6-40a0-b55a-36fe8fe75e91</P>
     <P Name="LastSavedArchitecture">win64</P>
     <ConfigManagerSettings>
       <P Name="ModifiedByFormat">%&lt;Auto&gt;</P>
@@ -937,8 +937,8 @@ __MWOPC_PART_BEGIN__ /simulink/hdlParams.xml
 __MWOPC_PART_BEGIN__ /simulink/modelDictionary.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <MF0 version="1.1" defaultPackage="slid" packageUris="http://schema.mathworks.com/mf0/slid/R2023a_20220628">
-  <System type="System" uuid="1ec87549-c081-4559-baea-a127278093bf">
-    <Interface type="Interface" uuid="5f9847aa-3e2a-4341-8adc-607b727f3870"/>
+  <System type="System" uuid="65265a52-f348-46fe-a5ff-6fbfc2c1d6f4">
+    <Interface type="Interface" uuid="010892af-1fb7-4c91-ab1a-46b877a2b472"/>
   </System>
 </MF0>
 __MWOPC_PART_BEGIN__ /simulink/ScheduleCore.xml
@@ -1613,9 +1613,9 @@ __MWOPC_PART_BEGIN__ /simulink/systems/system_49.xml
     <P Name="ZOrder">3</P>
     <P Name="InputPortMap">u0</P>
     <P Name="NumberOfTableDimensions">1</P>
-    <P Name="BreakpointsForDimension1">bnd_v_bp</P>
+    <P Name="BreakpointsForDimension1">Tamax_v_bp_ms</P>
     <P Name="BreakpointsForDimension3">[5, 7]</P>
-    <P Name="Table">bnd_Ta_max</P>
+    <P Name="Table">Tamax_table</P>
     <P Name="ExtrapMethod">Clip</P>
     <P Name="InternalRulePriority">Speed</P>
     <P Name="RndMeth">Simplest</P>
@@ -1713,7 +1713,7 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       <Array PropName="PersistedApps" Type="Cell" Dimension="0*1"/>
       <P Name="WindowUuid" Class="char">43a7fe24-6618-44b7-a6c4-7acfaa3515db</P>
     </Object>
-    <P Name="BDUuid" Class="char">1a484516-6e78-477c-a5a5-f42fd346a8a2</P>
+    <P Name="BDUuid" Class="char">fda78d11-347c-471e-b401-52a89807501e</P>
   </Object>
 </WindowsInfo>
 

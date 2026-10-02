@@ -7,16 +7,23 @@
 %   Root level (runnable):
 %     From Workspace  sc_theta1, sc_v, sc_mu   ([t value] matrices in base)
 %       -> Model_PID (subsystem) ->
-%     To Workspace    log_T_s, log_T_d_ref, log_e_T, log_T_a, log_a_y
+%     To Workspace    log_T_s, log_T_d_ref, log_e_T, log_T_a, log_a_y   (TRUE values, scored)
+%                     log_T_s_meas, log_a_y_meas, log_v_meas             (what the controller sees)
 %
 %   Model_PID (subsystem)
 %     In : theta1 (driver angle), v, mu (unmeasured, scenario input)
-%     Out: T_s, T_d_ref, e_T, T_a, a_y
+%     Out: T_s, T_d_ref, e_T, T_a, a_y (true), T_s_meas, a_y_meas, v_meas (measured)
 %     |
 %     +-- Plant       In : theta1, T_a, v, mu   Out: T_s, theta2, a_y, gamma, beta, theta2_dot
-%     +-- Reference   In : T_s, v, a_y          Out: T_d_ref, e_T
+%     +-- Sensors     In : T_s, a_y, v (true)   Out: T_s_meas, a_y_meas, v_meas   (quantizer + hold + noise, data/sensors.json)
+%     +-- Reference   In : T_s, v, a_y (MEASURED)   Out: T_d_ref, e_T   -> feeds the controller
+%     +-- Reference_true In : T_s, v, a_y (TRUE)    Out: T_d_ref, e_T   -> scoring only, NOT wired to the controller
 %     +-- PID         In : e_T, v   Out: T_a
 %
+% The Plant stays noise free (physics). Sensors sit after it: the controller and its Reference see measured values; the
+% extra Reference_true is an "instrument of the experimenter": it reads true values and only feeds the logged outputs, so
+% the scored e_T is what the driver feels (Documents/Sim/ThucTeHoa.txt Mục 0). Default sensor level is 'none' = ideal, chain bypassed (load_sensors.m).
+% Goto tags: *_true = true values, plain names (T_s, a_y, v, e_T) = measured values read by Reference and controller.
 % Ports are wired by NAME; a controller port is only wired if the
 % controller has it. T_a closes the loop back into the Plant (Goto/From);
 % every signal used in more than one place goes through Goto/From. Unused
@@ -39,6 +46,7 @@ modelName = ['Model_' ctrlName '_s'];
 scriptDir = fileparts(mfilename('fullpath'));   % PID/script
 ctrlDir   = fileparts(scriptDir);               % PID/
 modelDir  = fileparts(ctrlDir);                 % Model/
+addpath(fullfile(modelDir, 'Sim', 'script'));   % add_sensors.m
 
 src = {fullfile(modelDir, 'Plant', 'Plant_s.mdl'), ...
        fullfile(modelDir, 'Ref',   'Reference_s.mdl'), ...
@@ -80,7 +88,7 @@ for i = 1:numel(ins)
     moveBlock(blk, 60, 60 + 60*(i-1));
     add_line(modelName, ['From Workspace ' ins{i} '/1'], portRef(sub, ins{i}), 'autorouting', 'on');
 end
-outs = {'T_s', 'T_d_ref', 'e_T', 'T_a', 'a_y'};
+outs = {'T_s', 'T_d_ref', 'e_T', 'T_a', 'a_y', 'T_s_meas', 'a_y_meas', 'v_meas'};
 for i = 1:numel(outs)
     blk = [modelName '/To Workspace ' outs{i}];
     add_block('simulink/Sinks/To Workspace', blk);
@@ -112,11 +120,15 @@ function buildClosedLoop(sub, srcNames, ctrlName)
     moveBlock([sub '/Plant'], 600, 60);
     add_block(findRootSubsystem(srcNames{2}), [sub '/Reference']);
     moveBlock([sub '/Reference'], 1000, 60);
+    add_block(findRootSubsystem(srcNames{2}), [sub '/Reference_true']);
+    moveBlock([sub '/Reference_true'], 1000, 600);
+    sens = add_sensors(sub, {'T_s', 'a_y', 'v'}, 760, 60);
     add_block(findRootSubsystem(srcNames{3}), [sub '/' ctrlName]);
     moveBlock([sub '/' ctrlName], 300, 400);
 
     plant = [sub '/Plant'];
     ref   = [sub '/Reference'];
+    refTrue = [sub '/Reference_true'];
     ctl   = [sub '/' ctrlName];
 
     % ----- External inputs / outputs -----
@@ -129,29 +141,47 @@ function buildClosedLoop(sub, srcNames, ctrlName)
     addOutport(sub, 'e_T',     3, 1400, 220);
     addOutport(sub, 'T_a',     4, 1400, 300);
     addOutport(sub, 'a_y',     5, 1400, 380);
+    addOutport(sub, 'T_s_meas', 6, 1400, 460);
+    addOutport(sub, 'a_y_meas', 7, 1400, 540);
+    addOutport(sub, 'v_meas',   8, 1400, 620);
 
     % ----- Scenario inputs -----
     g_th1 = addGoto(sub, 'theta1', 120, 60);
     add_line(sub, 'theta1/1', [g_th1 '/1'], 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'theta1', 500, 60) '/1'], portRef(plant, 'theta1'), 'autorouting', 'on');
 
-    g_v = addGoto(sub, 'v', 120, 140);
+    g_v = addGoto(sub, 'v_true', 120, 140);
     add_line(sub, 'v/1', [g_v '/1'], 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'v', 500, 180) '/1'], portRef(plant, 'v'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'v_true', 500, 180) '/1'], portRef(plant, 'v'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'v_true', 500, 220) '/1'], portRef(sens, 'v'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'v_true', 900, 640) '/1'], portRef(refTrue, 'v'), 'autorouting', 'on');
+    g_vm = addGoto(sub, 'v', 900, 260);   % measured
+    add_line(sub, portRef(sens, 'v_meas'), [g_vm '/1'], 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'v', 900, 100) '/1'], portRef(ref, 'v'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'v', 1320, 620) '/1'], 'v_meas/1', 'autorouting', 'on');
 
     add_line(sub, 'mu/1', portRef(plant, 'mu'), 'autorouting', 'on');
 
     % ----- Plant outputs -----
-    g_Ts = addGoto(sub, 'T_s', 860, 60);
+    g_Ts = addGoto(sub, 'T_s_true', 700, 60);
     add_line(sub, portRef(plant, 'T_s'), [g_Ts '/1'], 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'T_s_true', 700, 100) '/1'], portRef(sens, 'T_s'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'T_s_true', 900, 660) '/1'], portRef(refTrue, 'T_s'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'T_s_true', 1320, 60) '/1'], 'T_s/1', 'autorouting', 'on');
+    g_Tsm = addGoto(sub, 'T_s', 900, 300);   % measured
+    add_line(sub, portRef(sens, 'T_s_meas'), [g_Tsm '/1'], 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'T_s', 900,  60) '/1'], portRef(ref, 'T_s'), 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'T_s', 1320, 60) '/1'], 'T_s/1', 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'T_s', 1320, 460) '/1'], 'T_s_meas/1', 'autorouting', 'on');
 
-    g_ay = addGoto(sub, 'a_y', 860, 180);
+    g_ay = addGoto(sub, 'a_y_true', 700, 180);
     add_line(sub, portRef(plant, 'a_y'), [g_ay '/1'], 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'a_y_true', 700, 220) '/1'], portRef(sens, 'a_y'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'a_y_true', 900, 680) '/1'], portRef(refTrue, 'a_y'), 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'a_y_true', 1320, 380) '/1'], 'a_y/1', 'autorouting', 'on');
+    g_aym = addGoto(sub, 'a_y', 900, 340);   % measured
+    add_line(sub, portRef(sens, 'a_y_meas'), [g_aym '/1'], 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'a_y', 900, 140) '/1'], portRef(ref, 'a_y'), 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'a_y', 1320, 380) '/1'], 'a_y/1', 'autorouting', 'on');
+    add_line(sub, [addFrom(sub, 'a_y', 1320, 540) '/1'], 'a_y_meas/1', 'autorouting', 'on');
 
     g_th2d = addGoto(sub, 'theta2_dot', 860, 300);
     add_line(sub, portRef(plant, 'theta2_dot'), [g_th2d '/1'], 'autorouting', 'on');
@@ -164,10 +194,15 @@ function buildClosedLoop(sub, srcNames, ctrlName)
     end
 
     % ----- Reference outputs -----
+    % measured Reference -> controller only (its T_d_ref output is not used)
     g_eT = addGoto(sub, 'e_T', 1200, 220);
     add_line(sub, portRef(ref, 'e_T'), [g_eT '/1'], 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'e_T', 1320, 220) '/1'], 'e_T/1', 'autorouting', 'on');
-    add_line(sub, portRef(ref, 'T_d_ref'), 'T_d_ref/1', 'autorouting', 'on');
+    hT = add_block('simulink/Sinks/Terminator', [sub '/Terminator'], 'MakeNameUnique', 'on');
+    moveBlock(hT, 1200, 150);
+    add_line(sub, portRef(ref, 'T_d_ref'), [get_param(hT, 'Name') '/1'], 'autorouting', 'on');
+    % scoring Reference (true values) -> logged outputs only
+    add_line(sub, portRef(refTrue, 'e_T'), 'e_T/1', 'autorouting', 'on');
+    add_line(sub, portRef(refTrue, 'T_d_ref'), 'T_d_ref/1', 'autorouting', 'on');
 
     % ----- Controller inputs (only the ports it has) -----
     ctlIns = get_param(find_system(ctl, 'SearchDepth', 1, 'BlockType', 'Inport'), 'Name');

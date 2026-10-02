@@ -13,7 +13,7 @@ function test_model_map()
 %   (2) Plant wiring: at the end (steady state, T_a held constant), T_s and
 %       a_y equal the Newton steady state of the plant equations for the
 %       final (theta1, T_a, v, mu).
-%   (3) Map wiring: everything is steady at the end and the lead stages have DC gain 1, so T_a(end) equals the
+%   (3) Map wiring: everything is steady at the end and the lead stage has DC gain 1, so T_a(end) equals the
 %       torque map evaluated at the final (v, T_s), saturated at +-T_a,max(v), computed independently from
 %       data/map.json (clipped 2-D interpolation, odd in T_s).
 
@@ -80,8 +80,8 @@ vBp = mp.v_breakpoints_kmh(:)'/3.6;  tsBp = mp.Ts_breakpoints_Nm(:)';
 TsEnd = Ts.Data(end);
 vcl = min(max(v, vBp(1)), vBp(end));
 TaMap = sign(TsEnd)*interp2(tsBp, vBp, mp.Ta_table_Nm, min(max(abs(TsEnd), tsBp(1)), tsBp(end)), vcl, 'linear');
-TaLim = interp1(vBp, mp.Ta_max_Nm(:)', vcl, 'linear');
-TaMap = max(-TaLim, min(TaMap, TaLim));   % lead stages have DC gain 1 -> steady T_a = saturated static map
+TaLim = interp1(vBp, rawRef.Ta_max.Ta_max_Nm(:)', vcl, 'linear');
+TaMap = max(-TaLim, min(TaMap, TaLim));   % lead stage has DC gain 1 -> steady T_a = saturated static map
 assert(abs(Ta.Data(end) - TaMap) < 1e-3, '(3) Map: T_a(end) = %.6g, map at (v, T_s(end)) = %.6g', Ta.Data(end), TaMap);
 
 fprintf(['[%s] TEST PASS: e_T = T_s - T_d_ref (max err %.2g); T_d_ref(end) = %.5g matches the fine reference table; ' ...
@@ -131,6 +131,6 @@ function [F_yf, F_yr, T_r] = tireModel(P, theta2, beta, gamma, v, mu)
     B_r = P.C_r / (P.C * D_r);
     u_r = B_r * alpha_r;
     F_yr = D_r * sin(P.C * atan(u_r - P.E*(u_r - atan(u_r))));
-    e_p = max(0, P.e_p0 - sign(alpha_f) * P.e_p0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
+    e_p = P.e_p0 - P.t_0 + max(0, P.t_0 - sign(alpha_f) * P.t_0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
     T_r = e_p / P.n_st * F_yf;
 end

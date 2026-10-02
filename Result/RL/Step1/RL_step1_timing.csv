@@ -1,0 +1,12 @@
+Configuration,Mode,Run,Simulated_s,Wall_s,Wall_per_simulated_s
+"Map baseline (Model_Map_s)",normal,1,30,2.7618526,0.0920617533333333
+"Map baseline (Model_Map_s)",normal,2,30,1.2083319,0.04027773
+"RL model, T_a = 0",normal,1,30,24.2326432,0.807754773333333
+"RL model, T_a = 0",normal,2,30,18.7678344,0.62559448
+"RL model, untrained agent",normal,1,30,17.5706246,0.585687486666667
+"RL model, untrained agent",normal,2,30,13.0773297,0.43591099
+"RL model, untrained agent",accelerator,1,30,12.583471,0.419449033333333
+"RL model, untrained agent",accelerator,2,30,11.9853827,0.399512756666667
+"Training TD3, 3 episodes x 2000 steps (6000 steps done)",normal,1,6,40.1204279,6.68673798333333
+"Training TD3, 3 episodes x 4000 steps (12000 steps done)",normal,1,12,77.9995338,6.49996115
+"Training TD3, marginal cost (difference of the two runs)",normal,1,6,37.8791059,6.31318431666667

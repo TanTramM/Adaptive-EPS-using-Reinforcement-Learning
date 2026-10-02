@@ -387,7 +387,7 @@ def build(txt_path, docx_path):
             t.autofit = False
             def vis(x):
                 return len(INLINE.sub(lambda mm_: 'x' * max(2, len(mm_.group(1)) // 3), x))
-            wts = [max(9, min(45, max(vis(r_[ci]) + (3 if ri_ == 0 else 0) if ci < len(r_) else 0 for ri_, r_ in enumerate(rows)))) for ci in range(ncol)]
+            wts = [max(12, min(45, max(vis(r_[ci]) + (3 if ri_ == 0 else 0) if ci < len(r_) else 0 for ri_, r_ in enumerate(rows)))) for ci in range(ncol)]
             tot = float(sum(wts))
             widths = [text_width * w_ / tot for w_ in wts]
             for ri, rw in enumerate(rows):

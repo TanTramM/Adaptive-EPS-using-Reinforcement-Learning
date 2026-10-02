@@ -77,26 +77,26 @@ Mô-men phản hồi $T_r$ lớn nhất trên đường khô, nên nhu cầu tr�
   (6)  T_a,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_d,ref(v, a_y)]
   [ T_{a,max}(v)=\max_{0\le a_y\le a_{y,lim}(v)}\big[T_r(v,a_y,0.8)-T_{d,ref}(v,a_y)\big] ]
 
-$T_r$ tại mỗi điểm được tính bằng cách giải trạng thái xác lập của mô hình ở gia tốc ngang cho trước. Ở trạng thái xác lập, cân bằng mô-men quanh trọng tâm cho lực bên cầu trước $F_{yf} = m a_y l_r / (l_f + l_r)$; góc trượt cầu trước và pneumatic trail do đó chỉ phụ thuộc $a_y$ và $\mu$, nên $T_r$ không phụ thuộc vận tốc: tại 0.4 g, $T_r = 9.00$ N.m ở mọi tốc độ. Kết quả ở Bảng 3 cho thấy hiệu $T_r - T_{d,ref}$ tăng theo gia tốc ngang, nên giá trị lớn nhất luôn nằm tại $a_{y,lim}$. Từ 30 km/h trở lên, $a_{y,lim} = 0.4$ g và $T_{a,max}$ giảm dần theo vận tốc chỉ vì $T_{d,ref}$ tăng theo vận tốc. Ở 20 km/h và 25 km/h, giới hạn góc nhỏ của mô hình chặn gia tốc ngang dưới 0.4 g nên $T_{a,max}$ thấp hơn hẳn.
+$T_r$ tại mỗi điểm được tính bằng cách giải trạng thái xác lập của mô hình ở gia tốc ngang cho trước. Ở trạng thái xác lập, cân bằng mô-men quanh trọng tâm cho lực bên cầu trước $F_{yf} = m a_y l_r / (l_f + l_r)$; góc trượt cầu trước và pneumatic trail do đó chỉ phụ thuộc $a_y$ và $\mu$, nên $T_r$ không phụ thuộc vận tốc: tại 0.4 g, $T_r = 9.92$ N.m ở mọi tốc độ. Kết quả ở Bảng 3 cho thấy hiệu $T_r - T_{d,ref}$ tăng theo gia tốc ngang, nên giá trị lớn nhất luôn nằm tại $a_{y,lim}$. Từ 30 km/h trở lên, $a_{y,lim} = 0.4$ g và $T_{a,max}$ giảm dần theo vận tốc chỉ vì $T_{d,ref}$ tăng theo vận tốc. Ở 20 km/h và 25 km/h, giới hạn góc nhỏ của mô hình chặn gia tốc ngang dưới 0.4 g nên $T_{a,max}$ thấp hơn hẳn.
 Bảng 3: Nhu cầu trợ lực lớn nhất theo vận tốc ($\mu = 0.8$, trạng thái xác lập)
 $v$ [km/h] | $a_{y,lim}$ [g] | $T_r$ [N.m] | $T_{d,ref}$ [N.m] | $T_{a,max}$ [N.m]
-20 | 0.201 | 5.016 | 1.501 | 3.515
-25 | 0.310 | 7.336 | 1.809 | 5.527
-30 | 0.400 | 8.997 | 2.113 | 6.884
-35 | 0.400 | 8.997 | 2.260 | 6.737
-40 | 0.400 | 8.997 | 2.400 | 6.597
-45 | 0.400 | 8.997 | 2.534 | 6.463
-50 | 0.400 | 8.997 | 2.663 | 6.334
-55 | 0.400 | 8.997 | 2.785 | 6.212
-60 | 0.400 | 8.997 | 2.900 | 6.097
-65 | 0.400 | 8.997 | 3.018 | 5.980
-70 | 0.400 | 8.997 | 3.136 | 5.862
-75 | 0.400 | 8.997 | 3.236 | 5.761
-80 | 0.400 | 8.997 | 3.300 | 5.697
-85 | 0.400 | 8.997 | 3.338 | 5.659
-90 | 0.400 | 8.997 | 3.370 | 5.627
-95 | 0.400 | 8.997 | 3.392 | 5.605
-100 | 0.400 | 8.997 | 3.400 | 5.597
+20 | 0.201 | 5.238 | 1.501 | 3.737
+25 | 0.310 | 7.875 | 1.810 | 6.066
+30 | 0.400 | 9.917 | 2.113 | 7.804
+35 | 0.400 | 9.917 | 2.260 | 7.657
+40 | 0.400 | 9.917 | 2.400 | 7.517
+45 | 0.400 | 9.917 | 2.534 | 7.383
+50 | 0.400 | 9.917 | 2.663 | 7.254
+55 | 0.400 | 9.917 | 2.785 | 7.132
+60 | 0.400 | 9.917 | 2.900 | 7.017
+65 | 0.400 | 9.917 | 3.018 | 6.900
+70 | 0.400 | 9.917 | 3.136 | 6.781
+75 | 0.400 | 9.917 | 3.236 | 6.681
+80 | 0.400 | 9.917 | 3.300 | 6.617
+85 | 0.400 | 9.917 | 3.338 | 6.579
+90 | 0.400 | 9.917 | 3.370 | 6.547
+95 | 0.400 | 9.917 | 3.392 | 6.525
+100 | 0.400 | 9.917 | 3.400 | 6.517
 
-Bảng 3 là nhu cầu trợ lực ước lượng từ mô hình, không phải khả năng của motor: luận văn không có số liệu motor cụ thể, nên giả thiết motor luôn sinh được $T_{a,max}$. Vì $T_r$ tỉ lệ thuận với $e_{p0}$ (Tự chọn(3) của chương trước), độ lớn của $T_{a,max}$ chỉ đúng về bậc độ lớn; điều quan trọng cho bài toán là mọi bộ điều khiển được so sánh với cùng một giới hạn. Ràng buộc đặt lên mô-men trợ lực vì vậy là $|T_a| \le T_{a,max}(v)$, nội suy tuyến tính theo vận tốc giữa các hàng của Bảng 3.
+Bảng 3 là nhu cầu trợ lực ước lượng từ mô hình, không phải khả năng của motor: luận văn không có số liệu motor cụ thể, nên giả thiết motor luôn sinh được $T_{a,max}$. Vì $T_r$ tỉ lệ thuận với cánh tay đòn $e_p$ (Tự chọn(3) và (4) của chương trước), độ lớn của $T_{a,max}$ chỉ đúng về bậc độ lớn; điều quan trọng cho bài toán là mọi bộ điều khiển được so sánh với cùng một giới hạn. Ràng buộc đặt lên mô-men trợ lực vì vậy là $|T_a| \le T_{a,max}(v)$, nội suy tuyến tính theo vận tốc giữa các hàng của Bảng 3.
 ==============================================================================================================================================================================================

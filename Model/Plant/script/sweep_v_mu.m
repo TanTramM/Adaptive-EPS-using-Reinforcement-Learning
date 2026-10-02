@@ -33,7 +33,7 @@ raw = jsondecode(fileread(fullfile(modelDir, 'data', 'params.json')));
 p2 = raw.cum2;
 m_ = p2.m.value; l_f = p2.l_f.value; l_r = p2.l_r.value; g_ = p2.g.value;
 C_alpha_f = p2.C_alpha_f.value; C_r = p2.C_r.value;
-C_ = p2.C.value; E_ = p2.E.value; n_st = p2.n_st.value; e_p0 = p2.e_p0.value;
+C_ = p2.C.value; E_ = p2.E.value; n_st = p2.n_st.value; e_p0 = p2.e_p0.value; t_0 = p2.t_0.value;
 
 rawRef = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
 v_bp_ms   = rawRef.v_breakpoints_kmh(:)' / 3.6;
@@ -108,7 +108,7 @@ for iv = 1:nV
         ay_end    = simOut.get('a_y_log').Data(end);
 
         T_r_end = analytic_Tr(theta_end, beta_end, gamma_end, v_ms, mu_val, ...
-            m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0);
+            m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0, t_0);
 
         v_clip  = min(max(v_ms, min(v_bp_ms)), max(v_bp_ms));
         ay_clip = min(max(abs(ay_end), min(ay_bp_ms2)), max(ay_bp_ms2));
@@ -177,7 +177,7 @@ for imu = 1:nMu
     betaVec  = simOut.get('beta_log').Data;
     gammaVec = simOut.get('gamma_log').Data;
     TrVec = arrayfun(@(k) analytic_Tr(thetaVec(k), betaVec(k), gammaVec(k), v_plot_ms, mu_val, ...
-        m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0), 1:numel(tVec));
+        m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0, t_0), 1:numel(tVec));
 
     plot(tVec, TrVec, 'Color', colors(imu,:), 'LineWidth', 1.5, ...
         'DisplayName', sprintf('\\mu=%.1f', mu_val));
@@ -197,14 +197,14 @@ fprintf('Da luu do thi: %s\n', outPng);
 end
 
 %% ===================== Ham tien ich =====================
-function T_r = analytic_Tr(theta, beta, gamma, v, mu, m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0)
+function T_r = analytic_Tr(theta, beta, gamma, v, mu, m_, l_f, l_r, g_, C_alpha_f, C_r, C_, E_, n_st, e_p0, t_0)
     delta_f = theta / n_st;
     alpha_f = delta_f - beta - l_f*gamma/v;
     F_zf = m_*g_*l_r / (l_f + l_r);
     D = mu * F_zf;
     B = C_alpha_f / (C_ * D);
     F_yf = D * sin(C_ * atan(B*alpha_f - E_*(B*alpha_f - atan(B*alpha_f))));
-    e_p = e_p0 - sign(alpha_f) * e_p0 * C_alpha_f * tan(alpha_f) / (3*mu*F_zf);
+    e_p = e_p0 - t_0 + max(0, t_0 - sign(alpha_f) * t_0 * C_alpha_f * tan(alpha_f) / (3*mu*F_zf));
     K_tr = e_p / n_st;
     T_r = K_tr * F_yf;
 end

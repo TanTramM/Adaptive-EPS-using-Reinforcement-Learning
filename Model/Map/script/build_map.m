@@ -5,7 +5,7 @@
 %
 %   T_s[k], v[k] sampled at Ts_ctrl (ZOH)
 %   T_a_map[k] = sgn(T_s[k]) * M(v[k], |T_s[k]|)        torque map (2-D table)
-%   T_a_c      = H(z)^2 * T_a_map                        two lead stages
+%   T_a_c      = H(z) * T_a_map                          one lead stage
 %   T_a_max[k] = T_a,max(v[k])                           1-D table
 %   T_a        = max(-T_a_max, min(T_a_c, T_a_max))      saturation
 %
@@ -111,15 +111,13 @@ function buildTaMap(s)
     add_line(s, 'Prod_Ta_map/1', 'T_a_map/1', 'autorouting', 'on');
 end
 
-%% ===================== T_a_c = H(z)^2 * T_a_map ========================
+%% ===================== T_a_c = H(z) * T_a_map =========================
 function buildTaC(s)
     addInport(s, 'T_a_map', 1, 40, 60);
-    addOutport(s, 'T_a_c', 1, 440, 60);
-    addLead(s, 'Lead_1', 150, 50);
-    addLead(s, 'Lead_2', 290, 50);
-    add_line(s, 'T_a_map/1', 'Lead_1/1', 'autorouting', 'on');
-    add_line(s, 'Lead_1/1',  'Lead_2/1', 'autorouting', 'on');
-    add_line(s, 'Lead_2/1',  'T_a_c/1',  'autorouting', 'on');
+    addOutport(s, 'T_a_c', 1, 320, 60);
+    addLead(s, 'Lead', 160, 50);
+    add_line(s, 'T_a_map/1', 'Lead/1', 'autorouting', 'on');
+    add_line(s, 'Lead/1',    'T_a_c/1', 'autorouting', 'on');
 end
 
 %% ===================== T_a_max = T_a,max(v) ============================
@@ -244,7 +242,7 @@ function addZOH(sys, name, x, y)
 end
 
 function addLead(sys, name, x, y)
-% Lead_<n>: one discrete lead stage (Tustin), coefficients from load_map.m.
+% Lead: the discrete lead stage (Tustin), coefficients from load_map.m.
     full = [sys '/' name];
     add_block('simulink/Discrete/Discrete Transfer Fcn', full);
     set_param(full, 'Numerator', 'map_lead_num', 'Denominator', 'map_lead_den', 'SampleTime', 'Ts_ctrl');

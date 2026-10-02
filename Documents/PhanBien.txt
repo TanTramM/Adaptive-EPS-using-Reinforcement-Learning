@@ -1,0 +1,121 @@
+==============================================================================================================================================================================================
+CÂU HỎI PHẢN BIỆN VÀ CÁCH TRẢ LỜI
+==============================================================================================================================================================================================
+File dùng chung cho toàn luận văn, chia section theo chương. Mỗi mục gồm: câu hỏi hội đồng có thể đặt, câu trả lời ngắn (nói miệng được trong 30 giây), cơ sở và số liệu kèm theo để trả lời khi
+bị hỏi sâu, và điểm yếu thật cần thừa nhận. Nguyên tắc: không chối điểm yếu đã biết, nêu rõ nó ảnh hưởng tới kết luận nào và đã kiểm tra độ nhạy ra sao. Cập nhật dần sau mỗi lần phản biện với
+người hướng dẫn hoặc khi phát hiện thêm điểm yếu.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục lục các section
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P. Mô hình đối tượng (Plant)           - chương plant.txt
+R. Giá trị đặt và giới hạn trợ lực     - chương ref.txt
+M. Bản đồ trợ lực truyền thống (Map)   - chương map.txt
+T. Ca thử và chỉ tiêu đánh giá         - chương TestCases.txt
+C. Bộ điều khiển PID, SMC              - đang làm (PID chỉnh lại bằng pidtune ở 1 ms, SMC chưa)
+L. Học tăng cường (RL)                 - đang làm (chương rl.txt chưa viết)
+G. Câu hỏi chung toàn luận văn         - phạm vi, đóng góp, tính mới
+
+==============================================================================================================================================================================================
+P. MÔ HÌNH ĐỐI TƯỢNG (PLANT)
+==============================================================================================================================================================================================
+P1. Cánh tay đòn của mô-men phản hồi: vì sao tách độ lệch caster khỏi pneumatic trail, và các con số 48 mm, 25 mm lấy ở đâu?
+Câu hỏi có thể đặt: "Mô-men phản hồi trên tay lái tính bằng lực bên nhân một khoảng lệch $e_p$. Em lấy khoảng lệch này từ đâu? Khi lốp trượt hoàn toàn thì mô-men phản hồi có về không không?
+Con số 48 mm có nguồn không, hay em chọn để kết quả đẹp?"
+Trả lời ngắn: Khoảng lệch gồm hai phần theo đúng [2] (PT 1.14) và [4] (PT 3-4): độ lệch caster $e_c$ là hình học của trụ quay lái, cố định; pneumatic trail $t$ là do áp suất phân bố trên vết
+tiếp xúc, co dần về không khi lốp trượt. Mô hình chỉ cho phần pneumatic co lại, nên khi lốp bão hòa mô-men phản hồi không về không mà còn $e_c F_{yf}/n_{st}$. Tổng 48 mm và tỉ lệ chia 25/23 mm
+đều là tự chọn vì không có số đo của một xe cụ thể; vì vậy độ lớn của trợ lực thừa được báo cáo kèm độ nhạy trên toàn dải, không dựa vào một con số.
+Cơ sở:
+Cấu trúc. [2] mục 1.3 PT (1.14) viết mô-men quanh trụ quay lái với cánh tay đòn gồm chiều dài caster và pneumatic trail. [4] mục 2 PT (3) viết $T_z = F_Y(e_m + e_p)$, nêu rõ độ lệch cơ khí
+$e_m$ là hằng số, và PT (4) co theo góc trượt và hệ số bám chỉ áp cho $e_p$ khí nén. Mô hình dùng đúng cấu trúc này: $e_p = e_c + \max(0, t_0 - \ldots)$ (PT (17) plant.txt).
+Pneumatic trail. [2] mục 3.2 PT (3.13): ở góc trượt bằng không bằng một phần ba nửa chiều dài vết tiếp xúc, và bằng không khi trượt hoàn toàn (PT (3.13a)); mục 1.2: khoảng một phần tư chiều
+dài vết tiếp xúc. Với nửa vết tiếp xúc 50-70 mm cho 17-35 mm; chọn giá trị giữa $t_0 = 25$ mm theo quy tắc đặt ra trước khi chạy mô phỏng.
+Tổng 48 mm. Tự chọn(3), từ hai ước lượng cùng cho dải 30-60 mm: pneumatic trail cộng caster, và mô-men phản hồi vài N.m ứng với lực bên vài nghìn N. Mô-men phản hồi tỉ lệ thuận với tổng này
+nên độ lớn của $T_r$ chỉ đúng về bậc độ lớn.
+Độ nhạy (plant.txt Bảng 6, mô phỏng hở vòng, 0.2 g, $\mu$ từ 0.8 xuống 0.3): $t_0 = 0$ (toàn caster) mô-men cảm biến giảm 0.8-2.7%; dải của [2] (17-35 mm) giảm 6-13%; $t_0 = 25$ mm (chọn) giảm
+9-10%; $t_0 = 48$ mm (toàn pneumatic) giảm 18%. Chiều của hiện tượng (mô-men giảm khi $\mu$ giảm) không phụ thuộc $t_0$.
+Điểm yếu thật: tỉ lệ caster/pneumatic không có nguồn đo; nửa vết tiếp xúc 50-70 mm là ước lượng thông thường, không có trong tài liệu tham khảo. Nếu có thông số hình học treo của một xe cụ thể
+thì thay vào là chốt được. Không có số đo nào cho nên không được nói "con số này đúng", chỉ được nói "kết luận định tính không đổi trên toàn dải".
+Ảnh hưởng tới kết quả (đã chạy lại toàn bộ): khi lốp bão hòa mô-men phản hồi không còn mất hẳn, nên các ca nguy hiểm nhẹ đi rõ rệt so với bản đầu gộp caster vào phần co lại. TC3 (μ giảm khi
+cua gấp 100 km/h): $e_{rel}$ từ -99.99% xuống -14.1%; TC4 (vũng nước): từ -98.8% xuống -83.6%; TC2 (cua 0.25 g, μ = 0.3): từ -7.85% xuống -3.5%; mô phỏng hở vòng 0.2 g: từ 18% xuống 9-10%.
+Giới hạn trợ lực $T_{a,max}$ tăng 6-16% (+0.92 N.m từ 30 km/h trở lên, ví dụ 6.1 lên 7.0 N.m ở 60 km/h) vì $T_r$ ở 0.4 g tăng từ 9.0 lên 9.9 N.m; độ dốc tự nhiên của bản đồ trong vùng 0.1-0.3 g tăng tới 17.9 nên
+$K_{max}$ đổi từ 10 sang 18 và khâu lead thiết kế lại (80 và 680 rad/s, độ dự trữ pha 45.8 độ).
+Nếu bị hỏi vì sao bản đầu làm khác: bản đầu gộp caster vào $e_{p0}$ và chỉ nêu đó là hạn chế, vì mọi kịch bản lúc đó nằm trong vùng chưa trượt hoàn toàn, nơi cách gộp không ảnh hưởng. Khi thêm
+các ca nguy hiểm (lốp bão hòa) thì giả thiết này trở nên quyết định, nên đã tách lại theo [2], [4] và chạy lại toàn bộ. Trả lời thẳng, không chối: đây là chỗ phát hiện và sửa, không phải chỗ
+che.
+
+==============================================================================================================================================================================================
+R. GIÁ TRỊ ĐẶT VÀ GIỚI HẠN TRỢ LỰC
+==============================================================================================================================================================================================
+(chưa có câu hỏi)
+
+==============================================================================================================================================================================================
+M. BẢN ĐỒ TRỢ LỰC TRUYỀN THỐNG (MAP)
+==============================================================================================================================================================================================
+(chưa có câu hỏi)
+
+==============================================================================================================================================================================================
+T. CA THỬ VÀ CHỈ TIÊU ĐÁNH GIÁ
+==============================================================================================================================================================================================
+(chưa có câu hỏi)
+
+==============================================================================================================================================================================================
+C. BỘ ĐIỀU KHIỂN PID, SMC
+==============================================================================================================================================================================================
+C1. PID ở chu kỳ 1 ms được chỉnh thế nào, và PID dùng để so sánh với Map và RL đã được chỉnh công bằng chưa?
+Câu hỏi có thể đặt: "Em nói PID chỉnh bằng Ziegler-Nichols. Ở 1 ms quy tắc đó cho gì? Em chỉnh PID theo tiêu chí nào, có cố tình làm PID yếu hay mạnh hơn Map không?"
+Trả lời ngắn: Ziegler-Nichols không dùng được ở 1 ms (độ lợi tới hạn cỡ 2000-4000, cho Kp cỡ 2458 và T_a đảo chiều từng mẫu). PID được chỉnh bằng pidtune trên ĐÚNG mô hình tuyến tính đã dùng
+để thiết kế khâu lead của Map, cùng tiêu chí độ dự trữ pha ít nhất 45 độ theo [1], và cùng tần số cắt với vòng Map ở độ dốc lớn nhất (286 rad/s). Hai bộ điều khiển vì vậy nhanh như nhau, có
+độ dự trữ tương đương (PID 54.0 độ, 6.60 lần; Map 45.8 độ, 6.12 lần) và độ lợi cao tần ngang nhau (cỡ 156 và 153); khác biệt kết quả đến từ cấu trúc, không từ việc một bên được chỉnh mạnh
+hơn.
+Cơ sở:
+ZN: find_ultimate_gain.m ở 1 ms, 20 km/h, mu = 0.2, a_y = 0.1 g: tắt dần đến Kp = 1024, duy trì dao động ở Kp = 4096, Pu = 4.0 ms. Hệ số ZN Kp = 2458, Ki = 1.2e6 chạy 6 ca: TV(T_a) 2774-5191
+N.m/s (Result/PID/TestCases_ZN1ms/).
+Chỉnh mới (tune_pid.m, DieuKhien_PID.txt mục 8.2): G1 = K/(J s^2 + C s + K + k_r) và G0 (k_r = 0), giữ bậc không 1 ms; pidtune('PIDF', 286.2 rad/s, PhaseMargin 45) cho Kp = 16.48, Ki =
+266.9, Kd = 0.203, T_filt = 1.452 ms; dạng rời rạc Euler tiến của pidtune trùng với cài đặt trong Simulink. Độ dự trữ kiểm trên cả G1 và G0.
+Điểm yếu thật: mô hình thiết kế tuyến tính bỏ qua ma sát khô và phi tuyến lốp (Map cũng thế); tần số cắt bằng Map là một lựa chọn, bản bảo thủ 143 rad/s chưa chạy; chưa có nhiễu cảm biến;
+T_a của PID có gợn và gai khi mu nhảy bậc (DieuKhien_PID.txt 8.4).
+
+
+==============================================================================================================================================================================================
+L. HỌC TĂNG CƯỜNG (RL)
+==============================================================================================================================================================================================
+L1. Tín hiệu nào cho agent biết hệ số bám $\mu$ đã đổi, và ở dải làm việc nào?
+Câu hỏi có thể đặt: "Em nói RL thích ứng được khi $\mu$ đổi mà không cần ước lượng $\mu$. Vậy agent dựa vào tín hiệu nào để biết $\mu$ đổi? Bản đồ tra bảng không biết thì RL biết bằng cách
+nào?"
+Trả lời ngắn: Trong vùng lái nhẹ (dưới khoảng 0.15 g) gia tốc ngang và tốc độ quay thân xe gần như không đổi khi $\mu$ đổi, nên không có tín hiệu cảnh báo sớm nào; tín hiệu duy nhất đổi rõ
+là mô-men cảm biến $T_s$, tức sai số $e_T$ đã xảy ra, và ở vùng này agent phản ứng sau như một bộ điều khiển phản hồi thông thường. Dấu vết của $\mu$ trong $a_y$ chỉ rõ khi xe chạy gần giới
+hạn bám (từ khoảng 0.25 g), đúng vùng mà trợ lực thừa nguy hiểm; chỗ khác biệt thật của RL so với bản đồ nằm ở vùng này và ở khả năng bám khi độ lợi của plant thay đổi theo vận tốc.
+Cơ sở:
+Phép đo (kết quả Result/RL/Step2/RL_mu_trace_steady_state.csv và .png; script đo đã bị xóa cùng code RL, cần viết lại nếu muốn chạy lại): trạng thái xác lập của plant hở vòng ($T_a = 0$), giữ nguyên góc vô-lăng đã đặt để
+được gia tốc ngang cho trước trên đường khô ($\mu = 0.8$), rồi cho $\mu$ xuống 0.3 và giải lại trạng thái xác lập. Phương trình dùng là bản độc lập của test_model_rl_s.m, không phải mô hình
+Simulink.
+Độ đổi tương đối của $a_y$ ở 40 km/h: +0.05% (0.10 g), -0.4% (0.20 g), -1.1% (0.25 g), -3.4% (0.30 g). Ở 100 km/h: +0.2% (0.10 g), -1.3% (0.20 g), -3.6% (0.25 g), -7.9% (0.30 g). Dưới 0.15 g
+độ đổi nhỏ hơn 0.25%, thấp hơn mức nhiễu của cảm biến gia tốc nên coi như không có thông tin.
+Tốc độ quay thân xe $\gamma$ không thêm thông tin ở trạng thái xác lập: $a_y = v\gamma$ nên hai đại lượng đổi cùng tỉ lệ (hai cột trùng nhau đến $10^{-12}$ %). $\gamma$ chỉ có ích trong giai
+đoạn chuyển tiếp, khi $eta$ còn biến thiên và $a_y = v(\doteta + \gamma)$.
+Mô-men cảm biến $T_s$ đổi mạnh hơn $a_y$ từ 7 đến 30 lần ở mọi điểm đo: -1.8% (0.05 g), -9.3% (0.20 g), -25.4% (0.30 g) ở 40 km/h; -1.6%, -10.0%, -24.3% ở 100 km/h. Nhưng $T_s$ đi vào bài
+toán qua $e_T = T_s - T_{d,ref}$, tức là sai số đã xảy ra, nên khai thác nó là phản hồi sau, cùng bản chất với khâu tích phân của PID.
+Thang thời gian (mô phỏng Model_RL_s, 40 km/h, 0.2 g, $T_a = 0$, $\mu$ từ 0.8 xuống 0.3): $T_s$ đạt 63% giá trị mới sau 1.30 s, 90% sau 3.07 s, 98% sau 5.27 s. Chậm vì $T_s = K(       heta_1
+-        heta_2)$ phải đợi trục lái $    heta_2$ dịch chuyển, dù công thức mô-men tự chỉnh phụ thuộc $\mu$ tức thì. Không đo được hằng số thời gian của $a_y$ ở điểm này vì nó chỉ đổi 0.35%.
+Hệ quả cho thiết kế: lập luận "agent suy ra $\mu$ từ $a_y$ và $\gamma$" chỉ đúng ở vùng gần giới hạn bám; ở dải lái bình thường lợi thế của RL không thể là biết $\mu$ sớm hơn, mà phải được
+chứng minh bằng các chỉ tiêu khác (bám khi độ lợi plant đổi theo vận tốc và biên độ lái, xử lý bão hòa $T_{a,max}$, độ rung $TV(T_a)$).
+Điểm yếu thật: (1) mới đo ở trạng thái xác lập và một điểm chuyển tiếp ($T_s$, 0.2 g); chưa đo thang thời gian của $a_y$ ở vùng gần giới hạn, nơi dấu vết lớn. (2) Khi chưa huấn luyện thì
+chưa biết agent có tận dụng được dấu vết 1-8% của $a_y$ hay không; nếu không, kết quả có thể chỉ ngang PID. (3) Lúc đầu tôi đã nêu sai rằng $T_s$ phản ứng trong vài ms và $a_y$ đổi rõ ở mọi
+dải; phép đo bác bỏ cả hai, nên các lập luận cũ về cửa sổ nhìn lại của agent dựa trên hai điều đó cần được xét lại theo số liệu này.
+L2. PID chỉnh cùng tiêu chí với Map đã gần xóa hết trợ lực thừa, vậy RL còn mang lại gì?
+Câu hỏi có thể đặt: "Kết quả của chính em cho thấy PID thắng Map ở mọi chỉ tiêu bám và trợ lực thừa gần 0 ở mọi ca. Vậy tại sao cần RL?"
+Trả lời ngắn: Đây là câu hỏi quan trọng nhất của luận văn và hiện CHƯA có câu trả lời được kiểm chứng. Về bám, PID gần như không chừa chỗ cho RL (RMS e_T 0.001-0.04 N.m ở TC2-TC6). Chỗ còn
+lại là độ êm của mô-men trợ lực: Map êm hơn PID 1.7-25 lần (TV(T_a)), PID có gợn và gai chạm giới hạn khi mu nhảy bậc. RL chỉ có đóng góp nếu đạt mức bám gần PID với độ êm gần Map, hoặc bền
+hơn PID khi có nhiễu cảm biến và sai lệch tham số. Nếu không, kết luận trung thực là RL không hơn PID trong bài toán này.
+Cơ sở: Result/Compare/Map_vs_PID/, cùng 6 ca, cùng chu kỳ 1 ms, chưa có nhiễu. RMS e_T Map so với PID: TC2 0.836 và 0.022; TC3 0.396 và 0.008; TC4 0.868 và 0.044; TC5 1.707 và 0.030. Trợ lực
+thừa: TC3 -14.08% và -0.0003%; TC4 trong vũng nước -83.6% và -1.06%. TV(T_a) Map so với PID: TC4 3.20 và 11.38; TC5 2.96 và 10.33; TC6 0.018 và 0.459 N.m/s.
+Điểm yếu thật: mục tiêu ban đầu "RL khắc phục trợ lực thừa của Map" vẫn đúng nhưng yếu, vì PID cũng khắc phục được; dấu vết của mu trong a_y rất nhỏ ở dải lái nhẹ (L1) nên RL không có thông
+tin sớm hơn PID; chưa đo ảnh hưởng của nhiễu, nơi PID với độ lợi cao có thể kém đi.
+
+
+==============================================================================================================================================================================================
+G. CÂU HỎI CHUNG TOÀN LUẬN VĂN
+==============================================================================================================================================================================================
+(chưa có câu hỏi)
+==============================================================================================================================================================================================

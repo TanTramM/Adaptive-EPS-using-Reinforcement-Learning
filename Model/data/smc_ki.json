@@ -1,9 +1,9 @@
 {
-  "_note": "Tham số thiết kế bộ điều khiển SMC bậc 1 tích phân + lớp biên sat (Documents/DieuKhien_SMC.txt). Dùng nguyên giá trị trong load_smc_ki.m.",
-  "Ts_ctrl":  { "value": 0.01, "unit": "s",       "desc": "Chu kỳ lấy mẫu bộ điều khiển số (ECU), ZOH ở đầu vào", "ref": "tự chọn" },
-  "lambda":   { "value": 30,   "unit": "1/s",     "desc": "Tốc độ hội tụ e_T trên mặt trượt (< w_n = 37.5 rad/s; lớn hơn thì sai số trong lớp biên nhỏ hơn)", "ref": "tự chọn" },
-  "tau_f":    { "value": 0.02, "unit": "s",       "desc": "Hằng số thời gian bộ vi phân có lọc ước lượng theta1_dot", "ref": "tự chọn" },
-  "k_sw":     { "value": 80,   "unit": "rad/s^2", "desc": "Độ lợi chuyển mạch, phải lớn hơn cận nhiễu gộp |psi|max (~70)", "ref": "tự chọn (quét mô phỏng)" },
-  "k_I":      { "value": 10,   "unit": "1/s",     "desc": "Hệ số khâu tích phân của mặt trượt: s = s0 + k_I*integral(s0); tích phân bị kẹp ở |k_I*z| <= Phi", "ref": "tự chọn (quét mô phỏng)" },
-  "Phi":      { "value": 0.6,  "unit": "rad/s",   "desc": "Bề rộng lớp biên sat(s/Phi); phải thỏa k_sw*Ts_ctrl/Phi < 2 để rời rạc ổn định", "ref": "tự chọn (quét mô phỏng)" }
+  "_note": "Tham số thiết kế SMC bậc 1 tích phân + lớp biên sat ở chu kỳ 1 ms (Documents/SMC/DieuKhien_SMC.txt): cùng lambda, tau_f, k_sw, Phi với smc.json, thêm k_I. Dùng nguyên giá trị trong load_smc_ki.m.",
+  "Ts_ctrl":  { "value": 0.001, "unit": "s",      "desc": "Chu kỳ lấy mẫu bộ điều khiển số (ECU), ZOH ở đầu vào; chung với Map, PID và RL", "ref": "chu kỳ chung 1 ms" },
+  "lambda":   { "value": 300,  "unit": "1/s",     "desc": "Tốc độ hội tụ e_T trên mặt trượt; chọn bằng tần số cắt của vòng Map và PID (286 rad/s) để ba bộ nhanh ngang nhau", "ref": "tần số cắt Map/PID" },
+  "tau_f":    { "value": 0.01, "unit": "s",       "desc": "Hằng số thời gian bộ vi phân có lọc ước lượng theta1_dot", "ref": "tự chọn (quét mô phỏng 2-20 ms, kết quả gần như không đổi)" },
+  "k_sw":     { "value": 150,  "unit": "rad/s^2", "desc": "Độ lợi chuyển mạch, phải lớn hơn cận nhiễu gộp |psi|max; quét mô phỏng: 75 mất bám, 100 đạt, chọn 150 (dư 1.5 lần)", "ref": "quét mô phỏng" },
+  "Phi":      { "value": 0.15, "unit": "rad/s",   "desc": "Bề rộng lớp biên sat(s/Phi) = k_sw*Ts_ctrl (tỉ số k_sw*Ts_ctrl/Phi = 1, không dao động); tỉ số 2 gây rung rời rạc (TV(T_a) hàng nghìn N.m/s)", "ref": "k_sw*Ts_ctrl/Phi < 2 (quét mô phỏng)" },
+  "k_I":      { "value": 10,   "unit": "1/s",     "desc": "Hệ số khâu tích phân của mặt trượt: s = s0 + k_I*integral(s0); tích phân bị kẹp ở |k_I*z| <= Phi", "ref": "quét mô phỏng" }
 }

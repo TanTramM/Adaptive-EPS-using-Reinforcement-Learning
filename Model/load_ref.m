@@ -15,6 +15,7 @@
 % Variables created in the base workspace:
 %   Tdref_v_bp_ms   - v-axis breakpoints, m/s (17 points)
 %   Tdref_ay_bp_ms2 - a_y-axis breakpoints, m/s^2 (17 points)
+%   Tamax_v_bp_ms, Tamax_table - assist limit T_a,max(v): speed breakpoints [m/s] and values [N.m] (only if ref.json has Ta_max)
 %   Tdref_table     - T_d,ref table [N.m], row = v, column = a_y (TRANSPOSED
 %                     relative to fine.table_Nm in ref.json, whose rows are a_y)
 %
@@ -34,6 +35,12 @@ Tdref_table     = raw.fine.table_Nm';   % transpose -> row = v, column = a_y
 assignin('base', 'Tdref_v_bp_ms',   Tdref_v_bp_ms);
 assignin('base', 'Tdref_ay_bp_ms2', Tdref_ay_bp_ms2);
 assignin('base', 'Tdref_table',     Tdref_table);
+
+% Assist limit T_a,max(v) (Documents/Ref/ref.txt section 1.5), written by Ref/script/make_ta_max.m; used by the controllers.
+if isfield(raw, 'Ta_max')
+    assignin('base', 'Tamax_v_bp_ms', raw.Ta_max.v_kmh(:)' / 3.6);
+    assignin('base', 'Tamax_table',   raw.Ta_max.Ta_max_Nm(:)');
+end
 
 fprintf('Loaded data/ref.json (fine table): %d speeds x %d a_y points, T_d,ref(0) = 0\n', ...
     size(Tdref_table, 1), size(Tdref_table, 2));

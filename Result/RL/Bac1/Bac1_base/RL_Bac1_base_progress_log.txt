@@ -1,0 +1,2 @@
+[2026-10-02 16:44:17] Bac1 Bac1_base: gamma 0.999, slow observation I kept, 30 episodes of 4000 steps, check every 5 episodes, seed 2
+[2026-10-02 16:44:25] untrained: mean e_T (1-2, 2-3, 3-4 s) 2.402, 1.900, 1.741 N.m, RMS e_T 3-4 s 1.741, mean T_a 1.515 N.m

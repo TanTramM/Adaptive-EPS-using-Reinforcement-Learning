@@ -63,7 +63,7 @@ PHẦN 1. BÀI TOÁN ĐIỀU KHIỂN
   - Phạm vi: CHỈ khắc phục over-assist. Không xét độ êm (rung, chattering) nên không cần động học motor chi tiết và trễ lốp (relaxation length).
   - Ràng buộc MV: |T_a| <= T_a,max(v) và sign(T_a) = sign(T_s) (dùng T_s vì T_d không đo được).
   - T_a,max(v): ước lượng NHU CẦU trợ lực từ Plant theo Multi-Map [4] công thức (6): T_a,max = max(T_r - T_d,ref) trên vùng a_y hợp lệ ở mu = 0.8; công thức và bảng theo v = 20-100 km/h nằm ở
-    Documents/Ref/ref.txt mục 1.5 (vùng a_y hợp lệ, tức biên của Plant, nằm ở Documents/Plant/plant.txt mục 6.2). Chưa phải công suất motor và tỉ lệ với e_p0 (số tự chọn). Đã loại: T_a,max = 23 N.m
+    Documents/Ref/ref.txt mục 1.5 (vùng a_y hợp lệ, tức biên của Plant, nằm ở Documents/Plant/plant.txt mục 6.2). Chưa phải công suất motor và tỉ lệ với cánh tay đòn e_p (e_p0, t_0 là số tự chọn). Đã loại: T_a,max = 23 N.m
     của [4] (xe tải 16 t), ngưỡng 1.94 N.m của bản cũ (hiện tượng giả).
   - Baseline [CẦN LÀM]: bản đồ trợ lực tĩnh T_a = f(T_s, v) hiệu chỉnh ở mu = 0.8 (chọn T_a để T_s = T_d,ref tại các điểm Bảng 4). Over-assist đo được bằng e_T của baseline khi mu giảm.
   - Chỉ tiêu (đang dùng ở Phần 4): RMS(e_T), max|e_T| và thời gian hồi phục sau khi mu đổi bậc, kèm RMS, max và biến thiên toàn phần của T_a. Chưa so với baseline; không đặt ngưỡng tuyệt đối vì
@@ -94,7 +94,7 @@ PHẦN 2. MÔ HÌNH ĐỐI TƯỢNG (PLANT)
   - Góc trượt alpha_f, alpha_r từ hình học dạng góc nhỏ của [3] (delta_f = theta2/n_st, beta, gamma, v); giới hạn a_y để giả thiết đúng theo tốc độ: Cum2_Pacejka.txt, Mục 4.
   - Lốp trước: Magic Formula với D_f = mu*F_zf, B_f = C_alpha_f/(C*D_f), nên chỉ điểm bão hòa phụ thuộc mu - đây là cơ chế vật lý cốt lõi của over-assist. F_zf, F_zr tính một lần (load_derived.m).
   - Lốp sau: cùng dạng Magic Formula với D_r = mu*F_zr, B_r = C_r/(C*D_r) và cùng C, E (giả thiết hai cầu cùng loại lốp), để cầu sau cũng có giới hạn bám mu*F_zr.
-  - T_r = K_tr*F_yf với K_tr = e_p/n_st, e_p(alpha_f, mu) là pneumatic trail động theo [4], chặn dưới ở 0 khi lốp trượt hoàn toàn.
+  - T_r = K_tr*F_yf với K_tr = e_p/n_st, e_p(alpha_f, mu) = e_c + t(alpha_f, mu): caster e_c cố định cộng pneumatic trail t động theo [4], t chặn dưới ở 0 khi lốp trượt hoàn toàn (nên e_p không về 0 mà còn e_c).
 
 2.4. Cụm 3 - Thân xe 2-DOF (Cum3_2DOF.txt)   [ĐÃ CÓ]
   Mô hình xe đạp (beta, gamma) suy từ Newton, cùng dạng của [3] Chương 2: beta_dot = (F_yf + F_yr)/(m*v) - gamma, gamma_dot = (l_f*F_yf - l_r*F_yr)/Iz, và a_y = (F_yf + F_yr)/m. Giả thiết: bỏ qua
@@ -118,11 +118,11 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ]
     Model/load_pid.m, load_smc.m   - nạp tham số bộ điều khiển (load_pid TÍNH Kp, Ki, Kd theo Ziegler-Nichols), rồi tự gọi load_plant và load_ref
     Model/Plant/                   - SteeringColumn, Tires, Bike2DOF, Plant (mỗi khối có bản _s)
     Model/Plant/script/            - build_cum1/2/3, build_plant, build_plant_s, test_cum1/2/3(_s), test_plant(_s)
-    Model/Ref/                     - Reference_s.mdl, script/build_reference.m, test_reference(_s).m
+    Model/Ref/                     - Reference_s.mdl, script/build_reference.m, test_reference(_s).m, make_ref_table.m (bảng T_d,ref mịn), make_ta_max.m (T_a,max -> ref.json), verify_Ta_need.m
     Model/PID/, Model/SMC/         - PID_s.mdl, SMC_s.mdl; script/build_pid.m, build_smc.m, test_pid(_s).m, test_smc(_s).m
     Model/Model_PID_s.mdl, Model_SMC_s.mdl - model vòng kín chạy được (nguồn kịch bản sc_theta1, sc_v, sc_mu; ghi log_T_s, log_e_T...)
                                      sinh bởi PID/script/build_model_pid.m, SMC/script/build_model_smc.m; test: test_model_pid(_s).m, test_model_smc(_s).m
-    Model/Sim/script/              - compare_controllers.m (so sánh, chạy Model_PID_s và Model_SMC_s), find_ultimate_gain.m, estimate_Ta_max.m, verify_Ta_need.m
+    Model/Sim/script/              - test_cases.m, run_test_cases.m (ca thử chung), compare_controllers.m (so sánh nhiều bộ điều khiển); find_ultimate_gain.m, scan_kcu_grid.m nằm ở Model/PID/script/
     Model/result_dir.m, save_run_results.m - đường dẫn và xuất kết quả; Model/Ref/script/export_reference_results.m
     Result/                        - kết quả xuất ra: Plant/, Reference/, PID/, SMC/ (từng đối tượng), Compare/PID_vs_SMC/ (so sánh); tên file <Đối tượng>_<nội dung>_<điều kiện>
 
@@ -156,7 +156,7 @@ PHẦN 3. ĐỘ CHÍNH XÁC MÔ HÌNH VÀ VIỆC CÒN LẠI
 3.1. Mô hình chính xác tới đâu
   - ĐÃ KIỂM CHỨNG (verification): model Simulink tính đúng phương trình trong tài liệu, sai lệch ở mức số học; xu hướng định tính đúng cơ chế over-assist (mục 2.6), cùng chiều với [4].
   - CHƯA THẨM ĐỊNH (validation): chưa đối chiếu độ lớn tuyệt đối T_s, a_y với dữ liệu thực nào. Tham số ghép từ nhiều nguồn: [1] (Hyundai i30) cho cột lái, [3] cho thân xe và độ cứng lốp, [2] cho
-    C, E, Bảng 4 [5], cùng các giá trị tự chọn n_st = 16, e_p0 = 0.048 m, c = 100.
+    C, E, Bảng 4 [5], cùng các giá trị tự chọn n_st = 16, e_p0 = 0.048 m (tổng), t_0 = 0.025 m (pneumatic trail, e_c = 0.023 m), c = 100.
   - Phép kiểm tra độ lớn làm được ngay [CẦN LÀM]: so T_s không trợ lực (T_a = 0) với T_d,ref của Bảng 4 tại cùng (v, a_y). T_s phải lớn hơn T_d,ref thì mới cần trợ lực.
   - Giới hạn đã biết (chấp nhận trong phạm vi): bỏ qua roll và chuyển tải; tài xế cứng vô hạn; không có động học motor và trễ lốp (chiều dài nới lỏng); C, E dùng chung cho hai cầu (số minh họa của
     [2]); e_p chỉ theo mô hình brush đơn giản hóa và chặn dưới ở 0.

@@ -1,7 +1,39 @@
 {
-  "_note": "Tham số thiết kế bộ điều khiển PID (Documents/DieuKhien_PID.txt). Chỉ chứa LỰA CHỌN và số ĐO ĐƯỢC; Kp, Ki, Kd được TÍNH từ Kcu, Pu bằng quy tắc Ziegler-Nichols trong load_pid.m. Kcu, Pu lấy ở điều kiện XẤU NHẤT trên lưới đo trong vùng biên (Result/PID/PID_Kcu_grid.csv, Sim/script/scan_kcu_grid.m): v = 80 km/h, mu = 0.2, a_y = 0.1 g.",
-  "Ts_ctrl":  { "value": 0.01,   "unit": "s", "desc": "Chu kỳ lấy mẫu bộ điều khiển số (ECU), ZOH ở đầu vào", "ref": "tự chọn" },
-  "Kcu":      { "value": 2.677,  "unit": "-", "desc": "Độ lợi tới hạn NHỎ NHẤT trên lưới điều kiện trong vùng biên (v 20-100 km/h, mu 0.2-0.8, a_y = 0.5 và 1 lần giới hạn): hệ số P lớn nhất trước khi vòng kín mất ổn định (chỉ có khâu P). ĐO bằng Sim/script/scan_kcu_grid.m (dùng find_ultimate_gain.m)", "ref": "đo mô phỏng, Seborg (cycling method)" },
-  "Pu":       { "value": 0.0940, "unit": "s", "desc": "Chu kỳ dao động tại độ lợi tới hạn ở điều kiện có Kcu nhỏ nhất (10.6 Hz). ĐO bằng scan_kcu_grid.m", "ref": "đo mô phỏng, Seborg (cycling method)" },
-  "alpha_D":  { "value": 0.1,    "unit": "-", "desc": "Hệ số lọc khâu D: T_filt = max(alpha_D*tau_D, Ts_ctrl)", "ref": "Seborg Eq. 8-12 (0.05-0.2, thường 0.1)" }
+  "x_note": "Discrete PID (PIDF, Forward Euler) of the assist loop, Documents/PID/DieuKhien_PID.txt. Written by Model/PID/script/tune_pid.m: pidtune on the linearized steering-column loop of the Map design (theta1 held, ZOH at Ts_ctrl), phase margin >= 45 deg at the crossover of the Map loop at K_max.",
+  "Ts_ctrl": {
+    "value": 0.001,
+    "unit": "s",
+    "desc": "ECU sample time, same as the Map and the RL agent"
+  },
+  "Kp": {
+    "value": 16.480139914741713,
+    "unit": "-",
+    "desc": "proportional gain"
+  },
+  "Ki": {
+    "value": 266.91322531026196,
+    "unit": "1/s",
+    "desc": "integral gain (Forward Euler)"
+  },
+  "Kd": {
+    "value": 0.20303390308167479,
+    "unit": "s",
+    "desc": "derivative gain"
+  },
+  "T_filt": {
+    "value": 0.001451642320297664,
+    "unit": "s",
+    "desc": "derivative filter time constant (Forward Euler, > Ts/2)"
+  },
+  "design": {
+    "crossover_rad_s": 286.17603204102329,
+    "phase_margin_target_deg": 45,
+    "pm_tire_deg": 53.994998543434271,
+    "gm_tire": 6.595657004618106,
+    "pm_saturated_deg": 54.018224145420916,
+    "gm_saturated": 6.5968941689817386,
+    "map_loop_pm_deg": 45.824354087087087,
+    "map_loop_gm": 6.1218735528500758,
+    "k_r_Nm_per_rad": 30
+  }
 }

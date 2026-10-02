@@ -16,7 +16,7 @@
 %     D_r  = mu*F_zr,  B_r = C_r/(C*D_r)
 %     F_yr = D_r*sin(C*atan(u - E*(u - atan(u))))  with  u = B_r*alpha_r
 %   Section 3 - Road reaction (aligning) torque:
-%     e_p  = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf))
+%     e_p  = e_c + max(0, t_0 - sgn(alpha_f)*t_0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)),  e_c = e_p0 - t_0
 %            (floored at 0: brush model, trail is zero once the tire slides fully)
 %     K_tr = e_p/n_st
 %     T_r  = K_tr*F_yf
@@ -395,7 +395,7 @@ end
 
 %% ===================== Section 3: road reaction torque ====================
 function buildAligningTorque(at)
-% e_p  = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf))
+% e_p  = e_c + max(0, t_0 - sgn(alpha_f)*t_0*C_alpha_f*tan(alpha_f)/(3*mu*F_zf)),  e_c = e_p0 - t_0
 % K_tr = e_p/n_st ; T_r = K_tr*F_yf
 % e_p, K_tr are pure single-use algebra intermediates (never reused outside
 % this formula) - stay as plain blocks, same treatment as t1..t4 inside
@@ -404,9 +404,9 @@ function buildAligningTorque(at)
 % placed near there, not at the left column (layout exception).
     addInport(at, 'alpha_f', 1,  40,  60);
     addInport(at, 'mu',      2,  40, 300);
-    addInport(at, 'F_yf',    3, 820, 200);   % used late -> near Prod_Tr
+    addInport(at, 'F_yf',    3, 920, 200);   % used late -> near Prod_Tr
 
-    addOutport(at, 'T_r', 1, 1020, 100);
+    addOutport(at, 'T_r', 1, 1120, 100);
 
     % alpha_f is used twice (sgn and tan) -> Goto/From
     g_af = addGoto(at, 'alpha_f', 120, 60);
@@ -419,11 +419,11 @@ function buildAligningTorque(at)
     add_line(at, [f_af1 '/1'], 'Sign_af/1', 'autorouting', 'on');
     add_line(at, [f_af2 '/1'], 'Trig_tan_af/1', 'autorouting', 'on');
 
-    hep0a = addConstant(at, 'e_p0',      340, 220);   % near Prod_ep0C
-    hCaf  = addConstant(at, 'C_alpha_f', 420, 220);   % near Prod_ep0C
-    addProduct(at, 'Prod_ep0C', '**', 380, 180);      % e_p0*C_alpha_f
+    ht0a  = addConstant(at, 't_0',       340, 220);   % near Prod_t0C
+    hCaf  = addConstant(at, 'C_alpha_f', 420, 220);   % near Prod_t0C
+    addProduct(at, 'Prod_t0C', '**', 380, 180);        % t_0*C_alpha_f
 
-    addProduct(at, 'Prod_numer', '***', 460, 100);    % sgn*(e_p0*C_af)*tan
+    addProduct(at, 'Prod_numer', '***', 460, 100);    % sgn*(t_0*C_af)*tan
 
     hFzf = addConstant(at, 'F_zf', 260, 340);   % near Prod_3Fzf
     h3   = addConstant(at, '3',    260, 400);   % literal 3, near Prod_3Fzf
@@ -431,22 +431,24 @@ function buildAligningTorque(at)
     addProduct(at, 'Prod_denom', '**', 400, 280);     % mu*(3*F_zf)
 
     addProduct(at, 'Div_frac', '*/', 560, 100);       % numer/denom
-    hep0b = addConstant(at, 'e_p0', 560, 180);        % near Sum_ep
-    addSum(at, 'Sum_ep', '+-', 640, 100);             % e_p0 - frac
+    ht0b  = addConstant(at, 't_0', 560, 180);          % near Sum_tp
+    addSum(at, 'Sum_tp', '+-', 640, 100);             % t_0 - frac
 
-    addMinMax(at, 'Max_ep', 'max', 720, 100);         % max(0, e_p0 - frac)
-    h0 = addConstant(at, '0', 720, 180);              % floor value, near Max_ep
+    addMinMax(at, 'Max_tp', 'max', 720, 100);         % max(0, t_0 - frac): pneumatic trail
+    h0 = addConstant(at, '0', 720, 180);              % floor value, near Max_tp
+    hec = addConstant(at, 'e_c', 800, 180);           % caster trail, near Sum_ep
+    addSum(at, 'Sum_ep', '++', 800, 100);             % e_c + pneumatic trail
 
-    hnst = addConstant(at, 'n_st', 800, 180);   % near Div_Ktr
-    addProduct(at, 'Div_Ktr', '*/', 800, 100);        % e_p/n_st
+    hnst = addConstant(at, 'n_st', 900, 180);   % near Div_Ktr
+    addProduct(at, 'Div_Ktr', '*/', 900, 100);        % e_p/n_st
 
-    addProduct(at, 'Prod_Tr', '**', 900, 100);        % K_tr*F_yf
+    addProduct(at, 'Prod_Tr', '**', 1000, 100);       % K_tr*F_yf
 
-    add_line(at, [hep0a '/1'], 'Prod_ep0C/1', 'autorouting', 'on');
-    add_line(at, [hCaf '/1'],  'Prod_ep0C/2', 'autorouting', 'on');
+    add_line(at, [ht0a '/1'], 'Prod_t0C/1', 'autorouting', 'on');
+    add_line(at, [hCaf '/1'],  'Prod_t0C/2', 'autorouting', 'on');
 
     add_line(at, 'Sign_af/1',     'Prod_numer/1', 'autorouting', 'on');
-    add_line(at, 'Prod_ep0C/1',   'Prod_numer/2', 'autorouting', 'on');
+    add_line(at, 'Prod_t0C/1',     'Prod_numer/2', 'autorouting', 'on');
     add_line(at, 'Trig_tan_af/1', 'Prod_numer/3', 'autorouting', 'on');
 
     add_line(at, [hFzf '/1'], 'Prod_3Fzf/1', 'autorouting', 'on');
@@ -457,12 +459,14 @@ function buildAligningTorque(at)
     add_line(at, 'Prod_numer/1', 'Div_frac/1', 'autorouting', 'on');
     add_line(at, 'Prod_denom/1', 'Div_frac/2', 'autorouting', 'on');
 
-    add_line(at, [hep0b '/1'], 'Sum_ep/1', 'autorouting', 'on');
-    add_line(at, 'Div_frac/1', 'Sum_ep/2', 'autorouting', 'on');
+    add_line(at, [ht0b '/1'], 'Sum_tp/1', 'autorouting', 'on');
+    add_line(at, 'Div_frac/1', 'Sum_tp/2', 'autorouting', 'on');
 
-    add_line(at, 'Sum_ep/1',  'Max_ep/1', 'autorouting', 'on');
-    add_line(at, [h0 '/1'],   'Max_ep/2', 'autorouting', 'on');
-    add_line(at, 'Max_ep/1',  'Div_Ktr/1', 'autorouting', 'on');
+    add_line(at, 'Sum_tp/1',  'Max_tp/1', 'autorouting', 'on');
+    add_line(at, [h0 '/1'],   'Max_tp/2', 'autorouting', 'on');
+    add_line(at, 'Max_tp/1',  'Sum_ep/1', 'autorouting', 'on');
+    add_line(at, [hec '/1'],  'Sum_ep/2', 'autorouting', 'on');
+    add_line(at, 'Sum_ep/1',  'Div_Ktr/1', 'autorouting', 'on');
     add_line(at, [hnst '/1'], 'Div_Ktr/2', 'autorouting', 'on');
 
     add_line(at, 'Div_Ktr/1', 'Prod_Tr/1', 'autorouting', 'on');

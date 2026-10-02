@@ -9,7 +9,7 @@ function test_model_smc_ki()
 %   data/ref.json (run load_smc_ki first - Simulink blocks read the base
 %   workspace):
 %   (1) Reference wiring: e_T = T_s - T_d_ref at every logged sample, and
-%       T_d_ref at the end equals interp2 of Table 4 at (v, a_y_end).
+%       T_d_ref at the end equals interp2 of the fine reference table at (v, a_y_end).
 %   (2) Plant wiring: at the end (steady state, T_a held constant), T_s and
 %       a_y equal the Newton steady state of the plant equations for the
 %       final (theta1, T_a, v, mu).
@@ -60,11 +60,11 @@ assert(all(isfinite(eT.Data)), 'e_T is not finite');
 % (1) Reference wiring
 err1 = max(abs(eT.Data - (Ts.Data - Tref.Data)));
 assert(err1 < 1e-9, '(1) e_T ~= T_s - T_d_ref: max err %.3g', err1);
-v_bp  = rawRef.v_breakpoints_kmh(:)'/3.6;
-ay_bp = rawRef.ay_breakpoints_g(:)'*9.81;
+v_bp  = rawRef.fine.v_breakpoints_kmh(:)'/3.6;
+ay_bp = rawRef.fine.ay_breakpoints_g(:)'*9.81;
 ayEnd = ay.Data(end);
 ayc = min(max(abs(ayEnd), min(ay_bp)), max(ay_bp));
-TrefInd = sign(ayEnd)*interp2(ay_bp, v_bp, rawRef.table_Nm', ayc, min(max(v, min(v_bp)), max(v_bp)), 'linear');
+TrefInd = sign(ayEnd)*interp2(ay_bp, v_bp, rawRef.fine.table_Nm', ayc, min(max(v, min(v_bp)), max(v_bp)), 'linear');
 assert(abs(Tref.Data(end) - TrefInd) < 1e-9, '(1) T_d_ref(end) = %.6g, independent = %.6g', Tref.Data(end), TrefInd);
 
 % (2) Plant wiring: Newton steady state for the final inputs
@@ -75,7 +75,7 @@ assert(abs(ayEnd - ss.a_y) < 5e-3, '(2) a_y(end) = %.6g, steady state = %.6g', a
 % (3)
 assert(abs(eT.Data(end)) < 0.05, '(3) SMC_KI: |e_T(end)| = %.4g, expected < 0.05', abs(eT.Data(end)));
 
-fprintf(['[%s] TEST PASS: e_T = T_s - T_d_ref (max err %.2g); T_d_ref(end) = %.5g matches Table 4; ' ...
+fprintf(['[%s] TEST PASS: e_T = T_s - T_d_ref (max err %.2g); T_d_ref(end) = %.5g matches the fine reference table; ' ...
     'T_s(end) = %.5g (steady state %.5g), a_y(end) = %.5g (steady state %.5g); e_T(end) = %.4g N.m, T_a(end) = %.4g N.m\n'], ...
     modelFileName, err1, Tref.Data(end), Ts.Data(end), ss.T_s, ayEnd, ss.a_y, eT.Data(end), Ta.Data(end));
 end
@@ -122,6 +122,6 @@ function [F_yf, F_yr, T_r] = tireModel(P, theta2, beta, gamma, v, mu)
     B_r = P.C_r / (P.C * D_r);
     u_r = B_r * alpha_r;
     F_yr = D_r * sin(P.C * atan(u_r - P.E*(u_r - atan(u_r))));
-    e_p = max(0, P.e_p0 - sign(alpha_f) * P.e_p0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
+    e_p = P.e_p0 - P.t_0 + max(0, P.t_0 - sign(alpha_f) * P.t_0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
     T_r = e_p / P.n_st * F_yf;
 end

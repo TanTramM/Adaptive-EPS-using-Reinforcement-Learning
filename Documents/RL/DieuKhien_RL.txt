@@ -1,0 +1,382 @@
+==============================================================================================================================================================================================
+BỘ ĐIỀU KHIỂN HỌC TĂNG CƯỜNG (RL THUẦN) CHO TRỢ LỰC LÁI - KHẮC PHỤC TRỢ LỰC THỪA CỦA BẢN ĐỒ TRUYỀN THỐNG
+==============================================================================================================================================================================================
+  Tài liệu thiết kế và kế hoạch cho riêng người viết (chưa phải chương luận văn; chương chính thức sẽ là Documents/RL/rl.txt khi có kết quả). Quy ước: mỗi công thức kèm 1 dòng LaTeX trong [ ];
+  trích dẫn [n] khớp Documents/References.txt. Plant: Documents/Plant/plant.txt; giá trị đặt và giới hạn trợ lực: Documents/Ref/ref.txt; baseline: Documents/Map/map.txt; ca thử:
+  Documents/Sim/TestCases.txt. Code dự kiến: Model/RL/script/, Model/load_rl.m, Model/data/rl.json, Model/Model_RL_s.mdl; kết quả: Result/RL/.
+  TRẠNG THÁI (2026-10-02, Lượt 193): Train2 GIAI ĐOẠN 1 XONG và ĐÃ DỪNG (15:25); giai đoạn 2 chưa bắt đầu. Kết quả: chưa hội tụ ngay cả trên đường khô, tốt nhất ở đợt 1 rồi trôi xấu đi (mục 2.4b).
+    Chẩn đoán (mục 2.4c): agent không học được phản hồi theo sai số (độ nhạy theo sai số nhỏ và sai dấu), sai số tĩnh lớn khi giữ góc, quan sát chậm I bị dùng sai dấu gây trôi. Agent đã lưu ở
+    Result/RL/Train2/agents/agent_stage1_best.mat và agent_stage1_last.mat. Chờ người dùng quyết định hướng điều chỉnh (đề xuất: gamma 0.99 và hành động dạng gia số). Người dùng không muốn dùng PID
+    trong RL. Mục 1 (khung) và mục 2.0 vẫn đúng.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Khung đã chốt
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Học tăng cường (Reinforcement Learning, RL: bộ điều khiển tự học cách hành động bằng thử-sai trên mô phỏng, được chấm điểm sau mỗi bước, thay vì lập sẵn công thức) gồm bốn thành phần. Các quyết
+  định dưới đây đã chốt qua thảo luận (History_Chat.md Lượt 134-140).
+  - Kiến trúc: RL THUẦN. Agent (tác tử: mạng nơ-ron ra quyết định) xuất thẳng mô-men trợ lực T_a, không lai với bản đồ (Map). Lý do: nếu lai thì mọi bộ điều khiển khác (PID, SMC) cũng phải lai
+    mới công bằng; giữ tất cả ở dạng đơn để khác biệt kết quả chỉ do phương pháp thiết kế. RL lai Map chỉ là biến thể phụ, làm nếu RL thuần không học được.
+  - Chu kỳ: 1 ms cho agent, đồng bộ với Map; PID/SMC sẽ thiết kế lại ở 1 ms sau. Agent quyết định thật mỗi 1 ms (không giữ đầu ra nhiều bước), vì trễ giữ mẫu do chu kỳ quyết định gây ra và ảnh
+    hưởng thẳng tới ổn định của vòng phản hồi (map.txt mục 2.4).
+  - Môi trường: Plant + khối giá trị đặt Reference, giống mô hình vòng kín của Map; T_a sau agent bị chặn bởi giới hạn chung |T_a| <= T_a,max(v) của Ref (ref.txt mục 1.5).
+  - Quan sát: đúng bộ tín hiệu bộ điều khiển được phép đọc (Blueprint mục 1.2): e_T, T_s, theta1, theta2_dot, v, gamma, a_y, cộng vài mẫu gần nhất và T_a của bước trước. KHÔNG đọc mu, beta, T_d.
+    gamma và a_y là "dấu vết của mu" mà Map không dùng: cùng góc vô-lăng theta1, đường trơn cho gamma và a_y nhỏ hơn đường khô. ĐÍNH CHÍNH sau phép đo (mục 2.2): điều này chỉ đáng kể khi xe
+    chạy gần giới hạn bám (từ khoảng 0.25 g); dưới 0.15 g a_y đổi dưới 0.25%, coi như không có thông tin. Ở xác lập a_y = v*gamma nên gamma không thêm thông tin; gamma chỉ có ích ở giai đoạn
+    chuyển tiếp.
+  - Phần thưởng: trừ điểm theo độ lệch e_T (mục tiêu chính), độ rung của T_a giữa hai bước (khớp chỉ tiêu TV(T_a)) và mức dùng T_a (phạt nhẹ). Chỉ dùng đầu ra, không dùng trạng thái ẩn.
+  - Bài toán quan sát một phần (POMDP: agent không thấy toàn bộ trạng thái của xe, ở đây thiếu beta và mu); bù bằng ghép nhiều mẫu gần nhất làm bộ nhớ ngắn.
+  - Thước đo thành công (so với Map trên TC1-TC6 và quét xác lập): RL BẰNG Map ở chỗ Map tốt (đường khô, TC1 sai số cỡ 0.001 N.m; độ gợn thấp; không dao động) và TỐT HƠN Map ở chỗ Map yếu (trợ
+    lực thừa khi mu giảm: TC2 cua 0.25 g -3.5%, TC3 -14.1%, vùng sát giới hạn bám ở map.txt Hình 11).
+  - Giới hạn đã biết, ghi trước: RL chỉ suy ra được mu khi xe đang cua; dấu vết của mu trong a_y rất nhỏ ở dải lái nhẹ, còn T_s phản ứng với mu trong cỡ giây (mục 2.2); không có chứng minh
+    ổn định hình thức; mô phỏng chưa có nhiễu cảm biến và trễ mạng CAN của a_y. Sẽ đưa vào Documents/PhanBien.txt section L.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Kế hoạch từng bước
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Mỗi bước có: mục tiêu, việc phải làm, sản phẩm, tiêu chí xong. Làm tuần tự, xong bước nào thảo luận và chốt bước đó rồi mới sang bước sau ("làm tới đâu thêm tới đó").
+
+2.0. Thứ tự công việc đã chốt (2026-10-01): dựng lại PID ở 1 ms và so với Map trước khi làm tiếp RL
+  Lý do: chưa biết bộ điều khiển phản hồi thông thường yếu ở đâu. Hiện chỉ có kết quả của Map; số liệu PID/SMC cũ đã xóa cùng model (dựng ở 10 ms, thông số Plant cũ). Nếu PID có khâu tích
+    phân đã bám tốt ở cả 6 ca thử, RL chỉ có thể ngang PID ở các chỉ tiêu chính; muốn hàm thưởng và kịch bản huấn luyện nhắm đúng chỗ PID yếu thì phải biết chỗ đó bằng số liệu, không đoán.
+  Việc làm tiếp (chưa làm, đúng thứ tự):
+    1) Dựng lại PID ở chu kỳ 1 ms (build_pid.m, build_model_pid.m, data/pid.json còn; model và kết quả đã xóa); chỉnh định lại theo Plant hiện tại (caster tách, T_a,max từ ref.json).
+    2) Chạy TC1-TC6 bằng run_test_cases('PID'), tổng hợp bảng chỉ tiêu cùng khuôn Bảng 9-10 của map.txt (RMS e_T, e_rel theo cửa sổ, RMS và TV của T_a).
+    3) So PID với Map trước (chỉ Map đã có kết quả); SMC và SMC_KI làm sau, cùng cách.
+    4) Từ bảng so sánh xác định chỗ PID yếu (ca nào, chỉ tiêu nào), rồi quay lại bước 2 của RL để thiết kế phần thưởng và kịch bản nhắm vào đó.
+  TIẾN ĐỘ MỤC 2.0 (2026-10-01): việc 1, 2, 3 ĐÃ LÀM (chi tiết: Documents/PID/DieuKhien_PID.txt mục 8; số liệu: Result/Compare/Map_vs_PID/). PID chỉnh bằng pidtune ở 1 ms, cùng mô hình tuyến
+  tính, cùng tiêu chí độ dự trữ pha 45 độ và cùng tần số cắt với Map (Kp 16.48, Ki 266.9, Kd 0.203); ZN không dùng được ở 1 ms.
+    - PID so với Map (cả ca): RMS e_T nhỏ hơn 1.7 (TC1, hai bên cùng bão hòa T_a,max) đến 58 lần (TC5); trợ lực thừa xác lập về gần 0 ở mọi cửa sổ đường trơn: TC3 Map -14.08% PID -0.0003%;
+      TC4 Map -83.6% PID -1.06%.
+    - Map chỉ còn hơn ở độ êm T_a: TV(T_a) của PID lớn hơn 1.7-25 lần; T_a của PID có gợn khi vô-lăng đổi chiều và gai chạm T_a,max khi mu nhảy bậc.
+    - Việc 4 (chỗ PID yếu, RL phải nhắm vào): độ êm T_a khi giữ mức bám gần PID; độ bền khi có nhiễu cảm biến và sai lệch tham số (chưa đo). Về bám, PID gần như không chừa chỗ cho RL. Hệ quả
+      cho luận văn: mục tiêu "RL hơn Map" dễ đạt nhưng yếu; mục tiêu "RL hơn PID" chưa có căn cứ, cần thảo luận lại phạm vi đóng góp (PhanBien.txt L2) trước khi đầu tư huấn luyện. Chưa làm:
+      SMC, SMC_KI ở 1 ms; nhiễu cảm biến.
+
+2.1. Bước 1 - Môi trường huấn luyện tối thiểu và đo chi phí
+  Mục tiêu: có mô hình vòng kín Plant + Reference + khối agent chạy được một lượt (episode), và biết một lượt tốn bao nhiêu thời gian máy, để chọn độ dài lượt, số lượt và cách tăng tốc trước khi
+  huấn luyện thật.
+  - Script build_model_rl.m sinh Model_RL_s.mdl: chép Plant_s và Reference_s như build_model_map.m; nguồn kịch bản sc_theta1, sc_v, sc_mu (From Workspace, giống mọi mô hình vòng kín, để dùng lại
+    test_cases.m và run_test_cases.m); khối giữ mẫu 1 ms trên mọi quan sát; khối RL Agent của Reinforcement Learning Toolbox; khối chặn T_a,max(v); ghi log_T_s, log_T_d_ref, log_e_T, log_T_a,
+    log_a_y như các mô hình khác.
+  - Script rl_env.m tạo môi trường RL: đặc tả quan sát (số chiều, chuẩn hóa), đặc tả hành động (khoảng T_a), hàm reset (đặt kịch bản cho mỗi lượt), tính phần thưởng và điều kiện dừng sớm.
+  - Chạy thử một lượt với một chính sách cố định (chưa học), đo thời gian thực cho mỗi giây mô phỏng, ở chế độ thường và Accelerator.
+  - Sản phẩm: Model_RL_s.mdl, build_model_rl.m, rl_env.m, data/rl.json (tham số), bảng thời gian đo được. Tiêu chí xong: một lượt chạy không lỗi, tín hiệu log đúng, có con số thời gian.
+  KẾT QUẢ BƯỚC 1 (làm lại 2026-10-02, máy i7-13700F 24 luồng, RAM 32 GB; log: Result/RL/Step1/step1_test_log.txt, step1_run_log.txt, step1_diag_log.txt; số: RL_step1_timing.csv):
+  - Đã làm: data/rl.json (n_hist 5, hist_stride 5, các số tạm của lần trước), Model/load_rl.m, Model/RL/script/{rl_scenario.m, rl_env.m, build_model_rl.m, test_model_rl_s.m,
+    measure_rl_cost.m}, Model/Model_RL_s.mdl. Mô hình có Plant sạch, khối Sensors cho 6 tín hiệu (T_s, theta1, theta2_dot, v, gamma, a_y), Reference đo (cho agent) và Reference_true (chấm
+    điểm), khối RL: quan sát 36 = 7 tín hiệu đo x 5 mẫu cách nhau 5 ms + T_a[k-1]; khối Delay độ dài 5 mẫu cho lịch sử; phần thưởng và dừng sớm dùng e_T THẬT; agent TD3 của toolbox, mạng 2 x
+    64.
+  - Kiểm dây (test_model_rl_s, TEST PASS). Cảm biến lý tưởng, T_a = 0, kịch bản 40 km/h giữ góc cho 0.2 g, mu 0.8 xuống 0.3 tại 12 s: T_s trước bước mu 5.2187 N.m (nghiệm xác lập độc lập
+    5.2189), sau 4.7357 N.m (4.7357), giảm 0.483 N.m đúng plant.txt mục 6.3; T_a = 0 đúng từng mẫu; e_T = T_s - T_d,ref; phần thưởng = -(e_T/1)^2, sai lệch 0. Mức cảm biến high: agent thấy
+    T_s ĐO (là bội của bước 0.01 N.m, khác T_s thật), mẫu lịch sử đúng bằng giá trị 5 mẫu trước, độ dài quan sát 36, phần thưởng tính trên e_T THẬT (sai lệch 0).
+  - PHÁT HIỆN: ngưỡng dừng sớm 10 N.m quá chặt. Agent chưa học (khởi tạo ngẫu nhiên) cho T_a trong khoảng -2.01 đến -0.48 N.m (dấu làm T_s tăng thêm), |e_T| vượt 10 N.m (10.004) và lượt BỊ
+    CẮT ở 0.061 s, tức khoảng 61 bước; ngay cả với T_a = 0 thì |e_T| lớn nhất cả lượt 30 s đã là 8.353 N.m. Hệ quả: nếu giữ nguyên, các lượt đầu khi huấn luyện chỉ kéo dài vài chục bước và
+    agent không bao giờ thấy phần quan trọng (mu đổi ở giây 12). Số đo thời gian lần đầu vì thế bị sai (lượt agent chạy 0.5 s cho 30 s mô phỏng); đã sửa script đo, nâng ngưỡng lên 1e6 khi đo
+    và ghi thời gian mô phỏng thực tế. Ngưỡng dừng, cách bỏ qua giai đoạn đầu lượt (như chỉ tiêu bỏ 2 s đầu) và dừng theo T_s là việc của bước 2; chưa đổi gì.
+
+  Thời gian máy (30 s mô phỏng, cảm biến lý tưởng, không dừng sớm; lần 1 gồm biên dịch, lần 2 là số dùng được):
+    Cấu hình                                     lần 1      lần 2      mỗi giây mô phỏng (lần 2)
+    Map (Model_Map_s)                            2.76 s     1.21 s     0.040 s
+    RL, T_a = 0, chế độ thường                   24.23 s    18.77 s    0.63 s
+    RL, agent chưa học, chế độ thường            17.57 s    13.08 s    0.44 s
+    RL, agent chưa học, Accelerator              12.58 s    11.99 s    0.40 s
+
+  - Huấn luyện TD3 (cập nhật mạng mỗi bước 1 ms, chế độ thường): 3 lượt x 2000 bước (6000 bước) mất 40.1 s; 3 lượt x 4000 bước (12000 bước) mất 78.0 s. Hiệu của hai lần cho chi phí biên 6.31
+    ms mỗi bước agent (chi phí khởi động khoảng 2.2 s). Chi phí chính là cập nhật mạng: mô phỏng cộng suy luận chỉ khoảng 0.44 ms mỗi bước, tức khoảng 14 lần nhỏ hơn.
+  - Ước lượng huấn luyện (một môi trường, 6.31 ms mỗi bước): 2e5 bước khoảng 21 phút (huấn luyện thử), 1e6 bước khoảng 1.75 giờ, 3e6 bước khoảng 5.3 giờ; nằm trong ngưỡng đã chốt (thử không
+    quá 1-2 giờ, chính không quá một đêm). Ước lượng này chưa kể chi phí của kịch bản ngẫu nhiên và nhiễu cảm biến (bước 3), cũng chưa đo song song nhiều môi trường; bản R2023a của TD3 không
+    có tùy chọn giảm tần suất cập nhật mạng nên song song hóa chỉ giúp phần mô phỏng.
+  - Điều chỉnh so với lần làm cũ: Accelerator chỉ nhanh hơn chế độ thường khoảng 8% (11.99 so với 13.08 s ở lần 2), không phải 2.3 lần như đã ghi (số cũ bị lẫn bởi việc lượt agent bị cắt
+    sớm); huấn luyện qua rlSimulinkEnv dùng chế độ thường nên không hưởng lợi. Chưa rõ vì sao RL với T_a = 0 chạy chậm hơn RL có agent (18.77 so với 13.08 s); chưa điều tra, nghi do số bước
+    của bộ giải biến bước khác nhau giữa hai quỹ đạo.
+  - Sản phẩm bước 1 đã đủ: một lượt chạy không lỗi, tín hiệu log đúng (kiểm bằng nghiệm độc lập), có số liệu thời gian. Việc mở của bước 1: không còn. Việc cần quyết ở bước 2, theo phát hiện
+    trên: ngưỡng và cách dừng sớm; phần thưởng (w1, w2); thêm tín hiệu đã lọc chậm để nắm thang giây của mu hay không.
+
+
+2.1a. Lựa chọn đã chốt cho lần làm lại bước 1 (2026-10-02, History_Chat.md Lượt 169-173)
+  Người dùng chốt từng mục sau khi thảo luận; các số kèm lý do để trả lời phản biện. Viết vào data/rl.json khi làm lại code.
+
+  Mục                                   Giá trị chốt        Lý do
+  Chu kỳ quyết định của agent           1 ms                Cùng chu kỳ với Map và PID để so sánh khách quan (mục 1)
+  Khoảng cách mẫu lịch sử D             5 ms                Nhiễu, xem đoạn dưới
+  Số mẫu lịch sử n_hist                 5                   Cửa sổ (n_hist-1)*D = 20 ms, xem đoạn dưới
+  Số quan sát                           7*5 + 1 = 36        7 tín hiệu đo x 5 mẫu, cộng T_a[k-1] đã chuẩn hóa
+  Tín hiệu vào quan sát                 giá trị ĐO          Trên xe agent chỉ có cảm biến
+  Tín hiệu cho phần thưởng, dừng sớm    giá trị THẬT        Mục tiêu là mô-men tay tài xế cảm nhận
+  Mức cảm biến khi kiểm dây             lý tưởng (none)     Giữ đáp án biết trước; kiểm thêm một lần ở mức high
+  Thuật toán                            TD3 của toolbox     Tự viết rủi ro cao (Lượt 143)
+
+  - Vì sao D = 5 ms. Lịch sử chỉ phục vụ việc ước lượng tốc độ biến thiên của T_s (để tạo sớm pha, giữ vòng ổn định ở độ lợi cao); dấu vết của mu ở thang 1.3 s thì không cửa sổ ngắn nào với
+    tới. Ước lượng tốc độ bằng hiệu hai mẫu chia khoảng cách, nên nhiễu bị khuếch đại khi khoảng cách nhỏ. Bước lượng tử của cảm biến mô-men là 0.01 N.m (độ lệch chuẩn 0.0029 N.m; mức nhiễu
+    cao khoảng 0.0104 N.m), cho nhiễu trên tốc độ (N.m/s) là 4.1 và 14.7 với D = 1 ms; 2.1 và 7.4 với 2 ms; 0.82 và 2.9 với 5 ms; 0.41 và 1.5 với 10 ms. Tốc độ biến thiên thật của T_s khoảng
+    3 N.m/s khi vào cua và 6 N.m/s khi lái sin (TC5). Vậy D = 1 ms không dùng được (nhiễu lớn hơn tín hiệu); D = 5 ms là mức nhỏ nhất mà tín hiệu còn nổi trên nhiễu. Mặt trái: hiệu hai mẫu
+    cách D bị trễ khoảng D/2, tại tần số cắt 286 rad/s của vòng Map tương ứng 8 độ (1 ms), 16 (2 ms), 41 (5 ms), 82 (10 ms); D nhỏ không bù được nhiễu nên vẫn chọn 5 ms.
+  - Vì sao n_hist = 5. Chu kỳ dao động tại tần số cắt 286 rad/s là 22 ms; cửa sổ nên phủ ít nhất một chu kỳ để agent nhận ra vòng đang dao động. Cửa sổ = (n_hist-1)*5 ms: 15 ms (n_hist 4, 29
+    quan sát), 20 ms (5, 36), 25 ms (6, 43), 40 ms (9, 64). Thêm nữa, khâu lead của Map có cực 680 rad/s nên trí nhớ chỉ khoảng 6 ms, cửa sổ 20 ms phủ thừa. Nếu huấn luyện thấy dao động hay
+    T_a rung thì TĂNG n_hist lên 7-9 (nhiều mẫu để lọc nhiễu), KHÔNG giảm D.
+  - Vì sao quan sát dùng giá trị đo còn phần thưởng dùng giá trị thật. Khi chạy trên xe agent chỉ có cảm biến; nếu lúc huấn luyện nó thấy giá trị thật thì học dựa vào thứ không tồn tại ngoài
+    đời, và so với Map, PID là không công bằng. Ngược lại phần thưởng phải chấm trên mô-men thật, vì nếu chấm trên giá trị đo thì agent có thể học "đuổi theo nhiễu" để số đo đẹp trong khi
+    mô-men thật sai. Phần thưởng chỉ dùng khi huấn luyện trong mô phỏng (thông tin đặc quyền, cách làm phổ biến khi huấn luyện robot), khi lên xe chỉ còn mạng chính sách đọc quan sát. Cách
+    chấm này cũng trùng với cách chấm Map và PID (khối Reference_true, ThucTeHoa.txt Mục 0).
+  - Giữ nguyên từ lần làm cũ (số tạm, sẽ xét lại ở bước 2 và 4): chuẩn hóa quan sát chia [2, 5, 2, 5, 27.78, 1, 3.924] cho [e_T, T_s, theta1, theta2_dot, v, gamma, a_y] và T_a chia 7.804 (=
+    max T_a,max); phần thưởng -(e_T/1)^2 với w1 = w2 = 0; dừng sớm khi |e_T| > 10 N.m; kịch bản cố định 40 km/h, giữ góc cho 0.2 g, mu 0.8 xuống 0.3 tại giây 12, dài 30 s; mạng 2 lớp x 64;
+    hệ số chiết khấu 0.99. CẢNH BÁO về hệ số chiết khấu: 0.99 ở chu kỳ 1 ms chỉ nhìn xa khoảng 100 bước (0.1 s) trong khi T_s phản ứng với mu ở thang 1.3 s; khi huấn luyện thật phải tăng lên
+    0.999 trở lên (quyết định ở bước 4, không ảnh hưởng việc đo chi phí ở bước 1).
+  - Khác với lần làm cũ về cài đặt: khối trễ của lịch sử phải trễ 5 mẫu (khối Delay, DelayLength = 5) thay vì chuỗi Unit Delay 1 mẫu; mô hình có thêm khối Sensors (6 tín hiệu đo) và khối
+    Reference_true để chấm điểm, giống Model_Map_s và Model_PID_s.
+  - Chỗ còn hổng đã biết: cửa sổ 20 ms so với thang thời gian 1.3 s của mu là gấp 65 lần, nên agent vẫn phản ứng sau khi sai số đã xảy ra, giống PID. Muốn nắm thang giây phải thêm tín hiệu
+    đã lọc thông thấp (hằng số thời gian 0.3-1 s, chỉ tốn 2-3 quan sát); đây là việc của bước 2, chưa đề xuất cụ thể.
+
+2.2. Bước 2 - Quan sát, hành động, phần thưởng
+  Mục tiêu: chốt chính xác vector quan sát, khoảng hành động và công thức phần thưởng, kiểm chứng rằng phần thưởng chấm đúng cái ta muốn.
+  - Chuẩn hóa mỗi quan sát về khoảng cỡ [-1, 1] bằng hằng số vật lý (ví dụ e_T chia 1 N.m, v chia 100 km/h), số mẫu lịch sử (dự kiến 3-5).
+  - Khoảng hành động: [-T_a,max, +T_a,max] (cho phép mô-men ngược chiều, cần cho các ca sát giới hạn bám như TC3).
+  - Phần thưởng nhận ở mẫu k chấm hành động của mẫu k-1 (hậu quả của nó là e_T[k]), nên dùng T_a[k-1] và T_a[k-2]; trọng số w1, w2 chỉnh bằng thử nghiệm. Dùng T_a[k] vừa sai ý nghĩa vừa tạo vòng
+    đại số qua khối agent (đã gặp ở bước 1, làm mô phỏng chậm khoảng 2 lần):
+
+  (1) r[k] = -(e_T[k]/T_ref)^2 - w1*(T_a[k-1] - T_a[k-2])^2 - w2*T_a[k-1]^2
+  [ r[k]=-\Big(\dfrac{e_T[k]}{T_{ref}}\Big)^2-w_1\big(T_a[k-1]-T_a[k-2]\big)^2-w_2\,T_a[k-1]^2 ]
+
+  - Kiểm chứng phần thưởng bằng chính sách đã biết: chạy Map và T_a = 0 qua cùng hàm phần thưởng; Map trên đường khô phải được điểm cao, Map khi mu giảm phải bị trừ điểm đúng tương ứng với trợ
+    lực thừa đã đo (TC2, TC3). Nếu không thì sửa phần thưởng trước khi huấn luyện.
+  - Điều kiện dừng sớm một lượt (tránh học lãng phí trên lượt đã hỏng): |e_T| hoặc |T_s| vượt ngưỡng trong một khoảng thời gian, hoặc T_a dao động mạnh.
+  TIẾN ĐỘ BƯỚC 2 (2026-10-01, TẠM DỪNG): mới thảo luận mục quan sát; chưa làm hành động, phần thưởng, kiểm chứng thưởng, dừng sớm.
+  - Phép đo mu để lại dấu vết ở tín hiệu nào (Model/RL/script/probe_mu_trace.m; Result/RL/Step2/RL_mu_trace_steady_state.csv và .png): xác lập, plant hở vòng T_a = 0, giữ nguyên theta1 đã
+    đặt cho a_y cho trước trên đường khô, rồi mu 0.8 xuống 0.3. Độ đổi tương đối: a_y ở 40 km/h +0.05% (0.10 g), -0.4% (0.20 g), -1.1% (0.25 g), -3.4% (0.30 g); ở 100 km/h +0.2%, -1.3%,
+    -3.6%, -7.9%. T_s: -3.8% (0.10 g), -9.3% (0.20 g), -25.4% (0.30 g) ở 40 km/h; -3.6%, -10.0%, -24.3% ở 100 km/h. gamma đổi trùng a_y đến 1e-12 % (a_y = v*gamma ở xác lập).
+  - Thang thời gian (mô phỏng Model_RL_s, 40 km/h, 0.2 g, T_a = 0, mu 0.8 xuống 0.3): T_s đạt 63% giá trị mới sau 1.30 s, 90% sau 3.07 s, 98% sau 5.27 s (chậm vì T_s = K(theta1 - theta2)
+    phải đợi trục lái dịch chuyển). Hằng số thời gian của a_y không đo được ở điểm này vì a_y chỉ đổi 0.35%. Mới đo một điểm làm việc; gamma chưa được log trong Model_RL_s.
+  - Hai nhận định cũ bị phép đo bác bỏ, đã sửa ở mục 1 và ghi vào PhanBien.txt mục L1: "T_s phản ứng trong vài ms" (thực tế cỡ giây) và "a_y, gamma đổi rõ ở mọi dải" (thực tế chỉ từ khoảng
+    0.25 g). Hệ quả: lập luận "RL suy ra mu từ a_y và gamma" chỉ đúng gần giới hạn bám; ở dải lái nhẹ không có tín hiệu cảnh báo sớm nào ngoài e_T, nên lợi thế của RL so với PID phải được
+    chứng minh bằng chỉ tiêu khác và chưa được kiểm chứng.
+  CHƯA CHỐT (người dùng yêu cầu khoan chốt, thảo luận tiếp khi quay lại bước 2):
+    - Số mẫu lịch sử n_hist (đang là 4 trong rl.json; người dùng đề nghị 5; chưa chốt) và khoảng cách giữa các mẫu D (đang 1 ms, tức 4 mẫu liền nhau chỉ nhìn lại 3 ms; đề xuất lưới 5, 10,
+      15, 20 ms). Thang thời gian đo được (cỡ giây) cho thấy cửa sổ 20-80 ms ít tạo khác biệt; nên chọn theo thực nghiệm huấn luyện thử hơn là theo lập luận.
+    - Có thêm đặc trưng a_y/theta1 hay không (đề xuất không thêm: nó là bộ ước lượng mu trá hình, phá luận điểm RL không cần ước lượng mu; chỉ làm biến thể so sánh nếu agent không học được).
+    - Giữ nguyên 7 tín hiệu quan sát (đề xuất giữ, kể cả gamma, vì ở chuyển tiếp nó khác a_y); chưa được người dùng xác nhận.
+    - Toàn bộ hằng số chuẩn hóa trong rl.json còn là giá trị tạm; khoảng hành động, w1, w2, ngưỡng dừng sớm chưa thảo luận.
+
+2.3. Bước 3 - Kịch bản huấn luyện (tách khỏi ca thử đánh giá)
+  Mục tiêu: bộ kịch bản ngẫu nhiên đủ đa dạng để RL học được tổng quát, và KHÁC TC1-TC6 để tránh câu hỏi "học thuộc đề".
+  - Mỗi lượt 10-20 s, ngẫu nhiên: v trong 20-100 km/h; dạng lái (giữ góc, hình sin, chuyển làn) với gia tốc ngang mục tiêu trong giới hạn a_y,lim(v) của Ref; mu ban đầu và các bước mu (giảm,
+    tăng) trong 0.2-0.8 tại thời điểm ngẫu nhiên.
+  - Tận dụng cách sinh góc lái độc lập bộ điều khiển của test_cases.m (theta1 từ gia tốc ngang mục tiêu trên đường khô).
+  - Có thể học theo giáo trình (curriculum: bắt đầu dễ - đường khô, giữ góc - rồi tăng dần độ khó - mu đổi, lái nhanh) nếu học thẳng không hội tụ.
+
+2.4. Bước 4 - Thuật toán, mạng và huấn luyện thử
+  Mục tiêu: chọn thuật toán và siêu tham số ban đầu, chạy một đợt huấn luyện ngắn để chắc chuỗi hoạt động.
+  - Thuật toán cho hành động liên tục: TD3 (Twin Delayed DDPG: dùng hai mạng đánh giá để giảm ước lượng quá cao, trễ cập nhật mạng chính sách) làm chính; SAC (Soft Actor-Critic: thêm entropy để
+    khám phá tốt hơn) làm dự phòng. Cả hai có sẵn trong toolbox. Nguồn lý thuyết nền: Sutton và Barto (References).
+  - Mạng nhỏ (2 lớp ẩn x 64 nơ-ron) cho cả mạng chính sách và mạng đánh giá, đủ chạy trên vi điều khiển theo ước lượng tải ở TestCases.txt mục 6.
+  - Hệ số chiết khấu gamma_d (mức coi trọng phần thưởng tương lai) phải sát 1 vì chu kỳ 1 ms: dự kiến 0.99-0.999.
+  - Khởi động ấm (tùy chọn): huấn luyện trước mạng chính sách bắt chước Map (học có giám sát) để agent bắt đầu từ một bộ điều khiển đã ổn định, rồi RL cải thiện tiếp. Khi chạy vẫn là RL thuần
+    (không có Map trong vòng). Quyết định ở bước này.
+
+2.4a. Lần huấn luyện đầu Train1 (chạy qua đêm 2026-10-02): các con số Claude chốt, lý do, kết quả
+  Người dùng (Lượt 180) giao: chạy qua đêm, các số Claude tự chốt sao cho hợp lý nhất và giải thích được, làm tới đâu ghi kết quả tới đó. Để kịp trong một đêm, lần này GỘP phần tối thiểu của
+    bước 2 (phần thưởng, dừng sớm), bước 3 (kịch bản ngẫu nhiên) và bước 4-5 (huấn luyện). Tạm BỎ: tín hiệu lọc chậm cho thang giây của mu; kiểm chứng phần thưởng đầy đủ bằng Map trên
+    TC1-TC6 (chỉ có kiểm chứng một phần trên hai lượt kiểm định, xem dưới). Mọi số nằm trong Model/data/rl.json (khối "reward", "done_eT", "episode_s", "train").
+
+  Mục                          Giá trị                         Lý do
+  Phần thưởng                  r = -(e_T/10)^2 - 0.01*(dT_a)^2  e_T THẬT; dT_a = T_a[k-1] - T_a[k-2] trong một mẫu 1 ms; w2 = 0 (không có lý do phạt bản thân trợ lực)
+  T_ref                        10 N.m                          Thang số: tổng thưởng chiết khấu cỡ chục, khoảng mạng đánh giá học tốt (với 1 N.m thì cỡ nghìn)
+  w1                           0.01 = 1/T_ref^2                Nhảy 1 N.m của T_a trong một mẫu 1 ms bị phạt bằng sai số bám 1 N.m
+  Dừng sớm                     tắt (ngưỡng 1e6 N.m)            Ngưỡng 10 N.m cắt lượt agent chưa học ở 61 bước (bước 1); thay bằng lượt ngắn cố định
+  Độ dài lượt                  10 s = 10000 bước               Đủ chứa một lần đánh lái và một lần mu đổi; ngắn để có nhiều lượt khác nhau
+  Hệ số chiết khấu             0.999                           Tầm nhìn 1/(1-gamma) = 1000 bước = 1 s, gần thang 1.3 s của T_s sau khi mu đổi (0.99 chỉ 0.1 s)
+  Thuật toán, mạng             TD3, mạng mặc định 64 nơ-ron    Actor 6593 tham số, 2 critic tổng 21634 tham số; khớp kế hoạch (mạng nhỏ, chạy được trên ECU)
+  Tốc độ học actor, critic     1e-4, 1e-3; cắt gradient 1      Actor học chậm hơn critic cho ổn định, như thực hành DDPG/TD3
+  Mini-batch, bộ nhớ đệm       256; 1e6 bước                   Bộ nhớ đệm = 1000 s lái = 100 lượt gần nhất
+  Nhiễu khám phá               Ornstein-Uhlenbeck, tương quan 50 ms; độ lệch chuẩn 0.3 -> 0.05 N.m trong 2e6 bước
+                                                               Nhiễu trắng 1 kHz bị cột lái lọc mất; nhiễu phải kéo dài hàng chục ms mới thay đổi được T_s. 0.3 N.m cỡ 4% khoảng +-7.8 N.m
+  Kịch bản huấn luyện          ngẫu nhiên mỗi lượt             Xem dưới; khác TC1-TC6
+  Cảm biến khi huấn luyện      mức high, seed mới mỗi lượt     Seed trong tập huấn luyện 1-9999; kiểm định 80001-80002; đánh giá 90001-90005
+  Ngân sách                    3.5 giờ hoặc 3e6 bước           Kết thúc khoảng 07:30, chừa thời gian cho đánh giá trước buổi sáng
+  Ghi kết quả                  sau mỗi đợt 10 lượt (khoảng 15 phút)  Mất phiên chat hay máy treo thì mất tối đa một đợt
+
+  - Kịch bản huấn luyện (Model/RL/script/rl_scenario_random.m): góc lái dựng đúng cách của ca thử chuẩn (góc cho gia tốc ngang mục tiêu trên đường khô với trợ lực lý tưởng, không phụ thuộc
+    bộ điều khiển; rl_angle_table.m). Mỗi lượt rút ngẫu nhiên: v đều 20-100 km/h; |a*| đều từ 0.05 g đến 90% của min(a_y,max(v, 0.8), 0.35 g) (còn đạt được trên đường khô); chiều trái/phải;
+    dạng giữ góc (dốc 1 - cos trong 0.5-1.5 s) hoặc hình sin (0.2-1.0 Hz), mỗi dạng 50%; mu ban đầu đều 0.4-0.8; với xác suất 80% có một bước mu tại 3-7 s tới giá trị đều 0.2-0.8 (giảm hoặc
+    tăng); tài xế giữ nguyên góc (không biết mu). Khác TC1-TC6 vì giá trị liên tục ngẫu nhiên, một bước mu, 10 s.
+  - Theo dõi tiến độ (rl_validation_scenarios.m): sau mỗi đợt chạy hai lượt KIỂM ĐỊNH cố định với chính sách hiện tại (không nhiễu khám phá), cảm biến mức high seed 80001, 80002: (1) 60
+    km/h, giữ góc cho 0.25 g, mu 0.8 xuống 0.3 tại 5 s; (2) 80 km/h, lái sin 0.15 g 0.5 Hz, mu 0.8 xuống 0.4 tại 5 s. Chi phí kiểm định = trung bình theo mẫu 1 ms (từ 1 s) của (e_T/10)^2 +
+    0.01*(dT_a)^2, tức trừ phần thưởng trung bình, trên e_T THẬT; thấp hơn là tốt hơn. Agent tốt nhất theo tổng chi phí kiểm định được lưu riêng (agent_best.mat) và dùng để đánh giá.
+  - Kiểm chứng một phần phần thưởng (chạy trước khi huấn luyện, cùng hai lượt kiểm định): Map chi phí 0.0034 (giữ góc; RMS e_T 0.107 N.m, TV(T_a) 427 N.m/s) và 0.0415 (sin; RMS e_T 1.99 N.m,
+    TV 233); PID 0.124 (RMS e_T 0.031, TV 2541) và 0.140 (RMS 0.140, TV 2518). Tức là với w1 = 0.01, PID bị chấm TỆ hơn Map ở lượt giữ góc dù sai số bám nhỏ hơn 3.4 lần, vì T_a của PID rung
+    (TV gấp 6 lần) khi có nhiễu cảm biến; ở lượt sin Map vẫn tốt hơn vì phần rung của PID nặng hơn phần sai số lớn của Map. Đây là đúng ý đồ (phạt rung), nhưng cũng là CẢNH BÁO: phần thưởng
+    nghiêng mạnh về độ êm; agent có thể học cách bám kém để giữ êm. Nếu kết quả cho thấy vậy thì giảm w1 ở lần sau.
+  - Lỗi đã gặp và sửa trước khi chạy: (1) góc lái của kịch bản bị thành ma trận 10001 x 10001 vì interp2 nhận tốc độ là một số vô hướng (mô hình báo 40004 trạng thái liên tục và hết bộ nhớ);
+    sửa bằng cách đưa tốc độ thành vector cùng cỡ; (2) đếm tham số của hai mạng critic (mảng) bị lỗi; sửa. Chạy thử vòng huấn luyện 2 lượt x 2000 bước: đủ file, lưu agent, vẽ đường cong;
+    chạy thử script đánh giá (eval_rl) trên agent chưa học, mức không nhiễu: chạy đủ 6 ca, bảng tổng hợp đúng; kết quả thử đã xóa.
+  - Cách chạy: Model/RL/script/run_overnight.m (nạp Map, PID, RL; train_rl('Train1'); xong thì eval_rl('Train1') trên TC1-TC6, mức none, low, high với seed 90001-90005, cùng seed với nghiên
+    cứu nhiễu của Map và PID). Khởi chạy 03:59 như một tiến trình MATLAB độc lập (vẫn chạy khi phiên chat đứt). File: Result/RL/Train1/ (RL_Train1_progress_log.txt, _episodes.csv,
+    _validation.csv, _learning_curve.png, agents/agent_best.mat và agent_last.mat, _matlab_stdout.txt, _eval_summary.txt); so sánh ba bộ: Result/Compare/Map_vs_PID_vs_RL/.
+  - Kỳ vọng ghi trước khi có kết quả: lần huấn luyện đầu thường không ra agent tốt. Ngân sách 3.5 giờ chỉ khoảng 1.5e6 bước, tức khoảng 150 lượt; với chu kỳ 1 ms và tầm nhìn 1000 bước, đây
+    là ít. Mục tiêu đêm nay là có đường cong học, biết agent có tiến bộ hay không, và danh sách vấn đề cần sửa; không phải agent thắng PID.
+  KẾT QUẢ (ghi dần):
+  - 04:00: bắt đầu; tham chiếu Map và PID trên hai lượt kiểm định như trên; agent chưa học có chi phí kiểm định 0.821 và 0.337 (gấp 240 và 8 lần Map).
+  - 04:15 đợt 1 (10 lượt, 1e5 bước): 917 s, tức 9.17 ms mỗi bước (chậm hơn 6.3 ms đo ở bước 1 vì mini-batch 256 thay 64 và thời gian kiểm định tính vào); với ngân sách 3.5 giờ chỉ được
+    khoảng 1.4e6 bước, khoảng 14 đợt. Chi phí kiểm định giảm từ 0.821 và 0.337 xuống 0.0087 và 0.0086: ở lượt sin đã thấp hơn cả Map (0.0415) và PID (0.140), ở lượt giữ góc còn cao hơn Map
+    (0.0034) nhưng thấp hơn PID (0.124). NHƯNG sai số bám RMS e_T là 0.92 N.m ở cả hai lượt (Map 0.107 và 1.99; PID 0.031 và 0.140), còn TV(T_a) chỉ 137 và 97 N.m/s (Map 427 và 233; PID 2541
+    và 2518): agent đang thắng chi phí nhờ T_a rất êm chứ chưa bám tốt, đúng cảnh báo về w1 ở trên. Cần xem các đợt sau sai số bám có giảm không.
+  - 04:31 đợt 2 (20 lượt, 2e5 bước) = KIỂM TRA THỬ: chi phí kiểm định so với agent chưa học GIẢM (0.821 và 0.337 xuống 0.022 và 0.0039), phần thưởng trung bình mỗi lượt huấn luyện tăng từ
+    -177 lên -116, nên tiếp tục huấn luyện. Chi tiết: lượt sin RMS e_T 0.58 N.m (đợt 1: 0.92), tốt hơn Map (1.99) nhưng còn kém PID (0.14), chi phí 0.0039 thấp hơn cả Map và PID; lượt giữ
+    góc thì xấu đi (RMS e_T 0.92 lên 1.48 N.m, chi phí 0.0087 lên 0.022), nên agent tốt nhất vẫn là của đợt 1. Dao động giữa các đợt là bình thường ở giai đoạn đầu của TD3; chưa thể kết
+    luận.
+  - 04:48-07:32 đợt 3 đến 11: KHÔNG tiến bộ thêm, mất ổn định. Phần thưởng trung bình mỗi lượt huấn luyện sụp từ -116 (đợt 2) xuống -902, -3709, -2138 (đợt 3-5), rồi hồi lại -370 đến -1385
+    nhưng không về lại mức đợt 2. Chi phí kiểm định dao động 0.005-0.094 (giữ góc) và 0.004-0.39 (sin), không đợt nào có tổng thấp hơn đợt 1, nên agent tốt nhất (agent_best.mat, dùng để đánh
+    giá) là agent SAU 10 LƯỢT ĐẦU. RMS e_T kiểm định các đợt sau 0.6-3.1 N.m (đợt 1: 0.92). Kết thúc 07:32 vì hết ngân sách: 110 lượt, 1.1e6 bước, 3.54 giờ. Thời gian mỗi bước tăng dần từ
+    9.2 lên 15.5 ms (đợt 1-10), có thể do bộ nhớ đệm kinh nghiệm lớn dần; chưa kiểm.
+  - Đánh giá 07:32-07:51 (eval_rl, agent sau 10 lượt, TC1-TC6, bỏ 2 s đầu, giá trị thật; mức high là trung bình 5 seed 90001-90005, cùng seed với Map và PID; bảng đầy đủ:
+    Result/RL/Train1/RL_Train1_eval_summary.txt). RMS e_T cả ca ở mức high, RL so với Map và PID (N.m): TC1 1.05 (0.60; 0.37), TC2 0.74 (0.84; 0.12), TC3 1.69 (0.40; 0.021), TC4 0.71 (0.87;
+    0.15), TC5 1.54 (1.71; 0.14), TC6 0.35 (0.013; 0.014): RL nhỉnh hơn Map chút ít ở TC2, TC4, TC5, kém Map rõ ở TC1, TC3, TC6, và kém PID ở mọi ca từ 3 đến 80 lần. TV(T_a) ở mức high: RL
+    91-122 N.m/s, Map 82-774, PID 2219-2571, tức RL êm nhất ở 5 trên 6 ca (TC4 Map 82, RL 105); không nhiễu thì RL và Map ngang nhau (0.04-3.7). Trợ lực thừa trong cửa sổ đường trơn (mức
+    high, RL; Map; PID): TC2 cua 0.25 g -5.5%; -3.6%; +0.2%; TC3 sau khi mu giảm +44% (THIẾU trợ lực, vô-lăng nặng); -14.1%; -0.05%; TC4 vũng nước -9.5%; -83.6%; -1.3%; TC5 lái sin -53%
+    (thừa nặng); +1.5%; -0.05%.
+  - KẾT LUẬN Train1: lần huấn luyện đầu KHÔNG cho ra bộ điều khiển dùng được. Agent học một chính sách "êm nhưng bám kém": T_a rất ít rung (êm nhất khi có nhiễu cảm biến) nhưng sai số bám
+    lớn, có ca thiếu trợ lực (TC3 +44%), có ca thừa nặng (TC5 -53%), và còn sai số tĩnh (TC6 0.35 N.m kéo dài trong khi Map và PID cỡ 0.01). Không hơn PID ở chỉ tiêu bám nào; hơn Map ở ba ca
+    nhưng với khoảng cách nhỏ, không đủ làm luận điểm. Giá trị của đêm nay là chẩn đoán, không phải bộ điều khiển. Nguyên nhân (GIẢ THUYẾT, chưa kiểm chứng): (1) w1 = 0.01 quá nặng so với
+    phần bám (kiểm chứng một phần trước khi chạy đã cho thấy hàm thưởng chấm PID tệ hơn Map), nên chính sách êm được thưởng hơn chính sách bám đúng; (2) huấn luyện mất ổn định sau khoảng 25
+    lượt (phần thưởng sụp gấp 30 lần), dấu hiệu thường gặp khi mạng đánh giá phân kỳ với tầm nhìn 1000 bước; (3) quá ít lượt: 110 lượt, và agent tốt nhất lại là của 10 lượt đầu; (4) quan sát
+    không có thông tin tích lũy của sai số (không có phần giống khâu tích phân), phù hợp với sai số tĩnh ở TC6 và TC3; (5) chọn agent tốt nhất chỉ dựa trên 2 lượt kiểm định với cùng hàm chi
+    phí thiên về độ êm. Hướng cho lần sau (CHỜ NGƯỜI DÙNG QUYẾT, chưa làm): giảm w1 (ví dụ 0.001) hoặc tách phạt rung khỏi phần bám; thêm tích phân của e_T vào quan sát; làm cho huấn luyện
+    ổn định hơn (tốc độ học critic nhỏ hơn, mini-batch lớn hơn, hay khởi động bằng cách cho agent bắt chước PID hoặc Map trước như kế hoạch bước 4 đã nêu); tăng số lượt; kiểm định trên nhiều
+    lượt hơn.
+
+2.4b. Train2 (hướng a): các thay đổi sau Train1, lý do, trạng thái
+  Người dùng chọn phương án đầy đủ rồi loại phần bắt chước PID ("không muốn dùng PID trong RL"); hướng a = không bắt chước bộ điều khiển cổ điển nào, ổn định huấn luyện bằng giáo trình kịch
+    bản và chỉnh tham số. Hướng b (bắt chước Map) và hướng c (thầy có thông tin đặc quyền: biết mu và mô-men phản hồi thật, trò chỉ thấy cảm biến) để dành nếu Train2 vẫn sụp. TRẠNG THÁI: các
+    thay đổi dưới đây ĐÃ SỬA trong code nhưng CHƯA dựng lại model, CHƯA chạy kiểm tra, CHƯA huấn luyện; file rl.json đã kiểm cú pháp bằng python.
+
+  Thay đổi                          Train1                    Train2                        Lý do
+  1. Quan sát chậm I                không có                  I = lọc thông thấp của e_T đo, tau = 1 s, thêm 1 quan sát (36 lên 37)
+                                                                                              Cửa sổ lịch sử chỉ 20 ms, agent không biết sai số đã kéo dài bao lâu; thiếu thông tin này nên TC6 còn lệch 0.35 N.m, TC3 thiếu trợ lực +44%
+  2. Trọng số phạt rung w1          0.01                      0.0003                        Độ êm của Map (trung bình dT_a^2 mỗi mẫu 1 ms cỡ 0.33) bị phạt bằng sai số bám 0.1 N.m: (0.1/10)^2/0.33 = 3e-4
+  3. Tốc độ học critic              1e-3                      1e-4                          Thưởng sụp gấp 30 lần sau khoảng 25 lượt, dấu hiệu mạng đánh giá phân kỳ
+  4. Giáo trình kịch bản            không                     3 giai đoạn: 40, 40, rồi đầy đủ   Học bám và êm trên đường khô trước, rồi thêm mu đổi nhẹ (mu1 0.4-0.8), rồi toàn dải
+  5. Số lượt kiểm định              2                         4                             Chọn agent tốt nhất từ 4 tình huống thay vì 2; thêm 40 km/h giữ góc (đáp án mở đã biết) và 100 km/h đường khô lái sin
+  6. Báo cáo chi phí kiểm định      tổng                      tách phần bám và phần êm      Cách phân tích đã cho thấy phần êm lấn át ở Map, PID nhưng phần bám lấn át ở agent
+  7. Ngân sách                      3.5 giờ (110 lượt)        10 giờ (khoảng 240-400 lượt)  Số lượt quá ít là một nguyên nhân; 9-15 ms mỗi bước cho khoảng 2.4e6-4e6 bước
+  8. Hạt giống bộ sinh ngẫu nhiên   1                         2                             Không lặp lại chuỗi kịch bản của Train1
+
+  - - Quan sát chậm I (chi tiết). I[k+1] = (1 - Ts/tau)*I[k] + (Ts/tau)*e_T[k], tính trên e_T ĐO (agent chỉ có cảm biến), khởi tạo 0, chuẩn hóa chia 2 N.m như e_T. Đây là bộ lọc thông thấp
+    bậc một của e_T, tương đương tích phân rò của e_T chia cho tau: ở trạng thái xác lập I bằng e_T, còn sai số kéo dài thì I tăng dần trong thang tau. Khác với khâu I của PID (cộng thẳng
+    vào T_a với hệ số cố định) và k_I của SMC (nằm trong mặt trượt): ở đây I chỉ là một đầu vào của mạng, mạng tự học cách dùng (phi tuyến, phụ thuộc v, a_y, theta1). Không bảo đảm xóa sai
+    số tĩnh như PID (PID xóa theo cấu trúc, RL chỉ có khả năng). Tau = 1 s vì gần thang 1.3 s của T_s sau khi mu đổi (đã đo). Khối: Unit Delay + hai Product + Sum, không có vòng đại số. Công
+    thức "tích phân rò" nêu ở cuộc thảo luận I' = e_T - I/tau cho I = tau*e_T ở xác lập; dạng cài đặt là I chia tau (cùng thông tin, cùng dạng, chỉ khác tỉ lệ), để I cùng đơn vị N.m với e_T.
+  - - Giáo trình (rl_scenario_random.m, tham số stage). Giai đoạn 1 (40 lượt đầu): mu = 0.8 suốt lượt, không bước mu, |a*| tối đa 60% giới hạn; giai đoạn 2 (40 lượt tiếp): mu0 0.6-0.8, 80%
+    có một bước mu tại 3-7 s tới 0.4-0.8; giai đoạn 3: toàn dải như Train1 (mu0 0.4-0.8, mu1 0.2-0.8, |a*| tối đa 90%). Giai đoạn chuyển theo số lượt đã chạy, đọc từ biến cơ sở rl_stage do
+    train_rl.m đặt trước mỗi đợt; bộ nhớ đệm kinh nghiệm giữ nguyên qua các giai đoạn nên dữ liệu dễ lẫn với dữ liệu khó (1e6 bước là khoảng 100 lượt). Lý do: Train1 học từ ngẫu nhiên toàn
+    dải ngay từ đầu và sụp; chạy giai đoạn 1 cho agent thấy bài toán bám và êm đơn giản trước, một cách phổ biến để ổn định học tăng cường.
+  - - Tính w1 (có kiểm chứng trước khi chạy ở Train1, khi đó dùng w1 = 0.01): với w1 = 0.01 chi phí kiểm định lượt giữ góc tách ra Map: bám 0.00011 + êm 0.0033 (êm gấp 30 lần); PID: 0.00001
+    + 0.124 (êm gấp 12000 lần); agent tốt nhất của Train1: 0.0084 + 0.0003 (bám gấp 25 lần). Tức là hàm thưởng cũ gần như chỉ đo độ êm khi chấm Map và PID, nhưng với chính agent thì phần bám
+    mới chiếm 96%; vì vậy nguyên nhân agent bám kém KHÔNG chủ yếu do bị ép êm mà do chưa học được (đính chính giả thuyết đầu tiên sáng 2026-10-02). Với w1 = 3e-4 trên cùng lượt: Map khoảng
+    0.0002 (êm), PID khoảng 0.0037, agent cũ 0.0084 (bám); thứ tự Map < PID < agent cũ, và rung của PID tương đương sai số bám khoảng 0.6 N.m thay vì lấn át hoàn toàn.
+  - - Thay đổi liên quan khác: nhiều thư mục kết quả theo tên chạy (Result/RL/Train2/, run_overnight.m chạy Train2 mặc định, đổi bằng biến run_name); validation.csv thêm hai cột cost_track
+    và cost_smooth; nhật ký ghi giai đoạn giáo trình mỗi khi đổi.
+  - - Thời gian dự kiến (ước, chưa kiểm chứng): dựng lại model và chạy test_model_rl_s khoảng 3 phút; kiểm tra thử vòng huấn luyện ngắn khoảng 10 phút; Train2 10 giờ cộng đánh giá khoảng 20
+    phút (eval_rl ở Train1 mất 19 phút). Tốc độ huấn luyện thực tế ở Train1 là 9-15 ms mỗi bước và chậm dần theo thời gian (nguyên nhân chưa rõ, nghi bộ nhớ đệm kinh nghiệm lớn dần); với 4
+    lượt kiểm định mỗi đợt thay cho 2, thời gian kiểm định tăng thêm khoảng 30 giây mỗi đợt.
+  - - Rủi ro đã biết: (1) giáo trình và w1 mới là phỏng đoán có lý do, không phải kết quả đã kiểm; (2) nếu critic vẫn phân kỳ thì hướng c; (3) kiểm định 4 tình huống vẫn là ít, agent tốt
+    nhất có thể được chọn ngẫu nhiên; (4) chưa kiểm cú pháp MATLAB của các sửa đổi: lần chạy đầu có thể phát lỗi nhỏ như ở Train1.
+  ĐÃ LÀM 2026-10-02 13:50-13:56: dựng lại Model_RL_s, test_model_rl_s PASS, chạy thử ngắn, khởi chạy Train2 (xem KẾT QUẢ TRAIN2 bên dưới).
+  - KẾT QUẢ TRAIN2 (ghi dần). 13:50 dựng lại Model_RL_s: TEST PASS, 37 quan sát, quan sát chậm I khớp bộ lọc độc lập (Result/RL/Train2/RL_Train2_build_test_log.txt). 13:52 chạy thử ngắn (2
+    lượt x 2000 bước): giáo trình chuyển giai đoạn đúng, kiểm định 4 tình huống chạy được, chi phí tách phần bám và êm (kết quả thử đã xóa). Tham chiếu kiểm định với w1 = 0.0003 (tổng chi
+    phí; phần bám + phần êm): Map: giữ góc 60 km/h 0.00021 (0.00011 + 0.0001), sin 80 km/h 0.040 (bám 0.040), giữ góc 40 km/h 0.00031, sin 100 km/h đường khô 0.039; PID: 0.0037, 0.0044,
+    0.0036, 0.0042 (gần như toàn phần êm, bám dưới 0.0003). Agent chưa học: 0.038, 0.163, 0.030, 0.170. Với w1 mới, Map thắng PID ở hai lượt giữ góc (PID bị phạt rung) còn PID thắng Map ở
+    hai lượt sin (Map bám kém, RMS e_T 1.97-1.99 N.m). 13:56 KHỞI CHẠY Train2 như tiến trình MATLAB độc lập (run_overnight.m, tên Train2): ngân sách 10 giờ hoặc 4e6 bước, kết thúc khoảng
+    23:56 rồi đánh giá khoảng 20 phút. File: Result/RL/Train2/.
+  - 14:03 CHẠY THEO TỪNG GIAI ĐOẠN (người dùng chọn phương án A: không đổi code, để Train2 chạy hết giai đoạn 1 rồi dừng, đánh giá, điều chỉnh): Train2 đang ở giai đoạn 1 (đường khô, 40 lượt
+    đầu = 4 đợt, ước 70-80 phút, xong khoảng 15:15). Bộ canh tự động (Result/RL/Train2/watch_stop_after_stage1.ps1, tiến trình độc lập, chỉ dừng cây tiến trình của lần chạy này, không đụng
+    MATLAB khác) chờ dòng "chunk 4 (stage 1)" trong nhật ký, đợi 20 giây cho huấn luyện lưu và vẽ xong, sao agent sang agents/agent_stage1_last.mat (sau 40 lượt) và agent_stage1_best.mat
+    (tốt nhất theo kiểm định) và RL_Train2_stage1_learning_curve.png, rồi dừng tiến trình; giai đoạn 2 KHÔNG bắt đầu. Trước khi chạy giai đoạn 2 cần viết thêm tính năng tiếp tục từ agent đã
+    lưu (số lượt, nhiễu khám phá, và bộ nhớ đệm kinh nghiệm nếu file agent có giữ; chưa kiểm).
+  - 14:15 đợt 1 giai đoạn 1 (10 lượt, 1e5 bước): 1124 s (11.2 ms mỗi bước). Phần thưởng trung bình mỗi lượt -563. Chi phí kiểm định (giữ 60 km/h; sin 80 km/h; giữ 40 km/h; sin 100 km/h khô)
+    0.0054; 0.0068; 0.036; 0.0089 (bám chiếm gần hết, phần êm dưới 3e-5), RMS e_T 0.74; 0.82; 1.90; 0.94 N.m. So với Map (0.0002; 0.040; 0.0003; 0.039) agent đã THẮNG ở hai lượt sin (0.0068
+    và 0.0089 so với 0.040 và 0.039) nhưng thua ở hai lượt giữ góc; so với PID (0.0037; 0.0044; 0.0036; 0.0042) còn kém ở cả bốn. 14:37 đợt 2 (20 lượt, 2e5 bước) = KIỂM TRA THỬ: 1302 s (13.0
+    ms mỗi bước); phần thưởng trung bình mỗi lượt cải thiện -563 lên -149, nhưng chi phí kiểm định XẤU đi ở ba trong bốn lượt: 0.068; 0.018; 0.148; 0.027 (RMS e_T 2.6; 1.3; 3.9; 1.6 N.m); cờ
+    IMPROVED của kiểm tra thử chỉ so với agent chưa học (tổng 0.40 xuống 0.26) nên dễ gây hiểu lầm. Dao động giữa các đợt giống Train1. Lưu ý khi đọc: kiểm định 1 và 3 có mu giảm 0.8 xuống
+    0.3 giữa lượt, mà giai đoạn 1 chỉ huấn luyện trên đường khô (mu không đổi), nên hai lượt này nằm NGOÀI phân bố huấn luyện ở giai đoạn này; chỉ lượt 4 (sin 100 km/h đường khô) là trong
+    phân bố, và nó xấu đi 0.0089 lên 0.027. Giai đoạn 1 chạy chậm hơn dự kiến (đợt 21 phút), dự kiến xong khoảng 15:25.
+  - 15:03 đợt 3 và 15:25 đợt 4 (giai đoạn 1 xong, 40 lượt, 4e5 bước): đợt 3 mất 1524 s, đợt 4 1331 s (13-15 ms mỗi bước, chậm dần). Chi phí kiểm định (giữ 60; sin 80; giữ 40; sin 100 khô):
+    đợt 3 0.034; 0.029; 0.113; 0.037; đợt 4 0.022; 0.019; 0.120; 0.015; so với đợt 1 (0.0054; 0.0068; 0.036; 0.0089): XẤU hơn ở cả bốn lượt. Lượt trong phân bố huấn luyện (sin 100 km/h đường
+    khô): 0.170 (chưa học), 0.0089, 0.027, 0.037, 0.015 qua các đợt, RMS e_T 4.13, 0.94, 1.64, 1.67, 1.23 N.m: tốt nhất ở đợt 1 rồi trôi xấu đi, không hội tụ; vẫn tốt hơn Map (0.039; RMS
+    1.97) nhưng kém PID (0.0042; RMS 0.15) khoảng 3.6 lần về chi phí, 8 lần về sai số. Phần thưởng huấn luyện: trung vị mỗi đợt -119, -92, -140, -218 (xấu dần từ đợt 2), trung bình bị kéo
+    bởi vài lượt rất xấu (-2697 ở lượt 1, -2064 ở lượt 10, -6292 ở lượt 34). Độ rung T_a: TV ở lượt sin 80 và sin 100 khô vọt lên 2997 và 2858 N.m/s ở đợt 3 (cỡ PID có nhiễu) rồi về 402 và
+    185 ở đợt 4; max|T_a| 6.5-6.6 N.m ở hai lượt sin (gần giới hạn 7). Kết luận giai đoạn 1: CHƯA hội tụ ngay cả trên đường khô, không có xu hướng cải thiện sau 10 lượt đầu; chi phí tách
+    thấy phần bám lấn át (phần êm 1e-5 đến 1e-2). 15:25 bộ canh dừng tiến trình đúng lúc, đã sao agents/agent_stage1_best.mat (đợt 1, tốt nhất theo tổng 4 lượt) và agent_stage1_last.mat (sau
+    40 lượt) và RL_Train2_stage1_learning_curve.png; giai đoạn 2 chưa bắt đầu.
+
+2.4c. Chẩn đoán agent giai đoạn 1 của Train2 (2026-10-02, History_Chat.md Lượt 193)
+  - Mục đích: kiểm chứng giả thuyết của Lượt 192 (agent trợ lực thiếu, không tự triệt sai số tĩnh) trước khi đổi thiết kế. Script Model/RL/script/diag_rl_agent.m (chỉ chạy mô phỏng, không huấn
+    luyện): chạy Map, PID, agent_stage1_best (đợt 1) và agent_stage1_last (sau 40 lượt) trên hai lượt kiểm định GIỮ GÓC (giữ 0.25g 60 km/h và giữ 0.20g 40 km/h, mu 0.8 xuống 0.3 ở 5 s, cảm biến mức
+    high, cùng seed kiểm định); vẽ T_a, T_s so với T_d,ref, e_T; lấy trung bình hai cửa sổ 3-5 s (trước khi mu giảm) và 8-10 s (sau); đo ĐỘ NHẠY của chính sách: ghi quan sát ở t = 4 s và 9 s, cộng
+    trừ 0.5 N.m vào các phần tử e_T đo được (cả 5 mẫu lịch sử và quan sát chậm I), đọc thay đổi của hành động, gain = dT_a/de_T (N.m trên N.m), rồi tách riêng phần do lịch sử và phần do I. Dấu đúng
+    là gain dương (e_T dương nghĩa là tài xế đang gánh nhiều hơn giá trị đặt, cần thêm trợ lực); để so sánh, PID có Kp = 16.48 cộng khâu tích phân. Kết quả: Result/RL/Train2/Diagnostics/ (hai hình
+    RL_Train2_diag_<lượt>.png, RL_Train2_diag_windows.csv, RL_Train2_diag_sensitivity.csv).
+  - Lượt giữ 0.20g 40 km/h, cửa sổ 3-5 s (T_d,ref = 2.00 N.m): Map T_a 3.22, e_T 0.001; PID T_a 3.43, e_T 0.012; agent đợt 1 T_a 5.37 (thừa khoảng 2 N.m), T_s 0.44, e_T -1.57 (TRỢ LỰC THỪA, vô-lăng
+    nhẹ hẳn); agent sau 40 lượt T_a -0.65 (NGƯỢC CHIỀU), T_s 5.42, e_T +3.43. Cửa sổ 8-10 s: agent đợt 1 e_T -2.40 (T_s -0.39, vô-lăng tự kéo về một phía), agent sau 40 lượt e_T +3.77. Lượt giữ 0.25g
+    60 km/h, cửa sổ 3-5 s (T_d,ref = 2.62): Map và PID e_T 0.000 và 0.026; agent đợt 1 e_T +0.89 (T_a 2.94 so với 3.8-4.2 cần); agent sau 40 lượt e_T +1.61 (T_a 1.99). Như vậy giả thuyết 'trợ lực
+    thiếu' chỉ đúng một phần: sai số tĩnh có thật và lớn, nhưng chiều sai khác nhau theo agent và theo lượt (thiếu, thừa, có lúc ngược chiều).
+  - Hình (lượt 40 km/h): trong 1 s đầu (góc lái đang tăng) cả hai agent bám tương đối; ngay khi góc lái đứng yên (t = 1 s) cả hai TRÔI chậm, đơn điệu, không quay lại: agent sau 40 lượt giảm T_a xuống
+    khoảng -1 N.m làm T_s tăng từ 4.3 lên 5.7 N.m; agent đợt 1 tăng T_a làm T_s giảm từ 3.1 xuống -0.4 N.m. Đường trôi có dạng mũ với hằng số thời gian cỡ 1-2 s, cùng cỡ với hằng số I_tau = 1 s của
+    quan sát chậm I. T_a của agent mượt hơn PID nhiều (PID bị nhiễu lượng tử T_s làm rung giữa hai giới hạn), nhưng không có phản hồi.
+  - Độ nhạy (bảng RL_Train2_diag_sensitivity.csv): mọi gain tổng nằm trong khoảng -3 đến +1.1, đổi dấu giữa các thời điểm và các lượt, nhỏ hơn Kp của PID 15-30 lần: agent gần như KHÔNG dùng sai số để
+    sửa. Tách riêng: agent sau 40 lượt có gain theo I ÂM và lớn (-2.7 ở lượt 60 km/h; -6.7 và -5.8 ở lượt 40 km/h) trong khi gain theo lịch sử e_T dương (+4.2 đến +5.2 ở lượt 40 km/h). Gain âm theo I
+    là PHẢN HỒI DƯƠNG chậm: e_T dương làm I tăng, I tăng làm T_a giảm, T_a giảm làm e_T tăng thêm, đúng với đường trôi đã thấy. Agent đợt 1 có gain theo I và theo lịch sử nhỏ, dấu không nhất quán
+    (chưa học được phản hồi nào).
+  - Kết luận chẩn đoán: (1) agent KHÔNG học được vòng phản hồi bám mô-men: độ nhạy theo sai số nhỏ và sai dấu, nên ở trạng thái giữ góc sai số tĩnh không được triệt; điểm làm việc mà agent dừng lại
+    là ngẫu nhiên theo mạng (lúc thiếu, lúc thừa, lúc ngược chiều); (2) quan sát chậm I (thêm ở Train2 để agent biết sai số kéo dài bao lâu) bị agent dùng với dấu SAI và trở thành đường gây trôi
+    chính ở agent sau 40 lượt; (3) agent chỉ bám được khi góc lái đang thay đổi, tức là học ánh xạ 'thay đổi góc lái thì đổi trợ lực' (gần với bản đồ tĩnh) chứ không học sửa sai số. Điều này khớp với
+    giả thuyết 1-2 của Lượt 192 (gamma 0.999 làm tín hiệu của từng hành động quá nhỏ; hành động T_a tuyệt đối buộc mạng tự tạo điểm làm việc) nhưng chưa chứng minh chúng là nguyên nhân; chỉ chứng
+    minh hiện tượng. Hạn chế của phép đo độ nhạy: chỉ đổi các phần tử e_T, giữ nguyên T_s đo được trong quan sát (agent có thể đọc sai số qua T_s), và chỉ ở hai thời điểm mỗi lượt.
+
+2.4d. KẾ HOẠCH thí nghiệm theo bậc (2026-10-03, History_Chat.md Lượt 196): từ bài toán nhỏ nhất lên dần
+  - Bối cảnh: Train1 và Train2 hỏng vì CÁCH LÀM thí nghiệm, không phải vì thiếu lượt huấn luyện: (1) mỗi lần đổi nhiều thứ cùng lúc nên không biết cái nào có tác dụng; (2) mỗi thí nghiệm mất 80 phút
+    trên bài toán đầy đủ (kịch bản ngẫu nhiên, nhiễu, lượt 10 s); (3) chưa có bài kiểm tra 'phải qua' nhỏ nhất: chẩn đoán (mục 2.4c) cho thấy agent chưa triệt được sai số tĩnh khi giữ góc, việc dễ
+    nhất. Mục tiêu cuối không đổi (mục 1): RL bằng Map ở chỗ Map tốt và hơn Map khi mu giảm; hơn PID là điểm cộng. Người dùng chốt (2026-10-03): làm đúng quan trọng hơn có kết quả đẹp cho báo cáo thứ
+    7.
+  - Nguyên tắc: mỗi bậc là một thí nghiệm RẺ (10-30 phút) có ĐIỀU KIỆN QUA ghi trước; đổi MỘT thứ mỗi lần; chỉ lên bậc kế khi qua. Hỏng ở bậc nào thì nguyên nhân nằm ở thứ vừa thêm. Bảng kết quả từng
+    biến thể chính là phần thử bỏ từng thành phần (ablation) của chương RL, để trả lời hội đồng 'vì sao chọn gamma, vì sao hành động dạng này'.
+  - BẬC 1 - Bài toán nhỏ nhất: triệt sai số tĩnh khi giữ góc. Thiết lập: MỘT kịch bản cố định (giữ góc ứng với a_y = 0.2 g, 40 km/h, đường khô mu = 0.8 suốt, góc lái tăng trong 0.5 s rồi giữ), KHÔNG
+    nhiễu cảm biến (mức none), mỗi lượt 4 s (4000 bước), 30 lượt (1.2e5 bước, khoảng 25 phút); sau mỗi 5 lượt chạy lại kịch bản đó bằng chính sách thuần (không nhiễu khám phá) và ghi sai số trung
+    bình e_T, RMS e_T, T_a trung bình trong cửa sổ 3-4 s (T_d,ref = 2.0 N.m). Code: Model/RL/script/train_small.m; kết quả: Result/RL/Bac1/<tên lần chạy>/. ĐIỀU KIỆN QUA: |e_T trung bình| trong cửa
+    sổ 3-4 s dưới 0.1 N.m (Map đạt 0.001, PID 0.012) và ổn định qua các lần kiểm tra cuối (không trôi như Train2). Lần chạy đầu là MỐC: giữ nguyên thiết lập hiện tại (gamma 0.999, hành động T_a tuyệt
+    đối, có quan sát chậm I) để có điểm so sánh. Sau đó đổi TỪNG thay đổi một so với mốc: (a) gamma 0.99; (b) hành động dạng gia số T_a[k] = T_a[k-1] + dT_a với |dT_a| tối đa 0.2 N.m mỗi bước (agent
+    có sẵn tính tích lũy, cần người dùng cân nhắc vì gần với tác dụng của khâu I, không phải PID: không có Kp, Ki, Kd cố định); (c) bỏ quan sát I (đặt rl_I_gain = 0). Nếu (a) hoặc (c) đã đủ để qua
+    thì không cần (b).
+  - BẬC 2 - Tăng tốc thí nghiệm (làm song song với bậc 1): hiện 13 ms mỗi bước trong khi riêng mô phỏng 6.3 ms; đo phần còn lại tốn ở đâu (cập nhật mạng, kiểm định); thử chạy nhiều môi trường song
+    song bằng Parallel Computing Toolbox (đã cài). Nếu được, ngân sách 1e6-3e6 bước (cỡ TD3 thường cần) trong tầm.
+  - BẬC 3 - Leo dần độ khó, mỗi lần thêm đúng một thứ, mỗi bước phải qua điều kiện mới lên bước kế: kịch bản ngẫu nhiên đường khô (nhiều tốc độ, biên độ lái, kiểu giữ/sin) -> thêm nhiễu cảm biến (mức
+    high) -> thêm mu thay đổi giữa lượt. Mỗi bước dùng kiểm định cố định như train_rl.m.
+  - BẬC 4 - Huấn luyện chính và đánh giá trên TC1-TC6 (mức none/low/high, seed kiểm tra) so với Map và PID, như bước 5 và 6.
+  - Nếu bậc 1 thất bại với mọi biến thể: lỗi ở phần nền (thang phần thưởng, chuẩn hóa quan sát, cỡ mạng), xem lại trước; chỉ khi nền đúng mà vẫn hỏng mới tính phương án B (agent chu kỳ 5 ms) hoặc C
+    (thầy-trò đặc quyền: thầy thấy mu thật, trò chỉ dùng tín hiệu đo).
+  - Nhật ký các bậc (ghi tiếp bên dưới khi làm):
+
+2.5. Bước 5 - Huấn luyện chính
+  - Huấn luyện song song nhiều lượt (Parallel Computing Toolbox nếu có), lưu agent định kỳ, ghi đường cong phần thưởng.
+  - Tiêu chí dừng: phần thưởng trung bình ngừng tăng; kiểm tra định kỳ agent trên một kịch bản kiểm tra cố định (không phải TC1-TC6).
+  - Sản phẩm: agent tốt nhất (.mat trong Model/data hoặc Result/RL), đường cong học.
+
+2.6. Bước 6 - Đánh giá trên cùng thước đo với Map
+  - Chạy run_test_cases('RL') trên TC1-TC6, so trực tiếp với Bảng 9-10 của map.txt (RMS e_T, e_rel theo cửa sổ, RMS và TV của T_a).
+  - Quét xác lập trợ lực thừa theo gia tốc ngang và mu như map.txt Hình 11 (với RL phải mô phỏng tới xác lập vì không có công thức đóng).
+  - Kiểm tra không dao động và độ gợn; chỉ tiêu theo vùng (tỉ lệ vùng (a_y, mu) mà |e_rel| vượt ngưỡng).
+
+2.7. Bước 7 - Độ bền
+  - mu và v ngoài dải huấn luyện; sai lệch tham số Plant +-20% (K, J_col, C_alpha, t_0) để trả lời câu hỏi "RL học thuộc mô hình"; nhiễu cảm biến; trễ của a_y.
+  - Ghi các điểm yếu vào PhanBien.txt section L.
+
+2.8. Bước 8 - Tài liệu
+  - Chương Documents/RL/rl.txt (cùng quy ước plant.txt, map.txt) và rl.docx; section L của PhanBien.txt; cập nhật CLAUDE.md và History_Chat.md.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Rủi ro và phương án dự phòng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  - RL thuần không học được vòng ổn định ở 1 ms (vòng phản hồi qua T_s có độ lợi cao, map.txt mục 2.4): thử khởi động ấm từ Map, giáo trình dễ đến khó, phạt dao động mạnh hơn; cuối cùng mới dùng
+    RL lai Map như biến thể phụ.
+  - Huấn luyện quá lâu: rút ngắn lượt, song song hóa, Accelerator; đo ở bước 1 trước khi cam kết lịch.
+  - RL bám tốt nhưng T_a rung: tăng w1, lọc đầu ra (bộ lọc phải được tính vào kiến trúc và áp cho cả lúc đánh giá).
+  - RL tốt trên kịch bản huấn luyện nhưng kém trên TC1-TC6: mở rộng độ đa dạng kịch bản, không đưa TC vào huấn luyện.
+==============================================================================================================================================================================================

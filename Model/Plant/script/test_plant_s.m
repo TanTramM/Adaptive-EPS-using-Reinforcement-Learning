@@ -174,7 +174,7 @@ function [F_yf, F_yr, T_r] = tireModel(P, theta2, beta, gamma, v, mu)
     B_r = P.C_r / (P.C * D_r);
     u_r = B_r * alpha_r;
     F_yr = D_r * sin(P.C * atan(u_r - P.E*(u_r - atan(u_r))));
-    e_p = max(0, P.e_p0 - sign(alpha_f) * P.e_p0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
+    e_p = P.e_p0 - P.t_0 + max(0, P.t_0 - sign(alpha_f) * P.t_0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
     T_r = e_p / P.n_st * F_yf;
 end
 

@@ -4,12 +4,12 @@ function export_map_results()
 %
 %   1. Map_assist_curves_by_speed.png            torque map T_a(|T_s|) per speed with the calibration pairs
 %   2. Map_phase_margin_vs_map_slope.png (+csv)  phase margin of the linearized loop vs map slope Kv:
-%                                                10 ms and 1 ms without compensator, 1 ms with the two lead stages
+%                                                10 ms and 1 ms without compensator, 1 ms with the lead stage
 %   3. Map_dry_road_steady_error.png (+csv)      steady e_T = T_s - T_d,ref at mu = 0.8 vs a_y, designed map
 %                                                (curve) and, for comparison, the linear map with dead band of [4]
-%   4. Map_TC1_dry_calibration_*, Map_TC2_road_*, Map_test_case_metrics.csv
-%                                                closed loop (Model_Map_s) on the two standard test cases shared by
-%                                                every controller (Sim/script/test_cases.m, run_test_cases.m)
+%   4. TestCases/Map_TC<n>_*, Map_test_case_metrics.csv
+%                                                closed loop (Model_Map_s) on the standard test cases TC1-TC6 shared
+%                                                by every controller (Sim/script/test_cases.m, run_test_cases.m)
 %   5. Map_over_assist_vs_lateral_accel.png (+csv) over-assist caused by mu: steady (e_T,after - e_T,before)/T_d,ref
 %                                                after mu drops (0.8 -> 0.5, 0.8 -> 0.3) with the steering wheel
 %                                                angle held, vs a_y before the drop (e_T,before = dry-road error)
@@ -52,7 +52,7 @@ exportgraphics(f, fullfile(outDir, 'Map_assist_curves_by_speed.png'), 'Resolutio
 %% 2. phase margin vs map slope
 kr = mp.lead.k_r_Nm_per_rad;
 Gc = tf(P.K, [P.J_col, P.C_col, P.K + kr]);
-H1 = tf(mp.lead.num(:)', mp.lead.den(:)', mp.Ts_ctrl.value)^2;
+H1 = tf(mp.lead.num(:)', mp.lead.den(:)', mp.Ts_ctrl.value)^mp.lead.stages;
 Kvs = linspace(0.5, Kmax, 40);
 pm = nan(numel(Kvs), 3); st = false(numel(Kvs), 3);
 cases = {c2d(Gc, 0.01, 'zoh'), c2d(Gc, 0.001, 'zoh'), H1 * c2d(Gc, 0.001, 'zoh')};
@@ -64,7 +64,7 @@ for i = 1:numel(Kvs)
     end
 end
 f = figure('Visible', 'off', 'Position', [100 100 760 440]); hold on; grid on; box on;
-lbl = {'T_{ctl} = 10 ms, không bù', 'T_{ctl} = 1 ms, không bù', 'T_{ctl} = 1 ms, hai khâu lead'};
+lbl = {'T_{ctl} = 10 ms, không bù', 'T_{ctl} = 1 ms, không bù', 'T_{ctl} = 1 ms, khâu lead'};
 sty = {'-r', '-b', '-k'};
 for c = 1:3
     plot(Kvs, pm(:, c), sty{c}, 'LineWidth', 1.6, 'DisplayName', lbl{c});
@@ -85,10 +85,10 @@ fprintf('2. 10 ms without compensator: first unstable slope %.2f; 1 ms without: 
 rows = [];
 for j = 1:numel(vBp)
     v = vBp(j);
-    ayL = mp.a_y_lim_g(j);
+    ayL = ref.Ta_max.a_y_lim_g(j);
     ays = unique([0.02:0.01:ayL, ayL]);
     z = [0; 0; 0.001];
-    TaTop = mp.Ta_max_Nm(j); TsTop = mp.T_s_top_Nm(j); KvLin = TaTop / (TsTop - Ts0);
+    TaTop = ref.Ta_max.Ta_max_Nm(j); TsTop = ref.Ta_max.T_d_ref_top_Nm(j); KvLin = TaTop / (TsTop - Ts0);
     Mlin = @(Ts) min(max(Ts - Ts0, 0) * KvLin, TaTop);
     for i = 1:numel(ays)
         [Tr, z] = roadTorque(P, v / 3.6, ays(i) * P.g, 0.8, z);
@@ -187,7 +187,7 @@ function [Fyf, Fyr, Tr] = tire(P, theta2, beta, gamma, v, mu)
     alpha_r = -beta + P.l_r * gamma / v;
     Fyf = mf(P, alpha_f, mu * P.F_zf, P.C_alpha_f);
     Fyr = mf(P, alpha_r, mu * P.F_zr, P.C_r);
-    e_p = max(0, P.e_p0 - sign(alpha_f) * P.e_p0 * P.C_alpha_f * tan(alpha_f) / (3 * mu * P.F_zf));
+    e_p = P.e_p0 - P.t_0 + max(0, P.t_0 - sign(alpha_f) * P.t_0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
     Tr = e_p / P.n_st * Fyf;
 end
 
@@ -219,7 +219,7 @@ function [Tr, z] = roadTorque(P, v, ay, mu, z0)
     [z, ~, flag] = fsolve(@(z) res(P, z, v, mu, ay), z0, opt);
     assert(flag > 0, 'no steady state at v = %g m/s, a_y = %g m/s^2', v, ay);
     alpha_f = z(3) - z(1) - P.l_f * z(2) / v;
-    e_p = max(0, P.e_p0 - sign(alpha_f) * P.e_p0 * P.C_alpha_f * tan(alpha_f) / (3 * mu * P.F_zf));
+    e_p = P.e_p0 - P.t_0 + max(0, P.t_0 - sign(alpha_f) * P.t_0 * P.C_alpha_f * tan(alpha_f) / (3*mu*P.F_zf));
     Tr = e_p / P.n_st * mf(P, alpha_f, mu * P.F_zf, P.C_alpha_f);
 end
 

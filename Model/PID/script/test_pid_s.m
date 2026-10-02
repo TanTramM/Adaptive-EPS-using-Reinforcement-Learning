@@ -16,7 +16,7 @@ function test_pid_s()
 %   the samples (checked), and v goes below 20 km/h and above 100 km/h to
 %   exercise the clipping of the table. Gains and Kaw are read from the base
 %   workspace (run load_pid first); the T_a,max table is read INDEPENDENTLY
-%   from data/boundaries.json - this test checks the IMPLEMENTATION, not the
+%   from data/ref.json (Ta_max) - this test checks the IMPLEMENTATION, not the
 %   tuning.
 
 modelFileName = 'PID_s';
@@ -31,9 +31,9 @@ for nm = {'Kp', 'Ki', 'Kd', 'T_filt', 'Kaw', 'Ts_ctrl'}
 end
 Ts = G.Ts_ctrl;
 
-bnd = jsondecode(fileread(fullfile(modelDir, 'data', 'boundaries.json')));
-vBp = bnd.T_a.v_kmh(:)'/3.6;
-TaMaxTable = bnd.T_a.value(:)';
+bnd = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));   % T_a,max(v) of Ref (field Ta_max)
+vBp = bnd.Ta_max.v_kmh(:)'/3.6;
+TaMaxTable = bnd.Ta_max.Ta_max_Nm(:)';
 
 N = 400;
 rng(1);

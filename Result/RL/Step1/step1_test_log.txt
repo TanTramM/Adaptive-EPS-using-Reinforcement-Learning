@@ -1,0 +1,7 @@
+load_rl: 7 signals x 5 samples (5 agent samples apart) + previous T_a = 36 observations, Ts_agent = 0.001 s, reward [T_ref w1 w2] = [1 0 0]
+Loaded plant parameters (data/params.json): Cluster1 [K, J_col, C_col, T_f, c], Cluster2 [m, l_f, l_r, g, C_alpha_f, C_r, C, E, n_st, e_p0, t_0], Cluster3 [Iz] (+ m,l_f,l_r reused from Cluster2)
+Computed derived quantities (load_derived.m): F_zf=9097.46 N, F_zr=6333.67 N
+Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0
+load_sensors: sensor level = none (sensors_on = 0; a_y step 0.0981 m/s^2 updated every 0.01 s, T_s step 0.01 N.m every 0.001 s)
+Created: C:\Users\Admin\OneDrive\Desktop\git\Adaptive-EPS-using-Reinforcement-Learning\Model\Model_RL_s.mdl
+[Model_RL_s] TEST PASS: T_a = 0; T_s before mu step 5.2187 (independent 5.2189), after 4.7357 (independent 4.7357), drop 0.483 N.m; e_T = T_s - T_d_ref; reward = -(e_T/T_ref)^2 (max err 0); level high: agent sees measured T_s (quantized), history 5 agent samples apart, 36 observations, reward on true e_T (max err 0)

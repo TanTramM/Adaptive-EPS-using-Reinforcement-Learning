@@ -5,7 +5,7 @@ function test_cum2()
 %   Requires the root subsystem to expose ports named:
 %   In: theta2, beta, gamma, v, mu | Out: F_yf, F_yr, T_r.
 %
-%   Feeds 2 fixed operating points (one with the e_p floor active) and checks F_yf, F_yr, T_r match the
+%   Feeds 2 fixed operating points (one with the pneumatic-trail floor active) and checks F_yf, F_yr, T_r match the
 %   analytic formulas (Eq.(1)-(11), Documents/Cum2_Pacejka.txt) EXACTLY
 %   (zero error) - this is a pure algebraic block (no state), so a single
 %   time step is enough. The analytic reference is computed INDEPENDENTLY
@@ -39,7 +39,7 @@ dutInHarness = [harnessName '/DUT'];
 % Two operating points, one row each: [theta2 beta gamma v mu].
 %   1: small slip angle - the aligning-torque floor is inactive (e_p > 0);
 %   2: large slip angle at low mu - tan(alpha_f) is beyond tan(alpha_sl) =
-%      3*mu*F_zf/C_alpha_f, so e_p is floored at 0 and T_r must be exactly 0.
+%      3*mu*F_zf/C_alpha_f, so the pneumatic trail is floored at 0 and e_p equals the caster trail e_c = e_p0 - t_0.
 cases = [0.3  0.02  0.1  20  0.6;
          0.8 -0.1   0    20  0.3];
 theta2_test = cases(1,1); beta_test = cases(1,2); gamma_test = cases(1,3); v_test = cases(1,4); mu_test = cases(1,5);
@@ -78,7 +78,7 @@ raw = jsondecode(fileread(fullfile(modelDir, 'data', 'params.json')));
 p2 = raw.cum2;
 m_ = p2.m.value; l_f = p2.l_f.value; l_r = p2.l_r.value; g_ = p2.g.value;
 C_alpha_f = p2.C_alpha_f.value; C_r = p2.C_r.value;
-C_ = p2.C.value; E_ = p2.E.value; n_st = p2.n_st.value; e_p0 = p2.e_p0.value;
+C_ = p2.C.value; E_ = p2.E.value; n_st = p2.n_st.value; e_p0 = p2.e_p0.value; t_0 = p2.t_0.value;
 F_zf = m_*g_*l_r / (l_f + l_r);
 F_zr = m_*g_*l_f / (l_f + l_r);
 
@@ -107,15 +107,15 @@ for k = 1:size(cases, 1)
     F_yr_ref = D_r * sin(C_ * atan(B_r*alpha_r - E_*(B_r*alpha_r - atan(B_r*alpha_r))));
     assert(abs(F_yr_ref) <= D_r + 1e-9, 'rear force must not exceed mu*F_zr');
 
-    e_p = max(0, e_p0 - sign(alpha_f) * e_p0 * C_alpha_f * tan(alpha_f) / (3*mu_test*F_zf));
+    e_p = e_p0 - t_0 + max(0, t_0 - sign(alpha_f) * t_0 * C_alpha_f * tan(alpha_f) / (3*mu_test*F_zf));
     K_tr = e_p / n_st;
     T_r_ref = K_tr * F_yf_ref;
 
     if k == 1
-        assert(e_p > 0, 'case 1 must leave the e_p floor inactive');
+        assert(e_p > e_p0 - t_0 + 1e-6, 'case 1 must leave the pneumatic-trail floor inactive');
     else
         assert(tan(abs(alpha_f)) > 3*mu_test*F_zf/C_alpha_f, 'case 2 must exceed the sliding angle');
-        assert(e_p == 0 && T_r_ref == 0, 'case 2 reference must be floored at 0');
+        assert(abs(e_p - (e_p0 - t_0)) < 1e-15 && T_r_ref ~= 0, 'case 2 must sit on the caster floor e_c');
     end
 
     assert(abs(Fyf_sim-F_yf_ref) < tol, 'case %d: F_yf error exceeds tolerance', k);

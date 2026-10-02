@@ -2,7 +2,7 @@
 % Use the Simulink API to build the discrete first-order sliding-mode
 % controller with a boundary layer (saturation function sat) as its own
 % subsystem, saved as SMC_s.mdl RIGHT INSIDE the SMC/ folder (parent of this
-% script). Matches Documents/DieuKhien_SMC.txt:
+% script). Matches Documents/SMC/DieuKhien_SMC.txt:
 %
 %   (all inputs sampled by ZOH at Ts = Ts_ctrl)
 %   theta1_dot_hat = (theta1 - x_f)/tau_f,  x_f[k+1] = x_f[k] + Ts*theta1_dot_hat[k]
@@ -11,8 +11,8 @@
 %           + J_col*lambda*(theta1_dot_hat - theta2_dot)
 %   u_sw  = k_sw*sat(s/Phi),      sat(x) = max(-1, min(1, x))
 %   T_a_unsat = T_eq - J_col*u_sw
-%   T_a   = max(-T_a,max(v), min(T_a_unsat, T_a,max(v)))   (assist limit, Documents/Boundaries.txt;
-%           T_a,max(v) = 1-D table of data/boundaries.json, clipped outside 20-100 km/h)
+%   T_a   = max(-T_a,max(v), min(T_a_unsat, T_a,max(v)))   (assist limit, Documents/Ref/ref.txt section 1.5;
+%           T_a,max(v) = 1-D table of data/ref.json (field Ta_max), clipped outside 20-100 km/h)
 %
 % HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
@@ -27,7 +27,7 @@
 %
 %   The sampled inputs and every named quantity are routed with Goto/From.
 %
-% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl, bnd_v_bp, bnd_Ta_max) are
+% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl, Tamax_v_bp_ms, Tamax_table) are
 % read from the base workspace - run Model/load_smc.m (it also runs
 % load_plant, load_ref) BEFORE building.
 %
@@ -198,7 +198,7 @@ function buildTeq(sys)
 % T_eq = -T_s + C_col*theta2_dot + J_col*lambda*(theta1_dot_hat - theta2_dot)
 % Dry friction T_f*tanh(c*theta2_dot) is NOT compensated: sampled at Ts_ctrl
 % with c = 100 it caused a limit cycle; it is left to the switching term
-% (boundary layer) as a bounded disturbance (Documents/DieuKhien_SMC.txt).
+% (boundary layer) as a bounded disturbance (Documents/SMC/DieuKhien_SMC.txt).
     addInport(sys, 'T_s',            1, 40,  40);
     addInport(sys, 'theta2_dot',     2, 40, 180);
     addInport(sys, 'theta1_dot_hat', 3, 40, 340);
@@ -233,7 +233,7 @@ end
 
 %% ===================== T_a_max(v) = assist limit table =====================
 function buildTamax(sys)
-% Read from the base workspace: bnd_v_bp [m/s], bnd_Ta_max [N.m] (data/boundaries.json).
+% Read from the base workspace: Tamax_v_bp_ms [m/s], Tamax_table [N.m] (loaded by load_ref.m from data/ref.json, field Ta_max).
     addInport(sys, 'v', 1, 40, 60);
     addOutport(sys, 'T_a_max', 1, 300, 60);
     addLookup1D(sys, 'Lookup_Tamax', 140, 60);
@@ -379,13 +379,13 @@ end
 
 function addLookup1D(sys, name, x, y)
 % Lookup_<result>: 1-D n-D Lookup Table on the base-workspace variables
-% bnd_v_bp (speed [m/s]) and bnd_Ta_max (T_a,max [N.m]); linear
+% Tamax_v_bp_ms (speed [m/s]) and Tamax_table (T_a,max [N.m]); linear
 % interpolation, clipped outside the breakpoints.
     full = [sys '/' name];
     add_block('simulink/Lookup Tables/n-D Lookup Table', full);
     set_param(full, 'NumberOfTableDimensions', '1', ...
-        'BreakpointsForDimension1', 'bnd_v_bp', ...
-        'Table', 'bnd_Ta_max', ...
+        'BreakpointsForDimension1', 'Tamax_v_bp_ms', ...
+        'Table', 'Tamax_table', ...
         'InterpMethod', 'Linear point-slope', ...
         'ExtrapMethod', 'Clip');
     moveBlock(full, x, y);

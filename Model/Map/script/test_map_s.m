@@ -10,7 +10,7 @@ function test_map_s()
 %   (2) Lead stage: Tustin coefficients of (s/z + 1)/(s/p + 1) derived by hand here equal the stored ones; DC gain 1.
 %   (3) Simulation: T_s(t) (sine sweep plus steps, both signs) and v(t) (ramp 10 -> 110 km/h, outside the table on
 %       both ends) held between samples; at every sample T_a equals
-%       sat( H(z)^2 [ sgn(T_s) * interp2(table, v, |T_s|) ], +-interp1(T_a,max, v) )
+%       sat( H(z) [ sgn(T_s) * interp2(table, v, |T_s|) ], +-interp1(T_a,max, v) )
 %       computed with filter() here.
 %   (4) After a long hold, T_a equals the static map value (DC gain of the compensator is 1).
 
@@ -25,7 +25,8 @@ Ts   = raw.Ts_ctrl.value;
 vBp  = raw.v_breakpoints_kmh(:)' / 3.6;
 tsBp = raw.Ts_breakpoints_Nm(:)';
 tab  = raw.Ta_table_Nm;
-TaMx = raw.Ta_max_Nm(:)';
+rawRefTa = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
+TaMx = rawRefTa.Ta_max.Ta_max_Nm(:)';   % T_a,max(v) of Ref (Documents/Ref/ref.txt section 1.5)
 
 % ---- (1) table properties ----
 assert(all(all(tab(:, tsBp <= raw.Ts0.value + 1e-12) == 0)), '(1) table is not zero inside the dead band');
@@ -85,7 +86,7 @@ Ta_sim = Ta_sim(1:N);
 vc = min(max(vin, vBp(1)), vBp(end));
 tc = min(max(abs(Tsin), tsBp(1)), tsBp(end));
 u  = sign(Tsin) .* interp2(tsBp, vBp, tab, tc, vc, 'linear');
-y  = filter(numInd, denInd, filter(numInd, denInd, u));
+y  = filter(numInd, denInd, u);
 lim = interp1(vBp, TaMx, vc, 'linear');
 Ta_ref = max(-lim, min(y, lim));
 err3 = max(abs(Ta_sim - Ta_ref));
@@ -97,7 +98,7 @@ TaStatic = interp2(tsBp, vBp, tab, TsHold, vHold, 'linear');
 assert(abs(Ta_sim(end) - TaStatic) < 1e-6, '(4) T_a after the hold = %.6g, static map = %.6g', Ta_sim(end), TaStatic);
 
 fprintf(['[%s] TEST PASS: table (dead band, monotone, slope <= %g, saturation) OK; lead coefficients = Tustin; ' ...
-    'T_a matches the independent map + 2 lead stages + saturation at %d samples (max err %.2g, %d samples saturated); ' ...
+    'T_a matches the independent map + lead stage + saturation at %d samples (max err %.2g, %d samples saturated); ' ...
     'steady T_a = static map (%.4f N.m)\n'], modelFileName, raw.Kmax.value, N, err3, nSat, TaStatic);
 
 close_system(harnessName, 0);

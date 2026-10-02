@@ -13,7 +13,7 @@
 %   T_a,unsat[k] = u_P[k] + u_I[k] + u_D[k]
 %   T_a[k]    = max(-T_a,max(v[k]), min(T_a,unsat[k], T_a,max(v[k])))
 %
-% T_a,max(v) is a 1-D table (Documents/Boundaries.txt, data/boundaries.json,
+% T_a,max(v) is a 1-D table (Documents/Ref/ref.txt section 1.5, data/ref.json field Ta_max,
 % the T_a field), clipped outside 20-100 km/h. The term Kaw*(T_a - T_a,unsat)
 % is zero while the command is inside the limits and pulls the integrator
 % back while it is saturated (back-calculation anti-windup).
@@ -36,7 +36,7 @@
 %   (anti-windup term) are routed with Goto/From.
 %
 % Gains (Kp, Ki, Kd, T_filt, Kaw), Ts_ctrl and the T_a,max table
-% (bnd_v_bp, bnd_Ta_max) are read from the base workspace - run
+% (Tamax_v_bp_ms, Tamax_table) are read from the base workspace - run
 % Model/load_pid.m BEFORE building (it also runs load_plant and load_ref).
 %
 % Usage (run from this folder, PID/script/):
@@ -213,7 +213,7 @@ end
 %% ===================== T_a,max(v) ========================================
 function buildTamax(sys)
 % Assist limit as a function of the (sampled) speed: 1-D lookup table
-% (base workspace bnd_v_bp [m/s], bnd_Ta_max [N.m], from data/boundaries.json).
+% (base workspace Tamax_v_bp_ms [m/s], Tamax_table [N.m], from data/ref.json (Ta_max)).
     addInport(sys, 'v', 1, 40, 60);
     addOutport(sys, 'T_a_max', 1, 300, 60);
     addLookup1D(sys, 'Lookup_Tamax', 140, 60);
@@ -363,13 +363,13 @@ end
 
 function addLookup1D(sys, name, x, y)
 % Lookup_<result>: 1-D n-D Lookup Table on the base-workspace variables
-% bnd_v_bp (speed [m/s]) and bnd_Ta_max (T_a,max [N.m]); linear
+% Tamax_v_bp_ms (speed [m/s]) and Tamax_table (T_a,max [N.m]); linear
 % interpolation, clipped outside the breakpoints.
     full = [sys '/' name];
     add_block('simulink/Lookup Tables/n-D Lookup Table', full);
     set_param(full, 'NumberOfTableDimensions', '1', ...
-        'BreakpointsForDimension1', 'bnd_v_bp', ...
-        'Table', 'bnd_Ta_max', ...
+        'BreakpointsForDimension1', 'Tamax_v_bp_ms', ...
+        'Table', 'Tamax_table', ...
         'InterpMethod', 'Linear point-slope', ...
         'ExtrapMethod', 'Clip');
     moveBlock(full, x, y);

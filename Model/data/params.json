@@ -17,7 +17,8 @@
     "C":         { "value": 1.3,   "unit": "-",      "desc": "Hệ số hình dạng đường cong Pacejka (lực ngang)",  "ref": "[3]" },
     "E":         { "value": -1,    "unit": "-",      "desc": "Hệ số độ cong đường cong Pacejka (lực ngang)",    "ref": "[3]" },
     "n_st":      { "value": 16,    "unit": "-",      "desc": "Tỷ số truyền cơ cấu lái tổng (góc vô-lăng/góc bánh xe)", "ref": "tự chọn, kiểm chứng chéo [7][8]" },
-    "e_p0":      { "value": 0.048, "unit": "m",      "desc": "Pneumatic trail danh nghĩa tại bánh xe ở góc trượt nhỏ, dùng cho K_tr(alpha_f,mu) động", "ref": "tự chọn" }
+    "e_p0":      { "value": 0.048, "unit": "m",      "desc": "Cánh tay đòn tổng (caster e_c + pneumatic trail t_0) tại bánh xe ở góc trượt bằng không", "ref": "tự chọn (3)" },
+    "t_0":       { "value": 0.025, "unit": "m",      "desc": "Pneumatic trail ở góc trượt bằng không (chỉ phần này co lại theo góc trượt và mu); caster e_c = e_p0 - t_0 = 0.023 m không đổi", "ref": "tự chọn (4), giữa dải 17-35 mm của [2]" }
   },
   "cum3": {
     "Iz": { "value": 2873, "unit": "kg.m^2", "desc": "Mô-men quán tính Yaw quanh trục thẳng đứng qua trọng tâm", "ref": "[5]" }

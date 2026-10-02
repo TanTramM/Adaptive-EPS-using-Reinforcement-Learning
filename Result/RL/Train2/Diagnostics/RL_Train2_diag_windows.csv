@@ -1,0 +1,17 @@
+episode,controller,window,mean_Ta_Nm,mean_eT_Nm,rms_eT_Nm,mean_Ts_Nm,mean_Td_ref_Nm
+hold_0p25g_v60_mu_drop,Map,before_3_5s,3.8225,0.0002,0.0034,2.6230,2.6228
+hold_0p25g_v60_mu_drop,Map,after_8_10s,3.0266,-0.1446,0.1446,2.4422,2.5868
+hold_0p25g_v60_mu_drop,PID,before_3_5s,4.2194,0.0262,0.0372,2.6485,2.6223
+hold_0p25g_v60_mu_drop,PID,after_8_10s,3.2109,0.0203,0.0347,2.6046,2.5843
+hold_0p25g_v60_mu_drop,agent_stage1_best,before_3_5s,2.9353,0.8867,0.8872,3.4934,2.6066
+hold_0p25g_v60_mu_drop,agent_stage1_best,after_8_10s,2.8765,0.1054,0.1135,2.6881,2.5827
+hold_0p25g_v60_mu_drop,agent_stage1_last,before_3_5s,1.9895,1.6065,1.6073,4.2002,2.5937
+hold_0p25g_v60_mu_drop,agent_stage1_last,after_8_10s,1.6870,1.2921,1.2933,3.8563,2.5641
+hold_0p20g_v40_mu_drop,Map,before_3_5s,3.2196,0.0010,0.0024,2.0010,2.0000
+hold_0p20g_v40_mu_drop,Map,after_8_10s,2.7705,-0.0476,0.0476,1.9485,1.9961
+hold_0p20g_v40_mu_drop,PID,before_3_5s,3.4280,0.0117,0.0212,2.0117,1.9999
+hold_0p20g_v40_mu_drop,PID,after_8_10s,2.9061,0.0119,0.0200,2.0077,1.9958
+hold_0p20g_v40_mu_drop,agent_stage1_best,before_3_5s,5.3737,-1.5679,1.5823,0.4418,2.0097
+hold_0p20g_v40_mu_drop,agent_stage1_best,after_8_10s,5.2106,-2.4004,2.4004,-0.3913,2.0091
+hold_0p20g_v40_mu_drop,agent_stage1_last,before_3_5s,-0.6451,3.4319,3.4344,5.4150,1.9831
+hold_0p20g_v40_mu_drop,agent_stage1_last,after_8_10s,-1.1717,3.7658,3.7658,5.7437,1.9779

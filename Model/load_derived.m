@@ -15,6 +15,8 @@
 %                                 Cluster2/AligningTorque (build_cum2.m).
 %   F_zr = m*g*l_f/(l_f+l_r)   - static rear-axle load (Eq.(5)), used in
 %                                 Cluster2/TireForces (D_r).
+%   e_c  = e_p0 - t_0          - caster trail, the part of the aligning-torque arm that does not shrink with the
+%                                 slip angle (Documents/Plant/plant.txt Eq.(17)); used in Cluster2/AligningTorque.
 
 m_   = evalin('base', 'm');
 g_   = evalin('base', 'g');
@@ -26,5 +28,8 @@ assignin('base', 'F_zf', F_zf);
 
 F_zr = m_ * g_ * l_f_ / (l_f_ + l_r_);
 assignin('base', 'F_zr', F_zr);
+
+e_c = evalin('base', 'e_p0') - evalin('base', 't_0');   % caster trail: constant part of the aligning-torque arm
+assignin('base', 'e_c', e_c);
 
 fprintf('Computed derived quantities (load_derived.m): F_zf=%.6g N, F_zr=%.6g N\n', F_zf, F_zr);
