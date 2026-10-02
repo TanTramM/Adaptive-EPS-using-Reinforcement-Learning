@@ -9,4 +9,8 @@ Quy ước: [n] trong mọi file .txt của Documents/ khớp đúng số ở đ
 [4] Li, Y., Yang, Z., Zhai, D., He, J., Fan, J. (2023). "Study on Control Strategy of Electric Power Steering for Commercial Vehicle Based on Multi-Map." World Electric Vehicle Journal, 14, 33. File: References/Multi-Map EPS.pdf.
 [5] Li, Q., Xia, C. "Research of Electric Power Steering System Assistance Characteristic Based on The Identification of The Road." File: References/Road Identification BP-NN.pdf.
 [6] Ren, X.A., Deng, Z.X. (2014). "Research on Ideal Steering Wheel Effort Characteristics of Driver." China Mechanical Engineering, 25(16), 2261-2265. File: References/Research on Ideal Steering Wheel Effort Characteristics of Driver.pdf.
+[7] Valeo. "Torque and/or angle sensor" (catalogue của nhà sản xuất, độ phân giải mô-men và góc). https://www.valeo.com/en/catalogue/cda/torque-and-or-angle-sensors/.
+[8] Bosch Motorsport. "Steering Wheel Angle Sensor LWS" (datasheet, 27/01/2026, độ phân giải góc và tốc độ góc, chu kỳ CAN 10 ms). bosch-motorsport.com.
+[9] Bosch Motorsport. "Acceleration Sensor MM5.10" (datasheet, 18/08/2020, độ phân giải gia tốc và tốc độ quay). bosch-motorsport.com.
+[10] Ragab, H., Givigi, S., Noureldin, A. "Automotive Speed Estimation: Sensor Types and Error Characteristics from OBD-II to ADAS." arXiv:2501.00242.
 ================================================================================

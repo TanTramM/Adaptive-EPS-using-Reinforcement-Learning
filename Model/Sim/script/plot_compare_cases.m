@@ -19,11 +19,9 @@ if nargin < 3, runSeed = 90001; end
 noiseNote = '';
 if ~strcmp(level, 'none'), noiseNote = sprintf(' (cảm biến có nhiễu: %s, seed %d)', level, runSeed); end
 
-palette = [0.165 0.471 0.839;    % #2a78d6 blue   (series 1)
-           0.922 0.408 0.204;    % #eb6834 orange (series 2)
-           0.106 0.686 0.478;    % #1baf7a aqua   (series 3)
-           0.910 0.482 0.643];   % #e87ba4 magenta (series 5)
-assert(numel(ctrlList) <= size(palette, 1), 'at most %d controllers', size(palette, 1));
+% one fixed color per controller (color follows the entity, not its position in the list)
+col = zeros(numel(ctrlList), 3);
+for c = 1:numel(ctrlList), col(c, :) = colorOf(ctrlList{c}); end
 refColor = [0.043 0.043 0.043];  % text-primary ink for the reference
 gridColor = [0.85 0.85 0.85];
 
@@ -43,7 +41,7 @@ for k = 1:numel(TC)
 
     ax(1) = nexttile; hold on;
     for c = 1:numel(ctrlList)
-        plot(D{c}.t, D{c}.T_s, 'Color', palette(c, :), 'LineWidth', 1.2);
+        plot(D{c}.t, D{c}.T_s, 'Color', col(c, :), 'LineWidth', 1.2);
     end
     plot(D{1}.t, D{1}.T_d_ref, '--', 'Color', refColor, 'LineWidth', 1.2);
     ylabel('N.m'); title('T_s và T_{d,ref}');
@@ -51,14 +49,14 @@ for k = 1:numel(TC)
 
     ax(2) = nexttile; hold on;
     for c = 1:numel(ctrlList)
-        plot(D{c}.t, D{c}.e_T, 'Color', palette(c, :), 'LineWidth', 1.2);
+        plot(D{c}.t, D{c}.e_T, 'Color', col(c, :), 'LineWidth', 1.2);
     end
     ylabel('N.m'); title('e_T = T_s - T_{d,ref}');
     legend(ctrlList, 'Location', 'northeast', 'Interpreter', 'none');
 
     ax(3) = nexttile; hold on;
     for c = 1:numel(ctrlList)
-        plot(D{c}.t, D{c}.T_a, 'Color', palette(c, :), 'LineWidth', 1.2);
+        plot(D{c}.t, D{c}.T_a, 'Color', col(c, :), 'LineWidth', 1.2);
     end
     ylabel('N.m'); xlabel('t [s]'); title('Mô-men trợ lực T_a');
     legend(ctrlList, 'Location', 'northeast', 'Interpreter', 'none');
@@ -79,5 +77,15 @@ function d = srcDir(ctrl, level, runSeed)
         d = result_dir(ctrl, 'TestCases');
     else
         d = result_dir(ctrl, 'TestCases_noise', sprintf('%s_seed%d', level, runSeed));
+    end
+end
+
+function rgb = colorOf(ctrl)
+    switch ctrl
+        case 'Map',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
+        case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua
+        case 'SMC_KI', rgb = [0.910 0.482 0.643];   % #e87ba4 magenta
+        otherwise,     rgb = [0.36 0.36 0.36];
     end
 end
