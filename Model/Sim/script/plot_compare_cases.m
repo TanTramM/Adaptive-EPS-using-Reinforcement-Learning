@@ -1,9 +1,10 @@
-function plot_compare_cases(ctrlList)
+function plot_compare_cases(ctrlList, level, runSeed)
 %PLOT_COMPARE_CASES One figure per test case: T_s (with T_d,ref), e_T and T_a of several controllers on the same axes.
 %
-%   plot_compare_cases({'Map', 'PID', 'SMC'})
+%   plot_compare_cases({'Map', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'low' | 'high', one noise seed
 %
-%   Reads Result/<ctrl>/TestCases/<ctrl>_<case>_signals.csv written by run_test_cases.m (noise-free level) and writes
+%   Reads the signal files written by run_test_cases(ctrl, level, runSeed) (Result/<ctrl>/TestCases for level none, else
+%   Result/<ctrl>/TestCases_noise/<level>_seed<seed>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
 %     Result/Compare/<A>_vs_<B>_vs_.../<A>_vs_<B>_vs_..._<case>_Ts_eT_Ta.png
 %   Each figure has 3 stacked charts, one line per controller (fixed colors, in the order of ctrlList):
 %     1. T_s of every controller plus the reference T_d,ref (black dashed)   2. e_T = T_s - T_d,ref   3. T_a
@@ -13,6 +14,10 @@ scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir);                              % result_dir
 addpath(scriptDir);                             % test_cases
+if nargin < 2, level = 'none'; end
+if nargin < 3, runSeed = 90001; end
+noiseNote = '';
+if ~strcmp(level, 'none'), noiseNote = sprintf(' (cảm biến có nhiễu: %s, seed %d)', level, runSeed); end
 
 palette = [0.165 0.471 0.839;    % #2a78d6 blue   (series 1)
            0.922 0.408 0.204;    % #eb6834 orange (series 2)
@@ -29,12 +34,12 @@ for k = 1:numel(TC)
     S = TC(k);
     D = cell(1, numel(ctrlList));
     for c = 1:numel(ctrlList)
-        D{c} = readtable(fullfile(result_dir(ctrlList{c}, 'TestCases'), ...
+        D{c} = readtable(fullfile(srcDir(ctrlList{c}, level, runSeed), ...
             sprintf('%s_%s_signals.csv', ctrlList{c}, S.tag)));
     end
     f = figure('Visible', 'off', 'Position', [50 50 1200 900]);
     tl = tiledlayout(3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
-    title(tl, sprintf('%s - %s', strjoin(ctrlList, ' / '), S.name), 'FontWeight', 'bold');
+    title(tl, sprintf('%s - %s%s', strjoin(ctrlList, ' / '), S.name, noiseNote), 'FontWeight', 'bold');
 
     ax(1) = nexttile; hold on;
     for c = 1:numel(ctrlList)
@@ -67,4 +72,12 @@ for k = 1:numel(TC)
     fprintf('plot_compare_cases: %s done\n', S.tag);
 end
 fprintf('plot_compare_cases: written to %s\n', outDir);
+end
+
+function d = srcDir(ctrl, level, runSeed)
+    if strcmp(level, 'none')
+        d = result_dir(ctrl, 'TestCases');
+    else
+        d = result_dir(ctrl, 'TestCases_noise', sprintf('%s_seed%d', level, runSeed));
+    end
 end

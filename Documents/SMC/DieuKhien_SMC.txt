@@ -241,7 +241,9 @@ BỘ ĐIỀU KHIỂN TRƯỢT (SMC BẬC 1, LỚP BIÊN sat, KHÔNG TÍCH PHÂN)
   - Xếp hạng bám e_T khi có nhiễu cao (RMS e_T trung bình 5 hạt giống): PID tốt nhất ở TC1-TC5, rồi SMC_KI, rồi SMC; Map kém nhất ở TC1-TC5 (bám bằng bản đồ cố định, nhiễu không làm đổi e_T của
     Map) nhưng ở TC6 Map tốt nhất (0.0129 so với PID 0.0136, SMC_KI 0.038, SMC 0.062). Độ êm TV(T_a) khi có nhiễu cao: Map thấp nhất (82-774), PID (2200-2570), SMC_KI và SMC (4000-6300). Ở mức
     none, SMC_KI bám tốt nhất ở TC2, TC3, TC5, TC6, SMC ngang SMC_KI ở TC4 (0.0366 so với 0.0367), PID tốt hơn SMC ở TC3 và TC6 nhưng kém SMC_KI.
-  - Cỡ độ lớn của TV: 5000 N.m/s ở chu kỳ 1 ms tương đương thay đổi T_a khoảng 5 mN.m mỗi mẫu; chưa đánh giá điều đó có đáng kể về cảm giác lái hay về motor hay không.
+  - Cỡ độ lớn của TV (ĐÃ SỬA, bản trước ghi sai gấp 1000 lần): TV [N.m/s] nhân Ts = 1 ms cho thay đổi T_a trung bình mỗi mẫu, tức 5000 N.m/s tương đương khoảng 5 N.m mỗi mẫu, KHÔNG phải 5 mN.m.
+    Hình TC4 mức high (Result/Compare/Map_vs_PID_vs_SMC/) cho thấy T_a của PID và SMC nhảy gần như giữa hai giới hạn +-T_a,max ở mọi mẫu (bang-bang); e_T vẫn nhỏ chỉ vì Plant hiện chưa có động
+    học motor và quán tính cột lái lọc mất dao động 1 ms. Kết quả nhiễu mức high của PID và SMC vì vậy chỉ có nghĩa khi có bộ lọc đo và động học motor; chưa có.
   - Mức độ "đầy đủ" của nhiễu: chỉ có nhiễu trắng + lượng tử hóa + chu kỳ cập nhật của 5-6 tín hiệu cảm biến (độ lớn high tự chọn, chu kỳ CAN 10 ms là giả định, data/sensors.json). Chưa có động
     học motor, sai lệch thông số xe và cột lái, trễ a_y qua CAN, nhiễu mặt đường (Documents/Sim/ThucTeHoa.txt).
 ==============================================================================================================================================================================================
