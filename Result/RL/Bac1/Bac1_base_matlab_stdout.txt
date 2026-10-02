@@ -15,3 +15,10 @@ Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0
 load_sensors: sensor level = none (sensors_on = 0; a_y step 0.0981 m/s^2 updated every 0.01 s, T_s step 0.01 N.m every 0.001 s)
 [2026-10-02 16:44:17] Bac1 Bac1_base: gamma 0.999, slow observation I kept, 30 episodes of 4000 steps, check every 5 episodes, seed 2
 [2026-10-02 16:44:25] untrained: mean e_T (1-2, 2-3, 3-4 s) 2.402, 1.900, 1.741 N.m, RMS e_T 3-4 s 1.741, mean T_a 1.515 N.m
+[2026-10-02 16:47:48] episodes 5 (202 s, 10.12 ms/step): episode reward mean -263.9; mean e_T (1-2, 2-3, 3-4 s) -1.151, -1.184, -1.167 N.m, RMS e_T 3-4 s 1.167, mean T_a 4.417 N.m, max|T_a| 5.12
+[2026-10-02 16:51:02] episodes 10 (397 s, 9.93 ms/step): episode reward mean -70.77; mean e_T (1-2, 2-3, 3-4 s) 1.062, 1.280, 1.331 N.m, RMS e_T 3-4 s 1.331, mean T_a 1.802 N.m, max|T_a| 1.81
+[2026-10-02 16:53:47] episodes 15 (561 s, 9.36 ms/step): episode reward mean -68.38; mean e_T (1-2, 2-3, 3-4 s) 1.096, 1.239, 1.204 N.m, RMS e_T 3-4 s 1.204, mean T_a 2.005 N.m, max|T_a| 2.01
+[2026-10-02 16:56:36] episodes 20 (731 s, 9.13 ms/step): episode reward mean -9.32; mean e_T (1-2, 2-3, 3-4 s) 0.302, 0.293, 0.284 N.m, RMS e_T 3-4 s 0.284, mean T_a 2.930 N.m, max|T_a| 2.93
+[2026-10-02 16:59:41] episodes 25 (915 s, 9.15 ms/step): episode reward mean -1.594; mean e_T (1-2, 2-3, 3-4 s) 0.016, 0.031, 0.033 N.m, RMS e_T 3-4 s 0.033, mean T_a 3.184 N.m, max|T_a| 3.19  [|e_T| < 0.1: pass level]
+[2026-10-02 17:02:59] episodes 30 (1114 s, 9.28 ms/step): episode reward mean -1.231; mean e_T (1-2, 2-3, 3-4 s) 0.167, 0.180, 0.177 N.m, RMS e_T 3-4 s 0.177, mean T_a 3.038 N.m, max|T_a| 3.04
+[2026-10-02 17:02:59] end: 30 episodes, 18.6 min; last mean e_T 3-4 s 0.177 N.m (NOT passed)

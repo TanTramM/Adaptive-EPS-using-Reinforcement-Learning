@@ -22,6 +22,8 @@ if nargin < 2, mode = 'fixed'; end
 scriptDir = fileparts(mfilename('fullpath'));   % RL/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 mdl = 'Model_RL_s';
+incr = evalin('base', 'exist(''rl_incremental'', ''var'') && rl_incremental == 1');   % variant C: the agent outputs dT_a (Model_RLinc_s)
+if incr, mdl = 'Model_RLinc_s'; end
 cfg = jsondecode(fileread(fullfile(modelDir, 'data', 'rl.json')));
 tr = cfg.train;
 
@@ -30,7 +32,12 @@ TaLim = max(evalin('base', 'Tamax_table'));
 Ts    = evalin('base', 'rl_Ts');
 obsInfo = rlNumericSpec([nObs 1]);
 obsInfo.Name = 'observation';
-actInfo = rlNumericSpec([1 1], 'LowerLimit', -TaLim, 'UpperLimit', TaLim);
+actLim = TaLim; noiseScale = 1;
+if incr
+    actLim = evalin('base', 'rl_dTa_max');
+    noiseScale = actLim / TaLim;      % exploration noise scaled to the action range (same share of the range as in the absolute variant)
+end
+actInfo = rlNumericSpec([1 1], 'LowerLimit', -actLim, 'UpperLimit', actLim);
 actInfo.Name = 'T_a';
 
 if nargin < 1 || isempty(agent)
@@ -45,8 +52,8 @@ if nargin < 1 || isempty(agent)
     d = log(tr.noise_std_start.value / tr.noise_std_min.value) / tr.noise_decay_steps.value;
     ou = rl.option.OrnsteinUhlenbeckActionNoise;
     ou.MeanAttractionConstant = theta;
-    ou.StandardDeviation = tr.noise_std_start.value * sqrt(2 * theta);
-    ou.StandardDeviationMin = tr.noise_std_min.value * sqrt(2 * theta);
+    ou.StandardDeviation = noiseScale * tr.noise_std_start.value * sqrt(2 * theta);
+    ou.StandardDeviationMin = noiseScale * tr.noise_std_min.value * sqrt(2 * theta);
     ou.StandardDeviationDecayRate = d;
     agentOpts.ExplorationModel = ou;
     agent = rlTD3Agent(obsInfo, actInfo, initOpts, agentOpts);
@@ -54,7 +61,9 @@ end
 assignin('base', 'rl_agent', agent);
 
 if ~exist(fullfile(modelDir, [mdl '.mdl']), 'file')
+    if incr, assignin('base', 'rl_build_variant', 'inc'); end
     run(fullfile(scriptDir, 'build_model_rl.m'));
+    assignin('base', 'rl_build_variant', 'abs');
 end
 if ~bdIsLoaded(mdl)
     load_system(fullfile(modelDir, [mdl '.mdl']));

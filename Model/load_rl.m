@@ -14,6 +14,7 @@
 %        rl_I_in        [-]   Ts/I_tau: input gain of I
 %        rl_I_gain      [1/N.m] 1 / I_scale: normalization of I
 %        rl_n_obs       [-]   length of the observation vector (7 signals x n_hist, previous T_a, I)
+%        rl_dTa_max     [N.m] limit of the action of the incremental variant (Model_RLinc_s): |dT_a| per agent step
 %   2. load_plant.m (plant parameters), load_ref.m (T_d,ref table and T_a,max(v)), load_sensors.m (Sensors variables,
 %      default level 'none' = ideal sensors).
 %
@@ -36,6 +37,7 @@ assignin('base', 'rl_I_decay',     1 - raw.Ts_agent.value / raw.I_tau.value);
 assignin('base', 'rl_I_in',        raw.Ts_agent.value / raw.I_tau.value);
 assignin('base', 'rl_I_gain',      1 / raw.I_scale.value);
 assignin('base', 'rl_n_obs',       nSig * raw.n_hist.value + 2);
+assignin('base', 'rl_dTa_max',     raw.incremental.dTa_max.value);
 
 fprintf('load_rl: %d signals x %d samples (%d agent samples apart) + previous T_a + slow e_T (tau %g s) = %d observations, Ts_agent = %g s, reward [T_ref w1 w2] = %s\n', ...
     nSig, raw.n_hist.value, raw.hist_stride.value, raw.I_tau.value, nSig * raw.n_hist.value + 2, raw.Ts_agent.value, ...

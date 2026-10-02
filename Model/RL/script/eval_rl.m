@@ -6,7 +6,7 @@ function eval_rl(runName, levels, seeds)
 %
 %   Documents/RL/DieuKhien_RL.txt section 2.4a. Loads Result/RL/<runName>/agents/agent_best.mat (best validation cost), puts it
 %   in the base workspace as rl_agent (exploration is not used in simulation), switches the early termination off and runs
-%   run_noise_study({'RL'}, {'none', 'low', 'high'}, 90001:90005): TC1-TC6 with the same sensor levels and test seeds as the Map
+%   run_noise_study({'RL'}, {'none', 'high'}, 90001:90005) (levels none and high only, user decision 2026-10-02): TC1-TC6 with the same sensor levels and test seeds as the Map
 %   and PID study (Result/Compare/Map_vs_PID/Map_vs_PID_noise_study_summary.csv). Metrics on the TRUE signals.
 %   Writes:
 %     Result/RL/TestCases/ (figures and signals, level none) and Result/RL/TestCases_noise/ (by run_test_cases)
@@ -27,7 +27,7 @@ assignin('base', 'rl_use_agent', 1);
 assignin('base', 'rl_done_eT', 1e6);
 if ~bdIsLoaded('Model_RL_s'), load_system(fullfile(modelDir, 'Model_RL_s.mdl')); end
 
-if nargin < 2, levels = {'none', 'low', 'high'}; end
+if nargin < 2, levels = {'none', 'high'}; end
 if nargin < 3, seeds = 90001:90005; end
 try
     G = run_noise_study({'RL'}, levels, seeds);

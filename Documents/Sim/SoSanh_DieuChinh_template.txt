@@ -1,0 +1,125 @@
+========================================================================================================================
+SO SÁNH CÁC BỘ ĐIỀU KHIỂN SAU KHI ĐIỀU CHỈNH CHO CẢM BIẾN CÓ NHIỄU
+========================================================================================================================
+Chương này là bản điều chỉnh của Documents/Sim/SoSanh.txt (bản cũ giữ nguyên để đối chiếu). Ở bản cũ, khi cảm biến có nhiễu, mô-men trợ lực $T_a$ của PID (bộ điều khiển tỉ lệ - tích phân - vi phân) và SMC (điều khiển trượt) nhảy gần như giữa hai giới hạn $\pm T_{a,max}$ ở nhiều mẫu, vì hai bộ này khuếch đại nhiễu của cảm biến mô-men $T_s$ mạnh hơn bản đồ trợ lực (Map). Bản này giữ nguyên Map và điều chỉnh PID và SMC theo cùng một bộ quy tắc, chốt trước khi chạy các ca thử, rồi so sánh lại từng đôi: Map với PIDF_DZ, Map với SMC_KI_DZ, và PIDF_DZ với SMC_KI_DZ.
+
+1. Điều kiện so sánh
+
+1.1. Ca thử, cảm biến và chỉ tiêu
+
+Ca thử TC1 đến TC6, mô hình cảm biến có nhiễu (một mức duy nhất), 5 hạt giống nhiễu 90001 đến 90005 và các chỉ tiêu (RMS $e_T$, max $|e_T|$, TV($T_a$), $e_{rel}$) giống hệt Documents/Sim/SoSanh.txt mục 1. Chỉ tiêu luôn tính trên giá trị THẬT của $T_s$; các bảng cho trung bình qua 5 hạt giống, các hình theo thời gian vẽ hạt giống 90001.
+@SENSORS | Bảng 1: Cảm biến: độ phân giải, chu kỳ cập nhật và nhiễu
+
+1.2. Quy tắc điều chỉnh chung
+
+Ba quy tắc dưới đây được chốt trước khi chạy và áp như nhau cho PID và SMC; Map không đổi và là mốc của cả ba quy tắc.
+Bảng 2: Quy tắc điều chỉnh chung
+Quy tắc | Nội dung | Lý do
+Cùng tốc độ và độ bền | Tần số cắt vòng hở bằng vòng Map ở độ dốc lớn nhất (286.2 rad/s), dự trữ pha 45 độ như Map | Ba bộ nhanh ngang nhau và bền như nhau, chỉ khác cấu trúc
+Cùng ngân sách nhiễu | Độ lợi nhiễu từ $T_s$ đến $T_a$ (căn trung bình bình phương độ lợi đến tần số Nyquist 500 Hz) không lớn hơn của Map: $K_{max}$ × độ lợi nhiễu khâu sớm pha = 132.5 | Bộ điều khiển không được "ồn" hơn Map
+Cùng vùng chết | $T_a$ = 0 khi $|T_s|$ < 0.3 N.m, bằng vùng chết $T_{s0}$ của Map | Quanh vị trí giữa mô-men đo được chủ yếu là nhiễu (Documents/Map/map.txt)
+
+Không dùng vùng chết trên sai số $e_T$: thí nghiệm thử (Result/Compare/PIDF_dead_zone) cho thấy nó giảm rung nhưng đổi trực tiếp lấy trợ lực thừa (trong vũng nước ở TC4, $e_{rel}$ từ -1.3 % lên -5.1 % với nửa bề rộng 0.1 N.m), tức đi ngược mục tiêu của đề tài.
+
+2. Các bộ điều khiển sau điều chỉnh
+
+2.1. PIDF_DZ
+
+PIDF_DZ là PID cùng cấu trúc, với hằng số thời gian lọc của thành phần vi phân tăng từ 1.452 ms lên 2.138 ms (lọc mạnh hơn), cộng vùng chết của Map. Hằng số lọc là giá trị nhỏ nhất thỏa ngân sách nhiễu; $K_p$ và $K_d$ được tính lại từ điều kiện vòng hở tại tần số cắt với dự trữ pha 45 độ, tỉ số thời gian tích phân giữ như bản chỉnh bằng pidtune (Model/PID/script/tune_pidf.m, data/pidf.json): $K_p$ = 16.32, $K_i$ = 264.3 1/s, $K_d$ = 0.2073 s, gần như PID cũ (16.48, 266.9, 0.203). Độ lợi nhiễu giảm từ 191 xuống 132; dự trữ pha 45.0 độ, dự trữ biên 5.92 với cả hai trạng thái lốp. Vùng chết đặt ở đầu ra bộ điều khiển (Model/Sim/script/make_dead_zone_model.m).
+
+2.2. SMC_KI_DZ
+
+SMC_KI_DZ là SMC có khâu tích phân trong mặt trượt ($k_I$ = 10 1/s), lớp biên nới rộng từ $\Phi$ = 0.15 lên 0.259, cộng vùng chết của Map; $\lambda$ = 300 1/s, $k_{sw}$ = 150 và $\tau_f$ = 10 ms giữ nguyên (Model/SMC_KI/script/tune_smc_ki_dz.m, data/smc_ki_dz.json). Trong lớp biên, SMC là bộ tuyến tính với độ lợi $G = k_{sw}/\Phi$, và độ lợi từ $T_s$ đến $T_a$ là $|J_{col} G \lambda / K - 1|$; ngân sách nhiễu cho $G$ lớn nhất 579 (trước là 1000), tức độ lợi nhiễu giảm từ 229 xuống 132. Nới lớp biên làm sai số tĩnh của bản không tích phân tăng 1.73 lần; khâu tích phân $k_I$ xóa sai số này, đây là lý do dùng bản có tích phân. Quy tắc ngân sách nhiễu chỉ xét nhiễu của $T_s$, vì Map và PID chỉ đọc $T_s$; SMC còn đọc góc vô-lăng $\theta_1$ và tốc độ cột lái $\dot\theta_2$, nhiễu của hai tín hiệu này không bị quy tắc giới hạn (mục 6).
+
+2.3. Trước và sau điều chỉnh
+
+@DELTA Map_vs_PID PID Map_vs_PIDF_DZ PIDF_DZ | Bảng 3: PID trước và sau điều chỉnh (trung bình 5 hạt giống)
+
+Điều chỉnh giảm độ rung TV($T_a$) của PID từ 32 % đến 79 %, trong khi RMS $e_T$ gần như không đổi: tốt hơn ở TC2, TC3, TC4 (TC4 từ 0.153 xuống 0.104 N.m), kém nhẹ ở TC5 và TC6.
+@DELTA PID_vs_SMC SMC Map_vs_SMC_KI_DZ SMC_KI_DZ | Bảng 4: SMC trước và sau điều chỉnh (trung bình 5 hạt giống)
+
+Với SMC, RMS $e_T$ tốt hơn ở cả sáu ca (TC4 từ 0.23 xuống 0.115 N.m) nhờ khâu tích phân, nhưng độ rung chỉ giảm rõ ở TC1, TC2 và TC4 (27 % đến 68 %); ở TC3, TC5 và TC6, khi đang cua hoặc lái liên tục, độ rung gần như không đổi, vì nguồn rung chính của SMC lúc đó là nhiễu của $\dot\theta_2$ và $\theta_1$, không phải của $T_s$.
+
+3. So sánh Map và PIDF_DZ
+
+3.1. Chỉ tiêu toàn ca
+
+@STD Map PIDF_DZ | Độ lệch chuẩn giữa các hạt giống: lớn nhất {x} % giá trị trung bình với RMS $e_T$ và {y} % với TV($T_a$).
+@WHOLE Map PIDF_DZ | Bảng 5: Map và PIDF_DZ, chỉ tiêu toàn ca (trung bình 5 hạt giống)
+
+PIDF_DZ bám tốt hơn Map ở TC1 đến TC5, RMS $e_T$ nhỏ hơn từ 1.6 lần (TC1) đến 25 lần (TC3); ở TC6 Map hơi tốt hơn (0.0129 so với 0.0149 N.m). TV($T_a$) của PIDF_DZ vẫn lớn hơn Map từ 2.2 lần (TC6) đến 7.3 lần (TC5), so với 3.3 đến 30 lần trước khi điều chỉnh. Như ở bản cũ, RMS toàn ca của Map ở TC2 và TC5 chịu ảnh hưởng của ma sát khô chưa được bù (Documents/Map/map.txt mục 2.7).
+[Hình 1: Map và PIDF_DZ: RMS e_T và TV(T_a) từng ca, trung bình và độ lệch chuẩn qua 5 hạt giống | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_whole_case.png]
+
+3.2. Trợ lực thừa
+
+@WINDOWS Map PIDF_DZ | Bảng 6: Map và PIDF_DZ, các cửa sổ hệ số bám thấp (trung bình 5 hạt giống)
+
+PIDF_DZ giữ $|e_{rel}|$ không quá 1.49 % ở mọi cửa sổ, trong khi Map thừa trợ lực -14.12 % ở TC3 và -83.56 % ở TC4.
+
+3.3. Diễn biến theo thời gian
+
+Mỗi hình có ba đồ thị: $T_s$ cùng $T_{d,ref}$ (đường đen nét đứt), $e_T$ và $T_a$; hạt giống 90001.
+[Hình 2: Map và PIDF_DZ, TC1 kiểm tra hiệu chỉnh trên đường khô | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC1_dry_calibration_Ts_eT_Ta.png]
+[Hình 3: Map và PIDF_DZ, TC2 chạy đường thực tế | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC2_road_Ts_eT_Ta.png]
+[Hình 4: Map và PIDF_DZ, TC3 hệ số bám giảm đột ngột khi cua gấp | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC3_mu_drop_hard_corner_Ts_eT_Ta.png]
+[Hình 5: Map và PIDF_DZ, TC4 vũng nước khi chuyển làn gấp | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC4_wet_patch_lane_change_Ts_eT_Ta.png]
+[Hình 6: Map và PIDF_DZ, TC5 lái hình sin tốc độ cao trên đường trơn | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC5_sine_high_speed_low_mu_Ts_eT_Ta.png]
+[Hình 7: Map và PIDF_DZ, TC6 hệ số bám tăng giữa cua | Result/Compare/Map_vs_PIDF_DZ/Map_vs_PIDF_DZ_TC6_mu_rise_mid_corner_Ts_eT_Ta.png]
+
+4. So sánh Map và SMC_KI_DZ
+
+4.1. Chỉ tiêu toàn ca
+
+@STD Map SMC_KI_DZ | Độ lệch chuẩn giữa các hạt giống: lớn nhất {x} % giá trị trung bình với RMS $e_T$ và {y} % với TV($T_a$).
+@WHOLE Map SMC_KI_DZ | Bảng 7: Map và SMC_KI_DZ, chỉ tiêu toàn ca (trung bình 5 hạt giống)
+
+SMC_KI_DZ bám tốt hơn Map ở TC1 đến TC5, RMS $e_T$ nhỏ hơn từ 1.5 lần (TC1) đến 10 lần (TC5); ở TC6 Map tốt hơn (0.0129 so với 0.0366 N.m). TV($T_a$) của SMC_KI_DZ lớn hơn Map từ 7.7 lần (TC1) đến 19 lần (TC5).
+[Hình 8: Map và SMC_KI_DZ: RMS e_T và TV(T_a) từng ca, trung bình và độ lệch chuẩn qua 5 hạt giống | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_whole_case.png]
+
+4.2. Trợ lực thừa
+
+@WINDOWS Map SMC_KI_DZ | Bảng 8: Map và SMC_KI_DZ, các cửa sổ hệ số bám thấp (trung bình 5 hạt giống)
+
+SMC_KI_DZ giữ $|e_{rel}|$ không quá 1.28 % ở mọi cửa sổ. Nhờ khâu tích phân, SMC không còn lệch dương (thiếu trợ lực) như bản không tích phân ở SoSanh.txt.
+
+4.3. Diễn biến theo thời gian
+
+[Hình 9: Map và SMC_KI_DZ, TC1 kiểm tra hiệu chỉnh trên đường khô | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC1_dry_calibration_Ts_eT_Ta.png]
+[Hình 10: Map và SMC_KI_DZ, TC2 chạy đường thực tế | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC2_road_Ts_eT_Ta.png]
+[Hình 11: Map và SMC_KI_DZ, TC3 hệ số bám giảm đột ngột khi cua gấp | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC3_mu_drop_hard_corner_Ts_eT_Ta.png]
+[Hình 12: Map và SMC_KI_DZ, TC4 vũng nước khi chuyển làn gấp | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC4_wet_patch_lane_change_Ts_eT_Ta.png]
+[Hình 13: Map và SMC_KI_DZ, TC5 lái hình sin tốc độ cao trên đường trơn | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC5_sine_high_speed_low_mu_Ts_eT_Ta.png]
+[Hình 14: Map và SMC_KI_DZ, TC6 hệ số bám tăng giữa cua | Result/Compare/Map_vs_SMC_KI_DZ/Map_vs_SMC_KI_DZ_TC6_mu_rise_mid_corner_Ts_eT_Ta.png]
+
+5. So sánh PIDF_DZ và SMC_KI_DZ
+
+5.1. Chỉ tiêu toàn ca
+
+@STD PIDF_DZ SMC_KI_DZ | Độ lệch chuẩn giữa các hạt giống: lớn nhất {x} % giá trị trung bình với RMS $e_T$ và {y} % với TV($T_a$).
+@WHOLE PIDF_DZ SMC_KI_DZ | Bảng 9: PIDF_DZ và SMC_KI_DZ, chỉ tiêu toàn ca (trung bình 5 hạt giống)
+
+PIDF_DZ bám tốt hơn SMC_KI_DZ ở cả sáu ca: RMS $e_T$ của SMC_KI_DZ lớn hơn từ 1.07 lần (TC1) đến 4.8 lần (TC3). $T_a$ của SMC_KI_DZ rung nhiều hơn PIDF_DZ từ 2.5 lần (TC4) đến 3.6 lần (TC6).
+[Hình 15: PIDF_DZ và SMC_KI_DZ: RMS e_T và TV(T_a) từng ca, trung bình và độ lệch chuẩn qua 5 hạt giống | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_whole_case.png]
+
+5.2. Trợ lực thừa
+
+@WINDOWS PIDF_DZ SMC_KI_DZ | Bảng 10: PIDF_DZ và SMC_KI_DZ, các cửa sổ hệ số bám thấp (trung bình 5 hạt giống)
+
+Cả hai đều không còn trợ lực thừa đáng kể ($|e_{rel}|$ không quá 1.49 %). SMC_KI_DZ có $e_{rel}$ trong vũng nước hơi nhỏ hơn (-1.28 % so với -1.49 %), nhưng RMS $e_T$ lớn hơn ở mọi cửa sổ vì dao động quanh giá trị đặt.
+
+5.3. Diễn biến theo thời gian
+
+[Hình 16: PIDF_DZ và SMC_KI_DZ, TC1 kiểm tra hiệu chỉnh trên đường khô | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC1_dry_calibration_Ts_eT_Ta.png]
+[Hình 17: PIDF_DZ và SMC_KI_DZ, TC2 chạy đường thực tế | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC2_road_Ts_eT_Ta.png]
+[Hình 18: PIDF_DZ và SMC_KI_DZ, TC3 hệ số bám giảm đột ngột khi cua gấp | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC3_mu_drop_hard_corner_Ts_eT_Ta.png]
+[Hình 19: PIDF_DZ và SMC_KI_DZ, TC4 vũng nước khi chuyển làn gấp | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC4_wet_patch_lane_change_Ts_eT_Ta.png]
+[Hình 20: PIDF_DZ và SMC_KI_DZ, TC5 lái hình sin tốc độ cao trên đường trơn | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC5_sine_high_speed_low_mu_Ts_eT_Ta.png]
+[Hình 21: PIDF_DZ và SMC_KI_DZ, TC6 hệ số bám tăng giữa cua | Result/Compare/PIDF_DZ_vs_SMC_KI_DZ/PIDF_DZ_vs_SMC_KI_DZ_TC6_mu_rise_mid_corner_Ts_eT_Ta.png]
+
+6. Nhận xét chung và hạn chế
+
+Sau điều chỉnh, thứ hạng về độ bám không đổi so với bản cũ: PIDF_DZ, rồi SMC_KI_DZ, rồi Map ở các ca có hệ số bám thấp, còn ở TC6 Map tốt nhất. Cả hai bộ có phản hồi vẫn khắc phục được trợ lực thừa mà Map không khắc phục được (Map -14.12 % ở TC3 và -83.56 % ở TC4, hai bộ kia trong khoảng ±1.5 %).
+
+Độ rung của $T_a$ giảm nhưng chưa hết. Giá trị hiệu dụng của $T_a$ là 1.0 đến 2.8 N.m với Map, 2.3 đến 3.8 N.m với PIDF_DZ và 3.2 đến 6.4 N.m với SMC_KI_DZ, trong khi giới hạn $T_{a,max}$ cỡ 6.5 đến 7.5 N.m ở 40 đến 100 km/h; Vùng chết làm $T_a$ bằng 0 giữa các đoạn cua (Hình 2), nhưng trong lúc giữ góc cả PIDF_DZ và SMC_KI_DZ vẫn nhảy gần như giữa hai giới hạn $\pm T_{a,max}$ ở nhiều mẫu, rõ nhất là SMC_KI_DZ ở TC3 và TC6. Hai nguyên nhân còn lại: (1) quy tắc ngân sách nhiễu chỉ xét $T_s$, trong khi SMC còn khuếch đại nhiễu của $\dot\theta_2$ (độ phân giải 4 độ/s, lấy theo cảm biến góc vô-lăng [8]; cảm biến vị trí motor nhìn qua hộp số thường mịn hơn nhưng chưa có nguồn) và của đạo hàm $\theta_1$; (2) môi trường chưa có động học motor nên không có gì lọc $T_a$ trước cột lái. Ngân sách nhiễu tính theo độ lợi tuyến tính cũng chưa phản ánh hết Map, vì độ dốc thực của bản đồ nhỏ hơn $K_{max}$ ở vận tốc cao.
+
+Hạn chế: chưa có động học motor, bộ lọc đo chung, trễ truyền qua CAN, sai lệch thông số; mức nhiễu là giả định (Documents/Sim/SoSanh.txt mục 1.2); số hạt giống là 5. Muốn giảm tiếp độ rung của SMC cần giới hạn cả đường nhiễu của $\dot\theta_2$ và $\theta_1$ (hạ $\lambda$ và $G$, hoặc lọc hai tín hiệu này), đổi lại phản ứng chậm hơn.

@@ -38,7 +38,11 @@
 % Solver: variable step, MaxStep = 0.002 s, like Model_Map_s (steep dry-friction term).
 
 ctrlName  = 'RL';
-modelName = ['Model_' ctrlName '_s'];
+% Variant (base variable rl_build_variant): 'abs' (default) = the agent outputs T_a, model Model_RL_s;
+% 'inc' = the agent outputs dT_a and T_a[k] = sat(T_a[k-1] + dT_a), model Model_RLinc_s (Documents/RL/DieuKhien_RL.txt section 2.4d, variant C).
+rlVariant = 'abs';
+if evalin('base', 'exist(''rl_build_variant'', ''var'')'), rlVariant = evalin('base', 'rl_build_variant'); end
+modelName = ['Model_' ctrlName ternaryName(rlVariant) '_s'];
 
 scriptDir = fileparts(mfilename('fullpath'));   % RL/script
 ctrlDir   = fileparts(scriptDir);               % RL/
@@ -325,7 +329,15 @@ function buildRL(s)
     add_block('simulink/Signal Routing/Switch', sw);
     set_param(sw, 'Criteria', 'u2 > Threshold', 'Threshold', '0.5');
     moveBlock(sw, 1000, 260);
-    add_line(s, 'RL Agent/1', 'Sw_use_agent/1', 'autorouting', 'on');
+    if evalin('base', 'exist(''rl_build_variant'', ''var'') && strcmp(rl_build_variant, ''inc'')')   % variant C (local functions do not see the script variable rlVariant)
+        % variant C: the agent action is a CHANGE of T_a; T_a_prev is the delayed value after the clamp (Delay_Ta), so no algebraic loop
+        addSum(s, 'Sum_inc', '++', 940, 200);
+        add_line(s, 'RL Agent/1', 'Sum_inc/1', 'autorouting', 'on');
+        add_line(s, [addFrom(s, 'T_a_prev', 880, 200) '/1'], 'Sum_inc/2', 'autorouting', 'on');
+        add_line(s, 'Sum_inc/1', 'Sw_use_agent/1', 'autorouting', 'on');
+    else
+        add_line(s, 'RL Agent/1', 'Sw_use_agent/1', 'autorouting', 'on');
+    end
     add_line(s, [addConstant(s, 'rl_use_agent', 940, 330) '/1'], 'Sw_use_agent/2', 'autorouting', 'on');
     add_line(s, [addConstant(s, '0', 940, 380) '/1'], 'Sw_use_agent/3', 'autorouting', 'on');
 
@@ -464,4 +476,8 @@ function addProduct(sys, name, inputsStr, x, y)
     add_block('simulink/Math Operations/Product', full);
     set_param(full, 'Inputs', inputsStr);
     moveBlock(full, x, y);
+end
+
+function s = ternaryName(variant)
+    if strcmp(variant, 'inc'), s = 'inc'; else, s = ''; end
 end

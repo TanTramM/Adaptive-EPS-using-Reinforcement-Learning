@@ -1,0 +1,28 @@
+load_map: torque map 17 speeds x 251 |T_s| points, dead band 0.3 N.m, max slope 18, T_a,max 3.74-7.80 N.m, 1 lead stage (zero 80, pole 680 rad/s), Ts_ctrl = 0.001 s
+Loaded plant parameters (data/params.json): Cluster1 [K, J_col, C_col, T_f, c], Cluster2 [m, l_f, l_r, g, C_alpha_f, C_r, C, E, n_st, e_p0, t_0], Cluster3 [Iz] (+ m,l_f,l_r reused from Cluster2)
+Computed derived quantities (load_derived.m): F_zf=9097.46 N, F_zr=6333.67 N
+Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0
+load_sensors: sensor level = none (sensors_on = 0; a_y step 0.0981 m/s^2 updated every 0.01 s, T_s step 0.01 N.m every 0.001 s)
+load_pid: pidtune gains (crossover 286.2 rad/s, PM 54 deg): Kp=16.48, Ki=266.9 1/s (tau_I=0.06174 s), Kd=0.203 s, T_filt=0.001452 s, Ts_ctrl=0.001 s
+Loaded plant parameters (data/params.json): Cluster1 [K, J_col, C_col, T_f, c], Cluster2 [m, l_f, l_r, g, C_alpha_f, C_r, C, E, n_st, e_p0, t_0], Cluster3 [Iz] (+ m,l_f,l_r reused from Cluster2)
+Computed derived quantities (load_derived.m): F_zf=9097.46 N, F_zr=6333.67 N
+Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0
+load_sensors: sensor level = none (sensors_on = 0; a_y step 0.0981 m/s^2 updated every 0.01 s, T_s step 0.01 N.m every 0.001 s)
+load_rl: 7 signals x 5 samples (5 agent samples apart) + previous T_a + slow e_T (tau 1 s) = 37 observations, Ts_agent = 0.001 s, reward [T_ref w1 w2] = [10 0.0003 0]
+Loaded plant parameters (data/params.json): Cluster1 [K, J_col, C_col, T_f, c], Cluster2 [m, l_f, l_r, g, C_alpha_f, C_r, C, E, n_st, e_p0, t_0], Cluster3 [Iz] (+ m,l_f,l_r reused from Cluster2)
+Computed derived quantities (load_derived.m): F_zf=9097.46 N, F_zr=6333.67 N
+Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0
+load_sensors: sensor level = none (sensors_on = 0; a_y step 0.0981 m/s^2 updated every 0.01 s, T_s step 0.01 N.m every 0.001 s)
+[2026-10-02 18:50:16] Bac1b Bac1b_base: gamma 0.999, slow observation I kept, 40 episodes of 5000 steps, check every 5 episodes, seed 2; mu drop at tMu in [1.5, 3] s to muAfter in [0.3, 0.8] without (0.42, 0.48)
+[2026-10-02 18:50:26] untrained: C1: e_T before 2.830 after 1.738, T_a before 2.138 after 1.663, max|T_a| 2.15 | C2: e_T before 2.830 after 2.114, T_a before 2.138 after 1.787, max|T_a| 2.15
+[2026-10-02 18:53:51] episodes 5 (205 s, 8.19 ms/step): episode reward mean -527.1; C1: e_T before -1.746 after -2.008, T_a before 5.877 after 5.400, max|T_a| 5.92 | C2: e_T before -1.746 after -1.754, T_a before 5.877 after 5.736, max|T_a| 5.92
+[2026-10-02 18:57:17] episodes 10 (410 s, 8.21 ms/step): episode reward mean -62.56; C1: e_T before 0.882 after 0.607, T_a before 3.375 after 2.731, max|T_a| 4.12 | C2: e_T before 0.882 after 0.750, T_a before 3.375 after 3.154, max|T_a| 3.66
+[2026-10-02 19:00:40] episodes 15 (614 s, 8.18 ms/step): episode reward mean -76.73; C1: e_T before 1.075 after 0.452, T_a before 3.116 after 3.221, max|T_a| 3.66 | C2: e_T before 1.075 after 1.008, T_a before 3.116 after 2.890, max|T_a| 3.32
+[2026-10-02 19:04:24] episodes 20 (837 s, 8.37 ms/step): episode reward mean -36.27; C1: e_T before 0.321 after -0.250, T_a before 3.639 after 3.551, max|T_a| 4.28 | C2: e_T before 0.321 after 0.396, T_a before 3.639 after 3.573, max|T_a| 3.96
+[2026-10-02 19:08:49] episodes 25 (1102 s, 8.82 ms/step): episode reward mean -12.19; C1: e_T before -0.188 after -0.835, T_a before 4.338 after 4.567, max|T_a| 4.69 | C2: e_T before -0.188 after -0.203, T_a before 4.338 after 4.133, max|T_a| 4.37
+[2026-10-02 19:13:15] episodes 30 (1369 s, 9.12 ms/step): episode reward mean -13.8; C1: e_T before -0.122 after -0.588, T_a before 4.432 after 3.945, max|T_a| 4.65 | C2: e_T before -0.122 after -0.210, T_a before 4.432 after 4.136, max|T_a| 4.61
+[2026-10-02 19:18:15] episodes 35 (1669 s, 9.54 ms/step): episode reward mean -15.24; C1: e_T before 0.306 after 0.028, T_a before 3.921 after 3.333, max|T_a| 4.40 | C2: e_T before 0.306 after 0.075, T_a before 3.921 after 3.869, max|T_a| 4.07
+[2026-10-02 19:23:27] episodes 40 (1981 s, 9.91 ms/step): episode reward mean -13.2; C1: e_T before 0.336 after 0.112, T_a before 3.972 after 3.240, max|T_a| 4.31 | C2: e_T before 0.336 after 0.244, T_a before 3.972 after 3.669, max|T_a| 4.13
+[2026-10-02 19:23:28] training end: 40 episodes, 33.0 min; consecutive passing checks at the end: 0 (PASS needs 2 and positive sensitivity)
+[2026-10-02 19:23:32] sensitivity written to C:\Users\Admin\OneDrive\Desktop\git\Adaptive-EPS-using-Reinforcement-Learning\Result\RL\Bac1\Bac1b_base\RL_Bac1b_base_sensitivity.csv
+[Warning: Cannot close the model 'Model_RL_s' because it has been changed. Use the command 'save_system' to first save the model] 

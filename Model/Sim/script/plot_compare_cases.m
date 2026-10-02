@@ -37,7 +37,7 @@ for k = 1:numel(TC)
     end
     f = figure('Visible', 'off', 'Position', [50 50 1200 900]);
     tl = tiledlayout(3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
-    title(tl, sprintf('%s - %s%s', strjoin(ctrlList, ' / '), S.name, noiseNote), 'FontWeight', 'bold');
+    title(tl, sprintf('%s - %s%s', strjoin(ctrlList, ' / '), S.name, noiseNote), 'FontWeight', 'bold', 'Interpreter', 'none');
 
     ax(1) = nexttile; hold on;
     for c = 1:numel(ctrlList)
@@ -86,6 +86,9 @@ function rgb = colorOf(ctrl)
         case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
         case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'SMC_KI', rgb = [0.910 0.482 0.643];   % #e87ba4 magenta
+        case 'PIDF_DZ',   rgb = [0.290 0.227 0.655];   % #4a3aa7 violet
+        case 'SMC_KI_DZ', rgb = [0.000 0.514 0.000];   % #008300 green
+        case 'PIDF',   rgb = [0.290 0.227 0.655];   % #4a3aa7 violet
         otherwise,     rgb = [0.36 0.36 0.36];
     end
 end

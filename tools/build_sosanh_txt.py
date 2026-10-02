@@ -9,6 +9,8 @@ replaced by a caption line plus the table rows read from Result/Compare/<A>_vs_<
   @WINDOWS A B | Bảng n: caption  windows where the road is slippery: RMS e_T and signed mean e_T / mean |T_d,ref|
   @SENSORS | Bảng n: caption      sensor table from Model/data/sensors.json
   @STD A B | text with {x} {y}    one sentence with the largest relative std over the seeds ({x} RMS e_T [%], {y} TV [%])
+  @DELTA tagOld ctrlOld tagNew ctrlNew | Bảng n: caption   before/after table: RMS e_T and TV(T_a) of ctrlOld (read from
+                                  Result/Compare/<tagOld>/) and ctrlNew (from Result/Compare/<tagNew>/), one row per test case
 Every table is followed by one blank line, as txt2docx.py expects.
 """
 import json
@@ -32,7 +34,23 @@ WINDOWS = [('TC2_road', 'curve_0p25g_v80_mu_0p3', 'TC2', 'Cua 0.25 g, 80 km/h, $
 
 def load(a, b):
     tag = '%s_vs_%s' % (a, b)
+    return load_tag(tag)
+
+
+def load_tag(tag):
     return pd.read_csv(os.path.join(REPO, 'Result', 'Compare', tag, tag + '_noise_study_summary.csv'))
+
+
+def table_delta(tag_old, c_old, tag_new, c_new, caption):
+    A = load_tag(tag_old)
+    B = load_tag(tag_new)
+    out = [caption, 'Ca | RMS $e_T$ %s [N.m] | RMS $e_T$ %s [N.m] | TV($T_a$) %s [N.m/s] | TV($T_a$) %s [N.m/s] | TV giảm [%%]'
+           % (c_old, c_new, c_old, c_new)]
+    for case, short in CASES:
+        e0 = row(A, c_old, case, 'whole case', 'mean_RMS_eT_Nm'); e1 = row(B, c_new, case, 'whole case', 'mean_RMS_eT_Nm')
+        t0 = row(A, c_old, case, 'whole case', 'mean_TV_Ta_Nm_per_s'); t1 = row(B, c_new, case, 'whole case', 'mean_TV_Ta_Nm_per_s')
+        out.append(' | '.join([short, fmt(e0), fmt(e1), fmt(t0, 'tv'), fmt(t1, 'tv'), '%.0f' % (100 * (1 - t1 / t0))]))
+    return out
 
 
 def fmt(x, kind='g'):
@@ -112,6 +130,8 @@ def main(tpl, dst):
             out += table_windows(parts[1], parts[2], rest.strip())
         elif kind == 'SENSORS':
             out += table_sensors(rest.strip())
+        elif kind == 'DELTA':
+            out += table_delta(parts[1], parts[2], parts[3], parts[4], rest.strip())
         elif kind == 'STD':
             out.append(sentence_std(parts[1], parts[2], rest.strip()))
         else:

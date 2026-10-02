@@ -353,6 +353,88 @@ BỘ ĐIỀU KHIỂN HỌC TĂNG CƯỜNG (RL THUẦN) CHO TRỢ LỰC LÁI - KH
   - Nếu bậc 1 thất bại với mọi biến thể: lỗi ở phần nền (thang phần thưởng, chuẩn hóa quan sát, cỡ mạng), xem lại trước; chỉ khi nền đúng mà vẫn hỏng mới tính phương án B (agent chu kỳ 5 ms) hoặc C
     (thầy-trò đặc quyền: thầy thấy mu thật, trò chỉ dùng tín hiệu đo).
   - Nhật ký các bậc (ghi tiếp bên dưới khi làm):
+    + BẬC 1, MỐC (Bac1_base, 16:44-17:03, Result/RL/Bac1/Bac1_base/): thiết lập hiện tại, không đổi gì (gamma 0.999, hành động tuyệt đối, có quan sát I), 30 lượt x 4000 bước = 1.2e5 bước, 18.6 phút
+      (9.3 ms mỗi bước). Sai số trung bình e_T trong cửa sổ 3-4 s (N.m) sau 0, 5, 10, 15, 20, 25, 30 lượt: +1.74, -1.17, +1.33, +1.20, +0.28, +0.033, +0.177 (T_d,ref = 2.0; Map 0.001, PID 0.012).
+      Mean T_a ở 25 và 30 lượt: 3.18 và 3.04 N.m (Map 3.22, PID 3.43). KẾT QUẢ: thiết lập hiện tại HỌC ĐƯỢC bài toán giữ góc cố định trong khoảng 25 lượt (đạt |e_T| < 0.1 ở lần kiểm 25), tức mạng và
+      phần thưởng đủ để đưa T_a về đúng mức khoảng 3.2 N.m; nhưng KHÔNG ổn định: 0.033 rồi 0.177 ở lần kiểm kế tiếp (điều kiện 'ổn định qua các lần kiểm cuối' KHÔNG đạt, theo đúng điều kiện qua đã
+      ghi trước). Hình traces: trong 0.5 s đầu (góc lái đang tăng) T_a chạm giới hạn khoảng 7.5 N.m ở hầu hết các lần kiểm, rồi đi xuống mức giữ; sau 1 s T_a gần như phẳng.
+    + ĐÁNH GIÁ BẬC 1 (tự phê bình, Lượt 197): bậc 1 như đã thiết kế là bài kiểm tra YẾU. Kịch bản giống hệt nhau mọi lượt, nên mạng chỉ cần nhớ MỘT hằng số T_a khoảng 3.2 N.m (T_a trung bình bằng T_a
+      lớn nhất, đường phẳng) mà không cần phản hồi theo e_T. Vì vậy 'đạt' ở bậc 1 chưa chứng minh agent biết sửa sai số; và Train2 hỏng ở chỗ khác với điều bậc 1 kiểm: nhiều kịch bản ngẫu nhiên, mỗi
+      kịch bản cần một mức T_a khác. Kết luận cho kế hoạch: mốc chứng tỏ thiết lập hiện tại KHÔNG sai cơ bản (học được khi bài toán đủ đơn giản), nên nghi ngờ chuyển sang việc học PHẢN HỒI/khái quát
+      hóa qua nhiều kịch bản. Cần bậc 1 làm chặt hơn trước khi so biến thể (a), (b), (c): ví dụ mỗi lượt một mức a_y ngẫu nhiên và kiểm trên mức CHƯA THẤY khi huấn luyện, và/hoặc có nhiễu loạn (mu
+      đổi giữa lượt) làm T_a cần thiết đổi mà mức góc không đổi. Chưa chốt, chờ người dùng.
+    + + BẬC 1b (2026-10-02, Lượt 201): làm chặt bậc 1 theo đánh giá ở trên. Code Model/RL/script/train_mu.m (kết quả Result/RL/Bac1/<tên lần chạy>/). THIẾT KẾ: giữ góc lái ứng với a_y = 0.25 g ở 40
+      km/h (góc tăng trong 0.5 s rồi giữ), mu giảm từ 0.8 xuống muAfter tại thời điểm tMu ngẫu nhiên mỗi lượt; lượt 5 s. Vì sao: góc lái và a_y gần như không đổi khi mu giảm (L1) nhưng T_a cần thiết
+      đổi, chỉ có e_T báo cho agent, nên chính sách hằng số KHÔNG qua được cửa sổ sau khi mu giảm. Huấn luyện: tMu đều trong [1.5, 3] s, muAfter đều trong [0.3, 0.8] LOẠI dải giữ-lại (0.42, 0.48);
+      cảm biến mức none. Kiểm tra sau mỗi 5 lượt (chính sách thuần): C1 mu xuống 0.3 lúc 2 s (trong dải huấn luyện) và C2 mu xuống 0.45 lúc 2 s (CHƯA TỪNG THẤY); đo e_T trung bình và T_a trung bình
+      trước (1.5-2 s) và sau (4-5 s). Cuối lần chạy đo độ nhạy dT_a/de_T trên C1 tại 1.8 s và 4.5 s (tổng, phần lịch sử, phần I; PID Kp = 16.48). ĐIỀU KIỆN QUA (ghi trước khi chạy): |e_T| dưới 0.1
+      N.m ở cả hai cửa sổ của cả C1 và C2, độ nhạy tổng dương, và đạt ở 2 lần kiểm liên tiếp. Kế hoạch lần chạy: mốc (thiết lập hiện tại, 40 lượt x 5000 bước = 2e5 bước, ước 35-40 phút); rồi từng
+      biến thể (a) gamma 0.99 (train_mu('Bac1b_a_gamma099', struct('gamma', 0.99))), (c) bỏ I (struct('I_off', true)), (b) hành động gia số (cần sửa model). Mốc khởi chạy 18:50 (kết quả ghi tiếp bên
+      dưới). Agent chưa học: e_T trước và sau khi mu giảm là C1 2.83 và 1.74, C2 2.83 và 2.11 N.m.
+    + 19:16 khởi chạy song song biến thể (a) Bac1b_a_gamma099 (gamma 0.99, mọi thứ khác như mốc, seed 2) trong tiến trình MATLAB thứ hai (maxNumCompThreads(8)); máy 16 lõi, RAM trống khoảng 8 GB
+      trước khi chạy, mỗi lần chạy khoảng 3.4 GB nên tối đa 2-3 lần song song. Mốc Bac1b_base lúc 30/40 lượt: e_T trước/sau khi mu giảm C1 -0.122/-0.588, C2 -0.122/-0.210 N.m (chưa qua điều kiện).
+    + KẾT QUẢ BẬC 1b (mốc Bac1b_base 18:50-19:23, 33 phút; biến thể (a) Bac1b_a_gamma099 19:16-19:52, 36 phút; 40 lượt x 5000 bước = 2e5 bước mỗi lần, seed 2). e_T trung bình (N.m) trước / sau khi mu
+      giảm ở lần kiểm 40 lượt: mốc C1 0.336 / 0.112, C2 (mu 0.45 chưa thấy) 0.336 / 0.244; (a) C1 0.322 / 0.229, C2 0.322 / 0.288 (Map: 0.001). ĐIỀU KIỆN QUA (|e_T| < 0.1 ở cả bốn ô, 2 lần liên
+      tiếp): KHÔNG đạt ở cả hai (số lần kiểm liên tiếp đạt = 0). Mốc theo các lần kiểm 5, 10, ..., 40, e_T trước khi mu giảm: -1.75, 0.88, 1.08, 0.32, -0.19, -0.12, 0.31, 0.34; (a): 3.98, 3.11, 2.68,
+      2.36, 1.07, 0.60, 1.29, 0.32 (chậm hơn mốc, và vọt lên 1.29 ở lượt 35).
+    + Độ nhạy cuối lần chạy (C1, dT_a/de_T, N.m trên N.m; PID Kp = 16.48): mốc 1.32 (t = 1.8 s) và 1.23 (4.5 s), phần lịch sử 0.84 và 0.75, phần I 0.62 và 0.37; (a) 4.03 và 4.10, phần lịch sử 3.34 và
+      3.34, phần I 0.79 và 0.76. TẤT CẢ DƯƠNG (đúng dấu), khác hẳn Train2 (-3 đến +1.1, quan sát I sai dấu). Phản ứng với mu giảm (T_a trước -> sau, lần kiểm 40): mốc C1 3.97 -> 3.24 (-0.73), C2 3.97
+      -> 3.67 (-0.30); (a) C1 3.94 -> 3.12 (-0.82), C2 3.94 -> 3.63 (-0.31). T_a giảm đúng chiều và tỉ lệ với độ lớn của mu giảm, kể cả mu 0.45 CHƯA TỪNG THẤY: bằng chứng agent THẬT SỰ phản ứng với
+      tình huống, khác bậc 1 (hằng số). Tốc độ: mốc 8.2-9.9 ms mỗi bước, (a) 10.7-14.3 ms mỗi bước khi chạy song song (chậm hơn 20-40%; hai lần chạy song song xong trong 36 phút thay vì 69 phút nối
+      tiếp).
+    + ĐÁNH GIÁ BẬC 1b (Lượt 205): (1) agent học được phản hồi đúng dấu và tỉ lệ, nhưng sai số tĩnh còn 0.1-0.3 N.m (Map 0.001), chưa qua; (2) hình traces: ở mọi lần kiểm sau 10 lượt, quá độ 0-0.5 s
+      vẫn bão hòa T_a ở 7.5 N.m và e_T đỉnh khoảng 2.7 N.m, không cải thiện; sau khi mu giảm T_a chỉnh chậm 1-2 s; (3) chênh lệch giữa mốc và (a) ở lượt 40 (0.336 so với 0.322) NHỎ HƠN dao động giữa
+      các lần kiểm của chính mỗi lần chạy (a: 0.60 rồi 1.29 rồi 0.32), mỗi biến thể chỉ chạy 1 seed, nên KHÔNG kết luận được gamma 0.99 tốt hơn hay kém hơn; chỉ thấy (a) học chậm hơn nhưng nhạy hơn
+      (gain 4.1 so với 1.3); (4) vẫn còn mất ổn định (0.6 -> 1.29 -> 0.32) và lượt 40 chưa hội tụ (mốc còn đang cải thiện ở 35-40). Việc cần làm trước khi so biến thể: chạy nhiều seed cho mỗi biến
+      thể (3 seed song song) và/hoặc chạy dài hơn (100 lượt).
+    + ĐÍNH CHÍNH (Lượt 206): giới hạn T_a,max(v) CÓ trong model (khối Lookup_Tamax, Min_Ta, Max_Ta trong build_model_rl.m; bảng Ta_max của data/ref.json, 7.517 N.m ở 40 km/h). Mức 7.5 trên hình
+      traces CHÍNH LÀ giới hạn đang chặn: agent đòi trợ lực lớn hơn 7.5 trong 0.5 s đánh lái (mức giữ chỉ 3.2-4.4 N.m) và bị cắt. Map cũng chạm 7.52 ở TC1 (Bảng 10 map.txt). Vì vậy câu 'quá độ không
+      cải thiện' ở trên chưa chắc do agent kém: đỉnh e_T khoảng 2.7 N.m có thể bị giới hạn trợ lực chặn; cần so với Map trên cùng kịch bản (góc tăng 0.25 g trong 0.5 s) trước khi kết luận. T_a,max là
+      ước lượng nhu cầu của mô hình (ref.txt mục 1.5), không phải khả năng motor.
+    + THƯỚC ĐO MAP VÀ PID TRÊN KỊCH BẢN KIỂM BẬC 1b (Lượt 208, Model/RL/script/ref_bac1b.m, Result/RL/Bac1/Reference/: RL_Bac1b_reference_metrics.csv và 4 hình). Mức cảm biến: CHỈ none và high (người
+      dùng chốt 2026-10-02, bỏ mức low; eval_rl.m đổi mặc định thành none và high), seed 80001 cho high. Kết quả mức none, e_T (N.m) trước / sau khi mu giảm, C1 (mu 0.3) và C2 (mu 0.45): Map -0.0002
+      / -0.115 và -0.0002 / -0.047; PID -0.0001 / 0.000 và -0.0001 / 0.000; agent mốc (40 lượt) 0.336 / 0.112 và 0.336 / 0.244; agent (a) 0.322 / 0.229 và 0.322 / 0.288.
+    + (1) QUÁ ĐỘ 0-1 s: đỉnh |e_T| Map 2.83, PID 2.68, agent 2.68-2.74 N.m, cả bốn đều chạm T_a,max = 7.52 N.m trong 0.24-0.35 s. Đỉnh khoảng 2.7 N.m là do GIỚI HẠN TRỢ LỰC, không phải agent kém; xác
+      nhận đính chính Lượt 206. (2) SAU KHI MU GIẢM: Map trợ lực thừa -0.115 N.m (C1) và -0.047 (C2): đây là mức trợ lực thừa của Map ở 0.25 g, 40 km/h (khoảng -5% so với T_d,ref) và là chỗ RL phải
+      hơn. Chính Map KHÔNG đạt ngưỡng 0.1 tôi đặt ở C1. (3) LỖI CHÍNH CỦA AGENT là THIÊN LỆCH TRỢ LỰC THIẾU khoảng +0.3 N.m CÓ SẴN TRƯỚC KHI MU GIẢM (Map, PID khoảng 0), chứ không phải phản ứng với
+      mu: T_a giảm sau khi mu giảm ở C1 Map 0.80, PID 0.92, agent mốc 0.73, (a) 0.82 N.m, cùng cỡ. Thiên lệch này khớp với độ lợi phản hồi thấp (1.2-4.1 so với Kp 16.5 của PID) và không có tích phân
+      đúng nghĩa: phản hồi tỉ lệ yếu để lại sai số tĩnh. (4) VỚI NHIỄU (high, agent huấn luyện ở none): sai số của agent gần như không đổi (0.329 / 0.113), còn TV(T_a) agent 55-185 N.m/s so với Map
+      560-590 và PID 2480-2570: agent ÊM HƠN Map 3-10 lần và PID 14-45 lần khi có nhiễu cảm biến, dù chưa từng thấy nhiễu khi học. Đây là điểm mạnh đầu tiên có số liệu của RL.
+    + ĐIỀU KIỆN QUA SỬA LẠI (đề xuất, chờ người dùng): ngưỡng cố định 0.1 N.m đặt theo cảm tính và chính Map không đạt; thay bằng so với Map trên cùng kịch bản: trước khi mu giảm |e_T| không quá 0.05
+      N.m (Map, PID khoảng 0), sau khi mu giảm |e_T| nhỏ hơn của Map (0.115 ở C1, 0.047 ở C2), và TV(T_a) mức high không quá của Map.
+    + BANG-BANG (Lượt 209, thêm chỉ tiêu vào ref_bac1b.m, đo từ 1 s, C1 mức high; C2 tương tự): tỉ lệ mẫu |T_a| >= 95% T_a,max: PID 12.8% (C2 15.8%), Map 0.02%, agent 0; tỉ lệ bước 1 ms có |dT_a| > 1
+      N.m: PID 68%, Map 20%, agent mốc 0, (a) 0.15%; phân vị 99 của |dT_a| mỗi bước: PID 11.4 N.m (nhảy gần trọn dải -7.5 đến +7.5 trong 1 ms), Map 2.2, agent mốc 0.27, (a) 0.71. Ở mức none không bộ
+      nào bang-bang. Kết luận: PID bang-bang thật khi có nhiễu, Map rung mạnh nhưng ít chạm giới hạn, agent KHÔNG bang-bang. Nguyên nhân chung: lượng tử và nhiễu của T_s nhân với độ lợi phản hồi (PID
+      Kp 16.5 cộng khâu D; Map độ dốc tới 18 cộng khâu lead với độ lợi cao tần khoảng 153). Agent êm vì độ lợi phản hồi THẤP (1.3 ở mốc, 4.1 ở (a)) và TV tăng theo độ lợi đó (60 so với 185 N.m/s);
+      cũng chính độ lợi thấp này để lại sai số tĩnh +0.3 N.m. Vì vậy sửa sai số tĩnh bằng cách tăng độ lợi tỉ lệ sẽ đánh đổi độ êm; hành động gia số (tích lũy) có thể triệt sai số tĩnh mà không cần
+      độ lợi tỉ lệ cao, nên là ứng viên hợp lý (chưa kiểm chứng).
+    + 20:29 (Lượt 210, người dùng vắng 2 giờ): khởi chạy song song 3 lần MỐC bậc 1b với seed 2, 3, 4, mỗi lần 80 lượt (gấp đôi), tên Bac1b_base80_s2, _s3, _s4 (train_mu.m, struct('episodes', 80,
+      'seed', s)), mỗi tiến trình maxNumCompThreads(8), RAM trống 13.2 GB trước khi chạy; ước 100 phút. Mục đích: (1) đo dao động tự nhiên giữa các seed để biết khác biệt giữa biến thể bao nhiêu mới
+      là thật; (2) xem chạy gấp đôi có làm giảm thiên lệch +0.3 N.m không. Seed 2 trùng seed của Bac1b_base (40 lượt) nên 40 lượt đầu cho biết mức lặp lại của cùng một seed khi chạy song song. Đánh
+      giá theo điều kiện qua mới (so với Map, chờ người dùng duyệt) từ checks.csv. Hành động gia số CHƯA chạy (chờ người dùng đồng ý).
+    + 21:29 (Lượt 211, giữa chừng): seed 2 ở 50/80 lượt (13.9 ms mỗi bước), seed 3 ở 40/80 (17.2 ms), seed 4 ở 30/80 (21.3 ms, chậm dần); ước xong khoảng 22:05, 22:25, 23:00. (1) Seed 2 ở 40 lượt đầu
+      cho ĐÚNG từng chữ số như Bac1b_base: huấn luyện lặp lại được khi cùng seed, kể cả khi chạy song song. (2) ĐÍNH CHÍNH Lượt 208: 'thiên lệch trợ lực thiếu +0.3 N.m' là của RIÊNG seed 2; seed 3
+      lệch THỪA (e_T trước khi mu giảm -0.80 đến -0.13), seed 4 lệch thiếu 0.23-0.70. Đúng hơn: agent để lại sai số tĩnh có dấu ngẫu nhiên, độ lớn 0.1-0.8 N.m, đổi giữa các lần kiểm (không có cơ chế
+      triệt sai số tĩnh). (3) Chạy dài chưa giúp: seed 2 ở 45-50 lượt xấu hơn 35-40 (C1 sau khi mu giảm -0.35, -0.48, trợ lực thừa LỚN HƠN Map -0.115); seed 4 tốt dần tới 25 lượt (0.256 / 0.077) rồi
+      xấu ở 30 (0.702 / -0.591). Chưa lần kiểm nào đạt điều kiện mới (trước khi mu giảm |e_T| <= 0.05).
+    + KẾT QUẢ CUỐI 3 SEED x 80 LƯỢT MỐC (Lượt 216; Bac1b_base80_s2/_s3/_s4 xong 22:10, 22:24, 22:54). e_T trước khi mu giảm (C1) trung bình |e_T| trên các lần kiểm 40-80 lượt: seed 2 0.23
+      (0.02-0.44), seed 3 0.26 (0.11-0.46), seed 4 0.30 (0.19-0.47); lần kiểm 80 lượt: +0.02 / -0.35 / +0.21 N.m. KẾT LUẬN: chạy gấp đôi KHÔNG làm sai số tĩnh giảm: cả ba seed dao động 0.1-0.5 N.m có
+      dấu đổi, không có xu hướng về 0; dấu khác nhau giữa seed (seed 3 chủ yếu thừa, seed 4 chủ yếu thiếu, seed 2 đổi dấu); sai số sau khi mu giảm ở C1 còn -0.1 đến -0.86. Độ nhạy cuối (C1, N.m trên
+      N.m): seed 2 3.70 và 3.36; seed 3 1.34 và 2.14; seed 4 1.45 và 1.05; thấp hơn nhiều so với Kp = 16.5 của PID. Xác nhận: nguyên nhân là cấu trúc (không có cơ chế triệt sai số tĩnh), không phải
+      thiếu dữ liệu hay may rủi seed.
+    + 23:05 (Lượt 216): CÁCH C (hành động gia số) đã làm. Model mới Model_RLinc_s.mdl (build_model_rl.m với biến cơ sở rl_build_variant = 'inc': khối Sum_inc cộng đầu ra agent với T_a_prev rồi mới
+      qua công tắc và clamp T_a,max; T_a_prev là giá trị SAU clamp nên tự chống windup, không có vòng đại số vì T_a_prev là Unit Delay). rl.json thêm khối 'incremental' (dTa_max = 0.2 N.m mỗi bước);
+      load_rl.m đặt rl_dTa_max; rl_env.m dùng biến rl_incremental: đặc tả hành động +-dTa_max và nhiễu khám phá nhân hệ số dTa_max/T_a,max_lớn_nhất (0.2/7.8 = 0.0256, cùng tỉ lệ so với dải);
+      train_mu.m có tùy chọn incremental. Model gốc Model_RL_s.mdl không đổi. Chạy thử 2 lượt chạy được (chưa học: T_a trôi tới giới hạn 7.52 vì dT_a bão hòa ở 0.2, lượt 2 đã về 0.2-0.3). 23:05 khởi
+      chạy song song 3 lần, mỗi lần 40 lượt (so được với mốc ở 40 lượt): Bac1c_inc_s2 (seed 2, giữ quan sát I), Bac1c_inc_s3 (seed 3, giữ I), Bac1c_inc_noI_s2 (seed 2, bỏ I); ước 50 phút. Độ nhạy của
+      biến thể này là d(dT_a)/d(e_T) mỗi bước, so với Ki*Ts = 0.27 của PID. Mốc để so (40 lượt): seed 2 C1 0.336 / 0.112, seed 3 -0.164 / -0.216, seed 4 +0.29 / +0.11 (trước / sau khi mu giảm).
+    + KẾT QUẢ CÁCH C LẦN 1 (Lượt 219-220, 00:28 ngày 03/10, DỪNG THỦ CÔNG trước khi xong, seed 2 giữ I ở 30/40 lượt, seed 2 bỏ I ở 25/40, seed 3 ở 30/40; Result/RL/Bac1/Bac1c_inc_*): KHÔNG học được.
+      Seed 2 (cả hai biến thể) kẹt T_a = +7.517 N.m từ lượt 5 đến hết với cùng từng chữ số (C1 e_T -2.698 trước / -3.895 sau); seed 3 loanh quanh T_a 6-7.5 N.m, e_T -2.4 đến -3.8, trong khi mốc cùng
+      số lượt đã có e_T -0.1 đến +0.7. Thăm dò agent_ep30 trên 1000 quan sát ngẫu nhiên: dT_a trung bình 0.146 (seed 2) và 0.189 (seed 3) trên tối đa 0.2, độ lệch chuẩn 0.04-0.05, 87% mẫu >= 0.19 ở
+      seed 3: actor lệch dương và gần bão hòa với mọi quan sát (tanh bão hòa làm đạo hàm gần 0). Cơ chế: dT_a dương mọi lúc đẩy T_a lên giới hạn từ đầu lượt, e_T âm lớn kéo dài, actor không còn
+      gradient để giảm. Đây là lỗi khởi động/bão hòa của lần triển khai này (nhiễu khám phá dT_a chỉ 0.0077 N.m, nhỏ so với dải +-0.2; lớp ra của actor khởi tạo mặc định), CHƯA phải kết luận về cấu
+      trúc gia số; không đưa kết quả này vào báo cáo. Hướng sửa trước khi chạy lại: khởi tạo lớp cuối của actor với trọng số rất nhỏ để dT_a bắt đầu quanh 0; tăng nhiễu khám phá dT_a; chạy lại seed
+      2, 3, 4.
 
 2.5. Bước 5 - Huấn luyện chính
   - Huấn luyện song song nhiều lượt (Parallel Computing Toolbox nếu có), lưu agent định kỳ, ghi đường cong phần thưởng.

@@ -16,6 +16,9 @@
   "done_eT": { "value": 1000000, "unit": "N.m", "desc": "Early termination switched off (threshold unreachable): 10 N.m cut untrained episodes after 61 steps (step 1); episodes are 10 s long instead" },
   "use_agent": { "value": 1, "unit": "-", "desc": "1: T_a from the agent; 0: T_a = 0 (wiring check with the open-loop plant)" },
   "episode_s": { "value": 10, "unit": "s", "desc": "Training episode length (10000 agent steps)" },
+  "incremental": {
+    "dTa_max": { "value": 0.2, "unit": "N.m per agent step", "desc": "Variant C (Documents/RL/DieuKhien_RL.txt section 2.4d): the agent outputs dT_a within +-dTa_max and T_a[k] = sat(T_a[k-1] + dT_a): the integral action is in the structure, and dTa_max is a built-in rate limit of 200 N.m/s (7.5 N.m in 37 ms). T_a[k-1] is the value AFTER the T_a,max clamp, so the integration stops by itself in saturation (anti-windup). Used only by the model Model_RLinc_s" }
+  },
   "train": {
     "gamma": { "value": 0.999, "unit": "-", "desc": "Discount factor: horizon about 1/(1-gamma) = 1000 steps = 1 s, close to the 1.3 s time scale of T_s after a mu change" },
     "actor_lr": { "value": 0.0001, "unit": "-", "desc": "Actor learning rate (slower than the critic, as in DDPG/TD3 practice)" },
