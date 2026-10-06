@@ -12,7 +12,7 @@ function ref_bac1b(agentRuns)
 %     3. smoothness and bang-bang indicators from 1 s: TV(T_a), std of T_a, share of samples with |T_a| >= 95% of T_a,max,
 %        share of 1 ms steps with |dT_a| > 1 N.m, 99th percentile of |dT_a| per step.
 %   Writes Result/RL/Bac1/Reference/: RL_Bac1b_reference_metrics.csv, RL_Bac1b_reference_<check>_<level>.png.
-%   Run first: load_map.m, load_pid.m, load_rl.m.
+%   Run first: load_map_6_8.m, load_pid.m, load_rl.m.
 
 if nargin < 1, agentRuns = {}; end
 scriptDir = fileparts(mfilename('fullpath'));
@@ -25,7 +25,7 @@ checkName = {'C1_mu0p3', 'C2_mu0p45'};
 levels = {'none', 'high'};
 TaLim = interp1(evalin('base', 'Tamax_v_bp_ms'), evalin('base', 'Tamax_table'), 40 / 3.6);
 
-ctrl = [{'Map', 'PID'}, agentRuns];
+ctrl = [{'Map_6_8', 'PID'}, agentRuns];
 fM = fopen(fullfile(outDir, 'RL_Bac1b_reference_metrics.csv'), 'w');
 fprintf(fM, 'check,level,controller,peak_abs_eT_0_1s,time_at_limit_0_1s,mean_eT_before,mean_eT_after,mean_Ta_before,mean_Ta_after,tv_Ta_Nm_per_s,std_Ta_after1s,frac_near_limit_after1s,frac_jump_over1Nm_after1s,p99_abs_dTa_after1s\n');
 needRL = ~isempty(agentRuns);
@@ -36,7 +36,7 @@ for c = 1:numel(checks)
     for l = 1:numel(levels)
         R = struct('t', {}, 'eT', {}, 'Ta', {});
         for k = 1:numel(ctrl)
-            if any(strcmp(ctrl{k}, {'Map', 'PID'}))
+            if any(strcmp(ctrl{k}, {'Map_6_8', 'PID'}))
                 mdl = ['Model_' ctrl{k} '_s']; extra = struct();
             else
                 S = load(fullfile(result_dir('RL', 'Bac1', ctrl{k}), 'agent_ep40.mat'), 'agent');

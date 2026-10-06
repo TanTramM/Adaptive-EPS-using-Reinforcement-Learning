@@ -19,7 +19,7 @@
 %     +-- Reference      In : T_s, v, a_y (MEASURED)   Out: T_d_ref, e_T   -> feeds the agent
 %     +-- Reference_true In : T_s, v, a_y (TRUE)       Out: T_d_ref, e_T   -> scoring and reward only, NOT in the observation
 %     +-- RL             In : e_T, T_s, theta1, theta2_dot, v, gamma, a_y (MEASURED), e_T_true   Out: T_a, reward
-%   Same sensing and scoring structure as Model_Map_s and Model_PID_s: the agent sees only measured values; the logged e_T and the
+%   Same sensing and scoring structure as Model_Map_6_8_s and Model_PID_s: the agent sees only measured values; the logged e_T and the
 %   reward use true values (information that exists in simulation only: valid for teaching and scoring, the real car does not
 %   need it). Default sensor level 'none' = ideal sensors, chain bypassed (load_sensors.m); Documents/Sim/ThucTeHoa.txt Mục 0, 1.
 %
@@ -35,7 +35,7 @@
 %
 % Run first: run('<Model>/load_rl.m') and create the agent (RL/script/rl_env.m does it), because the
 % RL Agent block needs the base variable rl_agent.
-% Solver: variable step, MaxStep = 0.002 s, like Model_Map_s (steep dry-friction term).
+% Solver: variable step, MaxStep = 0.002 s, like Model_Map_6_8_s (steep dry-friction term).
 
 ctrlName  = 'RL';
 % Variant (base variable rl_build_variant): 'abs' (default) = the agent outputs T_a, model Model_RL_s;

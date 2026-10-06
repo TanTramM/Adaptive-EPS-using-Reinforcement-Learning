@@ -39,7 +39,7 @@ thì thay vào là chốt được. Không có số đo nào cho nên không đ�
 Ảnh hưởng tới kết quả (đã chạy lại toàn bộ): khi lốp bão hòa mô-men phản hồi không còn mất hẳn, nên các ca nguy hiểm nhẹ đi rõ rệt so với bản đầu gộp caster vào phần co lại. TC3 (μ giảm khi
 cua gấp 100 km/h): $e_{rel}$ từ -99.99% xuống -14.1%; TC4 (vũng nước): từ -98.8% xuống -83.6%; TC2 (cua 0.25 g, μ = 0.3): từ -7.85% xuống -3.5%; mô phỏng hở vòng 0.2 g: từ 18% xuống 9-10%.
 Giới hạn trợ lực $T_{a,max}$ tăng 6-16% (+0.92 N.m từ 30 km/h trở lên, ví dụ 6.1 lên 7.0 N.m ở 60 km/h) vì $T_r$ ở 0.4 g tăng từ 9.0 lên 9.9 N.m; độ dốc tự nhiên của bản đồ trong vùng 0.1-0.3 g tăng tới 17.9 nên
-$K_{max}$ đổi từ 10 sang 18 và khâu lead thiết kế lại (80 và 680 rad/s, độ dự trữ pha 45.8 độ).
+$K_{max}$ đổi từ 10 sang 18 và khâu lead thiết kế lại (bản đó chưa có motor; khi thêm motor bản đồ được chia hai bậc, $K_{max}$ = 8 và 6, xem map.txt mục 2.5).
 Nếu bị hỏi vì sao bản đầu làm khác: bản đầu gộp caster vào $e_{p0}$ và chỉ nêu đó là hạn chế, vì mọi kịch bản lúc đó nằm trong vùng chưa trượt hoàn toàn, nơi cách gộp không ảnh hưởng. Khi thêm
 các ca nguy hiểm (lốp bão hòa) thì giả thiết này trở nên quyết định, nên đã tách lại theo [2], [4] và chạy lại toàn bộ. Trả lời thẳng, không chối: đây là chỗ phát hiện và sửa, không phải chỗ
 che.
@@ -52,7 +52,21 @@ R. GIÁ TRỊ ĐẶT VÀ GIỚI HẠN TRỢ LỰC
 ==============================================================================================================================================================================================
 M. BẢN ĐỒ TRỢ LỰC TRUYỀN THỐNG (MAP)
 ==============================================================================================================================================================================================
-(chưa có câu hỏi)
+M1. Bản đồ hiệu chỉnh ở đường khô, ca TC1 là đường khô, sao $T_s$ vẫn vọt lố so với $T_{d,ref}$ khi vào bậc đánh lái?
+
+Trả lời ngắn: hiệu chỉnh của bản đồ là hiệu chỉnh tĩnh, nó bảo đảm $T_s = T_{d,ref}$ khi xe đã ổn định, không bảo đảm trong lúc đang đánh lái. Đỉnh là đáp ứng quá độ, một đỉnh rồi tắt,
+không dao động, và trạng thái xác lập về đúng giá trị đặt.
+
+Cơ sở và số liệu: ở trạng thái xác lập vận tốc góc của trục bằng không nên ma sát khô và quán tính không còn trong phương trình cân bằng $T_s = T_r - T_a$ (map.txt mục 2.3), nên hiệu chỉnh
+tĩnh đúng; ở các cửa sổ giữ góc của TC1 sai số không quá 0.069 N.m (2.1% giá trị đặt, lớn nhất ở 100 km/h, 0.3 g). Khi vào bậc đánh lái đầu tiên (20 km/h, giá trị đặt 1.0 N.m) $T_s$ lên
+4.38 N.m rồi về 1.00 N.m sau 1 s đến 2 s. Tách nguyên nhân bằng ba lần chạy cùng ca: bỏ ma sát khô thì đỉnh còn 2.39 N.m, tức ma sát chiếm hơn một nửa; không có trợ lực thì đỉnh 8.07 N.m
+và xác lập 2.70 N.m, tức bản đồ đã giảm đỉnh đi một nửa; phần còn lại do quán tính của cột lái, độ trễ của khâu bù và motor, và trợ lực chạm $T_{a,max}$ = 3.74 N.m ở 20 km/h tại đúng lúc
+đỉnh.
+
+Điểm yếu thật: không thể có bản đồ tĩnh nào bám tuyệt đối trong lúc đang đánh lái, vì bản đồ chỉ biết giá trị $T_s$ hiện tại, không biết ma sát hay gia tốc; xe thật bù bằng các khâu bù ma
+sát, bù quán tính và giảm chấn, các khâu mà [1], [4], [5] không mô tả nên không được đưa vào (map.txt mục 2.8). Vì vậy chỉ tiêu chính của luận văn lấy ở các cửa sổ xác lập chứ không phải
+RMS toàn ca, và sai số quá độ này chung cho mọi bộ điều khiển. Không được nói bản đồ bám tuyệt đối; chỉ được nói bám đúng ở trạng thái xác lập trong vùng lái thường ngày (từ 30 km/h, tới
+0.3 g).
 
 ==============================================================================================================================================================================================
 T. CA THỬ VÀ CHỈ TIÊU ĐÁNH GIÁ

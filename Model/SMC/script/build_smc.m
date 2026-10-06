@@ -10,24 +10,23 @@
 %   T_eq  = -T_s + C_col*theta2_dot
 %           + J_col*lambda*(theta1_dot_hat - theta2_dot)
 %   u_sw  = k_sw*sat(s/Phi),      sat(x) = max(-1, min(1, x))
-%   T_a_unsat = T_eq - J_col*u_sw
-%   T_a   = max(-T_a,max(v), min(T_a_unsat, T_a,max(v)))   (assist limit, Documents/Ref/ref.txt section 1.5;
-%           T_a,max(v) = 1-D table of data/ref.json (field Ta_max), clipped outside 20-100 km/h)
+%   T_a   = T_eq - J_col*u_sw      (the command; the assist limit T_a,max(v) and the motor lag are in the Actuator block)
+%   e_T   = T_s - T_d,ref(v, a_y)  computed INSIDE from the measured T_s, v, a_y (Reference block)
 %
 % HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
 %   SMC
-%     In : e_T, T_s, theta1, theta2_dot, v   Out: T_a
+%     In : T_s, theta1, theta2_dot, v, a_y   Out: T_a
 %     |
 %     +-- theta1_dot_hat   In : theta1                          Out: theta1_dot_hat
 %     +-- s                In : theta2_dot, theta1_dot_hat, e_T  Out: s
 %     +-- T_eq             In : T_s, theta2_dot, theta1_dot_hat  Out: T_eq
 %     +-- u_sw             In : s                               Out: u_sw
-%     +-- T_a_max          In : v                               Out: T_a_max
+%     +-- Reference        In : v, a_y                          Out: T_d_ref   (e_T = T_s - T_d_ref in Sum_eT)
 %
 %   The sampled inputs and every named quantity are routed with Goto/From.
 %
-% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl, Tamax_v_bp_ms, Tamax_table) are
+% Parameters (K, J_col, C_col, lambda, tau_f, k_sw, Phi, Ts_ctrl) are
 % read from the base workspace - run Model/load_smc.m (it also runs
 % load_plant, load_ref) BEFORE building.
 %
@@ -43,11 +42,14 @@ end
 
 scriptDir = fileparts(mfilename('fullpath'));   % SMC/script
 ctrlDir   = fileparts(scriptDir);               % SMC/
+modelDir  = fileparts(ctrlDir);                 % Model/
 modelPath = fullfile(ctrlDir, [modelName '.mdl']);
 if exist(modelPath, 'file')
     delete(modelPath);
 end
 
+if bdIsLoaded('Reference_s'), close_system('Reference_s', 0); end
+load_system(fullfile(modelDir, 'Ref', 'Reference_s.mdl'));
 new_system(modelName);
 open_system(modelName);
 
@@ -56,7 +58,7 @@ sub = [modelName '/SMC'];
 createSubsystem(sub);
 moveBlock(sub, 50, 50);
 
-inNames = {'e_T', 'T_s', 'theta1', 'theta2_dot', 'v'};
+inNames = {'T_s', 'theta1', 'theta2_dot', 'v', 'a_y'};
 for i = 1:numel(inNames)
     y = 60 + 80*(i-1);
     addInport(sub, inNames{i}, i, 40, y);
@@ -104,27 +106,26 @@ add_line(sub, [hJ '/1'],       'Prod_Jusw/2',    'autorouting', 'on');
 add_line(sub, 'T_eq/1',        'Sum_Ta_unsat/1', 'autorouting', 'on');
 add_line(sub, 'Prod_Jusw/1',   'Sum_Ta_unsat/2', 'autorouting', 'on');
 
-%% ----- assist limit T_a,max(v) -----
-taMax = [sub '/T_a_max']; createSubsystem(taMax); moveBlock(taMax, 720, 480); buildTamax(taMax);
-add_line(sub, [addFrom(sub, 'v', 640, 480) '/1'], 'T_a_max/1', 'autorouting', 'on');
-g_max = addGoto(sub, 'T_a_max', 900, 480);
-add_line(sub, 'T_a_max/1', [g_max '/1'], 'autorouting', 'on');
-f_max1 = addFrom(sub, 'T_a_max', 1100, 300);
-f_max2 = addFrom(sub, 'T_a_max', 1100, 380);
-addMinMax(sub, 'Min_Ta', 'min', 1200, 220);
-add_line(sub, 'Sum_Ta_unsat/1', 'Min_Ta/1', 'autorouting', 'on');
-add_line(sub, [f_max1 '/1'],    'Min_Ta/2', 'autorouting', 'on');
-hNeg = addConstant(sub, '-1', 1200, 440);
-addProduct(sub, 'Prod_Tamin', '**', 1280, 380);   % -T_a_max
-add_line(sub, [f_max2 '/1'], 'Prod_Tamin/1', 'autorouting', 'on');
-add_line(sub, [hNeg '/1'],   'Prod_Tamin/2', 'autorouting', 'on');
-addMinMax(sub, 'Max_Ta', 'max', 1380, 250);
-add_line(sub, 'Min_Ta/1',     'Max_Ta/1', 'autorouting', 'on');
-add_line(sub, 'Prod_Tamin/1', 'Max_Ta/2', 'autorouting', 'on');
-add_line(sub, 'Max_Ta/1',     'T_a/1',    'autorouting', 'on');
+%% ----- tracking error e_T = T_s - T_d,ref computed inside from the measured T_s, v, a_y -----
+refBlk = find_system('Reference_s', 'SearchDepth', 1, 'BlockType', 'SubSystem');
+add_block(refBlk{1}, [sub '/Reference']);
+moveBlock([sub '/Reference'], 420, 560);
+add_line(sub, [addFrom(sub, 'v',   340, 560) '/1'], 'Reference/1', 'autorouting', 'on');
+add_line(sub, [addFrom(sub, 'a_y', 340, 600) '/1'], 'Reference/2', 'autorouting', 'on');
+g_tdr = addGoto(sub, 'T_d_ref', 600, 570);
+add_line(sub, 'Reference/1', [g_tdr '/1'], 'autorouting', 'on');
+addSum(sub, 'Sum_eT', '+-', 720, 590);
+add_line(sub, [addFrom(sub, 'T_s',     640, 590) '/1'], 'Sum_eT/1', 'autorouting', 'on');
+add_line(sub, [addFrom(sub, 'T_d_ref', 640, 630) '/1'], 'Sum_eT/2', 'autorouting', 'on');
+g_eT = addGoto(sub, 'e_T', 800, 590);
+add_line(sub, 'Sum_eT/1', [g_eT '/1'], 'autorouting', 'on');
+
+%% ----- output: the command T_a (assist limit and motor are in the Actuator block) -----
+add_line(sub, 'Sum_Ta_unsat/1', 'T_a/1', 'autorouting', 'on');
 
 save_system(modelName, modelPath);
 close_system(modelName, 0);
+close_system('Reference_s', 0);
 
 fprintf('Created: %s\n', modelPath);
 
@@ -229,16 +230,6 @@ function buildTeq(sys)
     add_line(sys, 'Prod_Ccol/1', 'Sum_Teq/2', 'autorouting', 'on');
     add_line(sys, 'Prod_Jlam/1', 'Sum_Teq/3', 'autorouting', 'on');
     add_line(sys, 'Sum_Teq/1',   'T_eq/1',    'autorouting', 'on');
-end
-
-%% ===================== T_a_max(v) = assist limit table =====================
-function buildTamax(sys)
-% Read from the base workspace: Tamax_v_bp_ms [m/s], Tamax_table [N.m] (loaded by load_ref.m from data/ref.json, field Ta_max).
-    addInport(sys, 'v', 1, 40, 60);
-    addOutport(sys, 'T_a_max', 1, 300, 60);
-    addLookup1D(sys, 'Lookup_Tamax', 140, 60);
-    add_line(sys, 'v/1',            'Lookup_Tamax/1', 'autorouting', 'on');
-    add_line(sys, 'Lookup_Tamax/1', 'T_a_max/1',      'autorouting', 'on');
 end
 
 %% ===================== Shared utility functions ========================
@@ -369,24 +360,3 @@ function addSaturationBlock(sys, name, x, y)
     moveBlock(full, x, y);
 end
 
-function addMinMax(sys, name, fcn, x, y)
-% Min_<result> / Max_<result>: 2-input MinMax block (fcn = 'min' or 'max')
-    full = [sys '/' name];
-    add_block('simulink/Math Operations/MinMax', full);
-    set_param(full, 'Function', fcn, 'Inputs', '2');
-    moveBlock(full, x, y);
-end
-
-function addLookup1D(sys, name, x, y)
-% Lookup_<result>: 1-D n-D Lookup Table on the base-workspace variables
-% Tamax_v_bp_ms (speed [m/s]) and Tamax_table (T_a,max [N.m]); linear
-% interpolation, clipped outside the breakpoints.
-    full = [sys '/' name];
-    add_block('simulink/Lookup Tables/n-D Lookup Table', full);
-    set_param(full, 'NumberOfTableDimensions', '1', ...
-        'BreakpointsForDimension1', 'Tamax_v_bp_ms', ...
-        'Table', 'Tamax_table', ...
-        'InterpMethod', 'Linear point-slope', ...
-        'ExtrapMethod', 'Clip');
-    moveBlock(full, x, y);
-end

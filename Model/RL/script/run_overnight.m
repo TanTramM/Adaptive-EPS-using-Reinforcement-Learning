@@ -10,7 +10,7 @@ modelDir  = fileparts(fileparts(scriptDir));
 addpath(scriptDir);
 addpath(fullfile(modelDir, 'Sim', 'script'));
 addpath(modelDir);
-run(fullfile(modelDir, 'load_map.m'));
+run(fullfile(modelDir, 'load_map_6_8.m'));
 run(fullfile(modelDir, 'load_pid.m'));
 run(fullfile(modelDir, 'load_rl.m'));
 if ~exist('run_name', 'var'), run_name = 'Train2'; end   % define run_name before running this script to use another name

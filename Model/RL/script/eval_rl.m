@@ -12,7 +12,7 @@ function eval_rl(runName, levels, seeds)
 %     Result/RL/TestCases/ (figures and signals, level none) and Result/RL/TestCases_noise/ (by run_test_cases)
 %     Result/Compare/Map_vs_PID_vs_RL/Map_vs_PID_vs_RL_noise_study_summary.csv   the three controllers in one table
 %     Result/RL/<runName>/RL_<runName>_eval_summary.txt                          readable comparison table
-%   Run first: load_rl.m (and load_map.m, load_pid.m are not needed: Map and PID results are read from the earlier study).
+%   Run first: load_rl.m (and load_map_6_8.m, load_pid.m are not needed: Map and PID results are read from the earlier study).
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
@@ -50,12 +50,12 @@ cases = unique(all3.Case, 'stable');
 for m = {'RMS_eT_Nm', 'TV_Ta_Nm_per_s', 'MaxAbs_eT_Nm', 'RMS_Ta_Nm'}
     fprintf(fid, '%s (whole case)\n', m{1});
     fprintf(fid, '%-30s', 'case');
-    for lv = levels, for c = {'Map', 'PID', 'RL'}, fprintf(fid, '%14s', [c{1} '/' lv{1}]); end, end
+    for lv = levels, for c = {'Map_6_8', 'PID', 'RL'}, fprintf(fid, '%14s', [c{1} '/' lv{1}]); end, end
     fprintf(fid, '\n');
     for i = 1:numel(cases)
         fprintf(fid, '%-30s', cases{i});
         for lv = levels
-            for c = {'Map', 'PID', 'RL'}
+            for c = {'Map_6_8', 'PID', 'RL'}
                 r = strcmp(all3.Ctrl, c{1}) & strcmp(all3.Level, lv{1}) & strcmp(all3.Case, cases{i}) & strcmp(all3.Window, 'whole case');
                 if any(r), fprintf(fid, '%14.4g', all3.(['mean_' m{1}])(find(r, 1))); else, fprintf(fid, '%14s', '-'); end
             end
@@ -70,7 +70,7 @@ wins = {'TC2_road', 'curve_0p25g_v80_mu_0p3'; 'TC3_mu_drop_hard_corner', 'after_
 for i = 1:size(wins, 1)
     fprintf(fid, '%-30s %-28s', wins{i, 1}, wins{i, 2});
     for lv = levels
-        for c = {'Map', 'PID', 'RL'}
+        for c = {'Map_6_8', 'PID', 'RL'}
             r = strcmp(all3.Ctrl, c{1}) & strcmp(all3.Level, lv{1}) & strcmp(all3.Case, wins{i, 1}) & strcmp(all3.Window, wins{i, 2});
             if any(r), fprintf(fid, '%14.3g', all3.mean_Mean_eT_signed_pct_of_Tdref(find(r, 1))); else, fprintf(fid, '%14s', '-'); end
         end

@@ -3,7 +3,7 @@ function test_plant_s()
 %from the regenerated "_s" clusters). Self-contained.
 %
 %   Requires exactly 1 root-level subsystem with ports found BY NAME:
-%   In : theta1, T_a, v, mu | Out: T_s, theta2, a_y, gamma, beta
+%   In : theta1, T_a, v, mu | Out: T_s, a_y, gamma, theta2_dot (theta2 and beta are internal; checked against the Newton solution through T_s, a_y, gamma)
 %
 %   Run load_plant.m first (Simulink blocks read the base workspace).
 %
@@ -63,7 +63,7 @@ for i = 1:numel(ins)
     add_block('simulink/Sources/Constant', [harnessName '/' ins{i} '_in']);
     add_line(harnessName, [ins{i} '_in/1'], portRef(dutInHarness, ins{i}));
 end
-outs = {'T_s', 'theta2', 'a_y', 'gamma', 'beta'};
+outs = {'T_s', 'a_y', 'gamma'};
 for i = 1:numel(outs)
     blk = [harnessName '/' outs{i} '_out'];
     add_block('simulink/Sinks/To Workspace', blk);
@@ -99,13 +99,10 @@ for i = 1:size(cases, 1)
     ref = steadyStateRef(P, theta1, Ta, v, mu);
     tol = 1e-5 * max(1, max(abs([ref.T_s ref.a_y ref.gamma ref.beta])));
     checkClose(sprintf('case %d T_s', i),    res(i,1), ref.T_s,    tol);
-    checkClose(sprintf('case %d theta2', i), res(i,2), ref.theta2, tol);
-    checkClose(sprintf('case %d a_y', i),    res(i,3), ref.a_y,    tol);
-    checkClose(sprintf('case %d gamma', i),  res(i,4), ref.gamma,  tol);
-    checkClose(sprintf('case %d beta', i),   res(i,5), ref.beta,   tol);
-    fprintf(['[%s] case %d (mu=%.2g, T_a=%.2g): T_s=%.6g (ref %.6g) theta2=%.6g (ref %.6g) ' ...
-        'a_y=%.6g (ref %.6g)\n'], modelFileName, i, mu, Ta, res(i,1), ref.T_s, ...
-        res(i,2), ref.theta2, res(i,3), ref.a_y);
+    checkClose(sprintf('case %d a_y', i),    res(i,2), ref.a_y,    tol);
+    checkClose(sprintf('case %d gamma', i),  res(i,3), ref.gamma,  tol);
+    fprintf('[%s] case %d (mu=%.2g, T_a=%.2g): T_s=%.6g (ref %.6g) a_y=%.6g (ref %.6g)\n', modelFileName, i, mu, Ta, ...
+        res(i,1), ref.T_s, res(i,2), ref.a_y);
 end
 
 % (1) more assist lowers T_s, but by LESS than T_a: T_a pushes theta2 up by
@@ -114,7 +111,7 @@ end
 for pair = [1 2; 3 4]'
     dTs = res(pair(2),1) - res(pair(1),1);
     assert(dTs < -0.5 && dTs > -1.0, 'T_a=1 should lower T_s by 0.5..1.0, got %.6g', dTs);
-    assert(res(pair(2),3) > res(pair(1),3), 'more assist should raise a_y slightly (theta2 shifts)');
+    assert(res(pair(2),2) > res(pair(1),2), 'more assist should raise a_y slightly (theta2 shifts)');
 end
 % (2) same angle, lower mu -> lower T_s (over-assist mechanism)
 assert(res(3,1) < res(1,1), 'Expected T_s(mu=0.4) < T_s(mu=0.8) at the same angle');

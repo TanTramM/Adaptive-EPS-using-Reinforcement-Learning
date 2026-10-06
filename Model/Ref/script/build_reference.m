@@ -1,5 +1,5 @@
 %% build_reference.m
-% Build the "Reference" block (T_d,ref(v,a_y)) and the tracking error e_T,
+% Build the "Reference" block (T_d,ref(v,a_y)),
 % saved as Reference_s.mdl RIGHT INSIDE the Ref/ folder - the "_s" suffix
 % distinguishes it from a hand-formatted version (Reference.mdl). Matches
 % Blueprint_OverAssist_RL.txt section 1.3:
@@ -8,8 +8,8 @@
 %                     the fine table of Documents/Ref/ref.txt section 1.3:
 %                     Table 4 of [5] plus a_y = 0 -> 0, PCHIP-resampled by
 %                     Ref/script/make_ref_table.m)
-%   e_T = T_s - T_d,ref                           (T_s = sensor torque, the
-%                                                   CV, output of the Plant)
+%   The tracking error e_T = T_s - T_d,ref is NOT computed here: each controller that needs it computes it itself
+%   (the Map does not use e_T).
 %
 % Table 4 data are NOT embedded here - read from Model/data/ref.json by
 % Model/load_ref.m (separate from load_plant.m); the 2-D Lookup Table only
@@ -24,12 +24,11 @@
 % HIERARCHY (see Claude.md, "Quy tac dung model Simulink"):
 %
 %   Reference
-%     In : T_s, v, a_y      Out: T_d_ref, e_T
+%     In : v, a_y      Out: T_d_ref
 %     |
 %     +-- Cal T_d_ref   In : v, a_y   Out: T_d_ref
 %     |                 (named quantity; "Cal " prefix because the parent
 %     |                  also has an output port named T_d_ref)
-%     +-- Sum_eT        (e_T = T_s - T_d_ref, the cluster output itself)
 %
 % Usage (run from this folder, Ref/script/):
 %   >> run('../../load_ref.m')
@@ -59,33 +58,19 @@ sub = [modelName '/Reference'];
 createSubsystem(sub);
 moveBlock(sub, 50, 50);
 
-addInport(sub, 'T_s', 1, 40,  60);
-addInport(sub, 'v',   2, 40, 200);
-addInport(sub, 'a_y', 3, 40, 260);
+addInport(sub, 'v',   1, 40,  60);
+addInport(sub, 'a_y', 2, 40, 120);
 
-addOutport(sub, 'e_T',     1, 700,  70);
-addOutport(sub, 'T_d_ref', 2, 700, 220);
+addOutport(sub, 'T_d_ref', 1, 500, 90);
 
 tdr = [sub '/Cal T_d_ref'];
 createSubsystem(tdr);
-moveBlock(tdr, 260, 200);
+moveBlock(tdr, 260, 70);
 buildCalTdref(tdr);
-
-addSum(sub, 'Sum_eT', '+-', 560, 70);   % T_s - T_d_ref
 
 add_line(sub, 'v/1',   'Cal T_d_ref/1', 'autorouting', 'on');
 add_line(sub, 'a_y/1', 'Cal T_d_ref/2', 'autorouting', 'on');
-
-% T_d_ref is a named quantity used by Sum_eT and the output -> Goto/From
-g_tdr = addGoto(sub, 'T_d_ref', 440, 200);
-add_line(sub, 'Cal T_d_ref/1', [g_tdr '/1'], 'autorouting', 'on');
-f_tdr_e = addFrom(sub, 'T_d_ref', 480, 110);
-add_line(sub, [f_tdr_e '/1'], 'Sum_eT/2', 'autorouting', 'on');
-f_tdr_o = addFrom(sub, 'T_d_ref', 620, 220);
-add_line(sub, [f_tdr_o '/1'], 'T_d_ref/1', 'autorouting', 'on');
-
-add_line(sub, 'T_s/1',    'Sum_eT/1', 'autorouting', 'on');
-add_line(sub, 'Sum_eT/1', 'e_T/1',    'autorouting', 'on');
+add_line(sub, 'Cal T_d_ref/1', 'T_d_ref/1', 'autorouting', 'on');
 
 save_system(modelName, modelPath);
 close_system(modelName, 0);

@@ -7,7 +7,8 @@
 %      calls load_derived.m (F_zf). The SMC also uses K, J_col, C_col from
 %      here in its equivalent control;
 %   3. load_ref.m     -> reference data and the assist limit T_a,max(v) (data/ref.json);
-%   4. load_sensors.m -> sensor model of the closed loop (data/sensors.json, default level none = ideal).
+%   4. load_sensors.m -> sensor model of the closed loop (data/sensors.json, default level none = ideal);
+%   5. load_actuator.m -> motor lag (data/actuator.json) and the assist limit T_a,max(v) of the Actuator block.
 %
 % Usage: run this SCRIPT from any folder: >> run('<Model>/load_smc.m')
 
@@ -27,3 +28,4 @@ fprintf('load_smc: first-order SMC with sat boundary layer: lambda=%.4g 1/s, tau
 run(fullfile(scriptDir, 'load_plant.m'));
 run(fullfile(scriptDir, 'load_ref.m'));
 run(fullfile(scriptDir, 'load_sensors.m'));
+run(fullfile(scriptDir, 'load_actuator.m'));

@@ -12,7 +12,7 @@ function diag_rl_agent(runName, agentFiles)
 %        (every history sample and the slow observation I) are shifted by +-0.5 N.m and the change of the action is read:
 %        gain = dT_a / de_T [N.m per N.m], also split into the history part and the I part. For comparison, PID has Kp = 16.48 (plus the integral that removes the steady error).
 %   Writes Result/RL/<runName>/Diagnostics/: RL_<runName>_diag_<episode>.png, RL_<runName>_diag_windows.csv,
-%   RL_<runName>_diag_sensitivity.csv. Run first: load_map.m, load_pid.m, load_rl.m.
+%   RL_<runName>_diag_sensitivity.csv. Run first: load_map_6_8.m, load_pid.m, load_rl.m.
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
@@ -32,7 +32,7 @@ add_block('simulink/Sinks/To Workspace', [rlSub '/Tap_obs'], 'VariableName', 'ta
 add_line(rlSub, 'Cat_obs/1', 'Tap_obs/1');             % temporary tap on the observation (model closed without saving)
 cleanup = onCleanup(@() close_system(mdl, 0));
 
-names = [{'Map', 'PID'}, agentFiles];
+names = [{'Map_6_8', 'PID'}, agentFiles];
 win = {'before_3_5s', [3 5]; 'after_8_10s', [8 10]};
 fW = fopen(fullfile(outDir, sprintf('RL_%s_diag_windows.csv', runName)), 'w');
 fprintf(fW, 'episode,controller,window,mean_Ta_Nm,mean_eT_Nm,rms_eT_Nm,mean_Ts_Nm,mean_Td_ref_Nm\n');
@@ -43,7 +43,7 @@ for k = 1:numel(V)
     R = struct();
     for c = 1:numel(names)
         nm = names{c};
-        if any(strcmp(nm, {'Map', 'PID'}))
+        if any(strcmp(nm, {'Map_6_8', 'PID'}))
             [R(c).t, R(c).Ta, R(c).Ts, R(c).Td, R(c).eT] = runOne(['Model_' nm '_s'], V(k), struct());
         else
             S = load(fullfile(runDir, 'agents', [nm '.mat']), 'agent');

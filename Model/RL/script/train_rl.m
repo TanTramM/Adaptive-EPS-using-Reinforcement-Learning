@@ -5,7 +5,7 @@ function train_rl(runName, ov)
 %   train_rl('Train2')
 %   train_rl('Smoke', struct('max_steps', 4000, 'chunk_episodes', 1, 'steps_per_episode', 2000))   quick check of the loop
 %
-%   Documents/RL/DieuKhien_RL.txt, section 2.4a. Run first: run('<Model>/load_map.m'), run('<Model>/load_pid.m'),
+%   Documents/RL/DieuKhien_RL.txt, section 2.4a. Run first: run('<Model>/load_map_6_8.m'), run('<Model>/load_pid.m'),
 %   run('<Model>/load_rl.m') (Map and PID give the reference on the validation episodes).
 %   Loop (until the step or wall-clock budget of data/rl.json "train" is used):
 %     1. train(agent, env) for chunk_episodes episodes; random training scenario and sensor seed each episode (rl_env 'train');
@@ -54,8 +54,8 @@ T_ref = cfg.reward.T_ref.value; w1 = cfg.reward.w1.value;
 V = rl_validation_scenarios();
 
 % ---- reference: Map and PID on the validation episodes ----
-ref = struct('Map', [], 'PID', []);
-for c = {'Map', 'PID'}
+ref = struct('Map_6_8', [], 'PID', []);
+for c = {'Map_6_8', 'PID'}
     for k = 1:numel(V)
         m = runValidation(['Model_' c{1} '_s'], V(k), T_ref, w1, struct());
         ref.(c{1})(k) = m.cost;

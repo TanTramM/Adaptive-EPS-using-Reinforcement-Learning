@@ -1,249 +1,115 @@
 ==============================================================================================================================================================================================
-BỘ ĐIỀU KHIỂN TRƯỢT (SMC BẬC 1, LỚP BIÊN sat, KHÔNG TÍCH PHÂN) CHO TRỢ LỰC LÁI - BÁM MÔ-MEN CẢM BIẾN T_s THEO T_d,ref
+BỘ ĐIỀU KHIỂN
 ==============================================================================================================================================================================================
-  TRẠNG THÁI (2026-10-02): viết lại cho Plant và Ref mới (đã tách caster, K_max = 18, T_a,max từ ref.json) và chu kỳ chung 1 ms. Mục 1-8: bản KHÔNG tích phân (SMC); mục 9: bản có tích phân
-  (SMC_KI, cùng tham số, thêm k_I = 10) và nghiên cứu nhiễu đầy đủ (4 bộ, 3 mức nhiễu, 5 hạt giống, 6 ca).
-  Tài liệu thiết kế cho riêng người viết. Quy ước: mỗi công thức kèm 1 dòng LaTeX trong [ ]. Plant và Reference: Documents/Plant/plant.txt, Documents/Ref/ref.txt; T_a,max: ref.txt mục 1.5; ca
-  thử: Documents/Sim/TestCases.txt. Code: Model/SMC/, Model/load_smc.m, Model/data/smc.json, Model/Model_SMC_s.mdl; kết quả: Result/SMC/TestCases/, so với Map: Result/Compare/Map_vs_SMC/.
-  LƯU Ý NGUỒN: lý thuyết SMC cổ điển (mặt trượt, điều khiển tương đương, điều kiện trượt, lớp biên) chưa có trong References/. Giáo trình thường trích là Slotine và Li (Applied Nonlinear Control,
-  chương SMC) và Utkin; đây là tên nhớ lại, CHƯA đối chiếu, cần bổ sung và kiểm tra trước khi trích dẫn trong luận văn.
+Mục này thiết kế bộ điều khiển trượt (SMC, Sliding Mode Control) bậc một truyền thống cho trợ lực lái, tức bản không có khâu tích phân và không có bộ lọc đo, từ hệ gồm đối tượng, giá trị đặt, cảm biến và motor (hệ PRSM) và theo cùng tiêu chí với bản đồ trợ lực ở mục 2: ổn định trước, rồi cân bằng giữa độ bám và độ khuếch đại nhiễu.
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-1. Lý thuyết SMC bậc 1 (tóm tắt các bước)
+3. Bộ điều khiển trượt bậc một không tích phân
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  - Ý tưởng: chọn mặt trượt s(x) = 0 sao cho khi hệ nằm trên đó thì sai số tự tắt dần theo động học mong muốn. Hai pha: tiến tới mặt trượt (reaching), rồi trượt trên mặt (sliding). Động học trên
-    mặt trượt không phụ thuộc nhiễu nằm cùng kênh với điều khiển.
-  - Bước 1, mặt trượt: với bậc tương đối n giữa đầu vào và đầu ra, s = (d/dt + lambda)^(n-1) * e. Ở đây n = 2 nên s = de/dt + lambda*e.
-  - Bước 2, luật điều khiển u = u_eq + u_sw. u_eq giải ds/dt = 0 với mô hình danh định (phần bù biết được); u_sw = -k*sgn(s) chống nhiễu và sai số mô hình.
-  - Bước 3, điều kiện trượt (Lyapunov V = s^2/2): s*ds/dt <= -eta*|s|. Với ds/dt = u_sw + psi và |psi| <= psi_max thì k >= psi_max + eta, thời gian tới mặt trượt <= |s(0)|/eta.
-  - Bước 4, chattering (rung tần số cao): sgn không liên tục, cộng với lấy mẫu làm điều khiển rung. Xử lý bằng lớp biên: thay sgn(s) bằng sat(s/Phi), với sat(x) = max(-1, min(1, x)). Trong lớp
-    |s| < Phi luật thành tuyến tính -(k/Phi)*s nên điều khiển liên tục. Cái giá: mất tính triệt nhiễu tuyệt đối; hệ chỉ bị giữ trong lớp biên với |s| <= Phi*psi/k.
+3.1. Vai trò và nguyên tắc
+SMC bám mô-men cảm biến $T_s$ theo giá trị đặt $T_{d,ref}$ bằng phản hồi, nên khác bản đồ ở chỗ nó đọc được sai số $e_T = T_s - T_{d,ref}$ và có thể bù ma sát khô của trục lái và phần mô-men phản hồi thay đổi theo hệ số bám. Chuẩn so sánh ở đây là bản truyền thống nhất, không tích phân và không lọc đo, để biết rõ phần cải thiện nào đến từ tích phân hay bộ lọc ở các bản sau. Bộ điều khiển đọc các tín hiệu đo được qua khối cảm biến: $T_s$, góc vô-lăng $\theta_1$, tốc độ cột lái $\dot\theta_2$ (từ encoder của motor), vận tốc $v$ và gia tốc ngang $a_y$ (hai tín hiệu sau chỉ để tra giá trị đặt), tự tính $e_T$ bên trong, không đọc $\mu$, và đưa lệnh $T_a$ vào khối motor dùng chung (giới hạn $T_{a,max}(v)$ và trễ bậc nhất 100 Hz). Lý thuyết SMC cổ điển (mặt trượt, điều khiển tương đương, điều kiện trượt, lớp biên) chưa có trong References/; các giáo trình thường trích là của Slotine và Li, và của Utkin, đây là tên nhớ lại và cần được bổ sung, đối chiếu trước khi trích dẫn.
+3.2. Mô hình và mặt trượt
+Bộ điều khiển dùng mô hình danh định của cột lái, từ phương trình (2) chương mô hình, trong đó $T_r$ (mô-men phản lực mặt đường, phụ thuộc $\mu$) và ma sát khô $T_f$ không biết trước:
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-2. Mô hình dùng để thiết kế (phương trình cột lái)
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  (17) J_col*theta2_ddot = T_a - T_r + T_s - T_f*tanh(c*theta2_dot) - C_col*theta2_dot,   T_s = K*(theta1 - theta2)
+  [ J_{col}\ddot\theta_2=T_a-T_r+T_s-T_f\tanh(c\dot\theta_2)-C_{col}\dot\theta_2,\qquad T_s=K(\theta_1-\theta_2) ]
 
-    J_col*theta2_ddot = T_a - T_r + T_s - T_f*tanh(c*theta2_dot) - C_col*theta2_dot,    T_s = K*(theta1 - theta2)
-    [ J_{col}\ddot\theta_2=T_a-T_r+T_s-T_f\tanh(c\dot\theta_2)-C_{col}\dot\theta_2,\quad T_s=K(\theta_1-\theta_2) ]
+Bậc tương đối từ $T_a$ tới $T_s$ là hai ($T_a \to \ddot\theta_2 \to \theta_2 \to T_s$), nên mặt trượt phải chứa cả vận tốc. Đặt $T_s = T_{d,ref}$ tương đương $\theta_2$ bằng góc mong muốn $\theta_2^* = \theta_1 - T_{d,ref}/K$ và sai số góc $e_\theta = -e_T/K$; mặt trượt bậc một theo $e_\theta$ là $s = \dot e_\theta + \lambda e_\theta$. Hai xấp xỉ khi cài đặt: bỏ số hạng $\dot T_{d,ref}/K$ (giá trị đặt đổi chậm, lại chia cho $K = 143$), và thay $\dot\theta_1$ bằng bản ước lượng vi phân có lọc của $\theta_1$ đo được với hằng số thời gian $\tau_f$, vì trên xe không có cảm biến vận tốc góc vô-lăng:
 
-  - Biết (từ plant.txt và đo được): J_col, C_col, K, T_s, theta2_dot. KHÔNG biết: T_r (mô-men phản lực từ mặt đường, phụ thuộc mu, nhảy khi mu đổi), ma sát khô T_f, theta1_dot (không có cảm biến
-    vận tốc góc vô-lăng, tự ước lượng).
-  - Bộ điều khiển đọc 5 tín hiệu: e_T (từ khối Reference), T_s (cảm biến mô-men), theta1 (cảm biến góc vô-lăng), theta2_dot (encoder motor) và v (tra T_a,max). Cả 5 nằm trong danh sách tín hiệu
-    được phép đọc; không đọc mu, beta, T_d.
-  - Bộ điều khiển số: ZOH ở cả 5 đầu vào, Ts = Ts_ctrl = 1 ms (chung với Map, PID, RL); T_a bị chặn bởi T_a,max(v) như PID và Map.
-  - Bậc tương đối từ T_a tới T_s là 2 (T_a -> theta2_ddot -> theta2 -> T_s), nên mặt trượt phải chứa cả vận tốc.
+  (18) s = theta2_dot - theta1_dot_hat - (lambda/K)*e_T,   theta1_dot_hat = (theta1 - x_f)/tau_f,   x_f[k+1] = x_f[k] + T_ctl*theta1_dot_hat[k]
+  [ s=\dot\theta_2-\hat{\dot\theta}_1-\dfrac{\lambda}{K}e_T,\qquad \hat{\dot\theta}_1=\dfrac{\theta_1-x_f}{\tau_f},\quad x_f[k+1]=x_f[k]+T_{ctl}\hat{\dot\theta}_1[k] ]
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-3. Mặt trượt
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Ý tưởng: T_s = T_d,ref tương đương theta2 bằng góc mong muốn theta2* = theta1 - T_d,ref/K. Đặt sai số góc e_theta = theta2 - theta2* = -e_T/K, mặt trượt bậc 1 theo e_theta:
+Khi $s = 0$, $e_T$ tắt theo $e^{-\lambda t}$ nếu ước lượng $\dot\theta_1$ chính xác, nên $\lambda$ là tốc độ hội tụ của $e_T$. $\tau_f$ là một phần cấu trúc của SMC (cách lấy đạo hàm của $\theta_1$), không phải bộ lọc đo thêm vào.
+3.3. Luật điều khiển
+Đạo hàm $s$ và thế phương trình (17), phần biết được đưa vào điều khiển tương đương $T_{eq}$, phần không biết (mô-men phản lực, ma sát khô, sai số ước lượng $\dot\theta_1$) gộp vào nhiễu $\psi$; phần còn lại là số hạng chuyển mạch với lớp biên để tránh rung tần số cao (chattering) của hàm dấu:
 
-    s = de_theta/dt + lambda*e_theta ~ theta2_dot - theta1_dot_hat - (lambda/K)*e_T
-    [ s=\dot e_\theta+\lambda e_\theta\approx\dot\theta_2-\hat{\dot\theta}_1-\dfrac{\lambda}{K}e_T ]
+  (19) T_a = T_eq - J_col*u_sw,   T_eq = -T_s + C_col*theta2_dot + J_col*lambda*(theta1_dot_hat - theta2_dot),   u_sw = k_sw*sat(s/Phi)
+  [ T_a=T_{eq}-J_{col}u_{sw},\quad T_{eq}=-T_s+C_{col}\dot\theta_2+J_{col}\lambda(\hat{\dot\theta}_1-\dot\theta_2),\quad u_{sw}=k_{sw}\,\mathrm{sat}\!\left(\dfrac{s}{\Phi}\right) ]
 
-  Hai xấp xỉ khi cài đặt: (a) bỏ số hạng dT_d,ref/dt / K (T_d,ref thay đổi chậm, chia cho K = 143); (b) thay theta1_dot bằng bản ước lượng vi phân có lọc của theta1 đo được (hằng số thời gian
-  tau_f), vì trên xe không có cảm biến vận tốc góc vô-lăng:
+với $\mathrm{sat}(x) = \max(-1, \min(1, x))$. $T_{eq}$ chứa $-T_s$ để triệt tiêu mô-men lò xo và $C_{col}\dot\theta_2$ để triệt tiêu cản nhớt; ma sát khô không được bù trong $T_{eq}$ vì số hạng $\tanh$ đổi dấu gần tức thời khi trục dừng, bù nó sau khi lấy mẫu gây chu kỳ giới hạn. $k_{sw}$ phải lớn hơn cận của $\psi$; bề rộng lớp biên $\Phi$ quyết định độ lợi trong lớp: khi $|s| < \Phi$ luật chuyển mạch thành tuyến tính với hệ số $G = k_{sw}/\Phi$. Bộ điều khiển số lấy mẫu mọi đầu vào với $T_{ctl} = 1$ ms. Giới hạn $T_{a,max}(v)$ và trễ motor nằm ở khối motor ngoài bộ điều khiển, và vì SMC không có biến trạng thái nào phụ thuộc $T_a$ nên không cần chống bão hòa tích phân.
+[Hình 1: Sơ đồ khối bộ điều khiển SMC không tích phân: tính $e_T$ từ giá trị đặt, ước lượng $\dot	heta_1$ bằng đạo hàm lọc, mặt trượt, điều khiển tương đương và số hạng chuyển mạch với lớp biên; lệnh đi vào khối motor]
+3.4. Phân tích tuyến tính trong lớp biên
+Trong lớp biên, thay (19) vào (18) cho luật điều khiển tuyến tính trên các tín hiệu đo:
 
-    theta1_dot_hat = (theta1 - x_f)/tau_f,   x_f[k+1] = x_f[k] + Ts*theta1_dot_hat[k]
-    [ \hat{\dot\theta}_1=\dfrac{\theta_1-x_f}{\tau_f},\quad x_f[k+1]=x_f[k]+T_s\hat{\dot\theta}_1[k] ]
+  (20) T_a = a_1*T_s + a_2*theta2_dot + a_3*theta1_dot_hat - (J_col*G*lambda/K)*T_d,ref
+  [ T_a=a_1T_s+a_2\dot\theta_2+a_3\hat{\dot\theta}_1-\dfrac{J_{col}G\lambda}{K}T_{d,ref} ]
 
-  Khi s = 0: de_T/dt = -lambda*e_T + K*(theta1_dot - theta1_dot_hat), tức e_T tắt theo e^(-lambda*t) nếu ước lượng theta1_dot chính xác.
+  (21) a_1 = -1 + J_col*G*lambda/K,   a_2 = C_col - J_col*(lambda + G),   a_3 = J_col*(lambda + G)
+  [ a_1=-1+\dfrac{J_{col}G\lambda}{K},\qquad a_2=C_{col}-J_{col}(\lambda+G),\qquad a_3=J_{col}(\lambda+G) ]
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-4. Luật điều khiển: điều khiển tương đương + chuyển mạch với lớp biên
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Đạo hàm s và thế phương trình cột lái. Phần biết được đưa vào T_eq, phần không biết gộp vào nhiễu psi:
+Hai đại lượng quyết định chất lượng đều tính được không cần mô phỏng. Thứ nhất, ổn định: vòng kín gồm lệnh, motor $G_m(s)$ (phương trình (9)), cột lái (phương trình (13), trục đang trượt không ma sát, độ cứng đường $k_r$ của đường khô và $k_r = 0$ của đường rất trơn) và bộ điều khiển (20), rời rạc hóa với bộ giữ bậc không ở 1 ms; ta đo độ dự trữ pha và độ dự trữ biên của vòng, lấy giá trị nhỏ nhất của hai trường hợp $k_r$. Thứ hai, sai số xác lập: ở trạng thái xác lập $\dot\theta_2 = 0$ nên ma sát khô không còn, $s = -(\lambda/K) e_T$ và cân bằng của (17) cho:
 
-    T_a = T_eq - J_col*u_sw
-    [ T_a=T_{eq}-J_{col}u_{sw} ]
+  (22) e_T,ss = K*T_r / (J_col*G*lambda)
+  [ e_{T,ss}=\dfrac{K\,T_r}{J_{col}\,G\,\lambda} ]
 
-    T_eq = -T_s + C_col*theta2_dot + J_col*lambda*(theta1_dot_hat - theta2_dot)
-    [ T_{eq}=-T_s+C_{col}\dot\theta_2+J_{col}\lambda(\hat{\dot\theta}_1-\dot\theta_2) ]
+Không có tích phân nên sai số này khác không, tỉ lệ với $T_r$ và tỉ lệ nghịch với tích $G\lambda$. $T_r$ và $T_{d,ref}$ ở các điểm hiệu chỉnh lấy từ bảng điểm hiệu chỉnh của mục 2.3 ($T_r = T_{s,cal} + T_{a,cal}$). Trong vùng lái thường ngày (từ 30 km/h, tới 0.3 g) tỉ số $T_r/T_{d,ref}$ lớn nhất là 3.86, nên sai số xác lập tương đối lớn nhất bằng $100 \cdot 3.86\,K/(J_{col} G\lambda)$ phần trăm.
+Thứ ba, khuếch đại nhiễu: nhiễu trắng của ba cảm biến mà SMC đọc đi vào lệnh qua ba kênh với độ lợi $|a_1|$ (từ $T_s$), $|a_2|$ (từ $\dot\theta_2$) và $a_3/\tau_f$ (từ $\theta_1$, qua đạo hàm lọc), với độ lệch chuẩn nhiễu mỗi kênh $\sqrt{r^2 + r^2/12}$, $r$ là độ phân giải của cảm biến (nhiễu trắng một bước lượng tử cộng bộ lượng tử hóa, theo [7]-[10]): 0.0104 N.m cho $T_s$, 0.0727 rad/s cho $\dot\theta_2$ (bước 4 độ/s) và 0.0018 rad cho $\theta_1$. Độ lệch chuẩn của $T_a$ đặt vào đối tượng tính từ vòng kín bằng phương trình Lyapunov rời rạc.
+3.5. Hai điều kiện cứng của bản đồ không thể cùng đạt với SMC không tích phân
+Tiêu chí của bản đồ (mục 2.5) có hai điều kiện cứng: độ dự trữ pha từ 45 độ, theo [1] (mục III.D), và sai số xác lập không quá 3% giá trị đặt trong vùng lái thường ngày. Với SMC không tích phân, độ dự trữ pha từ 45 độ (và vòng ổn định không điều kiện, độ dự trữ biên trên 1) chỉ đạt khi tích $G\lambda$ không quá $2.31 \cdot 10^4$ (độ lợi vòng quá lớn thì trễ của motor và bộ giữ bậc không làm mất ổn định), còn theo (22) sai số không quá 3% cần $G\lambda \ge 100 \cdot 3.86\,K / (3\,J_{col}) = 1.7 \cdot 10^5$, gấp 7 lần. Hình 2 vẽ độ dự trữ pha trên lưới 26 giá trị $\lambda$ (20 đến 1000 1/s) nhân 30 giá trị $G$ (20 đến 1800 1/s): 292 trong 780 điểm đạt 45 độ, 136 điểm đạt sai số 3%, và không có điểm nào đạt cả hai; sai số xác lập dự đoán nhỏ nhất trong các điểm đạt 45 độ là 21.8%. Đây là bản chất của cấu trúc không tích phân: sai số xác lập nhân độ lợi vòng là một hằng số, không thể vừa tăng độ lợi để giảm sai số vừa giữ ổn định.
+[Hình 2: Độ dự trữ pha của vòng SMC theo $\lambda$ và $G = k_{sw}/\Phi$ (có motor); đường đen: 45 độ; đường đỏ nét đứt: sai số xác lập 3%; sao: bản thiết kế ban đầu ($\lambda$ = 300, $G$ = 1000) | Result/SMC/Tuning/SMC_stability_map.png]
+Bản thiết kế ban đầu của SMC ($\lambda$ = 300 1/s, $G$ = 1000 1/s, $\tau_f$ = 10 ms, chọn khi chưa có motor và cảm biến) nằm bên trên đường đỏ (sai số xác lập 1.7%) nhưng độ dự trữ pha là $-0.2$ độ và độ dự trữ biên 0.99, tức vòng kín ở sát biên mất ổn định: không có nhiễu cảm biến mà $TV(T_a)$ vẫn là 62 N.m/s (TC1), 232 (TC2), 245 (TC4) và 770 (TC5), do chu kỳ giới hạn quanh biên ổn định, trong khi RMS $e_T$ rất nhỏ (0.02 N.m ở TC2 đến TC6, 0.36 N.m ở TC1); trên ca TK với nhiễu mức cao lệnh bão hòa liên tục ($S = 3.2$ N.m, độ lệch lệnh sau lọc thông cao 15 N.m) và $S$ gấp bảy lần bản đồ. Bản đó không đạt điều kiện ổn định.
+Vì vậy ở đây giữ độ dự trữ pha từ 45 độ làm điều kiện cứng (không đạt thì không dùng được), còn sai số xác lập không thể làm điều kiện cứng và được tính vào độ bám $R$, cùng cách tính với bản đồ ở mục 2.5, và kết quả cuối cùng cho thấy rõ cái giá của việc không có tích phân.
+3.6. Chọn tham số
+Cố định $k_{sw} = 150$ rad/s$^2$, lớn hơn cận nhiễu gộp (khi cố định tỉ số $k_{sw}/\Phi$ và $\lambda = 300$, $k_{sw}$ nhỏ hơn 100 làm mất bám và 100 đạt như 150); chỉ chỉnh bề rộng lớp biên qua $\Phi = k_{sw}/G$. Tham số tự chọn(12): $k_{sw}$ = 150. Ba biến thiết kế là $\lambda \in \{30, 60, 100, 150, 250\}$ 1/s, $G \in \{30, 60, 100, 150, 250, 400\}$ 1/s và $\tau_f \in \{10, 30, 100\}$ ms (tự chọn(13)); 20 cặp ($\lambda$, $G$) đạt độ dự trữ pha 45 độ, nhân ba giá trị $\tau_f$ cho 60 bộ. Trong lớp biên các hệ số (21) chỉ phụ thuộc tích $G\lambda$ và tổng $\lambda + G$, nên ($\lambda$, $G$) và ($G$, $\lambda$) cho cùng một bộ điều khiển. Mỗi bộ chạy trên ca TK (mục 2.5, Bảng 9) với cảm biến mức cao và hai hạt giống nhiễu 91001 và 91002, tính hai chỉ tiêu của phương trình (16): độ bám $R$ (RMS $e_T$ trên mọi cửa sổ, gồm cả sai số xác lập) và độ êm $S$ (RMS của $T_a$ trên 5 Hz). Độ lệch chuẩn qua hai hạt giống không quá 0.013 N.m cho $R$ và 0.006 N.m cho $S$. Mặt Pareto của ($S$, $R$) gồm 12 bộ khác nhau; khuỷu được chọn theo quy tắc định lượng: chuẩn hóa hai trục về [0, 1] trên các điểm của mặt Pareto, nối hai đầu mút (êm nhất và bám tốt nhất), chọn điểm xa đường nối nhất về phía dưới-trái. Bảng 14 trích các điểm của mặt Pareto, Hình 3 vẽ toàn bộ 60 bộ.
+Bảng 14: Các điểm trên mặt Pareto của SMC không tích phân (ca TK, nhiễu mức cao)
+$\lambda$ [1/s] | $G$ [1/s] | $\tau_f$ [ms] | Độ dự trữ pha [độ] | Sai số xác lập dự đoán [%] | $R$ [N.m] | $S$ [N.m] | $TV(T_a)$ [N.m/s]
+60 | 30 | 100 | 84.1 | 280 | 4.514 | 0.415 | 280
+60 | 30 | 30 | 84.1 | 280 | 4.362 | 0.511 | 376
+60 | 60 | 100 | 72.2 | 140 | 2.403 | 0.585 | 389
+60 | 60 | 30 | 72.2 | 140 | 2.263 | 0.717 | 513
+60 | 100 | 100 (chọn, khuỷu) | 64.9 | 84 | 1.544 | 0.791 | 525
+100 | 60 | 30 | 64.9 | 84 | 1.401 | 0.956 | 682
+100 | 100 | 100 | 57.8 | 50 | 1.026 | 1.021 | 653
+100 | 100 | 30 | 57.8 | 50 | 0.909 | 1.198 | 825
+100 | 150 | 100 | 52.1 | 34 | 0.788 | 1.265 | 793
+150 | 100 | 30 | 52.1 | 34 | 0.689 | 1.450 | 976
+150 | 150 | 100 | 46.0 | 22 | 0.634 | 1.510 | 911
+150 | 150 | 30 | 46.0 | 22 | 0.556 | 1.697 | 1097
 
-    ds/dt = -u_sw + psi,   psi = -(T_r + T_f*tanh(c*theta2_dot))/J_col + (sai số ước lượng theta1_dot, các số hạng bỏ qua)
-    [ \dot s=-u_{sw}+\psi ]
+[Hình 3: Độ bám $R$ theo độ êm $S$ của 60 bộ $(\lambda/G)$ đạt độ dự trữ pha 45 độ trên ca TK, màu theo $\tau_f$; đường đen: mặt Pareto; sao: khuỷu được chọn; dấu chéo đỏ: bản thiết kế ban đầu | Result/SMC/Tuning/SMC_pareto.png]
+Kết quả: $\lambda$ = 60 1/s, $G$ = 100 1/s ($\Phi$ = 1.5 rad/s), $\tau_f$ = 100 ms, $k_{sw}$ = 150 rad/s$^2$, $T_{ctl}$ = 1 ms. Độ dự trữ pha 64.9 độ và độ dự trữ biên 14.5 (23 dB); sai số xác lập dự đoán lớn nhất trong vùng lái thường ngày 84%; $R$ = 1.544 N.m và $S$ = 0.791 N.m trên ca TK. Hai đầu của mặt Pareto là bộ êm nhất ($R$ = 4.5 N.m, $S$ = 0.42 N.m) và bộ bám tốt nhất ($R$ = 0.56 N.m, $S$ = 1.70 N.m, cao gấp 3.8 lần bản đồ); so với bản đồ ($R$ = 0.72 N.m, $S$ = 0.45 N.m trên cùng ca với $K_{max}$ = 6 cho mọi vận tốc, Bảng 10), không bộ SMC nào đạt đồng thời $R$ và $S$ của bản đồ. Bảng 15 phân tích nhiễu của bộ được chọn: kênh tốc độ cột lái chiếm hầu hết, vì bước lượng tử 4 độ/s của $\dot\theta_2$ là thô nhất trong các cảm biến mà SMC đọc và độ lợi $|a_2|$ lớn.
+Bảng 15: Ba kênh nhiễu của bộ được chọn ($\lambda$ = 60, $G$ = 100, $\tau_f$ = 100 ms)
+Kênh | Cảm biến | Độ lệch chuẩn nhiễu | Độ lợi tới lệnh | Đóng góp vào lệnh [N.m]
+$T_s$ | mô-men | 0.0104 N.m | 3.61 | 0.038
+$\dot\theta_2$ | encoder motor | 0.0727 rad/s | 16.25 | 1.181
+$\theta_1$ | góc vô-lăng | 0.0018 rad | 176 N.m/rad | 0.320
 
-    u_sw = k_sw * sat(s/Phi),    sat(x) = max(-1, min(1, x))
-    [ u_{sw}=k_{sw}\,\mathrm{sat}\!\left(\dfrac{s}{\Phi}\right),\quad \mathrm{sat}(x)=\max(-1,\min(1,x)) ]
+Độ lệch chuẩn của $T_a$ đặt vào đối tượng tính từ vòng kín là 0.71 N.m, so với $S$ = 0.79 N.m đo trên ca TK (RMS trên 5 Hz), khớp tới 12%, nên phân tích tuyến tính dùng được để loại bộ trước khi mô phỏng.
+3.7. Kiểm chứng trong vòng kín
+Mô hình Simulink của bộ điều khiển được kiểm tra với tính toán độc lập: tại 300 mẫu của tín hiệu giả ngẫu nhiên, trong đó 107 mẫu nằm trong lớp biên và các mẫu còn lại bên ngoài, lệnh $T_a$ của mô hình khớp luật (18)-(19) viết lại độc lập (gồm cả $e_T$ tính từ giá trị đặt đọc trực tiếp từ dữ liệu), sai khác dưới $10^{-9}$ N.m. Bộ điều khiển sau đó chạy trên sáu ca thử chuẩn (Bảng 11), với cảm biến lý tưởng và với nhiễu mức cao, năm hạt giống 90001 đến 90005. Chỉ tiêu như ở mục 2.6. Bảng 16 là các cửa sổ giữ góc và Bảng 17 là toàn ca.
+Bảng 16: Chỉ tiêu của SMC không tích phân tại các cửa sổ (cảm biến lý tưởng)
+Ca | Cửa sổ | Điều kiện | RMS $e_T$ [N.m] | $e_{rel}$ [%]
+TC1 | 15 bậc giữ góc | 20-100 km/h, $\mu$ = 0.8 | 0.555-1.642 | 21.8 đến 71.6
+TC2 | Cua 0.25 g trước khi $\mu$ giảm | 80 km/h, $\mu$ = 0.8 | 1.356 | 46.1
+TC2 | Cua 0.25 g | 80 km/h, $\mu$ = 0.3 | 1.155 | 39.7
+TC2 | Cua 0.15 g | 80 km/h, $\mu$ = 0.3 | 0.778 | 30.2
+TC2 | Cua 0.2 g | 100 km/h, $\mu$ = 0.5 | 1.050 | 35.4
+TC2 | Lượn, chuyển làn | 50-80 km/h, $\mu$ 0.3-0.8 | 0.495-0.590 | -
+TC3 | Trước khi $\mu$ giảm | 100 km/h, $\mu$ = 0.8 | 1.836 | 54.8
+TC3 | Sau khi $\mu$ giảm | 100 km/h, $\mu$ = 0.3 | 1.247 | 38.1
+TC4 | Trong vũng nước | 80 km/h, $\mu$ = 0.2 | 0.218 | -8.0
+TC5 | Lái hình sin duy trì | 100 km/h, $\mu$ = 0.2 | 0.473 | -
+TC6 | Trước khi $\mu$ tăng | 60 km/h, $\mu$ = 0.3 | 0.788 | 34.8
+TC6 | Sau khi $\mu$ tăng | 60 km/h, $\mu$ = 0.8 | 0.841 | 37.2
 
-  Giới hạn trợ lực (giống PID và Map): T_a = max(-T_a,max(v), min(T_a_unsat, T_a,max(v))), T_a,max(v) tra bảng ở ref.txt mục 1.5 (data/ref.json, trường Ta_max, kẹp ngoài 20-100 km/h). SMC không
-  có khâu tích phân bộ điều khiển (chỉ có x_f của bộ lọc theta1, không phụ thuộc T_a) nên KHÔNG cần chống windup; phép chặn chỉ cắt đầu ra.
-    [ T_a=\max\!\left(-T_{a,max}(v),\ \min\!\left(T_{a,unsat},\ T_{a,max}(v)\right)\right) ]
+Bảng 17: Chỉ tiêu toàn ca của SMC không tích phân (không tính 2 s đầu), so với bản đồ
+Ca | RMS $e_T$ SMC [N.m] | RMS $e_T$ Map [N.m] | $TV(T_a)$ SMC lý tưởng [N.m/s] | $TV(T_a)$ SMC nhiễu cao, 5 hạt giống [N.m/s] | $TV(T_a)$ Map nhiễu cao [N.m/s] | max $|T_a|$ SMC nhiễu cao [N.m]
+TC1 | 1.03 | 0.60 | 1.1 | 523 ± 1 | 235 | 7.3
+TC2 | 0.71 | 0.84 | 1.4 | 558 ± 1 | 177 | 6.8
+TC3 | 1.37 | 0.40 | 0.2 | 519 ± 3 | 293 | 5.5
+TC4 | 0.39 | 0.87 | 3.5 | 571 ± 4 | 42 | 6.3
+TC5 | 0.46 | 1.71 | 3.8 | 565 ± 2 | 117 | 6.4
+TC6 | 0.83 | 0.01 | 0.0 | 519 ± 3 | 591 | 3.4
 
-  Dấu: nếu s > 0 (cột lái quay nhanh hơn mong muốn) thì u_sw > 0 làm T_a giảm, kéo s về 0. T_eq chứa -T_s triệt tiêu mô-men lò xo, và C_col*theta2_dot triệt tiêu cản nhớt. Ma sát khô KHÔNG bù
-  trong T_eq: số hạng tanh (c = 100) đổi dấu gần tức thời khi cột lái dừng, bù nó sau khi lấy mẫu gây chu kỳ giới hạn (đã thử ở bản cũ 10 ms). Ma sát nằm trong psi.
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-5. Chọn tham số ở chu kỳ 1 ms
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  - lambda = 300 1/s. Trên mặt trượt e_T tắt theo e^(-lambda*t) nên lambda là băng thông của vòng; chọn bằng tần số cắt của vòng Map và PID (286 rad/s, cùng tiêu chí chỉnh PID ở
-    DieuKhien_PID.txt) để ba bộ nhanh ngang nhau và khác nhau chỉ ở cấu trúc. Ở 10 ms bản cũ phải để lambda = 30 (lấy mẫu chậm); ở 1 ms lambda*Ts = 0.3 vẫn nhỏ. Quét: lambda = 30 -> 1000 (bảng
-    dưới); lambda = 1000 (lambda*Ts = 1) rung (TV(T_a) hàng trăm đến nghìn N.m/s).
-  - k_sw = 150 rad/s^2. Phải lớn hơn cận nhiễu gộp |psi|max (T_r cộng ma sát khô, chia J_col). Cận giải tích CHƯA tính lại cho Plant mới; đo bằng mô phỏng ở lambda = 300 và tỉ số k_sw/Phi cố
-    định: k_sw = 50 mất bám (RMS e_T TC1 4.6, TC3 8.9 N.m), 75 mất bám một phần (TC1 0.48, TC3 0.53), 100 đạt như 150. Chọn 150, dư 1.5 lần so với mức đạt nhỏ nhất đo được.
-  - Phi = k_sw*Ts_ctrl = 0.15 rad/s. Trong lớp biên s[k+1] = s[k]*(1 - k_sw*Ts/Phi) nên cần k_sw*Ts/Phi < 2 để không phân kỳ; đo: tỉ số 2 rung dữ dội (TV(T_a) 6000-8300 N.m/s), tỉ số 1.5 TV tăng
-    1.3-3.7 lần so với tỉ số 1, tỉ số 1 (chọn) không rung. Vì lớp biên rộng đúng bằng k_sw*Ts nên luật trong lớp biên là tuyến tính với độ lợi k_sw/Phi = 1/Ts = 1000 1/s.
-  - tau_f = 0.01 s. Quét 2-20 ms: sai số bám gần như không đổi, TV(T_a) giảm khi tau_f tăng (TC4: 18.8, 15.2, 15.0 N.m/s ở 2, 10, 20 ms). Chọn 10 ms, trễ lọc nhỏ so với thang thời gian lái (cỡ
-    giây).
-  - Hệ quả của việc chọn Phi nhỏ: ở các ca thử |s| < Phi gần như mọi lúc nên u_sw chưa bão hòa, SMC chạy trong lớp biên (như bộ tuyến tính độ lợi cao); phần chuyển mạch chỉ thật sự làm việc khi
-    có nhảy lớn của T_r (bước mu, TC3-TC4). Quét k_sw = 150, 300, 600 với k_sw/Phi cố định cho kết quả giống hệt nhau, xác nhận điều này.
-  - Sai số tĩnh trong lớp biên (không có tích phân nên không triệt nhiễu hằng), quy về mô-men:
-
-    e_T,ss ~ (K/lambda) * Phi * psi / k_sw
-    [ e_{T,ss}\approx\dfrac{K}{\lambda}\cdot\dfrac{\Phi\,\psi}{k_{sw}} ]
-
-  Với bộ chọn, Phi/k_sw = Ts nên e_T,ss ~ (K*Ts/lambda)*psi = 0.00048*psi (N.m); đo ở TC1 giữ góc: 0.012 N.m (0.1 g), 0.023 (0.2 g), 0.033 (0.3 g), tức tăng theo a_y như T_r. Nhỏ nhưng khác 0 và
-  cùng dấu T_d,ref (trợ lực hơi thiếu), đúng hướng mà khâu tích phân của SMC_KI sẽ xóa.
-
-  Kết quả quét (chỉ tiêu tính t >= 2 s; RMS e_T [N.m] của TC1..TC6 và TV(T_a) [N.m/s] của TC1..TC6; tau_f = 5 ms trừ dòng chọn):
-
-    lambda  k_sw  Phi    RMS e_T TC1..TC6                                  TV(T_a) TC1..TC6
-    30      150   0.15   0.409 0.147 0.222 0.113 0.137 0.169              1.20 2.42 0.45 7.38 6.89 0.06
-    100     150   0.15   0.365 0.046 0.066 0.049 0.044 0.051              1.32 2.94 0.49 10.4 8.64 0.23
-    200     150   0.15   0.362 0.025 0.033 0.039 0.024 0.025              1.45 3.74 0.62 14.3 10.9 0.49
-    300     150   0.15   0.361 0.019 0.022 0.036 0.017 0.017              1.58 4.38 0.73 16.5 13.2 0.79
-    500     150   0.15   0.361 0.015 0.014 0.035 0.012 0.010              1.92 5.48 0.96 20.7 17.3 1.72
-    300     100   0.10   0.361 0.019 0.022 0.037 0.017 0.017              1.58 4.32 0.72 15.7 13.3 0.79
-    300     75    0.075  0.481 0.020 0.526 0.039 0.018 0.017              1.62 4.20 0.31 14.7 13.1 0.79
-    300     50    0.05   4.587 1.441 8.934 0.072 0.018 0.017              2.01 4.39 0.16 13.9 12.7 0.79
-    300     150   0.10   0.361 0.016 0.015 0.036 0.016 0.011              2.51 8.55 0.97 30.8 25.8 2.90
-    300     150   0.075  0.361 0.014 0.012 0.036 0.016 0.009              6003 8096 7268 7299 6749 8314
-    1000    300   0.30   0.361 0.013 0.007 0.034 0.009 0.005              674 1179 2.54 1245 1891 6.94
-    300     150   0.15   0.361 0.019 0.022 0.037 0.017 0.017              1.56 4.07 0.73 15.2 11.8 0.79      (CHỌN, tau_f = 10 ms)
-
-  RMS e_T của TC1 (0.36) gần như không đổi theo tham số và bằng PID (0.36): nhiều khả năng do các đoạn chuyển giữa các mức a_y của ca thử (T_s phải đổi theo T_d,ref nhảy bậc), không do bộ điều
-  khiển; chưa phân tích kỹ.
-  Kết quả chốt (data/smc.json, nạp bằng Model/load_smc.m, file này chạy tiếp load_plant.m, load_ref.m và load_sensors.m): Ts_ctrl = 0.001 s, lambda = 300 1/s, tau_f = 0.01 s, k_sw = 150, Phi =
-  0.15.
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-6. Hiện thực Simulink và kiểm chứng
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  - Model/SMC/SMC_s.mdl (sinh bởi SMC/script/build_smc.m, đúng quy tắc CLAUDE.md): subsystem SMC, vào e_T, T_s, theta1, theta2_dot, v, ra T_a; 5 ZOH rồi 5 subsystem theta1_dot_hat, s, T_eq, u_sw,
-    T_a_max. u_sw gồm Div_sPhi, khối Saturation (-1..1), Prod_ksat. T_a_unsat = T_eq - J_col*u_sw (Sum_Ta_unsat), rồi Min_Ta, Prod_Tamin, Max_Ta chặn theo T_a_max (bảng tra theo v từ ref.json).
-  - test_smc_s.m: đưa 5 chuỗi đầu vào (thêm v, có cả đoạn ngoài 20-100 km/h) ngẫu nhiên giữ hằng giữa các mẫu, so T_a tại mọi mẫu với thuật toán mục 3-4 và phép chặn viết lại độc lập bằng m-code
-    (tham số cột lái đọc thẳng params.json, bảng T_a,max đọc thẳng ref.json): sai lệch lớn nhất 8.9e-16 (PASS) ở Ts = 1 ms. Test chỉ kiểm cài đặt, không kiểm chỉnh định.
-  - Vòng kín Model/Model_SMC_s.mdl (Plant_s + Sensors + Reference_s + Reference_true + SMC_s; sinh bởi SMC/script/build_model_smc.m theo đúng cấu trúc Model_PID_s, kiểm bởi test_model_smc_s.m:
-    PASS). Khối Sensors đặt sau Plant cho cả 5 tín hiệu SMC đọc (T_s, a_y, v, theta1, theta2_dot; độ phân giải và chu kỳ cập nhật ở data/sensors.json); mức none (mặc định) là cảm biến lý tưởng
-    nên kết quả mục 7 là KHÔNG nhiễu, kết quả có nhiễu ở mục 7b. Reference_true chấm điểm bằng giá trị thật. Kiểm tra: mức none sau khi thêm hai cổng cho bảng chỉ tiêu giống hệt trước khi thêm.
-  - Chạy 6 ca thử bằng Model/Sim/script/run_test_cases('SMC'), so với Map bằng compare_test_cases('Map', 'SMC').
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-7. Kết quả TC1-TC6 và so với Map (không nhiễu cảm biến, 1 ms)
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Chỉ tiêu theo toàn ca (bỏ 2 s đầu), Result/Compare/Map_vs_SMC/Map_vs_SMC_test_case_metrics.csv:
-
-    Ca    RMS e_T Map  RMS e_T SMC   max|e_T| Map  max|e_T| SMC   TV(T_a) Map  TV(T_a) SMC   [N.m, N.m/s]
-    TC1   0.599        0.361         3.459         3.467           0.96         1.56
-    TC2   0.836        0.019         3.162         0.863           1.64         4.07
-    TC3   0.396        0.022         0.457         0.184           0.27         0.73
-    TC4   0.868        0.037         3.321         0.755           3.20         15.2
-    TC5   1.707        0.017         3.006         0.179           2.96         11.8
-    TC6   0.0124       0.0169        0.0415        0.0187          0.018        0.79
-
-  Trợ lực thừa (e_T trung bình / T_d,ref trung bình trong cửa sổ, âm = thừa trợ lực), Map_vs_SMC_over_assist_windows.png:
-
-    Cửa sổ                              Map        SMC
-    TC2 cung 0.25 g, 80 km/h, mu 0.3    -3.54 %    +0.80 %
-    TC2 cung 0.15 g, 80 km/h, mu 0.3    -1.84 %    +0.61 %
-    TC2 cung 0.2 g, 100 km/h, mu 0.5    -0.63 %    +0.73 %
-    TC3 sau khi mu giảm, giữ góc        -14.1 %    +0.47 %
-    TC4 trong vũng nước                 -83.6 %    +0.17 %
-
-  - SMC bám tốt hơn Map ở 5/6 ca, RMS e_T nhỏ hơn 1.7-99 lần; ở TC6 (Map cũng gần như hoàn hảo vì mu tăng lại về giá trị hiệu chỉnh) ngang nhau (0.017 và 0.012, SMC hơi lớn hơn). Không còn trợ
-    lực thừa ở các cửa sổ mu thấp: sai số của SMC nhỏ và hơi dương (thiếu trợ lực dưới 1 %), trong khi Map thừa tới 83.6 % ở TC4.
-  - Đổi lại SMC kém êm hơn Map: TV(T_a) lớn hơn 1.6-44 lần (TC4 15.2 so với 3.2 N.m/s; TC6 0.79 so với 0.018), cùng cỡ PID (PID TC4 11.4, TC5 10.3). T_a có gợn tần số cao 3-4 N.m ở đoạn giữ góc
-    (hình TC4) vì độ lợi trong lớp biên cao (1000 1/s). Chưa có bộ lọc đo, và chưa có nhiễu cảm biến nên kết quả này chưa phản ánh việc nhiễu bị khuếch đại.
-  - Spike khi bắt đầu đánh lái: ở TC4 e_T nhảy 0.75 N.m lúc theta1 bắt đầu đổi (t = 3.0 s) và -0.45 N.m lúc dừng (5.5 s), T_a chạm giới hạn T_a,max. max|e_T| của TC4 bằng nhau đến 8 chữ số giữa
-    SMC và PID (0.7548277), mà PID không dùng theta1_dot_hat, nên spike KHÔNG do bộ điều khiển; nhiều khả năng do T_a chạm giới hạn T_a,max khi góc lái đổi gấp (cả hai bộ cùng chặn một bảng
-    T_a,max). Chưa kiểm chứng riêng (có thể thử nới T_a,max để xem spike có mất).
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-7b. Kết quả có cảm biến lượng tử hóa và nhiễu (một hạt giống 90001)
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Mức low = lượng tử hóa + chu kỳ cập nhật, không thêm nhiễu; mức high = low + nhiễu trắng sigma = 1 bước phân giải (v: 0.38 km/h); nguồn và giả định ở data/sensors.json và
-  Documents/Sim/ThucTeHoa.txt. Chỉ tiêu tính trên giá trị THẬT. Một hạt giống nên chỉ là chỉ dẫn, chưa phải thống kê (nghiên cứu nhiễu 5 hạt giống chưa chạy cho SMC). RMS e_T [N.m] và TV(T_a)
-  [N.m/s], TC1..TC6:
-
-    Bộ     Mức    RMS e_T TC1..TC6                                  TV(T_a) TC1..TC6
-    SMC    none   0.361 0.019 0.022 0.037 0.017 0.017              1.56 4.07 0.73 15.2 11.8 0.79
-    SMC    low    0.362 0.036 0.022 0.046 0.056 0.014              1021 1623 706 1182 3374 124
-    SMC    high   0.418 0.187 0.109 0.228 0.187 0.064              4068 4812 5291 4114 4534 6294
-    PID    low    0.361 0.035 0.0096 0.061 0.076 0.0032            211 596 1037 300 782 1193
-    PID    high   0.372 0.118 0.022 0.151 0.135 0.013              2214 2568 2356 2481 2515 2563
-    Map    low    0.599 0.836 0.395 0.868 1.707 0.0124             28 63 151 14 33 263
-    Map    high   0.599 0.836 0.397 0.868 1.706 0.0130             383 267 617 83 215 772
-
-  - Chỉ lượng tử hóa (mức low, không nhiễu) đã làm TV(T_a) của SMC vọt từ 1-15 lên 120-3400 N.m/s (hàng trăm lần), tức T_a rung mạnh; bám e_T vẫn giữ (RMS 0.014-0.056). Nguyên nhân hợp lý: độ lợi
-    trong lớp biên 1000 1/s và theta1_dot_hat (đạo hàm của theta1 lượng tử 0.1 độ) khuếch đại bước lượng tử; chưa kiểm chứng riêng từng tín hiệu.
-  - Ở mức high SMC kém PID về bám ở 5/6 ca (RMS e_T TC3 0.109 so với 0.022, TC2 0.187 so với 0.118) và TV(T_a) lớn hơn PID khoảng 2 lần; vẫn bám tốt hơn Map nhiều (Map không đổi vì không có khâu
-    nhạy với nhiễu bám e_T). Vậy lợi thế bám của SMC so với Map còn, nhưng lợi thế so với PID mất khi có cảm biến thực tế, và SMC cần bộ lọc đo hoặc chỉnh lại tham số cho điều kiện có nhiễu.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-8. Hạn chế và việc còn lại
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  - SMC_KI: xem mục 9 (đã làm; k_I = 10 chọn bằng quét 3-300, chưa chỉnh lại các tham số khác cho SMC_KI).
-  - Chưa làm gì để giảm độ nhạy nhiễu của SMC (mục 7b, 9): chưa có bộ lọc đo, chưa chỉnh lại lambda, tau_f, Phi cho điều kiện có nhiễu.
-  - Dùng mô hình cột lái (J_col, C_col, K) trong T_eq: chưa kiểm tra độ bền khi các tham số này sai lệch (mục "sai lệch thông số xe" của Documents/Sim/ThucTeHoa.txt). Cận psi chưa tính giải tích
-    lại cho Plant mới. Chưa áp ràng buộc dấu.
-  - Cần bổ sung nguồn cho lý thuyết SMC cổ điển và lớp biên (mục lưu ý nguồn ở đầu file).
-  - So với PID (1 ms, pidtune, Result/Compare/Map_vs_PID/): chưa có bảng SMC so với PID (chưa được yêu cầu). Nhìn riêng RMS e_T: SMC nhỏ hơn PID ở TC2 (0.019 so với 0.022), TC4 (0.037 so với
-    0.044), TC5 (0.017 so với 0.030); PID nhỏ hơn ở TC3 (0.008 so với 0.022) và TC6 (0.0013 so với 0.017) vì PID có khâu tích phân xóa sai số tĩnh.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-9. SMC_KI (thêm tích phân vào mặt trượt) và nghiên cứu nhiễu đầy đủ
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Bản có tích phân giữ nguyên toàn bộ luật ở mục 3-4 và tham số mục 5, chỉ đổi mặt trượt (data/smc_ki.json, Model/load_smc_ki.m, Model/SMC_KI/, Model/Model_SMC_KI_s.mdl, test_smc_ki_s và
-  test_model_smc_ki_s PASS):
-
-    s0 = theta2_dot - theta1_dot_hat - (lambda/K)*e_T,   z[k+1] = clamp(z[k] + Ts*s0[k], +-Phi/k_I),   s = s0 + k_I*z
-    [ s_0=\dot\theta_2-\hat{\dot\theta}_1-\dfrac{\lambda}{K}e_T,\quad z[k+1]=\mathrm{clamp}\!\left(z[k]+T_s s_0[k],\ \pm\dfrac{\Phi}{k_I}\right),\quad s=s_0+k_I z ]
-
-  Khi xác lập s0 = 0 và u_sw cân bằng nhiễu psi nhờ z = Phi*psi/(k_sw*k_I), nên e_T = 0 thay vì sai số lớp biên ở mục 5. Kẹp z ở +-Phi/k_I giữ k_I*z <= Phi (u_sw không quá k_sw). Quét k_I = 3,
-  10, 30, 100, 300 1/s (mức none và high, hạt giống 90001): RMS e_T gần như không đổi theo k_I ở mức none (TC3 0.0031 -> 0.0026, TC6 0.0003), TV(T_a) tăng nhẹ khi k_I tăng (TC4 15.5 -> 19.1
-  N.m/s); ở mức high k_I = 100 so với 3 giảm TV 4-9 % nhưng RMS e_T tăng 1-17 %. Chọn k_I = 10 1/s (như bản cũ), vì đường cong phẳng.
-
-  Nghiên cứu nhiễu đầy đủ (Model/Sim/script/run_noise_study.m): Map, PID, SMC, SMC_KI; mức none, low, high; mức high lấy trung bình 5 hạt giống 90001-90005 (cùng chuỗi nhiễu cho mọi bộ); cả 6 ca
-  thử; chỉ tiêu tính trên giá trị THẬT. Kết quả: Result/Compare/Map_vs_PID_vs_SMC_vs_SMC_KI/ (all_runs.csv, summary.csv, hình whole_case.png). Đơn vị RMS e_T [N.m], TV(T_a) [N.m/s]; cột TC1..TC6;
-  độ lệch chuẩn giữa các hạt giống của RMS e_T nhỏ (thường dưới 3 % giá trị trung bình, lớn nhất ~4 % ở PID TC4), của TV dưới 1.5 %.
-
-    Mức none   RMS e_T TC1..TC6                                  TV(T_a) TC1..TC6
-    Map        0.599 0.836 0.396 0.868 1.707 0.0124              0.96 1.64 0.27 3.20 2.96 0.018
-    PID        0.361 0.0224 0.0081 0.0443 0.0296 0.0013          1.63 3.42 0.58 11.4 10.3 0.46
-    SMC        0.361 0.0191 0.0222 0.0366 0.0173 0.0169          1.57 4.07 0.73 15.2 11.8 0.79
-    SMC_KI     0.361 0.0139 0.0028 0.0367 0.0157 0.0003          1.60 4.08 0.83 15.3 11.8 0.79
-
-    Mức low    RMS e_T TC1..TC6                                  TV(T_a) TC1..TC6
-    Map        0.599 0.836 0.395 0.868 1.707 0.0125              28 63 151 14 33 263
-    PID        0.361 0.035 0.0096 0.061 0.076 0.0032             211 596 1037 300 782 1193
-    SMC        0.362 0.036 0.0219 0.046 0.056 0.0143             1021 1623 706 1182 3374 124
-    SMC_KI     0.361 0.034 0.0062 0.050 0.060 0.0030             618 1645 822 1184 3344 965
-
-    Mức high   RMS e_T TC1..TC6                                  TV(T_a) TC1..TC6
-    Map        0.599 0.836 0.397 0.868 1.706 0.0129              384 267 620 82 216 774
-    PID        0.369 0.116 0.0212 0.153 0.140 0.0136             2219 2571 2351 2449 2506 2552
-    SMC        0.414 0.187 0.109 0.230 0.188 0.0624              4079 4835 5262 4085 4564 6325
-    SMC_KI     0.407 0.187 0.081 0.237 0.191 0.0377              3996 4774 5235 4030 4514 6280
-
-    Trợ lực thừa/thiếu (e_T trung bình / |T_d,ref| trung bình, %, âm = thừa trợ lực), cửa sổ: TC2 cung 0.25 g mu 0.3 | TC2 cung 0.15 g mu 0.3 | TC3 sau khi mu giảm | TC4 trong vũng nước
-    Map     none    -3.54   -1.84   -14.08   -83.56
-    PID     none     0.00    0.00     0.00    -1.06
-    SMC     none    +0.80   +0.61    +0.47    +0.17
-    SMC_KI  none     0.00    0.00     0.00    -0.09
-    Map     high    -3.56   -1.85   -14.12   -83.56
-    PID     high    +0.23    0.00    -0.05    -1.33
-    SMC     high    +2.73   +1.43    +0.61    -2.45
-    SMC_KI  high    +0.47   -0.21    -0.08    -1.23
-
-  - Tích phân xóa sai số tĩnh đúng như dự đoán: mức none, TC3 RMS e_T 0.0222 -> 0.0028, TC6 0.0169 -> 0.0003, cửa sổ trợ lực thừa về 0.00 % (SMC còn +0.17 đến +0.80 %). Không làm T_a rung thêm
-    đáng kể ở mức none (TV 1.60 so với 1.57 N.m/s ở TC1).
-  - Tích phân KHÔNG khắc phục được nhiễu: ở mức high TV(T_a) của SMC_KI (4030-6280 N.m/s) gần như bằng SMC (4085-6325), chỉ thấp hơn 0.5-2 %. Hợp lý về cơ chế: nhiễu vào qua độ lợi cao trong lớp
-    biên (k_sw/Phi = 1000 1/s) và qua đạo hàm của theta1 lượng tử hóa, còn khâu tích phân là khâu thông thấp chậm, không nằm trên đường khuếch đại nhiễu đó. RMS e_T ở mức high tốt hơn SMC ở TC3
-    (0.081 so với 0.109) và TC6 (0.038 so với 0.062) vì không còn sai số tĩnh cộng vào, ngang hoặc kém hơn ở TC2, TC4, TC5.
-  - Xếp hạng bám e_T khi có nhiễu cao (RMS e_T trung bình 5 hạt giống): PID tốt nhất ở TC1-TC5, rồi SMC_KI, rồi SMC; Map kém nhất ở TC1-TC5 (bám bằng bản đồ cố định, nhiễu không làm đổi e_T của
-    Map) nhưng ở TC6 Map tốt nhất (0.0129 so với PID 0.0136, SMC_KI 0.038, SMC 0.062). Độ êm TV(T_a) khi có nhiễu cao: Map thấp nhất (82-774), PID (2200-2570), SMC_KI và SMC (4000-6300). Ở mức
-    none, SMC_KI bám tốt nhất ở TC2, TC3, TC5, TC6, SMC ngang SMC_KI ở TC4 (0.0366 so với 0.0367), PID tốt hơn SMC ở TC3 và TC6 nhưng kém SMC_KI.
-  - Cỡ độ lớn của TV (ĐÃ SỬA, bản trước ghi sai gấp 1000 lần): TV [N.m/s] nhân Ts = 1 ms cho thay đổi T_a trung bình mỗi mẫu, tức 5000 N.m/s tương đương khoảng 5 N.m mỗi mẫu, KHÔNG phải 5 mN.m.
-    Hình TC4 mức high (Result/Compare/Map_vs_PID_vs_SMC/) cho thấy T_a của PID và SMC nhảy gần như giữa hai giới hạn +-T_a,max ở mọi mẫu (bang-bang); e_T vẫn nhỏ chỉ vì Plant hiện chưa có động
-    học motor và quán tính cột lái lọc mất dao động 1 ms. Kết quả nhiễu mức high của PID và SMC vì vậy chỉ có nghĩa khi có bộ lọc đo và động học motor; chưa có.
-  - Mức độ "đầy đủ" của nhiễu: chỉ có nhiễu trắng + lượng tử hóa + chu kỳ cập nhật của 5-6 tín hiệu cảm biến (độ lớn high tự chọn, chu kỳ CAN 10 ms là giả định, data/sensors.json). Chưa có động
-    học motor, sai lệch thông số xe và cột lái, trễ a_y qua CAN, nhiễu mặt đường (Documents/Sim/ThucTeHoa.txt).
+Sai số xác lập là điểm yếu nổi bật (Hình 4 đến 9). Ở mọi cửa sổ giữ góc trên đường khô của TC1, mô-men cảm biến cao hơn giá trị đặt từ 22% (100 km/h, 0.1 g) tới 72% (40 km/h, 0.3 g), tức tay lái nặng hơn nhiều so với mong muốn, và sai số tăng theo gia tốc ngang như $T_r$ đúng như phương trình (22); sai số này gần như không đổi khi có nhiễu cảm biến (RMS $e_T$ lệch dưới 0.02 N.m giữa lý tưởng và nhiễu). Vì vậy SMC không tích phân không đạt tiêu chí chính của đề tài: ở TC3 sau khi $\mu$ giảm tay lái vẫn nặng hơn 38% so với giá trị đặt, trong khi bản đồ là nhẹ hơn 14.1% (trợ lực thừa); SMC hoàn toàn không cho thấy trợ lực thừa vì nó cấp quá ít trợ lực, không vì nó xử lý tốt việc $\mu$ đổi, và sai số của SMC giảm từ 54.8% xuống 38.1% sau khi $\mu$ giảm chỉ vì $T_r$ giảm theo (22).
+[Hình 4: Ca TC1: kiểm tra hiệu chỉnh trên đường khô (SMC không tích phân) | Result/SMC/TestCases/SMC_TC1_dry_calibration_time_response.png]
+[Hình 5: Ca TC2: chạy đường thực tế (SMC không tích phân) | Result/SMC/TestCases/SMC_TC2_road_time_response.png]
+[Hình 6: Ca TC3: $\mu$ giảm đột ngột khi đang cua gấp (SMC không tích phân) | Result/SMC/TestCases/SMC_TC3_mu_drop_hard_corner_time_response.png]
+Mặt tốt của SMC là sai số động: ở các đoạn lái hình sin và chuyển làn RMS $e_T$ chỉ 0.5 N.m đến 0.6 N.m (TC2) và 0.47 N.m (TC5), so với 1.5 N.m đến 1.9 N.m của bản đồ, vì phản hồi theo $e_T$ bù được ma sát khô mà bản đồ tĩnh không bù. Trong vũng nước (TC4) sai số tương đối chỉ $-8.0\%$ so với $-83.6\%$ của bản đồ, vì bản đồ cắt trợ lực về gần không khi $T_s$ tụt còn SMC giữ lệnh theo $e_T$.
+[Hình 7: Ca TC4: vào vũng nước khi đang chuyển làn gấp (SMC không tích phân) | Result/SMC/TestCases/SMC_TC4_wet_patch_lane_change_time_response.png]
+[Hình 8: Ca TC5: lái hình sin liên tục trên mặt đường rất trơn (SMC không tích phân) | Result/SMC/TestCases/SMC_TC5_sine_high_speed_low_mu_time_response.png]
+[Hình 9: Ca TC6: $\mu$ tăng đột ngột giữa cua (SMC không tích phân) | Result/SMC/TestCases/SMC_TC6_mu_rise_mid_corner_time_response.png]
+Về nhiễu, với cảm biến mức cao $TV(T_a)$ gần như không đổi giữa các ca, từ 519 N.m/s đến 571 N.m/s (độ lệch chuẩn qua năm hạt giống không quá 4 N.m/s), vì tổng biến thiên bị chi phối bởi nhiễu cảm biến chứ không bởi ca thử; không có nhiễu $TV$ chỉ 0.02 N.m/s đến 3.8 N.m/s. Bản đồ cho $TV$ từ 42 đến 591 N.m/s tùy ca và thấp hơn SMC ở năm trong sáu ca, nên SMC ồn hơn bản đồ ở năm ca và chỉ ồn kém hơn một chút ở TC6 (519 so với 591 N.m/s), nơi bản đồ ở 60 km/h dùng bậc có độ lợi tần số cao lớn.
+3.8. Hạn chế và việc tiếp theo
+Kết quả chính của mục này là một kết quả âm có giá trị: trong hệ PRSM, SMC bậc một không tích phân không thể đạt đồng thời độ ổn định (độ dự trữ pha từ 45 độ) và độ chính xác (sai số xác lập không quá 3%) của bản đồ, vì sai số xác lập nhân độ lợi vòng là hằng số (phương trình (22)); bộ tốt nhất đạt độ ổn định có sai số xác lập từ 22% trở lên ở bộ bám tốt nhất và 84% ở bộ được chọn, và ồn hơn bản đồ. Đây là lý do cần khâu tích phân (SMC_KI), vì tích phân làm sai số xác lập về không mà không cần tăng $G\lambda$, và là việc tiếp theo với cùng quy trình. Hướng giảm ồn cho các bản sau là kênh $\dot\theta_2$, kênh chiếm hầu hết nhiễu (Bảng 15); ở bản này không thêm bộ lọc đo theo yêu cầu. Các giới hạn khác: $\tau_f$ chỉ quét ba giá trị và lưới $(\lambda, G)$ thưa nên khuỷu chỉ chính xác tới bước lưới; chỉ số $S$ lấy trên một ca thử ở đường khô nên không phản ánh nhiễu khi $\mu$ đổi; $k_{sw}$ chỉ được kiểm chứng bằng mô phỏng, chưa có cận giải tích của $\psi$; lý thuyết SMC chưa có nguồn trong References/ (mục 3.1).
 ==============================================================================================================================================================================================

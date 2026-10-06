@@ -1,10 +1,10 @@
 function G = make_pair_comparisons(ctrlList, seeds)
 %MAKE_PAIR_COMPARISONS Run the standard test cases with the full sensor chain and compare the controllers two at a time.
 %
-%   G = make_pair_comparisons({'Map', 'PID', 'SMC'}, 90001:90005)
+%   G = make_pair_comparisons({'Map_6_8', 'PID', 'SMC'}, 90001:90005)
 %
 %   Sensor level is the single level 'high' of the Sensors subsystem (data/sensors.json): white noise (std = one resolution step)
-%   + quantizer + update period of every signal. Run load_pid, load_smc, load_map (whatever the list needs) in the base workspace first.
+%   + quantizer + update period of every signal. Run load_pid, load_smc, load_map_6_8 (whatever the list needs) in the base workspace first.
 %   Every controller is run ONCE per seed (run_test_cases(ctrl, 'high', seed), metrics on the TRUE signals, first 2 s not scored),
 %   the seeds are averaged, then for every pair (A, B) of ctrlList, in list order, it writes to Result/Compare/<A>_vs_<B>/:
 %     <A>_vs_<B>_noise_study_all_runs.csv    one row per controller, seed, case, window
@@ -89,7 +89,7 @@ end
 function rgb = colorOf(ctrl)
 % same colors as plot_compare_cases.m
     switch ctrl
-        case 'Map',    rgb = [0.165 0.471 0.839];
+        case 'Map_6_8',    rgb = [0.165 0.471 0.839];
         case 'PID',    rgb = [0.922 0.408 0.204];
         case 'SMC',    rgb = [0.106 0.686 0.478];
         case 'SMC_KI', rgb = [0.910 0.482 0.643];

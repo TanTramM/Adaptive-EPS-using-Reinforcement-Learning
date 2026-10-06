@@ -6,7 +6,7 @@ Lượt 6 - Người dùng thấy SMC vẫn bám tốt, hỏi sai số tĩnh n�
 Người dùng: sao tôi thấy vẫn bám tốt mà, không bị sai số tĩnh, bị ở case nào chỉ cho xem. Claude: xác nhận người dùng đúng về mặt nhìn: sai số tĩnh của SMC (không KI) rất nhỏ, 0.5-1.4 % T_d,ref (0.012-0.033 N.m), mắt thường không thấy ở đồ thị T_s. Có ở MỌI cửa sổ giữ góc: TC1 (15 cửa sổ, tăng theo |a_y|, dấu theo T_d,ref), TC2 (7 cửa sổ, -0.028..+0.023 N.m), TC3 (before 0.038, after 0.0153), TC6 (0.016, 0.017). SMC_KI về 0. Tạo hình Result/Compare/SMC_vs_SMC_KI/SMC_vs_SMC_KI_static_error_TC1.png (3 ô: T_s với T_d,ref; e_T phóng to mN.m; trung bình e_T mỗi cửa sổ) bằng script tạm ngoài repo. Ghi nhận thêm: hình TC1 cho thấy e_T vọt tới ~3.4 N.m ở đầu các đoạn 20 km/h (t ~ 3, 9, 14 s), bằng cả PID và Map nên không do SMC; nguyên nhân chưa tìm.
 
 Lượt 7 - Quay lại Map: vì sao ở TC2 Map lệch nhiều
-Người dùng (kèm ảnh Map TC2, T_s và T_d,ref lệch lớn): quay lại phần Map, tại sao ở TC2 lệch nhiều như vầy. Claude: chạy thí nghiệm chẩn đoán (script tạm ngoài repo, KHÔNG đổi Map/Plant): cùng Map, TC2, đặt T_f = 0 qua SimulationInput. RMS e_T toàn ca 0.836 -> 0.295 N.m. Cửa sổ lái liên tục: slalom 1.481 -> 0.594, lane_change_mu_0p3 1.656 -> 0.361, sine_v60_mu_0p8 1.618 -> 0.742, sine_v60_mu_0p4 1.598 -> 0.714. Cửa sổ giữ góc (curve_*): không đổi (0.000-0.104) => trợ lực thừa do mu KHÔNG phải nguồn lệch lớn ở các đoạn này. Hình Result/Map/Diagnostics/Map_TC2_friction_off_diagnostic.png (3 ô: có ma sát, T_f = 0, e_T). Kết luận: lệch lớn chủ yếu do ma sát khô T_f = 2 N.m của cột lái (cỡ T_d,ref) mà Map tĩnh không bù (nhất quán Lượt 116-117 và map.txt 2.7); phần còn lại 0.36-0.74 N.m do trễ a_y (T_d,ref theo a_y chậm hơn T_s) và Map là bản đồ tĩnh + 1 khâu lead. Đuôi chậm vài giây sau khi nhả lái (t ~ 50, 80, 117 s) cũng là ma sát giữ cột lái. Chưa quyết thêm bù ma sát cho Map (quyết định của người dùng).
+Người dùng (kèm ảnh Map TC2, T_s và T_d,ref lệch lớn): quay lại phần Map, tại sao ở TC2 lệch nhiều như vầy. Claude: chạy thí nghiệm chẩn đoán (script tạm ngoài repo, KHÔNG đổi Map/Plant): cùng Map, TC2, đặt T_f = 0 qua SimulationInput. RMS e_T toàn ca 0.836 -> 0.295 N.m. Cửa sổ lái liên tục: slalom 1.481 -> 0.594, lane_change_mu_0p3 1.656 -> 0.361, sine_v60_mu_0p8 1.618 -> 0.742, sine_v60_mu_0p4 1.598 -> 0.714. Cửa sổ giữ góc (curve_*): không đổi (0.000-0.104) => trợ lực thừa do mu KHÔNG phải nguồn lệch lớn ở các đoạn này. Hình Result/Map_6_8/Diagnostics/Map_TC2_friction_off_diagnostic.png (3 ô: có ma sát, T_f = 0, e_T). Kết luận: lệch lớn chủ yếu do ma sát khô T_f = 2 N.m của cột lái (cỡ T_d,ref) mà Map tĩnh không bù (nhất quán Lượt 116-117 và map.txt 2.7); phần còn lại 0.36-0.74 N.m do trễ a_y (T_d,ref theo a_y chậm hơn T_s) và Map là bản đồ tĩnh + 1 khâu lead. Đuôi chậm vài giây sau khi nhả lái (t ~ 50, 80, 117 s) cũng là ma sát giữ cột lái. Chưa quyết thêm bù ma sát cho Map (quyết định của người dùng).
 
 Lượt 8 - Trong công nghiệp người ta làm thế nào (Map có đúng thực tế không, bù ma sát)
 Người dùng: xét tính đúng đắn trong công nghiệp, người ta thường làm ntn. Claude: chỉ trả lời, không đổi file. Đối chiếu nguồn trong References/ (đọc đoạn liên quan bằng pdftotext, KHÔNG đọc toàn bài): lee2018 (mục I): bộ điều khiển EPS = bản đồ trợ lực (một-một giữa mô-men tay lái đo được và mô-men motor, đổi theo tốc độ xe) + khâu bù ổn định (lead-lag); "bản đồ không dùng riêng được"; nêu các hướng khác: bù giảm chấn trọng số tần số [6 của Lee], H-vô-cùng, SMC tích phân bền vững. CEPS ANFIS-FOC Model.pdf (mục kết luận): ma sát khô và nhớt gây trễ, cần bù; hoặc dùng góc vô-lăng làm đầu vào thay mô-men; thêm vận tốc góc, bù tiến (feedforward), bù sớm pha vòng dòng điện. Fuzzy_Control_EPS_Constraints (Saifia 2015): ma sát và nhiễu mặt đường là nguồn phi tuyến chính, xử lý bằng điều khiển bền. Multi-Map EPS (Li 2023): nhiều bản đồ chọn theo hệ số bám ước lượng. Phần "ECU sản xuất có thêm bù giảm chấn, bù quán tính, bù ma sát, trả lái về giữa, giới hạn dòng/nhiệt/tốc độ đổi mô-men" là hiểu biết chung của Claude, CHƯA có nguồn trong repo, đã nói rõ. Phát hiện cần sửa (chưa sửa): map.txt 2.7 viết "các tài liệu tham khảo không mô tả các khâu này" - chưa chính xác với CEPS ANFIS-FOC (có nêu cần bù, không mô tả cách làm; file đó CHƯA nằm trong References.txt). Đề xuất (chờ người dùng quyết): giữ Map làm baseline theo Lee, báo rõ giới hạn; tùy chọn thêm bản Map+bù ma sát (feedforward T_f_hat*tanh(c*theta2_dot), cần đọc theta2_dot) làm baseline mạnh hơn.
@@ -51,7 +51,7 @@ Lượt 21 - Làm bộ lọc đo trước hay motor trước (chỉ tư vấn)
 Claude khuyên: MOTOR trước. Lý do: motor là phần của môi trường (sự thật vật lý), bộ lọc là quyết định thiết kế; thiết kế phải biết môi trường nên bộ lọc chọn sau; cả hai thêm trễ pha nên chỉ nên thiết kế lại Map (designLead) và PID (tune_pid) MỘT lần sau khi có cả hai; thêm motor trước để xem ảnh hưởng thật (bang-bang, mất dự trữ pha 5 ms), rồi mới biết cần lọc bao nhiêu. Rủi ro: tau_m chưa có nguồn (quét 1, 2, 5 ms, chốt trước khi chạy); sửa dòng trạng thái sai ở ThucTeHoa.txt dòng 58 khi làm.
 
 Lượt 22 - Xóa kết quả cũ, chạy lại 3 cặp so sánh Map/PID/SMC với cảm biến tổng hợp (mức high), làm docx
-Người dùng: tạm chưa làm motor; chạy lại 3 compare (Map-PID, Map-SMC, PID-SMC) bằng khối sensor tổng hợp biên độ + quantizer; tổng hợp số liệu thành bảng; làm 1 file docx theo từng phần so sánh, có dữ liệu, chèn hình đúng kết quả chạy; format và ref như cũ; trước khi chạy xóa kết quả cũ, chỉ giữ script và model. Claude làm: (1) XÓA kết quả cũ: Result/PID/{TestCases,TestCases_ZN10ms_gains,TestCases_ZN1ms,TestCases_noise}, Result/SMC, Result/SMC_KI, Result/Map/{TestCases,TestCases_noise,Diagnostics}, Result/Compare/{Map_vs_PID,Map_vs_SMC,Map_vs_PID_vs_SMC,Map_vs_PID_vs_SMC_vs_SMC_KI,SMC_vs_SMC_KI}. GIỮ: Result/RL, Compare/RL, Compare/Map_vs_PID_vs_RL (khung RL, eval_rl.m đọc Map_vs_PID_noise_study_summary.csv), Result/Plant, Result/Reference, Map/Calibration, Map/OverAssist, PID/Tuning (kết quả thiết kế, không phải kết quả chạy). (2) Script mới Model/Sim/script/make_pair_comparisons.m: chạy mỗi bộ 1 lần cho 5 hạt giống 90001-90005 ở mức high (run_test_cases), rồi tách 3 cặp: Result/Compare/<A>_vs_<B>/ gồm all_runs.csv, noise_study_summary.csv (cùng cột run_noise_study, RL eval đọc được nhưng chỉ có mức high), whole_case.png, 6 hình theo ca (T_s kèm T_d,ref, e_T, T_a; seed 90001). plot_compare_cases(ctrl, level, seed): màu cố định theo bộ (Map xanh, PID cam, SMC lục). (3) Tài liệu: tools/build_sosanh_txt.py (đọc CSV, sinh bảng từ marker @WHOLE/@WINDOWS/@SENSORS/@STD) + Documents/Sim/SoSanh_template.txt -> SoSanh.txt -> SoSanh.docx (txt2docx.py; 21 hình, 8 bảng, mục 1 điều kiện, 2-4 ba cặp, 5 nhận xét). Thêm References.txt [7]-[10] (Valeo, Bosch LWS, Bosch MM5.10, Ragab). SMC_KI KHÔNG đưa vào lần này (người dùng chỉ yêu cầu 3 cặp).
+Người dùng: tạm chưa làm motor; chạy lại 3 compare (Map-PID, Map-SMC, PID-SMC) bằng khối sensor tổng hợp biên độ + quantizer; tổng hợp số liệu thành bảng; làm 1 file docx theo từng phần so sánh, có dữ liệu, chèn hình đúng kết quả chạy; format và ref như cũ; trước khi chạy xóa kết quả cũ, chỉ giữ script và model. Claude làm: (1) XÓA kết quả cũ: Result/PID/{TestCases,TestCases_ZN10ms_gains,TestCases_ZN1ms,TestCases_noise}, Result/SMC, Result/SMC_KI, Result/Map_6_8/{TestCases,TestCases_noise,Diagnostics}, Result/Compare/{Map_vs_PID,Map_vs_SMC,Map_vs_PID_vs_SMC,Map_vs_PID_vs_SMC_vs_SMC_KI,SMC_vs_SMC_KI}. GIỮ: Result/RL, Compare/RL, Compare/Map_vs_PID_vs_RL (khung RL, eval_rl.m đọc Map_vs_PID_noise_study_summary.csv), Result/Plant, Result/Reference, Map/Calibration, Map/OverAssist, PID/Tuning (kết quả thiết kế, không phải kết quả chạy). (2) Script mới Model/Sim/script/make_pair_comparisons.m: chạy mỗi bộ 1 lần cho 5 hạt giống 90001-90005 ở mức high (run_test_cases), rồi tách 3 cặp: Result/Compare/<A>_vs_<B>/ gồm all_runs.csv, noise_study_summary.csv (cùng cột run_noise_study, RL eval đọc được nhưng chỉ có mức high), whole_case.png, 6 hình theo ca (T_s kèm T_d,ref, e_T, T_a; seed 90001). plot_compare_cases(ctrl, level, seed): màu cố định theo bộ (Map xanh, PID cam, SMC lục). (3) Tài liệu: tools/build_sosanh_txt.py (đọc CSV, sinh bảng từ marker @WHOLE/@WINDOWS/@SENSORS/@STD) + Documents/Sim/SoSanh_template.txt -> SoSanh.txt -> SoSanh.docx (txt2docx.py; 21 hình, 8 bảng, mục 1 điều kiện, 2-4 ba cặp, 5 nhận xét). Thêm References.txt [7]-[10] (Valeo, Bosch LWS, Bosch MM5.10, Ragab). SMC_KI KHÔNG đưa vào lần này (người dùng chỉ yêu cầu 3 cặp).
 KẾT QUẢ (RMS e_T N.m, TC1..TC6, mức high, TB 5 seed): Map 0.598/0.836/0.397/0.868/1.71/0.0129; PID 0.369/0.116/0.0212/0.153/0.14/0.0136; SMC 0.414/0.187/0.109/0.23/0.188/0.0623. TV(T_a): Map 82-774, PID 2219-2571, SMC 4079-6325 N.m/s (T_a của PID/SMC bang-bang +-T_a,max). Trợ lực thừa cửa sổ: Map -3.56/-1.85/-0.65/-14.12/-83.56 %, PID trong +-1.33 %, SMC -2.45..+2.73 %. Độ lệch chuẩn qua seed: RMS lớn nhất 4.2 %, TV 1.0 %. CHƯA commit, CHƯA push (người dùng chưa bảo lần này).
 
 Lượt 23 - Vì sao T_a bang-bang ở TC1, có phải do độ dốc/độ lợi quá cao
@@ -100,7 +100,7 @@ Lượt 37 - Khuyến nghị hướng đi tổng thể (chỉ tư vấn)
 Claude khuyên: (1) Map giữ nguyên. (2) PID chính thức = PIDF + vùng chết A (|T_s| < 0.3, giống Map): có lý do (cùng vùng chết, cùng PM 45, cùng tần số cắt, độ lợi nhiễu không quá Map), gần như miễn phí; KHÔNG dùng vùng chết B (đổi trực tiếp lấy trợ lực thừa, đi ngược mục tiêu đề tài). (3) SMC áp cùng nguyên tắc: vùng chết A + nới lớp biên tới độ lợi nhiễu không quá Map + KI để bù sai số tĩnh (SMC_KI có lý do thật). (4) Chạy bộ chốt (Map, PIDF+A, SMC_KI+A) 5 seed mức high, cập nhật SoSanh.docx, commit. (5) Phần rung T_a còn lại khi lái động: ghi là hạn chế (thiếu motor/lọc) và là khoảng trống cho RL (hàm thưởng có phạt thay đổi T_a) - báo khung RL dùng cùng môi trường và cùng cách chấm. (6) Motor để sau, làm một lần cho mọi bộ cùng RL. Chờ người dùng đồng ý.
 
 Lượt 38 - Chạy bộ chốt Map / PIDF_DZ / SMC_KI_DZ (5 seed, mức high), docx mới SoSanh_DieuChinh.docx (SoSanh.docx giữ nguyên); chưa commit
-Người dùng: chạy lại như đề xuất, làm file docx khác, giữ file SoSanh hiện tại. Claude: (1) Code: Model/Sim/script/make_dead_zone_model.m (copy model + Switch_gate: T_a = 0 khi |T_s đo| < dz_Ts); Model_PIDF_DZ_s.mdl (từ Model_PIDF_s), Model_SMC_KI_DZ_s.mdl (từ Model_SMC_KI_s); Model/load_pidf_dz.m (load_pidf + dz_Ts = Ts0 của map.json = 0.3, dz_e 0), Model/load_smc_ki_dz.m; Model/SMC_KI/script/tune_smc_ki_dz.m -> data/smc_ki_dz.json (Phi 0.15 -> 0.2589, G 1000 -> 579, độ lợi nhiễu T_s->T_a 229 -> 132.5 = Map; lambda 300, k_sw 150, tau_f 10 ms, k_I 10 giữ); plot_compare_cases/make_pair_comparisons thêm màu PIDF_DZ (tím), SMC_KI_DZ (lục đậm), tiêu đề Interpreter none; tools/build_sosanh_txt.py thêm marker @DELTA (bảng trước/sau). (2) Chạy make_pair_comparisons({'Map','PIDF_DZ','SMC_KI_DZ'}, 90001:90005): Result/Compare/{Map_vs_PIDF_DZ, Map_vs_SMC_KI_DZ, PIDF_DZ_vs_SMC_KI_DZ}/, Result/{PIDF_DZ,SMC_KI_DZ}/TestCases_noise; Map chạy lại (y hệt). (3) Documents/Sim/SoSanh_DieuChinh_template.txt -> SoSanh_DieuChinh.txt -> .docx (21 hình, 10 bảng; mục 1 điều kiện + Bảng 2 quy tắc chung, 2 điều chỉnh + bảng trước/sau, 3-5 ba cặp, 6 nhận xét). KẾT QUẢ RMS e_T TC1..6: Map 0.598/0.836/0.397/0.868/1.71/0.0129; PIDF_DZ 0.367/0.106/0.0159/0.104/0.145/0.0149; SMC_KI_DZ 0.394/0.122/0.0771/0.115/0.171/0.0366. TV: Map 384/267/620/82/216/774; PIDF_DZ 1149/1116/1609/514/1576/1723 (giảm 32-79 % so PID); SMC_KI_DZ 2972/3161/5195/1292/4055/6225 (giảm 1-68 % so SMC; TC3, TC6 gần như không đổi do đường nhiễu theta2_dot/theta1). RMS T_a: Map 1.0-2.8, PIDF_DZ 2.3-3.8, SMC_KI_DZ 3.2-6.4 N.m. e_rel: PIDF_DZ <= 1.49 %, SMC_KI_DZ <= 1.28 %, Map -14.12 (TC3) / -83.56 (TC4). Độ lệch chuẩn seed lớn nhất 9.2 % (RMS), 1.3 % (TV). Hình TC1: vùng chết làm T_a = 0 giữa các đoạn cua nhưng khi giữ góc PIDF_DZ vẫn bang-bang +-T_a,max. CHƯA commit/push.
+Người dùng: chạy lại như đề xuất, làm file docx khác, giữ file SoSanh hiện tại. Claude: (1) Code: Model/Sim/script/make_dead_zone_model.m (copy model + Switch_gate: T_a = 0 khi |T_s đo| < dz_Ts); Model_PIDF_DZ_s.mdl (từ Model_PIDF_s), Model_SMC_KI_DZ_s.mdl (từ Model_SMC_KI_s); Model/load_pidf_dz.m (load_pidf + dz_Ts = Ts0 của map.json = 0.3, dz_e 0), Model/load_smc_ki_dz.m; Model/SMC_KI/script/tune_smc_ki_dz.m -> data/smc_ki_dz.json (Phi 0.15 -> 0.2589, G 1000 -> 579, độ lợi nhiễu T_s->T_a 229 -> 132.5 = Map; lambda 300, k_sw 150, tau_f 10 ms, k_I 10 giữ); plot_compare_cases/make_pair_comparisons thêm màu PIDF_DZ (tím), SMC_KI_DZ (lục đậm), tiêu đề Interpreter none; tools/build_sosanh_txt.py thêm marker @DELTA (bảng trước/sau). (2) Chạy make_pair_comparisons({'Map_6_8','PIDF_DZ','SMC_KI_DZ'}, 90001:90005): Result/Compare/{Map_vs_PIDF_DZ, Map_vs_SMC_KI_DZ, PIDF_DZ_vs_SMC_KI_DZ}/, Result/{PIDF_DZ,SMC_KI_DZ}/TestCases_noise; Map chạy lại (y hệt). (3) Documents/Sim/SoSanh_DieuChinh_template.txt -> SoSanh_DieuChinh.txt -> .docx (21 hình, 10 bảng; mục 1 điều kiện + Bảng 2 quy tắc chung, 2 điều chỉnh + bảng trước/sau, 3-5 ba cặp, 6 nhận xét). KẾT QUẢ RMS e_T TC1..6: Map 0.598/0.836/0.397/0.868/1.71/0.0129; PIDF_DZ 0.367/0.106/0.0159/0.104/0.145/0.0149; SMC_KI_DZ 0.394/0.122/0.0771/0.115/0.171/0.0366. TV: Map 384/267/620/82/216/774; PIDF_DZ 1149/1116/1609/514/1576/1723 (giảm 32-79 % so PID); SMC_KI_DZ 2972/3161/5195/1292/4055/6225 (giảm 1-68 % so SMC; TC3, TC6 gần như không đổi do đường nhiễu theta2_dot/theta1). RMS T_a: Map 1.0-2.8, PIDF_DZ 2.3-3.8, SMC_KI_DZ 3.2-6.4 N.m. e_rel: PIDF_DZ <= 1.49 %, SMC_KI_DZ <= 1.28 %, Map -14.12 (TC3) / -83.56 (TC4). Độ lệch chuẩn seed lớn nhất 9.2 % (RMS), 1.3 % (TV). Hình TC1: vùng chết làm T_a = 0 giữa các đoạn cua nhưng khi giữ góc PIDF_DZ vẫn bang-bang +-T_a,max. CHƯA commit/push.
 
 Lượt 39 - Thêm động học motor có hết bang-bang không (chỉ trả lời, ước lượng tuyến tính)
 Claude: KHÔNG tự hết. Bang-bang nằm ở LỆNH T_a do bộ điều khiển tính từ nhiễu; khâu motor 1/(tau_m s + 1) chỉ làm trơn mô-men thật tác dụng lên cột lái, lệnh vẫn nhảy +-T_a,max. tau_m 1 ms (gãy 159 Hz): chỉ suy giảm ~3 lần ở 500 Hz; tau_m 5 ms (32 Hz): ~16 lần nhưng dự trữ pha sụp (ThucTeHoa Mục 2, phân tích tuyến tính Lượt 155: Map 45.8 -> 2.7 độ, PID 54 -> 9.6 độ) -> phải thiết kế lại với tần số cắt thấp hơn (180 rad/s cho PM 45 ở 5 ms) -> chính việc hạ tần số cắt mới hạ độ lợi cao tần và giảm bang-bang thật. Quán tính motor qua hộp số đã nằm trong J_col ([1]: J2 = Jc + N^2 Jm + ...), phần còn thiếu là vòng dòng điện. Kết luận: thêm motor làm môi trường đúng hơn và buộc thiết kế lại, cách thật sự hết bang-bang là giảm độ lợi cao tần của bộ điều khiển (hạ tần số cắt chung, lọc theta2_dot/theta1 cho SMC).
@@ -141,3 +141,201 @@ Người dùng: theta2 để làm gì, dùng ở đâu, thực tế có không; 
 Claude: theta2 chỉ dùng BÊN TRONG Plant (Tires: delta_f = theta2/n_st; T_s = K(theta1 - theta2)); không bộ điều khiển nào đọc
 (Map/PID/SMC/SMC_KI đều Terminator). Thực tế đo được (encoder motor/cột lái) nhưng dư thừa: theta2 = theta1 - T_s/K.
 Đề xuất: bus cảm biến 6 tín hiệu (bỏ theta2). Đã liệt kê danh sách xóa, chờ xác nhận trước khi xóa (git sạch, khôi phục được).
+
+================================================================================
+Lượt 51
+Người dùng: commit hết trước khi xóa; không cần theta2 ra ngoài; e_T tính TRONG bộ điều khiển (Map không tính e_T); motor chỉ có trễ,
+T_a,max lấy từ bảng; làm Plant, Sensors, Ref, Motor trước, CHƯA làm bộ điều khiển.
+Claude: (1) commit snapshot 89ac4aa (chưa push). (2) Đã hoàn tác sửa dở 4 build_<ctrl>.m (bộ điều khiển chưa đụng).
+(3) Plant_s: chỉ còn 4 cổng ra đo được T_s, a_y, gamma, theta2_dot (bỏ theta2, beta ra ngoài; vẫn dùng bên trong); test_plant_s PASS.
+(4) Reference_s: chỉ còn In v, a_y / Out T_d_ref (bỏ T_s và e_T); test_reference_s PASS. Mỗi bộ điều khiển sẽ tự tính e_T = T_s - T_d_ref.
+(5) Actuator_s mới (Model/Actuator/): T_a,max(v) từ ref.json rồi trễ bậc 1 wm = 2*pi*100 Hz (Lee 2018 Bảng III), cổng ra T_a và T_a_lim
+(trước trễ, cho chống bão hòa tích phân của PID); data/actuator.json, load_actuator.m, test_actuator_s PASS (tau_m 1.592 ms đo đúng).
+(6) Sensors_s mới (Model/Sensors/, script Sim/script/build_sensors.m): 6 tín hiệu T_s, theta1, theta2_dot, v, gamma, a_y vào, <tên>_meas ra.
+LƯU Ý cho khung RL: Plant_s đổi cổng ra (không còn theta2, beta) nên RL/script/build_model_rl.m dòng 158 (Terminator cho theta2, beta) phải bỏ;
+Reference_s không còn e_T/T_s nên RL cũng phải tính e_T riêng. Khung này KHÔNG sửa file RL.
+Chưa làm: khung vòng kín chung, bộ điều khiển, xóa model/kết quả cũ (các Model_<ctrl>_s hiện đã lỗi thời vì Plant/Ref đổi giao diện).
+
+================================================================================
+Lượt 52
+Người dùng: "ok làm đi, dựng đầy đủ, chạy xong tóm gọn kết quả chi tiết".
+Claude: dựng khung vòng kín chung Sim/script/build_closed_loop.m (Plant -> Sensors -> bộ điều khiển -> Actuator, cắm theo TÊN cổng, cổng thừa
+vào Terminator); Map_s bỏ chặn T_a,max (nằm ở Actuator); calibrate_map(Kmax, outFile) thiết kế lead CÓ motor (PM >= 45 độ trên cả dải độ dốc,
+tìm r tới 60, p <= 0.4*pi/Ts); ca TK trong test_cases('TK') (đường khô, 30/60/100 km/h, cua gấp 0.35 g + sin + chỉnh lái nhỏ);
+Map/script/run_k_sweep.m quét K_max = 3..18, 3 hạt giống 91001-91003, mức nhiễu high. KẾT QUẢ: PM >= 45 độ chỉ đạt khi K_max <= 8 (1 khâu lead,
+motor 100 Hz); sai số tĩnh <= 3% ở 0.35 g cần K_max >= 12 -> hai điều kiện loại nhau, bỏ điều kiện cứng 3% (chỉ báo cáo), giữ PM cứng.
+R (RMS e_T mọi cửa sổ) phẳng từ K_max >= 6 (0.723 -> 0.708); S (RMS T_a trên 5 Hz) tăng 0.448 (K=6) -> 0.565 (K=18).
+Chốt K_max = 6 (khuỷu), ghi vào data/map.json; chạy lại TC1-TC6 (none và high seed 90001) -> Result/Map_6_8/TestCases*, Result/Map_6_8/KSweep/.
+LỖI ĐÃ GẶP VÀ SỬA: vài script nháp dùng biến vòng lặp tên K ghi đè K (độ cứng thanh xoắn) của Plant trong base workspace -> số liệu sai
+(a_y 1.79 m/s^2); đã bỏ các kết quả đó, chạy lại bằng biến Kmap. Bản quét K_max chạy trong hàm nên không bị ảnh hưởng.
+Chưa làm: PID/SMC/SMC_KI vào khung mới, xóa model và kết quả cũ, sửa ref.txt/CLAUDE.md, commit.
+
+================================================================================
+Lượt 53
+Người dùng: theo bạn K nên là bao nhiêu, cấu trúc Map gồm những gì, cách tính ntn.
+Claude: đề xuất K_max = 6 (khuỷu của R theo S, PM 45.1 độ, lead z = 60, p = 780 rad/s); K_max = 7 là phương án dự phòng. Cấu trúc Map: lấy mẫu ZOH
+1 ms -> bảng mô-men 2-D T_a = sgn(T_s)*M(v,|T_s|) (hiệu chỉnh ở mu = 0.8, vùng chết 0.3 N.m, giới hạn độ dốc K_max) -> 1 khâu lead Tustin ->
+T_a_cmd; T_a,max(v) và trễ motor nằm ở Actuator. Giải thích công thức hiệu chỉnh và chọn K. Không chạy thêm gì.
+
+================================================================================
+Lượt 54
+Người dùng: làm lại Map với K đã cập nhật, các bước y chang Map cũ, dùng hệ plant - Ref - Sensor - Motor (gọi là PRSM = mọi phần trừ bộ điều khiển).
+Claude: calibrate_map(6) -> data/map.json (K_max = 6, lead z = 60, p = 780 rad/s, PM 45.06, GM 5.53, có motor); build_map (không còn chặn T_a,max);
+test_map_s và test_model_map_s (cập nhật cho khung PRSM) đều PASS; build_closed_loop('Map_6_8'); export_map_results (Result/Map_6_8/Calibration, OverAssist,
+TestCases; hình PM có motor); xóa các thư mục nhiễu cũ high_seed90002-90005 (dữ liệu bản K_max = 18 không motor); Documents/Map_6_8/map.txt viết lại
+(mục 2.2 motor, 2.4 lead có motor, mục 2.5 mới chọn K_max bằng quét, TC1-TC6 số liệu mới) -> map.docx, Map.xlsx; CLAUDE.md dòng Map cập nhật.
+Đã xóa build_model_map.m (thay bằng Sim/script/build_closed_loop.m). Còn lệch: PhanBien.txt dòng 42 và SoSanh*.txt nói K_max = 18 (SoSanh giữ nguyên theo yêu cầu).
+Chưa làm: PID/SMC/SMC_KI vào PRSM, xóa model/kết quả cũ còn lại, commit.
+
+================================================================================
+Lượt 55
+Người dùng: (đang bàn Map, chưa làm tiếp) nếu giữ 1 lead thì PID và SMC có thể tốt hơn không.
+Claude: trả lời lý thuyết, không chạy gì. Có: PID (2 không điểm + khâu lọc + tích phân) và SMC có thể đạt cùng dự trữ pha với độ lợi tần số cao thấp
+hơn 1 lead của Map (hai lead đã cho 9.0 so với 13.0 ở K_max = 6); phần "tốt hơn" về độ ồn/PM đến từ cấu trúc bù, không phải từ việc bám mu.
+Chỉ tiêu trợ lực thừa (e_rel sau khi mu đổi) không phụ thuộc số khâu lead. Đề xuất: chỉnh PID/SMC trong PRSM rồi so; nếu độ ồn của chúng nằm
+giữa Map 1 lead và Map 2 lead thì thêm Map 2 lead làm chuẩn mạnh hơn để công bằng. Chưa có số PID/SMC trong PRSM.
+
+================================================================================
+Lượt 56
+Người dùng: thầy hỏi SMC không có khâu D tại sao vẫn bang-bang.
+Claude: SMC không có khâu D tường minh nhưng mặt trượt s = theta2_dot - theta1_dot_hat - (lambda/K)*e_T (+k_I*z) chứa hai tín hiệu đạo hàm
+(tốc độ cột lái đo, và đạo hàm lọc của theta1 với tau_f = 10 ms) nên là PD ngầm; độ lợi lớp biên J_col*k_sw/Phi = 110 N.m/(rad/s)
+(k_sw = 150, Phi = 0.15, J_col = 0.11); nhiễu trong s (theta2_dot: một bước 0.07 rad/s; đạo hàm theta1: cỡ 0.17 rad/s - ƯỚC LƯỢNG) lớn hơn Phi
+nên sat bão hòa +-J_col*k_sw = 16.5 N.m, bị motor chặn ở T_a,max (6.5-7.8 N.m). Độ lợi nhiễu T_s -> T_a của SMC (Phi = 0.15) là 229, của SMC_KI_DZ
+(Phi = 0.259) là 132.5. Không chạy thêm gì.
+
+================================================================================
+Lượt 57
+Người dùng: tóm lại kết quả K của ta, đánh giá so với lúc lấy 18.
+Claude: tổng hợp, không chạy thêm. So 3 cấu hình (TC1-TC6, nhiễu high, hạt giống 90001): cũ K_max = 18 không motor (git), K_max = 18 có motor
+(PRSM, lead PM 31.7 độ), K_max = 6 có motor. RMS e_T gần như không đổi (chênh <= 0.01 N.m, TC6 +0.009). TV(T_a) có nhiễu: cũ 383/267/617/82/215/772;
+K18+motor 249/168/379/50/140/519; K6 174/145/293/42/117/324 N.m/s. Giảm của K6 so K18+motor: 14-38%; so cũ: 46-58% (một phần ~35% do trễ motor).
+Cái giá: sai số xác lập tăng (TC1 tới 5.3%, TC3 trước khi mu giảm +4.9% so với +0.41%), e_rel ở 0.35 g 12.8% so với 2.1%.
+
+================================================================================
+Lượt 58
+Người dùng: đánh giá K dựa trên những gì; quét K với độ phân giải bao nhiêu (1, 0.5 hay 2).
+Claude: giải thích cơ sở đánh giá (PRSM có nhiễu high, ca TK, R, S, TV, e_rel, điều kiện PM >= 45 với lưới thiết kế lead, điểm J và w, 3 hạt giống)
+và độ phân giải: K = 3..10 bước 1, sau đó 12, 15, 18 (bước 2-3, vùng không đạt PM nên thô cũng không ảnh hưởng). Bước 1 đủ vì chênh R/S giữa hai K liền kề
+(1% và 11% giữa 6 và 7) lớn hơn độ lệch chuẩn giữa hạt giống (~0.3%); bước 0.5 sẽ nằm trong sai số lưới lead (z bước 10, p/z nguyên). Điểm yếu: TK chỉ đường khô,
+trợ lực thừa do mu không nằm trong điểm số; PM ở K=9 (44.2) sát ngưỡng nên phụ thuộc lưới. Có thể kiểm tra K = 5.5, 6.5, 7.5 nếu cần. Không chạy thêm.
+
+================================================================================
+Lượt 59
+Người dùng: baseline là để xe chạy bình thường như thực tế; người ta ưu tiên độ êm và đáp ứng trên ~90% trường hợp, map tĩnh không thỏa cả cực đoan.
+Claude: đồng ý hướng (chưa có nguồn cho con số 90%). Nhưng chỉ ra K_max = 6 hy sinh cả vùng bình thường: TC1 lệch 3.8% ở 0.2 g và 5.3% ở 0.3 g
+(40 km/h). Độ dốc tự nhiên 0.1-0.3 g là 8.5-10.5 (v >= 40 km/h), 17.9 ở 20 km/h -> muốn đúng vùng bình thường cần K_max ~ 10-11 (bỏ 20 km/h),
+mà 1 lead chỉ đạt PM 45 độ tới K = 8 -> có thể cần 2 lead. Đề xuất tiêu chí mới: e_rel <= 3% trong vùng bình thường (<= 0.3 g, v >= 30 km/h) là điều
+kiện cứng, cho phép lệch trên 0.3 g; rồi chọn K có S nhỏ nhất. Chờ người dùng chốt, không chạy.
+
+================================================================================
+Lượt 60
+Người dùng: thực tế người ta hay làm ntn; xét vận tốc nhỏ quá thì bị gì.
+Claude: thực tế (kiến thức chung, chưa có nguồn trong References trừ chỗ ghi [1], [4]): đường trợ lực theo vận tốc, hiệu chỉnh chủ quan bằng lái thử trên
+đường khô, nặng dần theo vận tốc; vùng chết + bão hòa ([4]); khâu bù ổn định thiết kế cho trường hợp dốc nhất là đỗ xe ([1] Bảng III: K_v đỗ xe = 35,
+dùng 2 khâu lead mục IV.B); lọc/giảm chấn/bù ma sát cho cảm giác. Vận tốc nhỏ: độ dốc lớn nhất (20 km/h cần 17.9) -> khó ổn định, ồn nhất; mô hình của ta
+không đúng ở đỗ xe (bicycle chia cho v, không có mô-men cọ lốp tại chỗ, bảng T_d,ref của [5] chỉ từ 20 km/h). Đề xuất: vùng bình thường v >= 30 km/h,
+a_y <= 0.3 g; 20 km/h chấp nhận lệch; đỗ xe ngoài phạm vi. Không chạy.
+
+================================================================================
+Lượt 61
+Người dùng: chia K theo vận tốc (tốc cao K nhỏ, tốc thấp K lớn), kiểu nhiều map nhỏ ghép lại, được không.
+Claude: được, nhưng K_max(v) một mình không giảm ồn: ồn = độ dốc thực tại điểm làm việc x độ lợi tần số cao của khâu bù; K_max chỉ cắt chỗ độ dốc
+tự nhiên vượt nó. Khâu bù cố định phải ổn định với K lớn nhất mọi vận tốc -> muốn lợi phải lập lịch cả khâu bù theo v. Số liệu độ dốc cần trong
+0.1-0.3 g: 20-30 km/h 13.2-17.9; 35-60 km/h 10.1-11.3; 65-100 km/h 7.9-10.5 -> tốc cao chỉ nhỏ hơn chút, vẫn > 8 (giới hạn 1 lead) -> vẫn cần 2 lead.
+"Multi-Map" của [4] là đổi map theo mặt đường (mu), không dùng cho baseline vì baseline không được biết mu. Đề xuất: K_max(v) theo bảng độ dốc cần,
+một khâu bù 2 lead cố định cho K lớn nhất ở v >= 30 km/h (~11.3), 20-25 km/h chấp nhận lệch. Chờ chốt, không chạy.
+
+================================================================================
+Lượt 62
+Người dùng: thực tế 0-40 km/h chạy nhiều nhất, sai số lớn nhất ở đó là không giống thực tế.
+Claude: đồng ý ưu tiên tốc thấp. Đính chính: với K_max = 6 hiện tại, sai số ở 20 km/h nhỏ (<= 0.27%, vì mô hình chỉ đạt 0.2 g ở 20 km/h, độ dốc cần
+0.1-0.2 g là 7.9); lỗi lớn nhất vùng bình thường ở 40 km/h 0.3 g (5.3%) và 0.2 g ở 40/60 km/h (3.8/3.2%). Dưới 20 km/h không có dữ liệu giá trị đặt
+([5] từ 20 km/h) và mô hình không đúng. Tính nhanh (không ghi file) khâu bù có motor, PM >= 45: K 11.3 cần 2 lead (z 110, p 440 mỗi tầng, độ lợi
+tần số cao 16, PM 45.4); K 18 cần 2 lead (z 140, p 700, độ lợi 25, PM 46.6); 1 lead không đạt (40.2 và 31.7 độ). Đề xuất lập lịch theo vận tốc 2 vùng:
+v <= 30 km/h K 18 + khâu bù K 18; v >= 40 km/h K 11.3 + khâu bù K 11.3; trộn tuyến tính 30-40 km/h. Chờ chốt.
+
+================================================================================
+Lượt 63
+Người dùng: còn cái 6 thì sao, sao không lấy mốc 6 12 18.
+Claude: 6/12/18 hợp lý và khớp số liệu hơn 2 vùng: K_max = 6 hiện tại, sai số tĩnh trong 0.1-0.3 g theo vận tốc (Result/Map_6_8/Calibration/
+Map_dry_road_steady_error.csv): <= 3% (thực tế <= 2.1%) khi v >= 65 km/h; 3.2-4.2% ở 45-60 km/h; 5.3-11.6% ở 25-40 km/h; 20 km/h chỉ 1.6% (mô hình chỉ 0.2 g).
+Đề xuất 3 bậc: v >= 65 -> K 6 (1-2 lead); 35-60 -> K 12 (2 lead, độ lợi tần số cao ~16-18); <= 30 -> K 18 (2 lead, 25). Chuyển tiếp trộn tuyến tính.
+Cần quyết: có lập lịch khâu bù theo v hay dùng 1 khâu 2-lead cho K lớn nhất (ồn hơn ở tốc cao). Chờ chốt, không chạy.
+
+================================================================================
+Lượt 64
+Người dùng: tất cả để 1 khâu lead được không (mỗi K một khâu, không 2 lead).
+Claude: tính (không ghi file, kerr.m trong scratchpad) sai số xác lập tối đa (% giá trị đặt) trong 0.1-0.3 g theo vận tốc, mỗi K một lead:
+K=6 (PM 45.1, p/z 13): 20 km/h 2%, 25: 12, 30: 8, 35: 7, 40: 5, 45-55: 4, 60: 3, >= 65: 1-2.
+K=8 (PM 45.4, p/z 19): 20: 1, 25: 6, 30: 3, 35-60: 1, >= 65: 0.
+K=10 (PM 42.4): 25: 3. K=12 (PM 39.2): 25: 1. K=18 (PM 31.7): 20-25: 1-0.
+Kết luận: 1 lead đạt PM >= 45 tới K = 8 -> đủ cho v >= 30 km/h trong 3%. Đề xuất 2 bậc: K = 8 (z 60, p 1140) cho v <= 60 km/h, K = 6 (z 60, p 780) cho
+v >= 65 km/h, trộn tuyến tính ở chuyển tiếp; 25 km/h còn 6% (hoặc K = 10 với PM 42.4 độ). Chờ chốt, không chạy.
+
+================================================================================
+Lượt 65
+Người dùng: 6% ở đây nghĩa là gì.
+Claude: 6% = sai số xác lập |T_s - T_d,ref| / T_d,ref lớn nhất trong 0.1-0.3 g, đường khô, ở 25 km/h với K = 8. Tính chi tiết (k25.m, scratchpad):
+K=8: 0.1-0.2 g sai số ~0.1%; 0.25 g +2.8% (+0.049 N.m); 0.3 g +6.2% (+0.111 N.m trên T_d,ref 1.795). K=6: 0.25 g +6.3%, 0.3 g +11.6% (+0.207 N.m).
+Dấu dương = tay lái nặng hơn giá trị đặt (bản đồ cấp ít hơn điểm hiệu chỉnh). Chỉ xuất hiện ở phần trên của dải (>= 0.25 g), không phải toàn dải.
+
+================================================================================
+Lượt 66
+Người dùng: 0.3 g nghĩa là cua rất gắt đúng không.
+Claude: a_y = 0.3 g (2.94 m/s^2) là cua khá gắt so với lái thường ngày nhưng chưa phải giới hạn (lốp khô giữ được ~0.8 g). Bán kính R = v^2/a_y:
+25 km/h -> 16.4 m (vòng xoay/rẽ ngã tư gắt); 40 km/h -> 42 m; 60 km/h -> 94 m; 100 km/h -> 262 m (đường nhánh cao tốc). Con số "lái thường < 0.3 g" là kiến thức chung,
+chưa có nguồn trong References. Ở 25 km/h chỉ vùng trên cùng (0.25-0.3 g) có sai số.
+
+================================================================================
+Lượt 67
+Người dùng: làm như đề xuất: v <= 60 km/h K_max = 8, v >= 65 km/h K_max = 6, chạy lại 6 TC cho Map.
+Claude: calibrate_map() mặc định = 2 bậc (K_max 8 cho 20-60 km/h, 6 cho 65-100 km/h), mỗi bậc một lead: K 8 -> z 60, p 1140, PM 45.4, GM 4.82; K 6 -> z 60, p 780, PM 45.1, GM 5.53.
+Bảng 2-D nội suy tự nhiên giữa hàng 60 và 65 km/h; hai lead chạy song song, trộn đầu ra theo w(v) (0 tới 60, 1 từ 65 km/h, tuyến tính). Kiểm tra PM vùng trộn
+(Kv giảm 8 -> 6): >= 45.1 độ. Sửa: calibrate_map.m (Kmax vô hướng/vector/2 bậc, out.lead, out.lead_hi, out.blend_kmh, out.Kmax_by_speed), load_map_6_8.m
+(map_lead_hi_*, map_blend_*), build_map.m (T_a_c có 2 lead + Lookup_w), test_map_s.m (2 lead + trộn), run_k_sweep.m (lead_hi). test_map_s và test_model_map_s PASS.
+Chạy lại TC1-TC6 (none và high seed 90001) -> Result/Map_6_8/TestCases*. Kết quả: TC3-TC5 (80-100 km/h) giống hệt K = 6; TC1/TC2/TC6 (có <= 60 km/h) bám tốt hơn
+(TC1 40 km/h 0.2/0.3 g: 3.8/5.3% -> 0.8/0.5%; 60 km/h 0.2 g 3.2 -> 0.7%) nhưng ồn hơn (TV high TC1 174 -> 235, TC2 145 -> 177, TC6 324 -> 591 N.m/s).
+Chưa cập nhật map.txt/docx, export_map_results.m (hình PM dùng 1 lead), tools/export_xlsx.py (lead_hi) và CLAUDE.md. Chưa commit.
+
+================================================================================
+Lượt 68
+Người dùng: cập nhật txt, docx để xem; xóa hết các cái nào đã out date.
+Claude: map.txt viết lại cho Map 2 bậc (K_max 8 tới 60 km/h, 6 từ 65 km/h; 2 lead trộn theo v; mục 2.5 chọn K_max theo vận tốc: Bảng 8 sai số theo K và vận tốc,
+Bảng 10 quét K trên ca TK, Hình 5-6), map.docx (12 hình, 10 bảng) và Map.xlsx (tools/export_xlsx.py ghi cả 2 lead). Chạy lại export_map_results.m, scan_k_by_speed.m (mới).
+XÓA (đã có trong commit 89ac4aa): Model_PID/PIDF/PIDZ/PIDF_DZ/SMC/SMC_KI/SMC_KI_DZ_s.mdl+.slxc; load_pidf*.m, load_smc_ki_dz.m, data/pidf.json, data/smc_ki_dz.json;
+build_model_pid*/smc*/smc_ki*, test_model_pid/smc/smc_ki*, tune_pidf, tune_smc_ki_dz, find_ultimate_gain, scan_kcu_grid; Sim/script: compare_*.m, run_pidz_study, make_dead_zone_model;
+Map: test_map.m, test_model_map.m, build_model_map.m; Result/PID, SMC, PIDF, PIDF_DZ, PIDZ, SMC_KI_DZ, Result/Compare/* (trừ Map_vs_PID_vs_RL, RL), KSweep score/traces; Documents/Sim/SoSanh*.*;
+tools/build_sosanh_txt.py; cache slprj/.slxc ngoài RL. GIỮ: RL, controller blocks và build_<ctrl>.m, tune_pid.m, load_<ctrl>.m (sẽ sửa khi đưa vào PRSM).
+Chưa commit.
+
+================================================================================
+Lượt 69
+Người dùng: (ảnh TC1) sao vẫn còn vọt lố, mấy cái đỉnh màu xanh T_s.
+Claude: đo bước đánh lái đầu của TC1 (20 km/h, T_d,ref ~ 1.0 N.m), 3 cấu hình (peak.m trong scratchpad): Map + ma sát khô như mô hình: đỉnh T_s 4.38 N.m (T_a chạm 3.74 =
+T_a,max(20 km/h)); Map, bỏ ma sát (T_f = 0): đỉnh 2.39; không trợ lực + ma sát: đỉnh 8.07 (xác lập 2.70). Cả 3 cùng xác lập đúng khi đã ổn định (Map 1.00).
+Kết luận: đỉnh là đáp ứng quá độ khi vào bậc đánh lái (ma sát khô ~54% + quán tính cột lái/trễ trợ lực + chạm giới hạn T_a,max), một đỉnh rồi tắt, không dao động.
+Không phải mất ổn định; Map giảm đỉnh từ 8.07 xuống 4.38. Không sửa gì.
+
+================================================================================
+Lượt 70
+Người dùng: Map calib theo đường khô, TC1 là ca khô, phải bám tuyệt đối, thầy hỏi thì sao.
+Claude: trả lời: hiệu chỉnh là TĨNH (xác lập: ma sát/quán tính biến mất vì vận tốc góc = 0), không bảo đảm lúc đang đánh lái; xác lập TC1 <= 0.069 N.m (2.1%);
+đỉnh quá độ 4.38 vs giá trị đặt 1.0 (bỏ ma sát 2.39; không trợ lực 8.07). Đã thêm mục M1 vào Documents/PhanBien.txt (section M) và sửa dòng K_max 18 lỗi thời trong section P.
+
+================================================================================
+Lượt 71
+Người dùng: chốt Map; qua SMC, lên KẾ HOẠCH thiết kế SMC tối ưu, tiêu chí như Map (cân bằng đáp ứng và khuếch đại nhiễu), chưa làm; coi như chưa biết Map, thiết kế từ PRSM.
+Claude: đưa kế hoạch 7 bước (chỉ kế hoạch, không chạy): (0) chuẩn hóa khối SMC cho PRSM (e_T tính trong, bỏ chặn T_a,max, chống bão hòa tích phân từ T_a_lim);
+(1) chọn cấu trúc: SMC_KI làm chính, SMC không tích phân để so; (2) tuyến tính hóa trong lớp biên -> hàm truyền vòng có motor, ZOH, chu kỳ cảm biến; PM/GM và 3 kênh
+nhiễu (T_s, theta2_dot, theta1); (3) biến thiết kế lambda, G = k_sw/Phi, tau_f, k_I (+ tùy chọn lọc theta2_dot tau_v); (4) sàng lọc giải tích (PM >= 45, sai số tĩnh)
+rồi mô phỏng ca TK (91001-91003, nhiễu high) chỉ cho ứng viên qua cổng -> mặt Pareto R-S, chọn khuỷu; (5) kiểm tra lập lịch theo vận tốc nếu cần; (6) TC1-TC6 none + high
+5 hạt giống, e_rel sau mu đổi; (7) tài liệu DieuKhien_SMC.txt. Chờ người dùng chốt các điểm mở.
+
+================================================================================
+Lượt 72
+Người dùng: làm SMC truyền thống trước (không tích phân), chưa lọc gì, giữ điều kiện cứng như Map; chưa hiểu điểm 4 (chọn khuỷu trên mặt Pareto), giải thích chi tiết.
+Claude: giải thích mặt Pareto (tập thiết kế không thể cải thiện R mà không làm xấu S), 3 cách chọn (trọng số J phụ thuộc w; ngưỡng êm S_max cần nguồn; khuỷu không cần trọng số)
+và quy tắc khuỷu định lượng: chuẩn hóa R, S về [0,1] trên các điểm đạt cổng, chọn điểm xa nhất phía dưới đường nối hai đầu. Ví dụ số liệu Map (TK): khoảng cách K4 0.376,
+K5 0.404, K6 0.407, K7 0.211 -> K6. Lưu ý: SMC không tích phân + điều kiện sai số tĩnh <= 3% sẽ ép lớp biên hẹp -> độ lợi nhiễu cao (sai số tĩnh x độ lợi nhiễu = hằng số).
+Chờ xác nhận quy tắc khuỷu rồi bắt đầu bước 0.

@@ -1,0 +1,50 @@
+{
+  "x_note": "Gain-scheduled PI controller (PID block with Kd = 0). Documents/PI_2K/pi.txt. Written by PI/script/select_pi.m from Result/PI_2K/Design/PI_design_grid.csv.",
+  "Ts_ctrl": {
+    "value": 0.001,
+    "unit": "s",
+    "desc": "ECU sample time, same as the Map"
+  },
+  "v_breakpoints_kmh": {
+    "value": [
+      60,
+      65
+    ],
+    "unit": "km/h",
+    "desc": "Speed tiers for gain scheduling (like Map)"
+  },
+  "Kp": {
+    "value": [
+      0.257937342057882,
+      0.118559212311702
+    ],
+    "unit": "-",
+    "desc": "proportional gains [low speed, high speed]"
+  },
+  "Ki": {
+    "value": [
+      8.02164183714413,
+      5.92796061558508
+    ],
+    "unit": "1/s",
+    "desc": "integral gains (Forward Euler)"
+  },
+  "design": {
+    "wc_design_rad_s": [
+      7,
+      5
+    ],
+    "Ti_s": [
+      0.0321551806094739,
+      0.02
+    ],
+    "pm_dry_deg": [
+      98.4329699673522,
+      92.7023171551413
+    ],
+    "gm_dry": [
+      2.36267766413511,
+      2.91140444124673
+    ]
+  }
+}

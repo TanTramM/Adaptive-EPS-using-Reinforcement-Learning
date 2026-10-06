@@ -4,7 +4,7 @@ function T = measure_rl_cost(nRuns)
 %   T = measure_rl_cost()        2 runs per configuration (the first includes compilation)
 %
 %   Configurations (30 s requested, the fixed rl_scenario scenario, ideal sensors):
-%     Map baseline (Model_Map_s)                 reference: the controller with the cheapest loop
+%     Map baseline (Model_Map_6_8_s)                 reference: the controller with the cheapest loop
 %     RL model, T_a = 0                          agent switched off (the agent block still evaluates its network)
 %     RL model, untrained agent, normal mode     the agent drives T_a
 %     RL model, untrained agent, accelerator     same, Simulink Accelerator mode
@@ -13,7 +13,7 @@ function T = measure_rl_cost(nRuns)
 %   run after a fraction of a second (|e_T| > 10 N.m) and the timing would not describe full-length episodes. The simulated time of
 %   every row is the time actually reached (last logged sample), not the requested one.
 %   Result: Result/RL/Step1/RL_step1_timing.csv  Configuration, Mode, Run, Simulated_s, Wall_s, Wall_per_simulated_s.
-%   Run first: run('<Model>/load_map.m') (Map reference) and then run('<Model>/load_rl.m'); the models must be built
+%   Run first: run('<Model>/load_map_6_8.m') (Map reference) and then run('<Model>/load_rl.m'); the models must be built
 %   (Model_RL_s is built by rl_env if missing).
 
 if nargin < 1, nRuns = 2; end
@@ -25,7 +25,7 @@ sc = rl_scenario(40, 0.774, 0.3, 12, tEnd);
 rows = {};
 
 % ---- Map baseline ----
-mapName = 'Model_Map_s';
+mapName = 'Model_Map_6_8_s';
 if ~bdIsLoaded(mapName), load_system(fullfile(modelDir, [mapName '.mdl'])); end
 for r = 1:nRuns
     inM = Simulink.SimulationInput(mapName);
@@ -35,7 +35,7 @@ for r = 1:nRuns
     inM = inM.setModelParameter('StopTime', num2str(tEnd));
     t0 = tic; soM = sim(inM); w = toc(t0);
     tm = soM.get('log_T_s').Time(end);
-    rows(end + 1, :) = {'Map baseline (Model_Map_s)', 'normal', r, tm, w, w / tm}; %#ok<AGROW>
+    rows(end + 1, :) = {'Map baseline (Model_Map_6_8_s)', 'normal', r, tm, w, w / tm}; %#ok<AGROW>
     fprintf('Map baseline run %d: %.2f s wall for %.2f s simulated\n', r, w, tm);
 end
 close_system(mapName, 0);

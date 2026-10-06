@@ -99,7 +99,7 @@ Mục 5. Nhiễu mặt đường (mô-men giật ngược lên thanh răng)
     (huấn luyện đã đo khoảng 6.6 ms máy cho mỗi bước 1 ms, 1e6 bước khoảng 1.8 giờ).
   - Làm trước thứ 7: Mục 0 (rút gọn: tách giá trị đo và thật, tập seed huấn luyện/kiểm tra, vài seed kiểm tra) và Mục 1 (nhiễu T_s và các tín hiệu đo, mức tự chọn hoặc quét 3 mức). Hoãn: Mục
     2-5. Lý do hoãn Mục 2: phải thiết kế lại Map (calibrate_map, designLead) và PID, đụng vào kết quả Map đã chốt, rủi ro lớn trong 1 ngày.
-  - Dự kiến: tối thứ 5 (nay): viết tài liệu này, chốt thiết kế Mục 0-1. Thứ 6 sáng: dựng Sensors và khối Reference chấm điểm, nối vào Model_Map_s, Model_PID_s, Model_RL_s, test; thứ 6 chiều:
+  - Dự kiến: tối thứ 5 (nay): viết tài liệu này, chốt thiết kế Mục 0-1. Thứ 6 sáng: dựng Sensors và khối Reference chấm điểm, nối vào Model_Map_6_8_s, Model_PID_s, Model_RL_s, test; thứ 6 chiều:
     chốt quan sát và phần thưởng RL (bước 2), bộ sinh kịch bản huấn luyện tối thiểu (bước 3), huấn luyện thử 20-30 phút kiểm tra agent có học; thứ 6 tối (khoảng 18:00): chạy huấn luyện chính
     qua đêm; thứ 7 7:00-10:00: đánh giá agent trên 1-2 ca thử và Map, PID có nhiễu, vẽ hình.
   - Rủi ro: lần huấn luyện đầu có thể không học được. Khi đó kết quả đem báo cáo vẫn có: Map và PID trên môi trường có nhiễu (không phụ thuộc RL), khung RL, đường cong học, và các khâu thực

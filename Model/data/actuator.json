@@ -1,0 +1,4 @@
+{
+  "x_note": "Actuator (motor) of the closed-loop models. Model: assist limit T_a,max(v) (data/ref.json, field Ta_max, Documents/Ref/ref.txt section 1.5) followed by a first-order lag Gm(s) = wm/(s + wm), Lee 2018 equation (10). Bandwidth fm = 100 Hz from Lee 2018 Table III. Motor capacity (Kt*i_m*I_max) is not modelled: no sourced value yet, T_a,max(v) of the Ref is the only limit. Read by Model/load_actuator.m.",
+  "fm": { "value": 100, "unit": "Hz", "ref": "Lee 2018 Table III (motor bandwidth)" }
+}

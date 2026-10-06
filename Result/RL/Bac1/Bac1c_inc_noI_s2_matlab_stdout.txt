@@ -1,4 +1,4 @@
-load_map: torque map 17 speeds x 251 |T_s| points, dead band 0.3 N.m, max slope 18, T_a,max 3.74-7.80 N.m, 1 lead stage (zero 80, pole 680 rad/s), Ts_ctrl = 0.001 s
+load_map_6_8: torque map 17 speeds x 251 |T_s| points, dead band 0.3 N.m, max slope 18, T_a,max 3.74-7.80 N.m, 1 lead stage (zero 80, pole 680 rad/s), Ts_ctrl = 0.001 s
 Loaded plant parameters (data/params.json): Cluster1 [K, J_col, C_col, T_f, c], Cluster2 [m, l_f, l_r, g, C_alpha_f, C_r, C, E, n_st, e_p0, t_0], Cluster3 [Iz] (+ m,l_f,l_r reused from Cluster2)
 Computed derived quantities (load_derived.m): F_zf=9097.46 N, F_zr=6333.67 N
 Loaded data/ref.json (fine table): 17 speeds x 17 a_y points, T_d,ref(0) = 0

@@ -1,7 +1,7 @@
 function plot_compare_cases(ctrlList, level, runSeed)
 %PLOT_COMPARE_CASES One figure per test case: T_s (with T_d,ref), e_T and T_a of several controllers on the same axes.
 %
-%   plot_compare_cases({'Map', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'low' | 'high', one noise seed
+%   plot_compare_cases({'Map_6_8', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'low' | 'high', one noise seed
 %
 %   Reads the signal files written by run_test_cases(ctrl, level, runSeed) (Result/<ctrl>/TestCases for level none, else
 %   Result/<ctrl>/TestCases_noise/<level>_seed<seed>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
@@ -82,7 +82,7 @@ end
 
 function rgb = colorOf(ctrl)
     switch ctrl
-        case 'Map',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'Map_6_8',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
         case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
         case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'SMC_KI', rgb = [0.910 0.482 0.643];   % #e87ba4 magenta

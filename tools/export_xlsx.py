@@ -48,23 +48,30 @@ for k, t in enumerate(m['Ts_breakpoints_Nm']):
     ws.append([t] + [float(x) for x in tab[:, k]])
 
 ws = wb['Tham số']
-L = m['lead']
-for r in range(2, ws.max_row + 1):
-    name = ws.cell(r, 1).value
-    if name == 'K_max':
-        ws.cell(r, 2).value = m['Kmax']['value']
-    elif name == 'z_l':
-        ws.cell(r, 2).value = L['zero_rad_s']
-    elif name == 'p_l':
-        ws.cell(r, 2).value = L['pole_rad_s']
-    elif name == 'Độ dự trữ pha nhỏ nhất':
-        ws.cell(r, 2).value = round(L['min_phase_margin_deg'], 1)
-    elif name == 'Độ dự trữ biên nhỏ nhất':
-        ws.cell(r, 2).value = round(L['min_gain_margin'], 2)
-    elif name == 'Hệ số tử số H(z)':
-        ws.cell(r, 2).value = '[' + ' '.join('%.6f' % x for x in L['num']) + ']'
-    elif name == 'Hệ số mẫu số H(z)':
-        ws.cell(r, 2).value = '[' + ' '.join('%.6f' % x for x in L['den']) + ']'
+clear(ws)
+L, H = m['lead'], m['lead_hi']
+fmt = lambda x: '[' + ' '.join('%.6f' % q for q in x) + ']'
+for row in [
+        ['T_ctl', m['Ts_ctrl']['value'], 's', 'Chu kỳ lấy mẫu của vòng trợ lực', 'Tự chọn(8)'],
+        ['T_s0', m['Ts0']['value'], 'N.m', 'Vùng chết của bản đồ', 'Tự chọn(6)'],
+        ['K_max bậc thấp (20-60 km/h)', L['K_max'], '-', 'Độ dốc lớn nhất của bản đồ ở vận tốc thấp', 'Tự chọn(7)'],
+        ['K_max bậc cao (65-100 km/h)', H['K_max'], '-', 'Độ dốc lớn nhất của bản đồ ở vận tốc cao', 'Tự chọn(7)'],
+        ['Vùng trộn hai khâu bù [km/h]', '%g - %g' % tuple(m['blend_kmh']), 'km/h', 'Trọng số của khâu bậc cao tăng tuyến tính từ 0 lên 1', 'Tự chọn(7)'],
+        ['z_l bậc thấp', L['zero_rad_s'], 'rad/s', 'Điểm không của khâu lead bậc thấp', 'Thiết kế theo tiêu chí của [1]'],
+        ['p_l bậc thấp', L['pole_rad_s'], 'rad/s', 'Điểm cực của khâu lead bậc thấp', 'Thiết kế theo tiêu chí của [1]'],
+        ['z_l bậc cao', H['zero_rad_s'], 'rad/s', 'Điểm không của khâu lead bậc cao', 'Thiết kế theo tiêu chí của [1]'],
+        ['p_l bậc cao', H['pole_rad_s'], 'rad/s', 'Điểm cực của khâu lead bậc cao', 'Thiết kế theo tiêu chí của [1]'],
+        ['Độ dự trữ pha nhỏ nhất bậc thấp', round(L['min_phase_margin_deg'], 1), 'độ', 'Với K_v từ 0.5 tới K_max, k_r đường khô và k_r = 0, có motor', 'Tính toán'],
+        ['Độ dự trữ pha nhỏ nhất bậc cao', round(H['min_phase_margin_deg'], 1), 'độ', 'Như trên', 'Tính toán'],
+        ['Độ dự trữ biên nhỏ nhất bậc thấp', round(L['min_gain_margin'], 2), 'lần', 'Như trên', 'Tính toán'],
+        ['Độ dự trữ biên nhỏ nhất bậc cao', round(H['min_gain_margin'], 2), 'lần', 'Như trên', 'Tính toán'],
+        ['Hệ số tử số H(z) bậc thấp', fmt(L['num']), '-', 'Một khâu lead rời rạc (Tustin)', 'Tính toán'],
+        ['Hệ số mẫu số H(z) bậc thấp', fmt(L['den']), '-', 'Một khâu lead rời rạc (Tustin)', 'Tính toán'],
+        ['Hệ số tử số H(z) bậc cao', fmt(H['num']), '-', 'Một khâu lead rời rạc (Tustin)', 'Tính toán'],
+        ['Hệ số mẫu số H(z) bậc cao', fmt(H['den']), '-', 'Một khâu lead rời rạc (Tustin)', 'Tính toán'],
+        ['ω_m (motor)', round(L['motor_wm_rad_s'], 1), 'rad/s', 'Tần số cắt của khâu trễ motor (100 Hz)', '[1] (Bảng III)'],
+        ['μ hiệu chỉnh', m['calibration_mu'], '-', 'Hệ số bám khi hiệu chỉnh bản đồ', '[4]']]:
+    ws.append(row)
 
 ws = wb['T_a,max']
 clear(ws)

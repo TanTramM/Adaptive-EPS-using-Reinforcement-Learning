@@ -1,4 +1,4 @@
-function TC = test_cases()
+function TC = test_cases(which)
 %TEST_CASES The two standard test cases used for EVERY controller (Map, PID, SMC, RL, ...).
 %
 %   TC(1) 'TC1_dry_calibration'  dry road (mu = 0.8), speeds 20, 40, 60, 80, 100 km/h in turn; at every speed the
@@ -15,6 +15,10 @@ function TC = test_cases()
 %   theta1_ss = n_st*delta_f + T_d,ref/K. When mu drops the driver keeps the same angle (he does not know mu).
 %   All changes are smooth ramps (1 - cos) except the friction steps.
 %
+%   test_cases('TK') returns ONLY the calibration case TK (not part of the standard set, not run by run_test_cases.m): used to choose the
+%   map slope K_max (Model/Sim/script/run_map_sweep.m). Dry road, three speeds 30, 60, 100 km/h, 28 s each: hard cornering (0.35 g), sine
+%   steering around 0.2-0.25 g, small corrections.
+%
 %   Fields of TC(k): tag, name, t [s] (1 ms grid), theta1 [rad], v [m/s], mu [-], ayTarget [g],
 %   win (struct array: label, t0, t1) = windows where the mean e_T is reported.
 
@@ -24,6 +28,10 @@ P   = loadPlant(modelDir);
 ref = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
 thTab = steadyAngleTable(P, ref);
 
+if nargin > 0 && strcmp(which, 'TK')
+    TC = buildTK(thTab);
+    return;
+end
 TC = [buildTC1(thTab), buildTC2(thTab), buildTC3(thTab), buildTC4(thTab), buildTC5(thTab), buildTC6(thTab)];
 end
 
@@ -128,6 +136,37 @@ function S = buildTC6(thTab)
     kmu = [0 0.3; 5 0.3; 5.001 0.8; tEnd 0.8];
     win = struct('label', {'before_mu_rise', 'after_mu_rise_steady'}, 't0', {4, 13}, 't1', {5, 15});
     S = assemble('TC6_mu_rise_mid_corner', 'TC6 mu tăng đột ngột giữa cua', tEnd, kv, ka, kmu, [], thTab, win);
+end
+
+%% ===================== TK: calibration case of the map slope K_max ========
+function S = buildTK(thTab)
+% Dry road (mu = 0.8), speeds 30, 60, 100 km/h, 28 s each. The a_y targets reach 0.35 g because the map slope K_max only limits the
+% assist where the calibration needs a steep slope (top of the calibration range). Per block (T = start of the block):
+%   hard cornering     T+1..T+9     a_y* ramps to 0.35 g, held, down to a_base                                -> window steady (T+5..T+7)
+%   sine steering      T+9..T+18.5  sine of amplitude 0.1 g (0.5 Hz, 4 cycles) around a_base (0.2 g at 30 km/h, 0.25 g above)
+%                                                                                                          -> window sine (T+10.5..T+18)
+%   small corrections  T+19.5..T+26 around 0.2 g: +0.03 g then -0.03 g steps (small lane corrections)      -> window small (T+20..T+26)
+    speeds = [30 60 100];
+    aHold  = 0.35;
+    aBase  = [0.2 0.25 0.25];
+    aSmall = 0.2;
+    blockLen = 28;
+    kv = [0 speeds(1)];
+    ka = [0 0]; sines = []; win = struct('label', {}, 't0', {}, 't1', {});
+    for i = 1:numel(speeds)
+        T = (i - 1) * blockLen;
+        if i > 1, kv = [kv; T - 1, speeds(i-1); T, speeds(i)]; end %#ok<AGROW>
+        ka = [ka; T + 1, 0; T + 2, aHold; T + 7.5, aHold; T + 9, aBase(i); T + 18.5, aBase(i); T + 19.5, aSmall; T + 21, aSmall; ...
+              T + 21.5, aSmall + 0.03; T + 23, aSmall + 0.03; T + 23.5, aSmall - 0.03; T + 25, aSmall - 0.03; T + 26, aSmall; T + 27, 0]; %#ok<AGROW>
+        sines = [sines; T + 10, T + 18, 0.1, 0.5]; %#ok<AGROW>
+        win(end+1) = struct('label', sprintf('steady_v%d', speeds(i)), 't0', T + 5, 't1', T + 7); %#ok<AGROW>
+        win(end+1) = struct('label', sprintf('sine_v%d', speeds(i)), 't0', T + 10.5, 't1', T + 18); %#ok<AGROW>
+        win(end+1) = struct('label', sprintf('small_v%d', speeds(i)), 't0', T + 20, 't1', T + 26); %#ok<AGROW>
+    end
+    tEnd = numel(speeds) * blockLen;
+    kv = [kv; tEnd, speeds(end)];
+    ka = [ka; tEnd, 0];
+    S = assemble('TK_map_slope_calibration', 'TK hiệu chỉnh độ dốc K_max của Map (đường khô)', tEnd, kv, ka, [0 0.8; tEnd 0.8], sines, thTab, win);
 end
 
 %% ===================== Common assembly =================================

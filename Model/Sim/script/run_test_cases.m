@@ -1,7 +1,7 @@
 function M = run_test_cases(ctrlName, level, runSeed)
 %RUN_TEST_CASES Run the standard test cases (test_cases.m) on one controller and save the results.
 %
-%   M = run_test_cases('Map')      % also 'PID', 'SMC', 'SMC_KI', ...
+%   M = run_test_cases('Map_6_8')      % also 'PID', 'SMC', 'SMC_KI', ...
 %   M = run_test_cases('PID', 'high', 90003)   % with sensor noise: level 'none' | 'low' | 'high', one noise seed
 %
 %   Noise (Sensors subsystem, data/sensors.json, Documents/Sim/ThucTeHoa.txt): the level and seed are passed to the model per run

@@ -16,17 +16,17 @@
 % Plant interface:
 %   In : theta1 (driver steering-wheel angle, measured), T_a (MV, from the
 %        controller), v (measured DV), mu (unmeasured DV)
-%   Out: T_s (CV), theta2, a_y (for T_d,ref(v,a_y)), gamma, beta,
-%        theta2_dot (column speed from the motor encoder, used by the SMC)
+%   Out: only the signals a sensor can measure: T_s (CV), a_y (for T_d,ref(v,a_y)), gamma,
+%        theta2_dot (column speed from the motor encoder). theta2 and beta stay inside (Tires needs them), not exposed.
 %
 % Wiring (matches Documents/HeThongPlant_TongHop.txt):
 %   theta1, T_a               -> SteeringColumn         (direct)
 %   mu                        -> Tires                  (direct)
 %   v                         -> Tires, Bike2DOF        (Goto/From, 2 dest.)
-%   SteeringColumn.theta2     -> Tires ; -> Out         (Goto/From, 2 dest.)
+%   SteeringColumn.theta2     -> Tires                  (Goto/From)
 %   Tires.F_yf, F_yr          -> Bike2DOF               (direct)
 %   Tires.T_r                 -> SteeringColumn.T_r     (FEEDBACK loop 1)
-%   Bike2DOF.beta, gamma      -> Tires ; -> Out         (FEEDBACK loop 2)
+%   Bike2DOF.beta, gamma      -> Tires ; gamma -> Out   (FEEDBACK loop 2)
 %   SteeringColumn.T_s, theta2_dot, Bike2DOF.a_y -> Out (direct)
 %
 % Feedback signals flow backward relative to the left-to-right layout
@@ -101,12 +101,10 @@ function assemblePlant(modelName, modelPath, plantDir, srcFiles)
     addInport(sub, 'mu',     4, 40, 480);
 
     %% ----- External outputs (right edge) -----
-    addOutport(sub, 'T_s',    1, 1500,  60);
-    addOutport(sub, 'theta2', 2, 1500, 140);
-    addOutport(sub, 'a_y',    3, 1500, 220);
-    addOutport(sub, 'gamma',  4, 1500, 300);
-    addOutport(sub, 'beta',   5, 1500, 380);
-    addOutport(sub, 'theta2_dot', 6, 1500, 460);
+    addOutport(sub, 'T_s',        1, 1500,  60);
+    addOutport(sub, 'a_y',        2, 1500, 140);
+    addOutport(sub, 'gamma',      3, 1500, 220);
+    addOutport(sub, 'theta2_dot', 4, 1500, 300);
 
     %% ----- Forward, single destination: wire directly -----
     add_line(sub, 'theta1/1', portRef(steer, 'theta1'), 'autorouting', 'on');
@@ -128,13 +126,11 @@ function assemblePlant(modelName, modelPath, plantDir, srcFiles)
     f_v_bike = addFrom(sub, 'v', 1020, 260);
     add_line(sub, [f_v_bike '/1'], portRef(bike, 'v'), 'autorouting', 'on');
 
-    %% ----- theta2: SteeringColumn -> Tires + external output -> Goto/From -----
+    %% ----- theta2: SteeringColumn -> Tires (internal only) -> Goto/From -----
     g_th2 = addGoto(sub, 'theta2', 560, 100);
     add_line(sub, portRef(steer, 'theta2'), [g_th2 '/1'], 'autorouting', 'on');
     f_th2_tires = addFrom(sub, 'theta2', 620, 100);
     add_line(sub, [f_th2_tires '/1'], portRef(tires, 'theta2'), 'autorouting', 'on');
-    f_th2_out = addFrom(sub, 'theta2', 1420, 140);
-    add_line(sub, [f_th2_out '/1'], 'theta2/1', 'autorouting', 'on');
 
     %% ----- T_r: FEEDBACK (Tires -> SteeringColumn) -> Goto/From -----
     g_tr = addGoto(sub, 'T_r', 960, 220);
@@ -147,15 +143,13 @@ function assemblePlant(modelName, modelPath, plantDir, srcFiles)
     add_line(sub, portRef(bike, 'gamma'), [g_gamma '/1'], 'autorouting', 'on');
     f_gamma_tires = addFrom(sub, 'gamma', 620, 180);
     add_line(sub, [f_gamma_tires '/1'], portRef(tires, 'gamma'), 'autorouting', 'on');
-    f_gamma_out = addFrom(sub, 'gamma', 1420, 300);
+    f_gamma_out = addFrom(sub, 'gamma', 1420, 220);
     add_line(sub, [f_gamma_out '/1'], 'gamma/1', 'autorouting', 'on');
 
     g_beta = addGoto(sub, 'beta', 1360, 380);
     add_line(sub, portRef(bike, 'beta'), [g_beta '/1'], 'autorouting', 'on');
     f_beta_tires = addFrom(sub, 'beta', 620, 140);
     add_line(sub, [f_beta_tires '/1'], portRef(tires, 'beta'), 'autorouting', 'on');
-    f_beta_out = addFrom(sub, 'beta', 1420, 380);
-    add_line(sub, [f_beta_out '/1'], 'beta/1', 'autorouting', 'on');
 
     save_system(modelName, modelPath);
     close_system(modelName, 0);

@@ -2,9 +2,9 @@ function test_sensors(modelName)
 %TEST_SENSORS Check the Sensors subsystem (add_sensors.m): on its own, then inside a closed-loop model.
 %
 %   test_sensors            % closed-loop part on Model_PID_s
-%   test_sensors('Model_Map_s')
+%   test_sensors('Model_Map_6_8_s')
 %
-%   Run first: run('<Model>/load_pid.m') (or load_map.m) and the matching build_model_*.m.
+%   Run first: run('<Model>/load_pid.m') (or load_map_6_8.m) and the matching build_model_*.m.
 %   Part A, Sensors alone (harness model built here, signals T_s, a_y, v; reference values computed independently from
 %   data/sensors.json):
 %     (1) level 'none': measured = input exactly (chain bypassed);

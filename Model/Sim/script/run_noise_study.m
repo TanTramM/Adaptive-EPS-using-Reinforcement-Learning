@@ -1,7 +1,7 @@
 function G = run_noise_study(ctrlList, levels, seeds)
 %RUN_NOISE_STUDY Run the standard test cases with sensor noise for several controllers, noise levels and seeds; report mean and std.
 %
-%   G = run_noise_study({'Map', 'PID'}, {'none', 'low', 'high'}, 90001:90005)
+%   G = run_noise_study({'Map_6_8', 'PID'}, {'none', 'low', 'high'}, 90001:90005)
 %
 %   For every controller, noise level and seed it calls run_test_cases(ctrl, level, seed) (metrics on the TRUE signals, see there),
 %   then averages every metric over the seeds (levels 'none' and 'low' have no noise, so they are deterministic and run once). Every controller gets the SAME seeds,
