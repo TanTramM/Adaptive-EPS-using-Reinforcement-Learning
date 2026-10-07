@@ -1,7 +1,7 @@
 function plot_compare_cases(ctrlList, level, runSeed)
 %PLOT_COMPARE_CASES One figure per test case: T_s (with T_d,ref), e_T and T_a of several controllers on the same axes.
 %
-%   plot_compare_cases({'Map_6_8', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'low' | 'high', one noise seed
+%   plot_compare_cases({'Map_6_8', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'high', one noise seed
 %
 %   Reads the signal files written by run_test_cases(ctrl, level, runSeed) (Result/<ctrl>/TestCases for level none, else
 %   Result/<ctrl>/TestCases_noise/<level>_seed<seed>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
@@ -12,7 +12,7 @@ function plot_compare_cases(ctrlList, level, runSeed)
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
-addpath(modelDir);                              % result_dir
+addpath(modelDir); setup_paths;                              % result_dir
 addpath(scriptDir);                             % test_cases
 if nargin < 2, level = 'none'; end
 if nargin < 3, runSeed = 90001; end

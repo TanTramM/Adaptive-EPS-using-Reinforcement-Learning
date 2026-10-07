@@ -16,3 +16,7 @@ codegen/
 # OS junk
 Thumbs.db
 .DS_Store
+
+# Scratch / logs (khong commit)
+scratch/
+*.log

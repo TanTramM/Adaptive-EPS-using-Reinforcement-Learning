@@ -1,7 +1,7 @@
 function G = make_pair_comparisons(ctrlList, seeds)
 %MAKE_PAIR_COMPARISONS Run the standard test cases with the full sensor chain and compare the controllers two at a time.
 %
-%   G = make_pair_comparisons({'Map_6_8', 'PID', 'SMC'}, 90001:90005)
+%   G = make_pair_comparisons({'Map_6_8', 'SMC'}, 90001)
 %
 %   Sensor level is the single level 'high' of the Sensors subsystem (data/sensors.json): white noise (std = one resolution step)
 %   + quantizer + update period of every signal. Run load_pid, load_smc, load_map_6_8 (whatever the list needs) in the base workspace first.
@@ -15,9 +15,9 @@ function G = make_pair_comparisons(ctrlList, seeds)
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
-addpath(modelDir);                              % result_dir
+addpath(modelDir); setup_paths;                              % result_dir
 addpath(scriptDir);                             % run_test_cases, plot_compare_cases
-if nargin < 2, seeds = 90001:90005; end
+if nargin < 2, seeds = 90001; end
 
 metrics = {'RMS_eT_Nm', 'MaxAbs_eT_Nm', 'Mean_eT_signed_pct_of_Tdref', 'RMS_Ta_Nm', 'MaxAbs_Ta_Nm', 'TV_Ta_Nm_per_s'};
 runs = table();

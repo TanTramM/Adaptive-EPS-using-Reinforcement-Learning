@@ -1,10 +1,10 @@
 function G = run_noise_study(ctrlList, levels, seeds)
 %RUN_NOISE_STUDY Run the standard test cases with sensor noise for several controllers, noise levels and seeds; report mean and std.
 %
-%   G = run_noise_study({'Map_6_8', 'PID'}, {'none', 'low', 'high'}, 90001:90005)
+%   G = run_noise_study({'Map_6_8', 'PID'}, {'none', 'high'}, 90001:90005)
 %
 %   For every controller, noise level and seed it calls run_test_cases(ctrl, level, seed) (metrics on the TRUE signals, see there),
-%   then averages every metric over the seeds (levels 'none' and 'low' have no noise, so they are deterministic and run once). Every controller gets the SAME seeds,
+%   then averages every metric over the seeds (level 'none' has no noise, so they are deterministic and run once). Every controller gets the SAME seeds,
 %   so the same noise sequence (paired comparison). Seeds: tests use data/sensors.json seeds.test_range (90001-90010), never the
 %   training range used by RL. Writes to Result/Compare/<A>_vs_<B>/ (names joined by _vs_):
 %     <names>_noise_study_all_runs.csv   one row per controller, level, seed, case, window
@@ -14,7 +14,7 @@ function G = run_noise_study(ctrlList, levels, seeds)
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
-addpath(modelDir);
+addpath(modelDir); setup_paths;
 jr = jsondecode(fileread(fullfile(modelDir, 'data', 'sensors.json')));
 assert(all(seeds >= jr.seeds.test_range(1) & seeds <= jr.seeds.test_range(2)), 'seeds must be inside the test range %s', mat2str(jr.seeds.test_range));
 
@@ -23,7 +23,7 @@ runs = table();
 for c = 1:numel(ctrlList)
     for l = 1:numel(levels)
         sd = seeds;
-        if any(strcmp(levels{l}, {'none', 'low'})), sd = seeds(1); end
+        if strcmp(levels{l}, 'none'), sd = seeds(1); end
         for s = sd
             t0 = tic;
             evalc('M = run_test_cases(ctrlList{c}, levels{l}, s);');

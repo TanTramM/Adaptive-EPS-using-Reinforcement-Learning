@@ -3,8 +3,8 @@ function build_closed_loop(ctrlName)
 %
 %   build_closed_loop('Map_6_8')        % also 'PID', 'SMC', 'SMC_KI', ... (any controller block with the interface below)
 %
-%   Sources (all "_s", auto-generated, must already exist): Plant/Plant_s.mdl, Ref/Reference_s.mdl, Sensors/Sensors_s.mdl,
-%   Actuator/Actuator_s.mdl and <ctrl>/<ctrl>_s.mdl (root subsystem named like the controller).
+%   Sources (must already exist; PRSM models carry no suffix): PRSM/Plant/Plant.mdl, PRSM/Ref/Reference.mdl, PRSM/Sensors/Sensors.mdl,
+%   PRSM/Actuator/Actuator.mdl and Controllers/<ctrl>/<ctrl>_s.mdl (root subsystem named like the controller); the closed loop is written to Controllers/<ctrl>/Model_<ctrl>_s.mdl.
 %
 %   Plug and play: the controller block is the ONLY part that changes between models. It is wired BY NAME:
 %     - every Inport of the controller is fed from the bus signal of the same name: the measured T_s, theta1, theta2_dot, v,
@@ -39,14 +39,14 @@ modelName = ['Model_' ctrlName '_s'];
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
-addpath(scriptDir);
+addpath(modelDir); setup_paths;
 
-src = {fullfile(modelDir, 'Plant', 'Plant_s.mdl'), fullfile(modelDir, 'Ref', 'Reference_s.mdl'), ...
-       fullfile(modelDir, 'Sensors', 'Sensors_s.mdl'), fullfile(modelDir, 'Actuator', 'Actuator_s.mdl'), ...
-       fullfile(modelDir, ctrlName, [ctrlName '_s.mdl'])};
+src = {fullfile(modelDir, 'PRSM', 'Plant', 'Plant.mdl'), fullfile(modelDir, 'PRSM', 'Ref', 'Reference.mdl'), ...
+       fullfile(modelDir, 'PRSM', 'Sensors', 'Sensors.mdl'), fullfile(modelDir, 'PRSM', 'Actuator', 'Actuator.mdl'), ...
+       fullfile(modelDir, 'Controllers', ctrlName, [ctrlName '_s.mdl'])};
 
 if bdIsLoaded(modelName), close_system(modelName, 0); end
-modelPath = fullfile(modelDir, [modelName '.mdl']);
+modelPath = fullfile(modelDir, 'Controllers', ctrlName, [modelName '.mdl']);
 if exist(modelPath, 'file'), delete(modelPath); end
 
 srcNames = cell(size(src));

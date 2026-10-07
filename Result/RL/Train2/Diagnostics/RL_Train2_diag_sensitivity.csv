@@ -1,9 +1,0 @@
-episode,agent,t_s,action_Nm,action_eT_plus0p5_Nm,action_eT_minus0p5_Nm,gain_dTa_deT,gain_history_only,gain_I_only
-hold_0p25g_v60_mu_drop,agent_stage1_best,4,2.8737,3.7931,2.6713,1.122,0.376,0.838
-hold_0p25g_v60_mu_drop,agent_stage1_best,9,2.8702,2.6917,3.2532,-0.562,-1.124,0.429
-hold_0p25g_v60_mu_drop,agent_stage1_last,4,2.0716,0.3765,2.9052,-2.529,-0.238,-2.746
-hold_0p25g_v60_mu_drop,agent_stage1_last,9,1.4125,-0.2815,2.6819,-2.963,-1.178,-2.677
-hold_0p20g_v40_mu_drop,agent_stage1_best,4,5.3706,5.4847,5.4530,0.032,0.394,-0.459
-hold_0p20g_v40_mu_drop,agent_stage1_best,9,4.9111,5.3287,4.2129,1.116,1.204,0.106
-hold_0p20g_v40_mu_drop,agent_stage1_last,4,-0.4062,-1.2949,-0.4492,-0.846,5.192,-6.731
-hold_0p20g_v40_mu_drop,agent_stage1_last,9,-1.8389,-3.5811,-2.4720,-1.109,4.184,-5.793

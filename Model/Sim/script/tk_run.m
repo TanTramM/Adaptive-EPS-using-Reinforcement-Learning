@@ -4,7 +4,7 @@ function [L, m] = tk_run(mdl, level, seed, vars)
 %   [L, m] = tk_run('Model_SMC_s', 'high', 91001, struct('lambda', 100, 'Phi', 1.5))
 %
 %   mdl    closed-loop model built by build_closed_loop (already built; its base-workspace variables loaded by load_<ctrl>.m)
-%   level  sensor level 'none' | 'low' | 'high' (data/sensors.json), seed = noise seed (91001... for tuning: outside the training range of
+%   level  sensor level 'none' | 'high' (data/sensors.json), seed = noise seed (91001... for tuning: outside the training range of
 %          RL, 1-9999, and the scoring range of the comparisons, 90001-90010)
 %   vars   struct of base-workspace variables overridden for this run only (Simulink.SimulationInput.setVariable); [] for none
 %   L      logged TRUE signals on the 1 ms grid of the case: t, T_s, T_d_ref, e_T, T_a (applied), T_a_cmd (controller command)
@@ -21,7 +21,7 @@ assignin('base', 'sc_theta1', [S.t S.theta1]);
 assignin('base', 'sc_v',      [S.t S.v]);
 assignin('base', 'sc_mu',     [S.t S.mu]);
 modelDir = fileparts(fileparts(fileparts(mfilename('fullpath'))));   % Model/
-if ~bdIsLoaded(mdl), load_system(fullfile(modelDir, [mdl '.mdl'])); end
+if ~bdIsLoaded(mdl), load_system(mdl); end
 in = Simulink.SimulationInput(mdl);
 in = in.setModelParameter('StopTime', sprintf('%.15g', S.t(end)));
 V = sensor_noise_vars(level, seed);
