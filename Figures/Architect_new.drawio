@@ -1,0 +1,243 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="closed_loop" name="Closed loop">
+    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1850" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== Title ===== -->
+        <mxCell id="title" value="&lt;b&gt;Kiến trúc vòng kín Adaptive C-EPS&lt;/b&gt; (trường hợp tổng quát: bộ điều khiển dùng đủ mọi tín hiệu đo; Model_&amp;lt;Ctrl&amp;gt;.mdl sinh bằng build_closed_loop)" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="150" y="10" width="1000" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Scenario inputs ===== -->
+        <mxCell id="scen" value="Kịch bản: người lái và mặt đường (theta1, v, mu)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="40" width="470" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Measured-signal bus ===== -->
+        <mxCell id="bus" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="150" y="160" width="6" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="busLabel" value="Bus tín hiệu đo" style="text;html=1;align=center;verticalAlign=middle;rotation=-90;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="305" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Controller ===== -->
+        <mxCell id="ctrl" value="&lt;b&gt;Bộ điều khiển (Controller)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Map / PI / PID / SMC / ISMC&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="200" y="140" width="400" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="ref" value="Reference&lt;br&gt;T_d,ref(v, a_y)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="230" y="180" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sum" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="400" y="275" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sumPlus" value="+" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="380" y="290" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sumMinus" value="−" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="418" y="255" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="law" value="Luật điều khiển" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrlNote" value="Mỗi bộ chỉ khai báo cổng vào cần dùng (nối theo TÊN);&lt;br&gt;cổng không dùng nối Terminator. Ra duy nhất: T_a_cmd." style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="210" y="455" width="300" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== AssistLimit ===== -->
+        <mxCell id="lim" value="AssistLimit&lt;br&gt;T_a,max(v)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="85" width="110" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Delay_ctrl (margin test) ===== -->
+        <mxCell id="delay" value="Delay_ctrl&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;trễ, mặc định 0&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="270" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Actuator ===== -->
+        <mxCell id="act" value="&lt;b&gt;Actuator (motor)&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="800" y="230" width="220" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="clamp" value="Chặn&lt;br&gt;±T_a,max" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="815" y="270" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="lag" value="Trễ motor&lt;br&gt;100 Hz" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="925" y="270" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Gain_act (margin test) ===== -->
+        <mxCell id="gain" value="Gain_act&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;×1 mặc định&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="270" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Plant ===== -->
+        <mxCell id="plant" value="&lt;b&gt;Plant&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="180" width="520" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="col" value="Steering Column" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="260" width="130" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="tires" value="Tires&lt;br&gt;(Pacejka)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="260" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="bike" value="Bicycle 2-DOF" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="260" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Sensors ===== -->
+        <mxCell id="sens" value="&lt;b&gt;Sensors&lt;/b&gt;: nhiễu + lượng tử + chu kỳ cập nhật (không seed = lý tưởng)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="560" width="570" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Scoring (true values only) ===== -->
+        <mxCell id="eval" value="&lt;b&gt;Chấm điểm&lt;/b&gt; (chỉ đọc giá trị THẬT, không nối vào bộ điều khiển)&lt;br&gt;Reference_true: T_d,ref(v, a_y) ; e_T = T_s − T_d,ref&lt;br&gt;Chỉ tiêu: R, S, TV, e_rel ; cổng (Gates)" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="680" width="520" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Legend ===== -->
+        <mxCell id="legend" value="&lt;b&gt;Ghi chú&lt;/b&gt;&lt;br&gt;Khối nét đứt Delay_ctrl, Gain_act: kiểm độ dư ổn định (QuyChuan 5.2), mặc định trễ 0 và ×1.&lt;br&gt;Khối Chấm điểm: chỉ để đánh giá, bộ điều khiển chỉ thấy tín hiệu đo.&lt;br&gt;mu không đo được (nhiễu loạn từ mặt đường)." style="text;html=1;align=left;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="680" width="560" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ================= EDGES ================= -->
+        <!-- bus -> controller -->
+        <mxCell id="e_v_ref" value="v" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.109;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="ref">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ay_ref" value="a_y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.203;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="ref">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_Ts_sum" value="T_s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.406;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="sum">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ref_sum" value="T_d,ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ref" target="sum">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="415" y="210" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_sum_law" value="e_T" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sum" target="law">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_th1_law" value="theta1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.594;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="law">
+          <mxGeometry x="-0.75" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="e_th2d_law" value="theta2_dot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.672;exitDx=0;exitDy=0;entryX=0.458;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="law">
+          <mxGeometry x="-0.75" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="e_gam_law" value="gamma" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.667;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="law">
+          <mxGeometry x="-0.75" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- AssistLimit -->
+        <mxCell id="e_v_lim" value="v" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="lim">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="153" y="110" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_lim_clamp" value="T_a_max" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="lim" target="clamp">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="855" y="110" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_lim_law" value="T_a_max" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.833;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="lim" target="law">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="705" y="240" /><mxPoint x="560" y="240" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- forward path -->
+        <mxCell id="e_law_delay" value="T_a_cmd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="law" target="delay">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_delay_clamp" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="delay" target="clamp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_clamp_lag" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="clamp" target="lag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lag_gain" value="T_a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="lag" target="gain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gain_col" value="T_a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.375;entryDx=0;entryDy=0;" edge="1" parent="1" source="gain" target="col">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_clamp_law" value="T_a_lim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.875;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="clamp" target="law">
+          <mxGeometry x="-0.3" relative="1" as="geometry">
+            <Array as="points"><mxPoint x="855" y="470" /><mxPoint x="565" y="470" /></Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- scenario -> plant -->
+        <mxCell id="e_th1_col" value="theta1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.0745;exitY=1;exitDx=0;exitDy=0;entryX=0.269;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scen" target="col">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_v_tires" value="v" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.468;exitY=1;exitDx=0;exitDy=0;entryX=0.333;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scen" target="tires">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mu_tires" value="mu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.553;exitY=1;exitDx=0;exitDy=0;entryX=0.667;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scen" target="tires">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_v_bike" value="v" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.872;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scen" target="bike">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_scen_sens" value="theta1, v (thật)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;jumpStyle=arc;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.965;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scen" target="sens">
+          <mxGeometry x="0.6" relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1740" y="60" /></Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- plant internal -->
+        <mxCell id="e_col_tires" value="theta2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.375;exitDx=0;exitDy=0;entryX=0;entryY=0.375;entryDx=0;entryDy=0;" edge="1" parent="1" source="col" target="tires">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tires_bike" value="F_yf, F_yr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.375;exitDx=0;exitDy=0;entryX=0;entryY=0.375;entryDx=0;entryDy=0;" edge="1" parent="1" source="tires" target="bike">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tires_col" value="T_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="tires" target="col">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1430" y="370" /><mxPoint x="1285" y="370" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bike_tires" value="beta, gamma" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bike" target="tires">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1600" y="400" /><mxPoint x="1490" y="400" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- plant outputs -> sensors -->
+        <mxCell id="e_Ts_sens" value="T_s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.115;exitY=1;exitDx=0;exitDy=0;entryX=0.079;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="col" target="sens">
+          <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="e_th2d_sens" value="theta2_dot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.308;exitY=1;exitDx=0;exitDy=0;entryX=0.123;entryY=0;entryDx=0;entryDy=0;labelPosition=right;align=left;" edge="1" parent="1" source="col" target="sens">
+          <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="e_ay_sens" value="a_y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.772;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bike" target="sens">
+          <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="e_gam_sens" value="gamma" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.825;entryY=0;entryDx=0;entryDy=0;labelPosition=right;align=left;" edge="1" parent="1" source="bike" target="sens">
+          <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- sensors -> bus -->
+        <mxCell id="e_sens_bus" value="Tín hiệu đo: T_s, theta1, theta2_dot, v, gamma, a_y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="sens" target="bus">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <Array as="points"><mxPoint x="153" y="590" /></Array>
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- plant (true values) -> scoring -->
+        <mxCell id="e_plant_eval" value="T_s, a_y, v (thật)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;dashed=1;jumpStyle=arc;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="plant" target="eval">
+          <mxGeometry x="0.3" relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1800" y="420" /><mxPoint x="1800" y="725" /></Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
