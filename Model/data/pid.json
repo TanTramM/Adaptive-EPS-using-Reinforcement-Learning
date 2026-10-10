@@ -1,0 +1,27 @@
+{
+  "x_note": "PID controller data (Documents/Notes/Controllers/DieuKhien_Linear.txt). Ts_ctrl: controller period [s]. design: written by select_pid.m (Kp [N.m/(N.m)], Ki [1/s], Kd [s], Tf [s]); absent until the design is chosen, load_pid.m then loads all gains 0 (open loop).",
+  "Ts_ctrl": 0.001,
+  "design": {
+    "Kp": 1.5,
+    "Ki": 3,
+    "Kd": 0.015,
+    "Tf": 0.0035,
+    "Kaw": 2,
+    "TK_R_pct": 24.4265916550449,
+    "TK_S_Nm": 0.247916156107577,
+    "TK_TV_Nm_per_s": 29.5489975705829,
+    "TK_erel_pct": 3.13061040165775,
+    "TK_rev_pct": 3.73561969026356,
+    "f_sat_delta": 0.00026086729680611584,
+    "margin_ratio_gain": 0.57852138792987462,
+    "margin_ratio_delay": 1.0018993830332883,
+    "tier": "fallback: no point passes rev <= 1 % and e_rel <= 3 %; admissible = rev <= 5 % and e_rel <= 5 %",
+    "design_seed": 10000,
+    "seed_10001_R_pct": 24.36391998304773,
+    "seed_10001_S_Nm": 0.24751237393007189,
+    "seed_10001_TV_Nm_per_s": 29.208220771388916,
+    "seed_10001_erel_pct": 3.0995231285961942,
+    "seed_10001_rev_pct": 3.6721419813740752,
+    "date": "2026-10-10 14:00:46"
+  }
+}

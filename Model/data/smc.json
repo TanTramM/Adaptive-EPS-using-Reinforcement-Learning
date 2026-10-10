@@ -2,8 +2,19 @@
   "x_note": "SMC-sat (no integral) data. Ts_ctrl: controller period [s]. s = Ts_dot_hat + lambda*e_T, T_a = T_a_max * sat(s / Phi). The integral variant is controller ISMC (ismc.json). Plan and log: Documents/Notes/Controllers/DieuKhien_SMC.txt.",
   "Ts_ctrl": 0.001,
   "design": {
-    "lambda": 30.0,
-    "Phi": 2.0,
-    "Tf": 0.005
+    "lambda": 80,
+    "Phi": 200,
+    "Tf": 0.005,
+    "TK_R_pct": 40.1864426366409,
+    "TK_S_Nm": 0.395775587577277,
+    "TK_TV_Nm_per_s": 66.8638842510843,
+    "TK_erel_pct": 68.4704390941108,
+    "TK_rev_pct": 7.78254102138242,
+    "f_sat_delta": 0.0027738889227050196,
+    "margin_ratio_gain": 0.57163612440926259,
+    "margin_ratio_delay": 1.0001142479596281,
+    "tier": "fallback: least violation of rev (e_rel weighted 0.1)",
+    "design_seed": 20000,
+    "date": "2026-10-10 10:28:24"
   }
 }

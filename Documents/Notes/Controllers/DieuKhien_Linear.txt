@@ -123,7 +123,7 @@ P7. Tài liệu [XUYÊN SUỐT]
 Ghi vào Phần C của file này số liệu và lý do của từng bước ngay khi xong, đánh dấu rõ lựa chọn của tác giả và việc không có nguồn; nhật ký vào Tracking/historychat_linear.md; chương
 Documents/Thesis/pi.txt (và pi.docx) khi PI và PID cùng xong.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-P8. PID [SAU PI]
+P8. PID [XONG 2026-10-10, xem C.9]
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Dựng khối PID trên khối PI: thêm khâu D lấy trên T_s đo, lọc bậc 1 hằng số Tf (d[k] = a d[k-1] + b (T_s[k] - T_s[k-1]), a = Tf/(Tf + Ts), b = Kd/(Tf + Ts)); lưới 4 tham số hai giai đoạn;
 cùng cổng, cùng quy tắc chọn, cùng seed; PI là mốc để chỉ ra khâu D mở rộng được băng thông bao nhiêu và đổi lấy độ ồn bao nhiêu (so cả mặt Pareto, QuyChuan 6.3).
@@ -171,5 +171,17 @@ và 100 km/h là 2.78 % và 2.03 % <= 3 %, ở 20 km/h là 3.25 % (vượt 0.25 
 26.18 % chênh lệch 1.8 % so với (1.25, 3.0) nằm trong ngưỡng hòa 5 %; biến thiên S là 3.29 % < 5 %. Kiểm chứng seed 10001: R = 26.59 %, S = 0.2404 N.m, TV = 13.93 N.m/s, erel = 2.50 % <= 3 %;
 độ phân tán giữa hai seed cực nhỏ (Delta R = -0.06 %, Delta S = +0.0008 N.m, Delta TV = -0.13 N.m/s). Đảo thứ tự ưu tiên: nếu đặt erel trên bang-bang thì điểm chọn bất biến không đổi.
 ==============================================================================================================================================================================================
-
-
+C.9. P8 PID (2026-10-10), làm ĐỦ bước trong thư mục riêng Model/Controllers/PID/ (PI giữ nguyên). Khối: load_pid.m, build_pid.m (từ build_pi, thêm khâu D lấy trên T_s đo: d[k] = a d[k-1] + b
+(T_s[k] - T_s[k-1]), a = Tf/(Tf+Ts), b = Kd/(Tf+Ts), hai Unit Delay phá vòng đại số; T_a = Kp e + u_I + d; Kaw = Ki/Kp cố định), test_pid.m PASS (sai khác 1.78e-15 N.m trên 6001 mẫu),
+Model_PID.mdl; dữ liệu Model/data/pid.json. Quét: run_pid_sweep.m (resumable, seed 10000, lọc tuyến tính dưới stress gain x2 và trễ 1 ms), select_pid.m.
+Lưới: thô 245 điểm (Kp 0.25-1.25, Ki 1,2,4,6,8, Kd 0.01-0.04, Tf 0.005-0.02, kèm Kd = 0 làm mốc PI); thêm Ki = 3, 5, 7 cho Kp 0.75-1.25 (87 điểm; lý do: e_rel không đơn điệu theo Ki và lưới
+PI có mọi Ki nguyên); thêm Kp = 1.5 (45 điểm, chạm cận ổn định tuyến tính của PI) vì điểm tốt nhất nằm ở mép Kp = 1.25 (QuyChuan 6.1); lưới mịn 81 điểm quanh điểm chọn (Kp +-0.125, Ki +-1,
+Kd +-0.005, Tf x0.7 và x1.4). Tổng 455 điểm. Kiểm chứng chéo: điểm Kd = 0, Kp 1.25, Ki 3 của PID trùng PI (R 26.65 %, e_rel 3.25 %, rev 4.51 %).
+Chọn điểm: không điểm nào qua rev <= 1 % và e_rel <= 3 % (rev nhỏ nhất 1.43 %, e_rel thường chỉ đạt khi Ki lớn làm rev tăng tới 8 %), nên dùng quy tắc dự phòng 5.6 như PI (rev <= 5 % và
+e_rel <= 5 %: 45 điểm), rồi R trong 5 % của R nhỏ nhất, S nhỏ nhất, tám ứng viên cuối đều qua tk_bangbang (delta <= 0.0004) và tk_margin (gain x2 tỉ lệ 0.58, trễ 1 ms tỉ lệ 1.00). ĐIỂM CHỌN:
+Kp 1.5, Ki 3, Kd 0.015 s, Tf 0.0035 s, Kaw 2: TK seed 10000 R 24.43 %, S 0.2479 N.m, TV 29.5 N.m/s, e_rel 3.13 %, rev 3.74 %; seed 10001 R 24.36 %, S 0.2475, TV 29.2, e_rel 3.10 %, rev 3.67
+%. Cảnh báo trung thực: (a) trượt cổng rev (3.74 % > 1 %) và e_rel (3.13 % > 3 %) như PI; (b) Tf = 0.0035 là mép dưới vùng đã quét (khác Tf 0.005 chỉ 0.1 % R và 1 % S, nên không mở rộng
+thêm, ghi nhận); (c) khâu D gần như không đổi R: R phẳng 24.4 % khắp Kd 0.01-0.025, chỉ S giảm nhẹ khi Tf nhỏ và TV tăng khi Kd lớn.
+TC1-TC6 với seed local 10000 và lý tưởng (Result/Controllers/PID/TestCases, TestCases_noise/seed_10000). RMS e_T cả ca [N.m] lý tưởng (PI): TC1 0.454 (0.486), TC2 0.517 (0.564), TC3 0.238
+(0.250), TC4 0.555 (0.631), TC5 0.723 (0.800), TC6 0.057 (0.065): PID bám tốt hơn PI 5-10 %. TV(T_a) [N.m/s] seed 10000 (PI): TC1 36.2 (19.6), TC2 45.6 (28.3), TC3 23.8 (7.4), TC4 60.8
+(43.4), TC5 47.8 (31.6), TC6 24.0 (7.7): PID ồn hơn PI 1.4-3 lần khi có nhiễu cảm biến, đúng đánh đổi bám/êm; chưa so cả mặt Pareto (QuyChuan 6.3), chưa phân tích hình.
