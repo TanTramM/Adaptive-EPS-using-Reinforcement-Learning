@@ -40,10 +40,10 @@ __MWOPC_PART_BEGIN__ /metadata/coreProperties.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <cp:category>model</cp:category>
-  <dcterms:created xsi:type="dcterms:W3CDTF">2026-10-09T17:44:15Z</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-10-10T01:21:42Z</dcterms:created>
   <dc:creator>Tan_Tram</dc:creator>
   <cp:lastModifiedBy>Tan_Tram</cp:lastModifiedBy>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-10-09T17:44:25Z</dcterms:modified>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-10-10T01:21:54Z</dcterms:modified>
   <cp:revision>1.1</cp:revision>
   <cp:version>R2023a</cp:version>
 </cp:coreProperties>
@@ -106,7 +106,7 @@ __MWOPC_PART_BEGIN__ /simulink/blockdiagram.xml
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
   <Model>
-    <P Name="ModelUUID">8f7d009a-8b55-4d53-abfc-31d16a345881</P>
+    <P Name="ModelUUID">7818438d-57b4-453e-a606-9e93cfaf2dd3</P>
     <P Name="StopFcn">save_run_results(&apos;PI&apos;, &apos;manual_run&apos;)</P>
     <P Name="LastSavedArchitecture">win64</P>
     <ConfigManagerSettings>
@@ -938,8 +938,8 @@ __MWOPC_PART_BEGIN__ /simulink/hdlParams.xml
 __MWOPC_PART_BEGIN__ /simulink/modelDictionary.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <MF0 version="1.1" defaultPackage="slid" packageUris="http://schema.mathworks.com/mf0/slid/R2023a_20220628">
-  <System type="System" uuid="aba670e8-3125-434a-84cf-05e52138c3ec">
-    <Interface type="Interface" uuid="58ad5615-2415-4ef0-b05d-117400c5eb98"/>
+  <System type="System" uuid="e19a88f5-bbbd-4653-8ecd-39eea81b8a31">
+    <Interface type="Interface" uuid="a45021da-1af9-4220-b6bf-6f0f6b79a9e7"/>
   </System>
 </MF0>
 __MWOPC_PART_BEGIN__ /simulink/ScheduleCore.xml
@@ -6207,18 +6207,6 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
       </Object>
       <Array PropName="DockComponentsInfo" Type="Simulink.DockComponentInfo" Dimension="1*2">
         <Object ObjectID="6">
-          <P Name="Type" Class="char">GLUE2:PropertyInspector</P>
-          <P Name="ID" Class="char">Property Inspector</P>
-          <P Name="Visible" Class="logical">1</P>
-          <P Name="CreateCallback" Class="char"/>
-          <P Name="UserData" Class="char"/>
-          <P Name="Floating" Class="logical">0</P>
-          <P Name="DockPosition" Class="char">Right</P>
-          <P Name="Width" Class="int32">512</P>
-          <P Name="Height" Class="int32">384</P>
-          <P Name="Minimized" Class="char">On</P>
-        </Object>
-        <Object ObjectID="7">
           <P Name="Type" Class="char">Simulink:Editor:ReferencedFiles</P>
           <P Name="ID" Class="char">Referenced Files</P>
           <P Name="Visible" Class="logical">0</P>
@@ -6231,12 +6219,24 @@ __MWOPC_PART_BEGIN__ /simulink/windowsInfo.xml
           <P Name="Height" Class="int32">384</P>
           <P Name="Minimized" Class="char">Unset</P>
         </Object>
+        <Object ObjectID="7">
+          <P Name="Type" Class="char">GLUE2:PropertyInspector</P>
+          <P Name="ID" Class="char">Property Inspector</P>
+          <P Name="Visible" Class="logical">1</P>
+          <P Name="CreateCallback" Class="char"/>
+          <P Name="UserData" Class="char"/>
+          <P Name="Floating" Class="logical">0</P>
+          <P Name="DockPosition" Class="char">Right</P>
+          <P Name="Width" Class="int32">512</P>
+          <P Name="Height" Class="int32">384</P>
+          <P Name="Minimized" Class="char">On</P>
+        </Object>
       </Array>
       <P Name="WindowState" Class="char">AAAA/wAAAAD9AAAAAwAAAAAAAAC9AAAB+PwCAAAABPsAAAAWAEQAbwBjAGsAVwBpAGQAZwBlAHQAMwEAAAAxAAAB+AAAAAAAAAAA+wAAABYARABvAGMAawBXAGkAZABnAGUAdAA0AAAAAAD/////AAAAAAAAAAD7AAAAUgBHAEwAVQBFADIAIAB0AHIAZQBlACAAYwBvAG0AcABvAG4AZQBuAHQALwBHAEwAVQBFADIAIAB0AHIAZQBlACAAYwBvAG0AcABvAG4AZQBuAHQAAAAAAP////8AAAB5AP////sAAABgAFMAaQBtAHUAbABpAG4AawA6AEUAZABpAHQAbwByADoAUgBlAGYAZQByAGUAbgBjAGUAZABGAGkAbABlAHMALwBSAGUAZgBlAHIAZQBuAGMAZQBkACAARgBpAGwAZQBzAAAAAAD/////AAAApwD///8AAAABAAAAAAAAAAD8AgAAAAH7AAAAVABHAEwAVQBFADIAOgBQAHIAbwBwAGUAcgB0AHkASQBuAHMAcABlAGMAdABvAHIALwBQAHIAbwBwAGUAcgB0AHkAIABJAG4AcwBwAGUAYwB0AG8AcgAAAAAA/////wAAAhYA////AAAAAwAAAAAAAAAA/AEAAAAB+/////8AAAAAAP////8AAAGuAP///wAABJUAAALbAAAAAQAAAAIAAAABAAAAAvwAAAADAAAAAAAAAAEAAAA2AGMAbwBsAGwAYQBwAHMAaQBiAGwAZQBQAGEAbgBlAGwAVABvAG8AbABCAGEAcgBMAGUAZgB0AwAAAAD/////AAAAAAAAAAAAAAABAAAAAQAAADgAYwBvAGwAbABhAHAAcwBpAGIAbABlAFAAYQBuAGUAbABUAG8AbwBsAEIAYQByAFIAaQBnAGgAdAMAAAAA/////wAAAAAAAAAAAAAAAwAAAAEAAAA6AGMAbwBsAGwAYQBwAHMAaQBiAGwAZQBQAGEAbgBlAGwAVABvAG8AbABCAGEAcgBCAG8AdAB0AG8AbQAAAAAA/////wAAAAAAAAAA</P>
       <Array PropName="PersistedApps" Type="Cell" Dimension="0*1"/>
       <P Name="WindowUuid" Class="char">43a7fe24-6618-44b7-a6c4-7acfaa3515db</P>
     </Object>
-    <P Name="BDUuid" Class="char">687fefb0-fa13-4b55-81ae-1a643536dec5</P>
+    <P Name="BDUuid" Class="char">01baffd4-3f86-4532-992d-64276a5a1830</P>
   </Object>
 </WindowsInfo>
 

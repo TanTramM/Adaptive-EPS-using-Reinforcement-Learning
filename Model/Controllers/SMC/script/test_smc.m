@@ -9,9 +9,8 @@ function test_smc()
 %       e_T[k] = T_s[k] - T_d,ref(v[k], a_y[k])
 %       Ts_dot_hat[k] = (T_s[k] - w[k]) / Tf
 %       w[k+1] = w[k] + Ts * Ts_dot_hat[k]      (Forward Euler)
-%       s[k] = Ts_dot_hat[k] + 2 * lambda * e_T[k] + lambda^2 * z[k]
+%       s[k] = Ts_dot_hat[k] + lambda * e_T[k]
 %       T_a[k] = T_a_max[k] * sat(s[k] / Phi)
-%       z[k+1] = z[k] + Ts * (e_T[k] * (|s[k] / Phi| <= 1.0)) (Slotine anti-windup)
 %   and compared sample-by-sample with the Simulink block (fixed step 1 ms).
 
 modelFileName = 'SMC';
@@ -22,7 +21,7 @@ loadSmcPath = fullfile(ctlDir, 'load_smc.m');
 evalin('base', sprintf('run(''%s'');', strrep(loadSmcPath, '\', '/')));
 Ts = evalin('base', 'Ts_ctrl');
 
-lambda = 35.0; Phi = 2.5; Tf = 0.005;
+lambda = 30.0; Phi = 2.5; Tf = 0.005;
 assignin('base', 'SMC_lambda', lambda);
 assignin('base', 'SMC_Phi',    Phi);
 assignin('base', 'SMC_Tf',     Tf);
@@ -89,17 +88,13 @@ Td = sign(a_y) .* interp2(ay_bp, v_bp, tab, min(abs(a_y), ay_bp(end)), min(max(v
 
 Ta_ref = zeros(n, 1);
 w = 0;
-z = 0;
 for k = 1:n
     e_T = T_s(k) - Td(k);
     Ts_dot_hat = (T_s(k) - w) / Tf;
     w = w + Ts * Ts_dot_hat;
-    s = Ts_dot_hat + 2 * lambda * e_T + (lambda^2) * z;
+    s = Ts_dot_hat + lambda * e_T;
     sat_val = min(1, max(-1, s / Phi));
     Ta_ref(k) = T_a_max(k) * sat_val;
-    if abs(s / Phi) <= 1
-        z = z + Ts * e_T;
-    end
 end
 
 Ta_sim = squeeze(ts.Data); Ta_sim = Ta_sim(:);
@@ -108,15 +103,15 @@ fprintf('[%s] expected T_a range: [%.3f, %.3f] N.m\n', modelFileName, min(Ta_ref
 fprintf('[%s] max |T_a(Simulink) - T_a(reference)| over %d samples = %.3g N.m\n', modelFileName, n, err);
 assert(err < 1e-9, 'T_a differs from independent reference by %.3g', err);
 
-% Verify discrete structure: no continuous states in the block, exactly 2 forward Euler integrators
+% Verify discrete structure: no continuous states in the block, exactly 1 forward Euler integrator
 integ = find_system(dut, 'BlockType', 'DiscreteIntegrator');
-assert(numel(integ) == 2, 'Must have exactly 2 discrete-time integrators (w and z)');
+assert(numel(integ) == 1, 'Must have exactly 1 discrete-time integrator (w)');
 for ii = 1:numel(integ)
     assert(strcmp(get_param(integ{ii}, 'IntegratorMethod'), 'Integration: Forward Euler'), ...
         'Integrator %s must be forward-Euler discrete-time integrator', integ{ii});
 end
 
-fprintf('[%s] TEST PASS: ISMC matches the independent recursion (max error %.3g)\n', modelFileName, err);
+fprintf('[%s] TEST PASS: SMC-sat matches the independent recursion (max error %.3g)\n', modelFileName, err);
 
 close_system(harnessName, 0);
 close_system(modelFileName, 0);

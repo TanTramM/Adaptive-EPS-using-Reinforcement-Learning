@@ -589,3 +589,16 @@ Claude: ĐÃ LÀM VÀ CHẠY XONG P5 (lọc cổng cứng, chọn điểm tối 
 (4) Cập nhật Model/data/pi.json lưu thông số thiết kế chính thức và dữ liệu seed 10001; xuất Result/Controllers/PI/Sweep/PI_fine_sweep.csv và PI_sensitivity_report.csv.
 (5) Cập nhật DieuKhien_Linear.txt: chuyển P5 sang [XONG 2026-10-10], P6 sang [TIẾP THEO], thêm mục C.8 ghi chi tiết số liệu.
 TRẠNG THÁI HIỆN TẠI KHUNG LINEAR: P0, P1, P2, P3, P4, P5 ĐÃ XONG. SẴN SÀNG BƯỚC TIẾP: P6 (chấm điểm trên bộ ca thử chuẩn TC1-TC6).
+================================================================================
+Lượt 119
+Người dùng: kiểm tra xem linear đang làm tới đâu rồi, sắp tắt máy.
+Claude: CHỈ ĐỌC, không sửa file nào ngoài nhật ký này. Đã đọc lượt mới nhất khung Map (Lượt 342: kiểm tiến độ, Map xong Bước 1-5, K_max 6.75 sát ngưỡng K_acc, chưa làm Bước 6 TC1-TC6) và khung SMC (Lượt 18: ISMC đã đạt e_rel 1.95 %, đã chạy TC1-TC6 seed 20000; chưa có kinh nghiệm mới ảnh hưởng PI).
+Trạng thái Linear: PI xong P0-P5 (khối + test, móc cổng độ dư, nhận dạng + cận lưới, quét thô 103 điểm, chọn điểm, lưới mịn, seed 10001, độ nhạy); điểm chọn Kp 1.25, Ki 3.0, Kaw 2.4 (R 26.65 %, S 0.2395, e_rel 3.25 %, rev 4.51 %) theo quy tắc dự phòng 5.6 vì không điểm nào qua đủ cổng. Bước tiếp: P6 (TC1-TC6 lý tưởng và seed 10000), rồi P7 tài liệu, P8 PID. Việc tồn: xóa file rác Model/Controllers/PI/script/test_pi_harness.slx.autosave; hỏi người dùng xóa DieuKhien_PI.txt cũ; nêu rõ trong luận văn rằng điểm chọn trượt cổng rev (4.51 % > 1 %) và e_rel ở 20 km/h (3.25 % > 3 %).
+TRẠNG THÁI HIỆN TẠI KHUNG LINEAR: P0-P5 ĐÃ XONG. SẴN SÀNG BƯỚC TIẾP: P6.
+================================================================================
+Lượt 120
+Người dùng: chạy tc seed local.
+Claude: ĐÃ CHẠY P6 cho PI (Kp 1.25, Ki 3.0, Kaw 2.4): build_closed_loop('PI') dựng lại Model_PI, run_test_cases('PI', []) (lý tưởng) và run_test_cases('PI', 10000) (seed local). Kết quả: Result/Controllers/PI/TestCases/ và TestCases_noise/seed_10000/ (6 ảnh + 6 csv tín hiệu + PI_test_case_metrics.csv mỗi nơi). MATLAB báo heap corruption khi thoát (vô hại, dữ liệu đã ghi).
+RMS e_T cả ca [N.m] lý tưởng / seed 10000: TC1 0.486/0.485; TC2 0.564/0.565; TC3 0.250/0.251; TC4 0.631/0.630; TC5 0.800/0.807; TC6 0.065/0.067. TV(T_a) [N.m/s] lý tưởng -> seed 10000: TC1 1.1 -> 19.6; TC2 1.5 -> 28.3; TC3 0.3 -> 7.4; TC4 3.8 -> 43.4; TC5 4.0 -> 31.6; TC6 0.08 -> 7.7 (nhiễu cảm biến làm T_a rung, như dự kiến vì Kp 1.25 khuếch đại nhiễu T_s).
+Static TC1 (11 cửa sổ): |e_rel| <= 1.9 % ở cả hai chế độ (cổng 3 % đạt). Xác lập sau bậc mu: TC3 0.03 %, TC6 0.003 % (lý tưởng). Chưa phân tích sâu; TC4 'during_puddle' e_T trung bình -1.45 N.m (-56 %) là đoạn quá độ vũng nước, cần xem hình trước khi nhận xét. Chưa so với Map/SMC.
+TRẠNG THÁI HIỆN TẠI KHUNG LINEAR: P0-P6 ĐÃ XONG (chưa phân tích). SẴN SÀNG BƯỚC TIẾP: P7 tài liệu (pi.txt), rồi P8 PID.

@@ -1,39 +1,23 @@
 %% build_smc.m
-% Use the Simulink API to build the Integral SMC (ISMC) controller block, saved as
+% Use the Simulink API to build the SMC-sat controller block, saved as
 % SMC.mdl inside Controllers/SMC/ (parent of this script).
 % Plug-and-play interface of Sim/script/build_closed_loop.m (wired by NAME):
 %   In : T_s, v, a_y, T_a_lim (measured/closed-loop signals), T_a_max (from AssistLimit)
 %   Out: T_a (commanded assist torque)
 %
-% Mathematical formulation (Integral SMC-sat, Slotine & Li Ch. 7, pp. 286-287, 300):
+% Mathematical formulation (SMC-sat without integral, Slotine & Li Ch. 7):
 %   e_T = T_s - T_d,ref(v, a_y)                  from shared Reference block
-%   Ts_dot_hat: filtered derivative of T_s via 1st-order filter H(s) = s / (Tf * s + 1)
-%       w[k+1] = w[k] + Ts * ((T_s[k] - w[k]) / Tf),    Forward Euler, Ts = Ts_ctrl = 1 ms
-%       Ts_dot_hat[k] = (T_s[k] - w[k]) / Tf
-%   Integral state z with Slotine anti-windup (Remark iv, p. 300):
-%       z[k+1] = z[k] + Ts * (e_T[k] * (|s[k] / Phi| <= 1.0))
-%   Sliding surface:
-%       s = Ts_dot_hat + 2*lambda * e_T + lambda^2 * z
-%   Saturation control law:
-%       T_a = T_a_max * sat(s / Phi)
+%   Ts_dot_hat: filtered derivative of T_s, H(s) = s / (Tf * s + 1), Forward Euler, Ts = Ts_ctrl = 1 ms
+%       w[k+1] = w[k] + Ts * Ts_dot_hat[k],  Ts_dot_hat[k] = (T_s[k] - w[k]) / Tf
+%   Sliding surface:  s = Ts_dot_hat + lambda * e_T
+%   Saturation law:   T_a = T_a_max * sat(s / Phi)
 %
 % Hierarchy (CLAUDE.md):
 %   SMC                   In : T_s, v, a_y, T_a_lim, T_a_max    Out: T_a
-%     +-- Reference       In : v, a_y                           Out: T_d_ref
-%     +-- Sum_eT          T_s - T_d_ref -> e_T
-%     +-- Sum_diff        T_s - w
-%     +-- Prod_Ts_dot     (T_s - w) / SMC_Tf -> Ts_dot_hat
-%     +-- Int_w           discrete-time integrator, Forward Euler, Ts_ctrl -> w
-%     +-- Prod_2lambda_e  2 * SMC_lambda * e_T
-%     +-- Prod_lambda2_z  SMC_lambda^2 * z
-%     +-- Sum_s           Ts_dot_hat + 2*lambda*e_T + lambda^2*z -> s
-%     +-- Div_s_Phi       s / SMC_Phi -> s_over_Phi
-%     +-- Abs_s_Phi       |s / Phi|
-%     +-- RelOp_freeze    |s / Phi| <= 1.0
-%     +-- Prod_e_freeze   e_T * (|s / Phi| <= 1.0)
-%     +-- Int_z           discrete-time integrator, Forward Euler, Ts_ctrl -> z
-%     +-- Sat_s           sat(s / Phi, [-1, 1])
-%     +-- Prod_Ta         Sat_s * T_a_max -> T_a
+%     +-- Reference, Sum_eT, Sum_diff, Prod_Ts_dot, Int_w (Forward Euler, Ts_ctrl)
+%     +-- Prod_lambda_e   SMC_lambda * e_T
+%     +-- Sum_s           Ts_dot_hat + lambda*e_T -> s
+%     +-- Div_s_Phi, Sat_s, Prod_Ta   T_a_max * sat(s / Phi)
 %
 % Usage:
 %   >> run('../load_smc.m')
@@ -82,7 +66,7 @@ add_line(sub, 'T_s/1', [gTs '/1'], 'autorouting', 'on');
 gTamax = addGoto(sub, 'T_a_max', 180, 380);
 add_line(sub, 'T_a_max/1', [gTamax '/1'], 'autorouting', 'on');
 
-% Inport T_a_lim terminated (reserved for future anti-windup when integral state is present)
+% Inport T_a_lim terminated (no integral state, so no anti-windup)
 hTerm = add_block('simulink/Sinks/Terminator', [sub '/Term_Ta_lim'], 'MakeNameUnique', 'on');
 moveBlock(hTerm, 180, 480);
 add_line(sub, 'T_a_lim/1', [get_param(hTerm, 'Name') '/1'], 'autorouting', 'on');
@@ -118,44 +102,14 @@ moveBlock(fullIntW, 680, 360);
 add_line(sub, 'Prod_Ts_dot/1', 'Int_w/1', 'autorouting', 'on');
 g = addGoto(sub, 'w', 800, 370); add_line(sub, 'Int_w/1', [g '/1'], 'autorouting', 'on');
 
-% ----- Integral state z and Slotine anti-windup: z[k+1] = z[k] + Ts * e_int[k] -----
-% e_int = e_T * (|s / Phi| <= 1.0)
-fullAbs = [sub '/Abs_s_Phi'];
-add_block('simulink/Math Operations/Abs', fullAbs);
-moveBlock(fullAbs, 1100, 220);
-add_line(sub, [addFrom(sub, 's_over_Phi', 1000, 220) '/1'], 'Abs_s_Phi/1', 'autorouting', 'on');
+% ----- Sliding surface s = Ts_dot_hat + lambda*e_T -----
+addProduct(sub, 'Prod_lambda_e', '**', 760, 40);
+add_line(sub, [addConstant(sub, 'SMC_lambda', 640, 20) '/1'], 'Prod_lambda_e/1', 'autorouting', 'on');
+add_line(sub, [addFrom(sub, 'e_T', 640, 60) '/1'],            'Prod_lambda_e/2', 'autorouting', 'on');
 
-fullRel = [sub '/RelOp_freeze'];
-add_block('simulink/Logic and Bit Operations/Relational Operator', fullRel);
-set_param(fullRel, 'Operator', '<=');
-moveBlock(fullRel, 1220, 220);
-add_line(sub, 'Abs_s_Phi/1', 'RelOp_freeze/1', 'autorouting', 'on');
-add_line(sub, [addConstant(sub, '1.0', 1140, 260) '/1'], 'RelOp_freeze/2', 'autorouting', 'on');
-
-addProduct(sub, 'Prod_e_freeze', '**', 1340, 220);
-add_line(sub, [addFrom(sub, 'e_T', 1240, 180) '/1'], 'Prod_e_freeze/1', 'autorouting', 'on');
-add_line(sub, 'RelOp_freeze/1',                      'Prod_e_freeze/2', 'autorouting', 'on');
-
-fullIntZ = [sub '/Int_z'];
-add_block('simulink/Discrete/Discrete-Time Integrator', fullIntZ);
-set_param(fullIntZ, 'IntegratorMethod', 'Integration: Forward Euler', 'SampleTime', 'Ts_ctrl', 'gainval', '1', 'InitialCondition', '0');
-moveBlock(fullIntZ, 1440, 220);
-add_line(sub, 'Prod_e_freeze/1', 'Int_z/1', 'autorouting', 'on');
-g = addGoto(sub, 'z', 1560, 230); add_line(sub, 'Int_z/1', [g '/1'], 'autorouting', 'on');
-
-% ----- Sliding surface s = Ts_dot_hat + 2*lambda*e_T + lambda^2*z -----
-addProduct(sub, 'Prod_2lambda_e', '**', 760, 40);
-add_line(sub, [addConstant(sub, '2 * SMC_lambda', 640, 20) '/1'], 'Prod_2lambda_e/1', 'autorouting', 'on');
-add_line(sub, [addFrom(sub, 'e_T', 640, 60) '/1'],               'Prod_2lambda_e/2', 'autorouting', 'on');
-
-addProduct(sub, 'Prod_lambda2_z', '**', 760, 140);
-add_line(sub, [addConstant(sub, 'SMC_lambda^2', 640, 120) '/1'], 'Prod_lambda2_z/1', 'autorouting', 'on');
-add_line(sub, [addFrom(sub, 'z', 640, 160) '/1'],                'Prod_lambda2_z/2', 'autorouting', 'on');
-
-addSum(sub, 'Sum_s', '+++', 880, 60);
+addSum(sub, 'Sum_s', '++', 880, 60);
 add_line(sub, [addFrom(sub, 'Ts_dot_hat', 760, 90) '/1'], 'Sum_s/1', 'autorouting', 'on');
-add_line(sub, 'Prod_2lambda_e/1',                          'Sum_s/2', 'autorouting', 'on');
-add_line(sub, 'Prod_lambda2_z/1',                          'Sum_s/3', 'autorouting', 'on');
+add_line(sub, 'Prod_lambda_e/1',                          'Sum_s/2', 'autorouting', 'on');
 g = addGoto(sub, 's', 980, 70); add_line(sub, 'Sum_s/1', [g '/1'], 'autorouting', 'on');
 
 % ----- Normalized sliding surface: s_over_Phi = s / SMC_Phi -----

@@ -9,7 +9,7 @@
 
 ---
 
-## TRẠNG THÁI HIỆN TẠI (2026-10-10, sau Lượt 17)
+## TRẠNG THÁI HIỆN TẠI (2026-10-10, sau Lượt 19: đã tách SMC (sat, không tích phân) và ISMC (có tích phân) thành 2 thư mục; xem Lượt 19, các mục dưới là của Lượt 17 và cũ hơn)
 
 - MỚI NHẤT (Lượt 17): Đã chạy hoàn tất toàn bộ bộ ca thử nghiệm chuẩn TC1-TC6 cho bản SMC-sat không tích phân (baseline: lambda=30 rad/s, Phi=2.0 N.m/s, Tf=5 ms), cả 2 chế độ:
   1. Cảm biến lý tưởng: Result/Controllers/SMC/TestCases/ (RMS e_T toàn ca: TC1 0.175, TC2 0.146, TC3 0.055, TC4 0.116, TC5 0.100, TC6 0.106 N.m).
@@ -121,3 +121,7 @@
     - TC3: Cua gắt giảm bám duy trì sau quá độ đạt sai số 0.07 % (lý tưởng).
     - TC6: Cua tăng bám duy trì sau quá độ đạt sai số 0.43 % (lý tưởng).
 (5) Cập nhật tài liệu: Bổ sung Phần F vào Documents/Notes/Controllers/DieuKhien_SMC.txt và đồng bộ Tracking/historychat_smc.md.
+
+### Lượt 19 - Tách hai bộ: SMC (sat, không tích phân) và ISMC (có tích phân) (2026-10-10)
+**Người dùng:** làm lại smc-sat, folder tên là smc; smc tích phân, folder tên là ismc.
+**Claude:** (1) Sao lưu ra `C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-10_smc_truoc_tach_ismc`. (2) ISMC = bản có tích phân cũ, đổi tên: `Model/Controllers/ISMC/` (load_ismc.m, ISMC.mdl, Model_ISMC.mdl, script/build_ismc.m, test_ismc.m), `Model/data/ismc.json` (lambda 20, Phi 2, Tf 5 ms), biến `ISMC_*`, kết quả `Result/Controllers/ISMC/`; test_ismc PASS (1.92e-13). (3) SMC dựng lại là SMC-sat không tích phân: s = Ts_dot_hat + lambda e_T, T_a = T_a_max sat(s/Phi), `smc.json` lambda 30, Phi 2, Tf 5 ms; build_smc/test_smc sửa lại, test PASS (7.7e-14); chạy lại TC1-TC6 lý tưởng và nhiễu seed_20000. RMS e_T (N.m) lý tưởng SMC 0.168/0.145/0.056/0.116/0.100/0.105 so với ISMC 0.108/0.092/0.036/0.095/0.073/0.046. (4) Thêm màu 'ISMC' vào plot_compare_cases.m và make_pair_comparisons.m. (5) Chưa làm: DieuKhien_SMC.txt vẫn gộp cả hai (Phần F là của ISMC), chưa tách DieuKhien_ISMC.txt; mục TRẠNG THÁI HIỆN TẠI cần cập nhật; lưới quét chưa có. Lưu ý: CLAUDE.md nói biến thể không thành bộ mới, nhưng người dùng yêu cầu thư mục riêng nên theo người dùng.

@@ -86,6 +86,7 @@ function rgb = colorOf(ctrl)
         case 'PI_2K',  rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
         case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua
+        case 'ISMC', rgb = [0.910 0.482 0.643];   % magenta
         case 'SMC_KI', rgb = [0.910 0.482 0.643];   % #e87ba4 magenta
         case 'PIDF_DZ',   rgb = [0.290 0.227 0.655];   % #4a3aa7 violet
         case 'SMC_KI_DZ', rgb = [0.000 0.514 0.000];   % #008300 green

@@ -1,9 +1,8 @@
 {
-  "x_note": "SMC controller data (Documents/Notes/Controllers/DieuKhien_SMC.txt). Ts_ctrl: controller period [s]. Integral SMC (ISMC): s = Ts_dot_hat + 2*lambda*e_T + lambda^2*z, T_a = T_a_max * sat(s / Phi). Slotine anti-windup: z integrates e_T inside boundary layer (|s| <= Phi) and freezes outside (|s| > Phi).",
+  "x_note": "SMC-sat (no integral) data. Ts_ctrl: controller period [s]. s = Ts_dot_hat + lambda*e_T, T_a = T_a_max * sat(s / Phi). The integral variant is controller ISMC (ismc.json). Plan and log: Documents/Notes/Controllers/DieuKhien_SMC.txt.",
   "Ts_ctrl": 0.001,
   "design": {
-    "variant": "SMC_integral",
-    "lambda": 20.0,
+    "lambda": 30.0,
     "Phi": 2.0,
     "Tf": 0.005
   }
