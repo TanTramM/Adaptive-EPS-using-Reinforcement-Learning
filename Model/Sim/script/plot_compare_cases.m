@@ -82,7 +82,7 @@ end
 function rgb = colorOf(ctrl)
     switch ctrl
         case 'Map',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
-        case 'PI',     rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'PI',     rgb = [0.800 0.600 0.000];   % #cc9900 gold
         case 'PI_2K',  rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
         case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua

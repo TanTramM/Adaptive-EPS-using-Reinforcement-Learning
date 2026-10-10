@@ -89,6 +89,7 @@ function rgb = colorOf(ctrl)
 % same colors as plot_compare_cases.m
     switch ctrl
         case 'Map',    rgb = [0.165 0.471 0.839];
+        case 'PI',     rgb = [0.800 0.600 0.000];   % same as plot_compare_cases.m
         case 'PID',    rgb = [0.922 0.408 0.204];
         case 'SMC',    rgb = [0.106 0.686 0.478];
         case 'ISMC', rgb = [0.910 0.482 0.643];   % magenta
