@@ -1,11 +1,11 @@
 function G = make_pair_comparisons(ctrlList, seeds)
 %MAKE_PAIR_COMPARISONS Run the standard test cases with the full sensor chain and compare the controllers two at a time.
 %
-%   G = make_pair_comparisons({'Map_6_8', 'SMC'}, 90001)
+%   G = make_pair_comparisons({'Map', 'SMC'}, 99999)
 %
-%   Sensor level is the single level 'high' of the Sensors subsystem (data/sensors.json): white noise (std = one resolution step)
-%   + quantizer + update period of every signal. Run load_pid, load_smc, load_map_6_8 (whatever the list needs) in the base workspace first.
-%   Every controller is run ONCE per seed (run_test_cases(ctrl, 'high', seed), metrics on the TRUE signals, first 2 s not scored),
+%   Noisy sensors of the Sensors subsystem (data/sensors.json): white noise (std = one resolution step) + quantizer + update period of
+%   every signal. Run load_<ctrl> of every controller in the list in the base workspace first.
+%   Every controller is run ONCE per seed (run_test_cases(ctrl, seed), metrics on the TRUE signals, first 2 s not scored),
 %   the seeds are averaged, then for every pair (A, B) of ctrlList, in list order, it writes to Result/Compare/<A>_vs_<B>/:
 %     <A>_vs_<B>_noise_study_all_runs.csv    one row per controller, seed, case, window
 %     <A>_vs_<B>_noise_study_summary.csv     mean and std over the seeds (same columns as run_noise_study.m)
@@ -17,16 +17,15 @@ scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir); setup_paths;                              % result_dir
 addpath(scriptDir);                             % run_test_cases, plot_compare_cases
-if nargin < 2, seeds = 90001; end
+if nargin < 2, seeds = 99999; end
 
 metrics = {'RMS_eT_Nm', 'MaxAbs_eT_Nm', 'Mean_eT_signed_pct_of_Tdref', 'RMS_Ta_Nm', 'MaxAbs_Ta_Nm', 'TV_Ta_Nm_per_s'};
 runs = table();
 for ci = 1:numel(ctrlList)
     for s = seeds
         t0 = tic;
-        evalc('M = run_test_cases(ctrlList{ci}, ''high'', s);');
+        evalc('M = run_test_cases(ctrlList{ci}, s);');
         M.Ctrl = repmat(ctrlList(ci), height(M), 1);
-        M.Level = repmat({'high'}, height(M), 1);
         M.Seed = repmat(s, height(M), 1);
         runs = [runs; M]; %#ok<AGROW>
         fprintf('make_pair_comparisons: %s seed %d done (%.0f s)\n', ctrlList{ci}, s, toc(t0));
@@ -34,7 +33,7 @@ for ci = 1:numel(ctrlList)
 end
 mean0 = @(x) mean(x, 'omitnan');
 std0  = @(x) std(x, 0, 'omitnan');
-G = groupsummary(runs, {'Ctrl', 'Level', 'Case', 'Window'}, {mean0, std0}, metrics);
+G = groupsummary(runs, {'Ctrl', 'Case', 'Window'}, {mean0, std0}, metrics);
 G.Properties.VariableNames = regexprep(G.Properties.VariableNames, '^fun1_', 'mean_');
 G.Properties.VariableNames = regexprep(G.Properties.VariableNames, '^fun2_', 'std_');
 
@@ -46,7 +45,7 @@ for a = 1:numel(ctrlList) - 1
         writetable(runs(ismember(runs.Ctrl, pair), :), fullfile(outDir, [tag '_noise_study_all_runs.csv']));
         writetable(G(ismember(G.Ctrl, pair), :), fullfile(outDir, [tag '_noise_study_summary.csv']));
         wholeCaseBars(G, pair, seeds, fullfile(outDir, [tag '_whole_case.png']));
-        plot_compare_cases(pair, 'high', seeds(1));
+        plot_compare_cases(pair, seeds(1));
     end
 end
 evalin('base', 'clear sc_theta1 sc_v sc_mu');
@@ -81,7 +80,7 @@ function wholeCaseBars(G, pair, seeds, file)
         legend(pair, 'Location', 'northwest', 'Interpreter', 'none');
         title(sprintf('%s (trục log, trung bình +- độ lệch chuẩn qua %d hạt giống)', items{k, 2}, numel(seeds)));
     end
-    sgtitle(sprintf('%s, toàn ca (bỏ 2 s đầu), cảm biến có nhiễu mức high', strjoin(pair, ' vs ')), 'Interpreter', 'none');
+    sgtitle(sprintf('%s, toàn ca (bỏ 2 s đầu), cảm biến có nhiễu', strjoin(pair, ' vs ')), 'Interpreter', 'none');
     exportgraphics(f, file, 'Resolution', 130);
     close(f);
 end
@@ -89,7 +88,7 @@ end
 function rgb = colorOf(ctrl)
 % same colors as plot_compare_cases.m
     switch ctrl
-        case 'Map_6_8',    rgb = [0.165 0.471 0.839];
+        case 'Map',    rgb = [0.165 0.471 0.839];
         case 'PID',    rgb = [0.922 0.408 0.204];
         case 'SMC',    rgb = [0.106 0.686 0.478];
         case 'SMC_KI', rgb = [0.910 0.482 0.643];

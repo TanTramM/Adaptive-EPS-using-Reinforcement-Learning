@@ -15,9 +15,9 @@ function TC = test_cases(which)
 %   theta1_ss = n_st*delta_f + T_d,ref/K. When mu drops the driver keeps the same angle (he does not know mu).
 %   All changes are smooth ramps (1 - cos) except the friction steps.
 %
-%   test_cases('TK') returns ONLY the calibration case TK (not part of the standard set, not run by run_test_cases.m): used to choose the
-%   map slope K_max (Model/Sim/script/run_map_sweep.m). Dry road, three speeds 30, 60, 100 km/h, 28 s each: hard cornering (0.35 g), sine
-%   steering around 0.2-0.25 g, small corrections.
+%   test_cases('TK') returns ONLY the design case TK (not part of the standard set, not run by run_test_cases.m): used by EVERY controller to
+%   choose its parameters (Documents/Shared/QuyChuan.txt part 3). Dry road with one mu step block, speed blocks 20, 60, 100 km/h; windows named
+%   static_* (steady cornering 0.1-0.4 g), sine_*, small_*, mu_drop/mu_rise (see buildTK). S.blk lists the blocks (speed, t0, t1).
 %
 %   Fields of TC(k): tag, name, t [s] (1 ms grid), theta1 [rad], v [m/s], mu [-], ayTarget [g],
 %   win (struct array: label, t0, t1) = windows where the mean e_T is reported.
@@ -138,35 +138,62 @@ function S = buildTC6(thTab)
     S = assemble('TC6_mu_rise_mid_corner', 'TC6 mu tăng đột ngột giữa cua', tEnd, kv, ka, kmu, [], thTab, win);
 end
 
-%% ===================== TK: calibration case of the map slope K_max ========
+%% ===================== TK: design case shared by every controller ========
 function S = buildTK(thTab)
-% Dry road (mu = 0.8), speeds 30, 60, 100 km/h, 28 s each. The a_y targets reach 0.35 g because the map slope K_max only limits the
-% assist where the calibration needs a steep slope (top of the calibration range). Per block (T = start of the block):
-%   hard cornering     T+1..T+9     a_y* ramps to 0.35 g, held, down to a_base                                -> window steady (T+5..T+7)
-%   sine steering      T+9..T+18.5  sine of amplitude 0.1 g (0.5 Hz, 4 cycles) around a_base (0.2 g at 30 km/h, 0.25 g above)
-%                                                                                                          -> window sine (T+10.5..T+18)
-%   small corrections  T+19.5..T+26 around 0.2 g: +0.03 g then -0.03 g steps (small lane corrections)      -> window small (T+20..T+26)
-    speeds = [30 60 100];
-    aHold  = 0.35;
-    aBase  = [0.2 0.25 0.25];
-    aSmall = 0.2;
-    blockLen = 28;
-    kv = [0 speeds(1)];
-    ka = [0 0]; sines = []; win = struct('label', {}, 't0', {}, 't1', {});
+% Design case of QuyChuan.txt part 3. The speed blocks cover the range of the standard cases (20, 60, 100 km/h); a_y levels cover 0.1-0.4 g
+% wherever the Plant reaches them (20 km/h: about 0.2 g). Dry road mu = 0.8 except the mu step in the 60 km/h block. Per block (T = start):
+%   staircase   each level: 1 s transition + 3 s hold; window static_* = last 1 s of the hold (settled: slow integrators are not mistaken for
+%               steady error)                                                               20 km/h: 0.1 0.15 0.18 g; 60, 100 km/h: 0.1 0.2 0.3 0.4 g
+%   sine        1.5 s down to the base level, 1 s hold, then 4 cycles of 0.5 Hz; window sine_* skips the first 0.5 s     base 0.1 +-0.05 g (20 km/h), 0.2 +-0.1 g
+%   small       around the same base: +0.03 g then -0.03 g steps (small lane corrections); window small_* = 6 s
+%   mu step     60 km/h only: hold 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8; windows mu_drop, mu_rise = the 2 s after each step (response, not steady)
+% The first 2 s of the case are never scored; the 1 s straight run at the end of each block carries the speed change.
+    speeds = [20 60 100];
+    levels = {[0.1 0.15 0.18], [0.1 0.2 0.3 0.4], [0.1 0.2 0.3 0.4]};
+    aBase  = [0.1 0.2 0.2];          % base level of the sine and small corrections [g]
+    aSine  = [0.05 0.1 0.1];         % sine amplitude [g]
+    aMu    = 0.3;                    % level held during the mu step [g]
+    muLow  = 0.6;
+    kv = [0 speeds(1)]; ka = [0 0]; sines = []; kmu = [0 0.8];
+    win = struct('label', {}, 't0', {}, 't1', {});
+    blk = struct('speed', {}, 't0', {}, 't1', {});
+    T = 0;
     for i = 1:numel(speeds)
-        T = (i - 1) * blockLen;
-        if i > 1, kv = [kv; T - 1, speeds(i-1); T, speeds(i)]; end %#ok<AGROW>
-        ka = [ka; T + 1, 0; T + 2, aHold; T + 7.5, aHold; T + 9, aBase(i); T + 18.5, aBase(i); T + 19.5, aSmall; T + 21, aSmall; ...
-              T + 21.5, aSmall + 0.03; T + 23, aSmall + 0.03; T + 23.5, aSmall - 0.03; T + 25, aSmall - 0.03; T + 26, aSmall; T + 27, 0]; %#ok<AGROW>
-        sines = [sines; T + 10, T + 18, 0.1, 0.5]; %#ok<AGROW>
-        win(end+1) = struct('label', sprintf('steady_v%d', speeds(i)), 't0', T + 5, 't1', T + 7); %#ok<AGROW>
-        win(end+1) = struct('label', sprintf('sine_v%d', speeds(i)), 't0', T + 10.5, 't1', T + 18); %#ok<AGROW>
-        win(end+1) = struct('label', sprintf('small_v%d', speeds(i)), 't0', T + 20, 't1', T + 26); %#ok<AGROW>
+        v = speeds(i); lv = levels{i}; b = aBase(i);
+        if i > 1, kv = [kv; T - 1, speeds(i-1); T, v]; end %#ok<AGROW>
+        t = T + 1;
+        for k = 1:numel(lv)                                  % staircase
+            if k == 1, ka = [ka; t, 0]; end                  %#ok<AGROW>
+            ka = [ka; t + 1, lv(k); t + 4, lv(k)]; %#ok<AGROW>
+            win(end+1) = struct('label', sprintf('static_v%d_a%s', v, g2s(lv(k))), 't0', t + 3, 't1', t + 4); %#ok<AGROW>
+            t = t + 4;
+        end
+        ka = [ka; t + 1.5, b; t + 2.5, b]; %#ok<AGROW>        % sine
+        sines = [sines; t + 2.5, t + 10.5, aSine(i), 0.5]; %#ok<AGROW>
+        win(end+1) = struct('label', sprintf('sine_v%d', v), 't0', t + 3, 't1', t + 10.5); %#ok<AGROW>
+        f = t + 10.5;                                         % small corrections
+        ka = [ka; f + 1, b; f + 2.5, b; f + 3, b + 0.03; f + 4.5, b + 0.03; f + 5, b - 0.03; f + 6.5, b - 0.03; f + 7.5, b]; %#ok<AGROW>
+        win(end+1) = struct('label', sprintf('small_v%d', v), 't0', f + 1.5, 't1', f + 7.5); %#ok<AGROW>
+        t = f + 7.5;
+        if v == 60                                            % mu step block
+            m1 = t + 3.0; m2 = m1 + 4;
+            ka = [ka; t + 1, aMu; m2 + 3, aMu]; %#ok<AGROW>
+            kmu = [kmu; m1, 0.8; m1 + 0.001, muLow; m2, muLow; m2 + 0.001, 0.8]; %#ok<AGROW>
+            win(end+1) = struct('label', 'mu_drop', 't0', m1, 't1', m1 + 2); %#ok<AGROW>
+            win(end+1) = struct('label', 'mu_rise', 't0', m2, 't1', m2 + 2); %#ok<AGROW>
+            t = m2 + 3;
+        end
+        ka = [ka; t + 1, 0]; %#ok<AGROW>
+        Tend = t + 2;                                         % 1 s straight carries the speed change
+        blk(end+1) = struct('speed', v, 't0', T, 't1', Tend); %#ok<AGROW>
+        T = Tend;
     end
-    tEnd = numel(speeds) * blockLen;
+    tEnd = T;
     kv = [kv; tEnd, speeds(end)];
     ka = [ka; tEnd, 0];
-    S = assemble('TK_map_slope_calibration', 'TK hiệu chỉnh độ dốc K_max của Map (đường khô)', tEnd, kv, ka, [0 0.8; tEnd 0.8], sines, thTab, win);
+    kmu = [kmu; tEnd, 0.8];
+    S = assemble('TK_design', 'TK ca thiết kế chung cho mọi bộ điều khiển (đường khô, một bậc mu)', tEnd, kv, ka, kmu, sines, thTab, win);
+    S.blk = blk;
 end
 
 %% ===================== Common assembly =================================

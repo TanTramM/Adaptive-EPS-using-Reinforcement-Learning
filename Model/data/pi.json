@@ -1,0 +1,25 @@
+{
+  "x_note": "PI controller data (Documents/Notes/Controllers/DieuKhien_Linear.txt). Ts_ctrl: controller period [s]. design: written by the selection script of the PI (Kp [N.m/(N.m)], Ki [1/s]); absent until the design is chosen, load_pi.m then loads all gains 0 (open loop).",
+  "Ts_ctrl": 0.001,
+  "design": {
+    "Kp": 1.25,
+    "Ki": 3,
+    "Kaw": 2.4,
+    "TK_R_pct": 26.6512202326094,
+    "TK_S_Nm": 0.239546489299353,
+    "TK_TV_Nm_per_s": 14.0580512519537,
+    "TK_erel_pct": 3.25294820004284,
+    "TK_rev_pct": 4.50691733115364,
+    "f_sat_delta": 0.00027825844992652223,
+    "margin_ratio_gain": 0.59709405121220627,
+    "margin_ratio_delay": 1.0027659880222075,
+    "design_seed": 10000,
+    "date": "2026-10-10 01:57:16",
+    "seed_10001_R_pct": 26.590161166560236,
+    "seed_10001_S_Nm": 0.24037961812616065,
+    "seed_10001_TV_Nm_per_s": 13.92577511095624,
+    "seed_10001_erel_pct": 2.5036934046772541,
+    "seed_10001_rev_pct": 4.225180650603038,
+    "fine_grid_resolution_sufficient": false
+  }
+}

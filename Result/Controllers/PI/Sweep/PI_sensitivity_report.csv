@@ -1,0 +1,8 @@
+Condition,R_pct,S_Nm,TV_Nm_per_s
+Nominal (seed 10000),26.6512202326094,0.239546489299353,14.0580512519537
+Second seed (seed 10001),26.5901611665602,0.240379618126161,13.9257751109562
+Seed difference,-0.0610590660491646,0.000833128826807722,-0.13227614099746
+Max fine grid delta R [%],6.43004794109573,0,0
+Max fine grid delta S [%],3.2884528989905,0,0
+Resolution sufficient (< 5%),0,0,0
+Priority inversion invariant,1,0,0

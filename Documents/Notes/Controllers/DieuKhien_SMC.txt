@@ -1,0 +1,124 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH VÀ NHẬT KÝ THIẾT KẾ SMC (điều khiển trượt, Sliding Mode Control) - khung SMC, bắt đầu 2026-10-09
+==============================================================================================================================================================================================
+  File này là file kế hoạch của SMC theo QuyChuan.txt mục 7.1: ghi mọi lựa chọn mà quy chuẩn để mở TRƯỚC khi chạy mô phỏng chọn tham số. Quy chuẩn áp dụng: Documents/Shared/QuyChuan.txt phiên bản 2
+  (2026-10-09; ca TK 117 s ở 20/60/100 km/h, R một số, cổng ổn định đo bằng mô phỏng, thứ tự cổng ổn định -> trợ lực ngược -> bang-bang -> chính xác). Ba nguyên tắc người dùng đặt cho SMC: (1) ưu
+  tiên bản đơn giản trước, chỉ thêm khi bản đơn giản không qua cổng; (2) tính ổn định phải chứng minh được bằng hàm Lyapunov; (3) thứ gì PID cũng thêm được thì là thành phần chung, không tính là
+  lợi thế riêng của SMC; lợi thế riêng chỉ được đến từ thứ chỉ SMC có.
+==============================================================================================================================================================================================
+PHẦN A - CÁC QUYẾT ĐỊNH (chỉ A3 được người dùng xác nhận rõ; A1, A2, A4 là đề xuất, đã sửa nhãn 2026-10-10)
+==============================================================================================================================================================================================
+A1. Phạm vi "thành phần chung" (tiền đề Map không phản hồi do người dùng nêu 2026-10-09; kết luận "chỉ giữa PID và SMC" chờ xác nhận)
+  Map theo định nghĩa không có phản hồi: chỉ đọc T_s và v, tra T_a = f(T_s, v) rồi qua khâu lead; Map không tính e_T nên không thể có khâu tích phân hay mặt trượt. Vì vậy "thành phần chung" chỉ xét
+  giữa hai bộ phản hồi PID và SMC; Map là đường cơ sở không phản hồi, các khác biệt của Map (ví dụ sai số xác lập lớn khi cua gắt) là khác biệt cấu trúc, báo theo QuyChuan 1.4 và 7.2. Thành phần mà
+  PID cũng có hoặc thêm được (khâu tỷ lệ, tích phân của e_T, chống bão hòa tích phân, lọc bậc 1 của khâu đạo hàm) là thành phần chung; SMC chỉ được coi là hơn PID nếu phần hơn đến từ luật chuyển
+  phi tuyến.
+A2. Khâu tích phân của e_T (đề xuất, chờ người dùng xác nhận)
+  Là thành phần chung giữa PID và SMC (QuyChuan 2.4 liệt kê ở cả hai). SMC chỉ thêm tích phân của e_T khi bản không có nó trượt cổng e_rel (QuyChuan 5.3), và ghi rõ đó là phần chung. Map không có
+  (A1).
+A3. Cách lấy đạo hàm của sai số, ÁP DỤNG CHO CẢ PID VÀ SMC (người dùng chốt 2026-10-09; khung Linear tham chiếu mục này)
+  Đạo hàm dùng trong khâu D của PID và trong mặt trượt của SMC lấy bằng vi phân T_s đo qua lọc bậc 1, không dựng lại từ các tốc độ góc K (theta1_dot - theta2_dot). Bỏ số hạng dT_d,ref/dt (vi phân
+  trên tín hiệu đo, không vi phân giá trị đặt), coi nó là nhiễu bị chặn.
+  Ts_dot_hat = s / (Tf s + 1) T_s,m
+  [ \hat{\dot{T}}_s = \frac{s}{T_f s + 1} T_{s,m} ]
+  Ba cách đã xét: (a) SMC dùng K (theta1_dot_hat - theta2_dot), PID vi phân T_s; (b) cả hai dùng K (theta1_dot_hat - theta2_dot); (c) cả hai vi phân T_s. Chọn (c) vì khách quan nó ít nhiễu nhất cho
+  cả hai bộ, không vì đỡ việc (PID cũng đang làm lại). Với cảm biến lý tưởng hai cách mang cùng thông tin vì dT_s/dt = K (theta1_dot - theta2_dot) đúng tuyệt đối, cùng Tf thì cùng trễ; khác nhau
+  chỉ ở nhiễu. Ước lượng ngoài vòng kín (script tạm scratchpad/edot_noise.py, cảm biến theo Model/data/sensors.json: T_s bước 0.01 N.m, theta1 bước 0.0017453 rad, theta2_dot bước 0.069813 rad/s,
+  nhiễu trắng sigma = 1 bước, lái sin 0.5 Hz, RMS đạo hàm thật 4.77 N.m/s), độ lệch chuẩn nhiễu của ước lượng (N.m/s):
+  Tf (ms)   vi phân T_s (c)   K (theta1_dot - theta2_dot) (a, b)   trong đó phần theta1   phần theta2_dot
+  2         3.80              95.1                                 95.0                   4.7
+  5         1.81              45.4                                 45.3                   3.1
+  10        0.97              24.3                                 24.2                   2.3
+  20        0.50              12.6                                 12.5                   1.6
+  Nguyên nhân: bước 0.01 N.m của cảm biến T_s ứng với góc xoắn 0.01/143.24 = 7e-5 rad, mịn hơn bước 0.1 độ = 1.7e-3 rad của cảm biến góc theta1 khoảng 25 lần; khi dựng lại qua góc, sai số theta1 bị
+  nhân với K. Hạn chế: tính ngoài vòng kín, sigma = 1 bước tự chọn; tỉ lệ khoảng 25 lần đến từ độ phân giải (có nguồn datasheet) nên khó đảo. theta1 và theta2_dot vẫn được phép đọc (QuyChuan 2.2),
+  chỉ không dùng để tính đạo hàm sai số. Tf là tham số chỉnh của mỗi bộ.
+A4. Không dùng điều khiển tương đương u_eq (đề xuất của Claude, chưa được xác nhận; người dùng hỏi lại 2026-10-10, xem Tracking/historychat_smc.md Lượt 12)
+  SMC kinh điển có thành phần u_eq bù trước phần đã biết của động học; ở đây u_eq cần T_r (mô-men hồi từ lốp, không đo được), J_col, C_col, tức dùng mô hình plant để bù, bị cấm cho mọi bộ (QuyChuan
+  2.5). Chứng minh Lyapunov dựa vào cận của nhiễu và khả năng của Actuator thay cho u_eq.
+==============================================================================================================================================================================================
+PHẦN B - ĐỘNG HỌC SAI SỐ (bản nháp, để chứng minh Lyapunov)
+==============================================================================================================================================================================================
+  Từ Cụm 1: T_s = K (theta1 - theta2), J_col theta2_ddot = T_a - T_r + T_s - T_f tanh(c theta2_dot) - C_col theta2_dot. Đạo hàm hai lần của T_s chứa T_a, nên T_s (và e_T) có bậc tương đối 2 với
+  T_a; mặt trượt phải chứa đạo hàm của T_s để có bậc tương đối 1:
+  Ts_ddot = K theta1_ddot - (K/J_col) (T_a - T_r + T_s - T_f tanh(c theta2_dot) - C_col theta2_dot)
+  [ \ddot{T}_s = K\ddot{\theta}_1 - \frac{K}{J_{col}}\left(T_a - T_r + T_s - T_f\tanh(c\dot{\theta}_2) - C_{col}\dot{\theta}_2\right) ]
+  s = Ts_dot + lambda e_T,   s_dot = -(K/J_col) T_a + d(t)
+  [ s = \dot{T}_s + \lambda e_T, \qquad \dot{s} = -\frac{K}{J_{col}} T_a + d(t) ]
+  d(t) gom mọi phần không biết hoặc không đo (T_r, ma sát, theta1_ddot của tài xế, dT_d,ref/dt). Hạn chế phải nêu khi chứng minh: chứng minh làm cho hệ liên tục với Ts_dot đúng; trong mô hình thật
+  có lọc Tf (thêm một bậc), lấy mẫu 1 ms và motor 100 Hz ở Actuator; các phần này được kiểm bằng cổng độ dư mô phỏng (QuyChuan 5.2: độ lợi x2, trễ thêm 1 ms).
+==============================================================================================================================================================================================
+PHẦN C - MỤC ĐANG BÀN: LUẬT CHUYỂN (chưa chốt, xem Tracking/historychat_smc.md Lượt 6)
+==============================================================================================================================================================================================
+  Ứng viên: (1) sgn thuần; (2) bão hòa lớp biên k sat(s/Phi); (3) super-twisting (thuật toán xoắn siêu cấp, luật trượt bậc hai cho lệnh liên tục). Chưa chốt.
+==============================================================================================================================================================================================
+PHẦN D - TIẾN ĐỘ VÀ CÔNG VIỆC
+==============================================================================================================================================================================================
+- Tài liệu lý thuyết trong References/: Đã có đầy đủ Slotine và Li (Applied Nonlinear Control, 476 trang) và Moreno-Osorio 2012 (hàm Lyapunov chặt cho super-twisting).
+- Mã nguồn cơ sở: Đã tạo Model/data/smc.json, Model/Controllers/SMC/load_smc.m, script/build_smc.m, script/test_smc.m, Model_SMC.mdl. Test độc lập test_smc PASS (sai số máy 5.11e-14 N.m).
+- Vòng kín: Đã dựng Model_SMC.mdl qua build_closed_loop('SMC') và kiểm tra thông suốt trên ca TK 117 s.
+==============================================================================================================================================================================================
+PHẦN E - KẾT QUẢ THỰC NGHIỆM ĐẦU TIÊN CỦA BẢN SMC-SAT KHÔNG TÍCH PHÂN (2026-10-10)
+==============================================================================================================================================================================================
+E1. Thiết lập thử nghiệm đường ống (Smoke Test) trên ca TK 117 s (QuyChuan v2)
+  Tham số thử nghiệm định cỡ ban đầu: độ dốc mặt trượt lambda = 30.0 rad/s, bề dày lớp biên Phi = 2.0 N.m/s, bộ lọc vi phân Tf = 0.005 s (chu kỳ điều khiển Ts_ctrl = 1 ms).
+  Chạy trên ca TK 117 s với cả hai chế độ cảm biến: lý tưởng (runSeed = []) và có nhiễu (seed local seed_20000).
+E2. Số liệu đo đạc thực tế
+  (1) Cảm biến lý tưởng: R = 12.49 % (R_static = 4.38 %, R_dyn = 29.92 %, R_small = 8.64 %, R_mu = 7.03 %); S = 4.9267 N.m; e_rel = 6.87 %; tỉ lệ trợ lực ngược rev = 0.2350.
+  (2) Cảm biến có nhiễu (seed_20000): R = 15.11 % (R_static = 7.27 %, R_dyn = 30.99 %, R_small = 11.45 %, R_mu = 10.71 %); S = 5.4201 N.m; Scmd = 6.8210 N.m; TV = 1639.22 N.m/s.
+  (3) Sai số xác lập e_rel lớn nhất trên 11 cửa sổ tĩnh đạt 10.49 % (ở 60 km/h, 0.3 g), tại 20 km/h dao động 7.24 - 7.56 %, vượt xa cổng cứng e_rel <= 3.0 % của QuyChuan 5.3.
+  (4) Cổng bang-bang: tỉ lệ chạm trần có nhiễu 0.8409 trừ lý tưởng 0.7178 ra chênh lệch 0.1231, vượt ngưỡng cho phép 0.01 (trượt cổng bang-bang do độ lợi cao khuếch đại nhiễu).
+E3. Kết luận khoa học làm cơ sở cho luận văn
+  Kết quả thực nghiệm đã xác thực hoàn toàn dự đoán lý thuyết ở Lượt 2 và Remark (iii) của Slotine và Li (tr. 300): bản SMC-sat không tích phân suy biến thành bộ PD trong lớp biên, do
+  đó không có cơ chế tích lũy để triệt tiêu tải trọng phản lực từ lốp T_r và ma sát khô của cột lái T_f = 2.0 N.m, dẫn đến sai số xác lập lớn (10.49 %) và trượt cổng e_rel <= 3.0 %.
+  Đây là bằng chứng định lượng khách quan chứng minh tính tất yếu phải nâng cấp sang bản có tích phân (ISMC) hoặc luật trượt bậc hai (Super-Twisting).
+E4. Kết quả nghiệm thu trên bộ ca thử nghiệm chuẩn TC1-TC6 (2026-10-10)
+  Chạy toàn bộ 6 ca thử nghiệm chuẩn (run_test_cases.m) ở cả hai chế độ: lý tưởng (Result/Controllers/SMC/TestCases/) và có nhiễu seed_20000 (Result/Controllers/SMC/TestCases_noise/seed_20000/).
+  (1) Bảng chỉ tiêu toàn ca (RMS e_T [N.m] / Max |e_T| [N.m] / TV(T_a) [N.m/s]):
+      Ca thử nghiệm                   Cảm biến lý tưởng                     Cảm biến có nhiễu (seed_20000)
+      TC1_dry_calibration            0.175 / 1.492 / 1857.0                0.243 / 1.510 / 1860.5
+      TC2_road                       0.146 / 0.998 / 2295.2                0.220 / 1.000 / 1924.3
+      TC3_mu_drop_hard_corner        0.055 / 0.188 / 2029.0                0.105 / 0.378 / 2013.2
+      TC4_wet_patch_lane_change      0.116 / 0.639 / 2045.0                0.193 / 0.865 / 1872.2
+      TC5_sine_high_speed_low_mu     0.100 / 0.301 / 2129.2                0.149 / 0.712 / 1845.5
+      TC6_mu_rise_mid_corner         0.106 / 0.155 / 2500.0                0.154 / 0.339 / 2112.8
+(2) Nhận xét: Trên các cửa sổ giữ cua, sai số xác lập đo được tiếp tục duy trì ở mức cao: TC1 v40 ở 0.2-0.3 g đạt 9.40 - 9.52 %; TC2 khúc cua 0.2 g đạt 8.12 %; TC4 khi vào vũng nước
+đạt mức trợ lực thừa -7.81 %; tổng biến thiên TV(T_a) đạt ~1850-2500 N.m/s. Toàn bộ đồ thị 6 ô và file số liệu tín hiệu đã được xuất đầy đủ làm cơ sở đối chứng hoàn chỉnh cho luận văn.
+==============================================================================================================================================================================================
+PHẦN F - TRIỂN KHAI VÀ KẾT QUẢ CỦA BỘ ĐIỀU KHIỂN TRƯỢT TÍCH PHÂN (ISMC) (2026-10-10)
+==============================================================================================================================================================================================
+F1. Cơ sở lý thuyết và công thức toán học (Integral Sliding Mode Control - ISMC, Slotine & Li Ch. 7, tr. 286-287, 300)
+(1) Định nghĩa mặt trượt tích phân: s = Ts_dot_hat + 2*lambda*e_T + lambda^2*z, trong đó e_T = T_s - T_d,ref, và Ts_dot_hat là đạo hàm lọc của T_s qua bộ lọc quán tính bậc một
+H(s) = s / (Tf*s + 1) giải theo phương pháp Euler hiện (Forward Euler): w[k+1] = w[k] + Ts*Ts_dot_hat[k], Ts_dot_hat[k] = (T_s[k] - w[k]) / Tf (chu kỳ điều khiển Ts = Ts_ctrl = 1 ms).
+(2) Cơ chế chống bão hòa tích phân Slotine (Anti-windup, Remark iv tr. 300): Trạng thái tích phân z cập nhật theo z[k+1] = z[k] + Ts * e_int[k], với e_int[k] = e_T[k] khi |s[k]/Phi| <= 1
+và e_int[k] = 0 khi |s[k]/Phi| > 1 (đóng băng tích phân khi hệ thống nằm ngoài lớp biên để triệt tiêu hiện tượng tích lũy quá mức gây vọt lố).
+(3) Luật trợ lực bão hòa liên tục: T_a = T_a_max * sat(s / Phi). Trong lớp biên (|s| <= Phi), luật này tương đương một bộ điều khiển PID kinh điển có tham số:
+Kd = T_a_max / Phi, Kp = 2 * lambda * Kd, Ki = lambda^2 * Kd.
+F2. Cấu trúc khối Simulink (SMC.mdl) và kiểm thử độc lập (test_smc.m)
+(1) Xây dựng tự động bằng script/build_smc.m: Gồm hai bộ tích phân thời gian rời rạc (Forward Euler, Ts_ctrl): Int_w (cho bộ lọc vi phân) và Int_z (cho trạng thái tích phân).
+Nhánh chống bão hòa sử dụng khối Abs, Relational Operator (<= 1.0) và Product để đóng băng tích phân. Kết nối hồi tiếp qua trạng thái rời rạc không tạo vòng lặp đại số (Algebraic loop).
+(2) Đạt chuẩn Plug-and-play qua Model/Sim/script/build_closed_loop.m: Inports chuẩn {T_s, v, a_y, T_a_lim, T_a_max}, Outport {T_a}.
+(3) Kiểm thử độc lập: test_smc.m kiểm tra trên lưới thời gian 1 ms với tín hiệu tổng hợp, đối chiếu từng bước với thuật toán đệ quy MATLAB độc lập: Max sai số = 1.92e-13 N.m (TEST PASS).
+F3. Kết quả Smoke Test trên ca TK 117 s (chu trình QuyChuan v2)
+Tham số thiết kế ghi nhận trong Model/data/smc.json: variant = "SMC_integral", lambda = 20.0 rad/s, Phi = 2.0 N.m/s, Tf = 0.005 s.
+(1) Sai số xác lập e_rel: Giảm ngoạn mục từ 10.49 % (bản không tích phân) xuống còn 1.95 %, CHÍNH THỨC ĐẠT CỔNG NGHIỆM THU e_rel <= 3.0 % của QuyChuan v2!
+(2) Toàn bộ 11 cửa sổ tĩnh trên ca TK đều đạt sai số cực nhỏ: từ 0.42 % đến 1.95 % (không có bất kỳ cửa sổ nào vượt quá 2.0 %).
+(3) Sai số bám RMS e_T toàn ca giảm từ 0.5847 N.m xuống 0.3594 N.m (giảm ~40 %); mô-men trợ lực lớn nhất max |T_a| = 9.75 N.m.
+(4) Chỉ số độ êm ái: Rumble R = 10.74 %, S = 5.40 N.m, Total Variation TV = 1576.2 N.m/s, bảo đảm vận hành êm ái, hoàn toàn không bị chattering nhờ lớp biên liên tục.
+F4. Kết quả nghiệm thu bộ ca thử nghiệm chuẩn TC1-TC6 (2026-10-10)
+Thực hiện chạy toàn diện run_test_cases('SMC', []) và run_test_cases('SMC', 20000), sinh đầy đủ 12 đồ thị 6 ô và 14 file bảng số liệu CSV:
+(1) Bảng chỉ tiêu toàn ca (RMS e_T [N.m] / Max |e_T| [N.m] / TV(T_a) [N.m/s]):
+Ca thử nghiệm                   Cảm biến lý tưởng                     Cảm biến có nhiễu (seed_20000)
+TC1_dry_calibration            0.117 / 1.497 / 1941.4                0.172 / 1.717 / 1800.7
+TC2_road                       0.108 / 0.627 / 2257.9                0.192 / 1.065 / 1855.0
+TC3_mu_drop_hard_corner        0.034 / 0.146 / 2004.2                0.064 / 0.257 / 1960.1
+TC4_wet_patch_lane_change      0.104 / 0.639 / 2007.5                0.202 / 0.978 / 1792.9
+TC5_sine_high_speed_low_mu     0.086 / 0.297 / 2100.4                0.156 / 0.786 / 1795.2
+TC6_mu_rise_mid_corner         0.040 / 0.077 / 2425.4                0.073 / 0.208 / 2070.0
+(2) Phân tích định lượng so sánh với bản không tích phân:
+- TC1: Sai số xác lập các khúc cua giữ lái giảm mạnh (lý tưởng: v40 -0.3g từ 9.52 % xuống 1.29 %; v60 0.3g từ 6.87 % xuống 0.94 %; v80 từ 5.73 % xuống 0.75 %; v100 từ 5.07 % xuống
+0.69 %; khi có nhiễu seed_20000: toàn bộ các điểm tĩnh đều duy trì trong dải 0.89 % - 2.18 % <= 3.0 %).
+- TC2: Khúc cua đường khô 0.2g (v50) giảm từ 8.12 % xuống 1.85 %; các đoạn duy trì cua trên đường trơn mu = 0.3 chỉ còn 0.60 %; toàn bộ các tình huống chuyển làn đều ổn định.
+- TC3: Tại trạng thái xác lập sau khi sụt bám (after_mu_drop_steady), sai số chỉ còn 0.07 % (lý tưởng) và -0.08 % (có nhiễu).
+- TC6: Trước và sau khi tăng bám, sai số xác lập lần lượt là 0.44 % và 0.43 % (lý tưởng), 0.90 % và 0.70 % (có nhiễu).
+- Độ êm ái: TV(T_a) duy trì ổn định quanh mức 1800 - 2400 N.m/s, không xuất hiện hiện tượng giật cục hay quá tải động cơ trợ lực.

@@ -1,0 +1,100 @@
+==============================================================================================================================================================================================
+FRAMEWORK BÀI BÁO - Map so với bộ điều khiển tuyến tính (PI, PID) trong Adaptive C-EPS (BẢN NHÁP ĐỂ BÀN, 2026-10-09)
+==============================================================================================================================================================================================
+File làm việc, KHÔNG phải bản thảo bài báo. Mục đích: đặt khung (câu hỏi, đóng góp, dàn ý, bằng chứng, điều kiện trước khi viết, rủi ro) để người dùng và Claude bàn sâu từng mục rồi mới
+viết. Mọi con số lấy từ nhật ký và ghi chép đã có (DieuKhien_PI.txt, historychat_map và historychat_linear); số nào chưa chạy theo quy chuẩn v1 được đánh dấu [CHƯA CHÍNH THỨC]. Chỗ nào là đề
+xuất chưa chốt đánh dấu [BÀN]. Phân vai hiện tại: ba khung Map, Linear (PI, PID) và SMC (sắp mở); bài báo cần Map và Linear.
+==============================================================================================================================================================================================
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. ĐỊNH VỊ BÀI BÁO
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1.1. Tên tạm [BÀN]
+So sánh công bằng giữa bản đồ trợ lực (Map) và điều khiển hồi tiếp tuyến tính (PI, PID) để khắc phục trợ lực thừa của trợ lực lái điện cột lái (C-EPS) khi hệ số bám mặt đường đổi.
+1.2. Câu hỏi nghiên cứu
+- Q1. Trên cùng mô hình môi trường (PRSM), cùng cảm biến có nhiễu và cùng cổng thiết kế, bộ điều khiển hồi tiếp tuyến tính (PI, PID) khắc phục trợ lực thừa tốt hơn bản đồ trợ lực vòng hở đến
+  mức nào, và phải trả giá gì về độ ồn của mô-men trợ lực?
+- Q2. Vì sao PI không đủ và khâu vi phân (D) của PID đem lại điều gì: cải thiện đường đánh đổi bám/êm hay chỉ mở rộng vùng làm việc?
+- Q3. Khâu lead-lag trong Map (Lee 2018) có làm Map ngang với bộ hồi tiếp không, hay độ bám của Map bị chặn bởi cấu trúc vòng hở?
+1.3. Đóng góp dự kiến (3 ý) [BÀN: ý nào là chính]
+- C1 (phương pháp). Quy chuẩn đánh giá đặt cổng TRƯỚC khi chạy (ổn định, dự trữ pha, sai số xác lập, không bang-bang) và so cả mặt Pareto bám/êm thay vì chọn một điểm; có cổng không
+  bang-bang vì chọn tham số mà bỏ qua nhiễu từng cho T_a nhảy giữa hai giới hạn.
+- C2 (phân tích). Cộng hưởng cột lái (khoảng 6.2 Hz, tắt dần zeta 0.155) chặn PI ở băng thông khoảng 7 rad/s; khâu D gỡ trần đó nhưng ở cùng độ êm mặt Pareto của PI và PID trùng nhau (R >=
+  1.1).
+- C3 (kết quả so sánh). Số đo bám và ồn của Map (lead-only, lead-lag), PI, PID trên TC1-TC6, trong đó có các ca mu đổi (TC3, TC4) cho thấy trợ lực thừa của Map.
+1.4. Ngoài phạm vi (nói thẳng trong bài)
+- Không RL, không SMC (để dành luận văn). Không động học vòng dòng motor ngoài trễ 100 Hz của Actuator, không lọc đo, không notch, không feedforward theo góc vô-lăng (người dùng chốt là quá
+  phức tạp).
+- Kết quả hoàn toàn trên mô phỏng; chưa có thử trên xe hay HIL.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. LUẬN ĐIỂM VÀ BẰNG CHỨNG ĐÃ CÓ
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mỗi luận điểm kèm số liệu hiện có. Số TK (ca chọn tham số) mỗi bộ dùng seed local khác nhau (Map 00000, PI/PID 10000) nên KHÔNG so thẳng với nhau; so chính thức phải chạy lại ở seed chung
+99999 (mục 5).
+- L1. PI bị cấu trúc chặn: vùng khả thi (PM >= 45, GM >= 2, hai mặt đường) chỉ 277/2000 điểm; Ki tối đa 8 (do GM), Kp tối đa khoảng 0.5 (do PM); băng thông tối đa khoảng 7 rad/s. PI chọn Kp
+  0.26, Ki 8: R 1.105, S 0.234, TV 5.9 N.m/s [TK seed 10000]. Nguồn: DieuKhien_PI.txt A6, A7.
+- L2. D gỡ trần chứ không đổi đánh đổi: PID Kp 1.2, Ki 48, Kd 0.04, Tf 5 ms: R 0.468, S 0.352, TV 39, băng thông 115 rad/s, không bang-bang; mặt Pareto trùng PI khi R >= 1.1 và kéo dài tới R
+  0.46 [seed 10000]. Nguồn: DieuKhien_PI.txt A8; Result/Compare/PI_vs_PID.
+- L3. Lập lịch theo vận tốc vô ích với bộ tuyến tính: PI_2K chọn trùng PI (cộng hưởng gần như không đổi theo v); không qua cổng đáng giá (R giảm >= 5 % mà S không tăng). Một câu hoặc một
+  dòng bảng, không cần mục riêng.
+- L4. Map lead-only bị cổng không bang-bang chặn K_max thấp: K <= 7.0 (tỉ lệ mẫu chạm T_a,max do nhiễu 0.93 % tại K 7.0, 1.28 % tại 7.25); K_max 6.75: R 1.164, S 0.504 [TK seed 00000]; bản
+  hai bậc suy biến thành một bậc. Nguồn: historychat_linear Lượt 80.
+- L5. Lead-lag cứu được Map ở cổng bang-bang: K 10, lead z 38.3 p 952, lag z1 25 p1 8.75: R 0.947, S 0.339, TV 140, giảm R 18.7 % và S 32.7 % so lead-only; PM min 45.4, GM min 4.85 trên bộ
+  68 đối tượng. Nguồn: historychat_map Lượt 317. Lưu ý công sức: 5 tham số, 70 ứng viên mô phỏng so với 1 tham số của lead-only [CHƯA CHÍNH THỨC: chưa chạy TC1-TC6].
+- L6. Trợ lực thừa của Map khi mu đổi: TC3 sau mu giảm Map -14.1 %, PI/PID gần 0 (PID -0.095 %, PI -0.129 %); TC4 vũng nước Map -83.6 % (số của bản Map cũ, cần tái đo). Đây là minh họa trực
+  tiếp của vấn đề đề tài [CHƯA CHÍNH THỨC].
+- L7. Đỉnh |e_T| ở TC1 là giới hạn của Actuator, không phải của bộ điều khiển: 3.47 N.m ở cả PI và PID vì T_a chạm T_a,max = 7.5 N.m ở 20 km/h. Phải nói để không bị hiểu là PID kém.
+- L8. So sánh sơ bộ (khác seed, chưa chính thức): PID R 0.468 / S 0.352 so Map lead-lag R 0.947 / S 0.339; tức ở độ ồn tương đương PID bám tốt gấp khoảng 2 lần. Phải xác nhận bằng một Pareto
+  chung.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. DÀN Ý (đề xuất, trang là ƯỚC LƯỢNG chưa kiểm với mẫu của hội nghị) [BÀN]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- I. Giới thiệu (1 trang): trợ lực thừa, vì sao quan trọng; bản đồ trợ lực là thực hành chuẩn (Lee 2018); tồn tại hồi tiếp theo mô-men; khoảng trống: thiếu so sánh công bằng dưới nhiễu cảm
+  biến; 3 đóng góp.
+- II. Mô hình và giá trị đặt (1 trang): PRSM tóm tắt (cột lái, lốp, 2-DOF, Actuator với T_a,max(v) và trễ 100 Hz, cảm biến có nhiễu và lượng tử); giá trị đặt T_d,ref(v, a_y).
+- III. Quy chuẩn đánh giá (1 trang): ca TK và TC1-TC6; chỉ tiêu R, S, TV, e_rel, trợ lực thừa; cổng đặt trước; quy tắc chọn điểm (R trong 5 % rồi S nhỏ nhất); cổng không bang-bang; seed
+  local và seed chung.
+- IV. Các bộ điều khiển (1.5 trang): Map (lead, lead-lag), PI, PID; mỗi bộ cấu trúc, số tham số chỉnh, số ứng viên mô phỏng (công sức thiết kế).
+- V. Kết quả (2 trang): Pareto bốn đường trên cùng trục; bảng TC1-TC6 (RMS e_T, TV, trợ lực thừa); hình T_s, e_T, T_a cho TC3 hoặc TC4; phân tích cộng hưởng chặn PI.
+- VI. Thảo luận và hạn chế (0.5 trang): giới hạn Actuator ở TC1; mô phỏng thuần; nhiễu tự chọn; chưa động học motor đầy đủ.
+- VII. Kết luận (0.5 trang). Tổng khoảng 7-8 trang; nếu hội nghị giới hạn 6 trang thì gộp II với III, bỏ thảo luận riêng.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. HÌNH VÀ BẢNG CHÍNH (đã có nguồn)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- H1. Sơ đồ khối vòng kín Plant - Sensors - bộ điều khiển - Actuator (Figures/, vẽ tay hoặc drawio) [CHƯA CÓ bản chuẩn].
+- H2. Mặt Pareto (R, S) của Map lead-only, Map lead-lag, PI, PID cùng trục: Result/Compare/PI_vs_PID/PI_vs_PID_pareto_TK.png đã có cho PI và PID; MapLL_pareto_TK.png cho Map; CẦN HÌNH CHUNG
+  [phải chạy lại cùng ca TK và cùng seed].
+- H3. Đáp ứng tần số vòng hở có cộng hưởng (cho L1): suy từ PI_plant_resonance.csv.
+- H4. Chuỗi thời gian TC3 (mu giảm): T_s kèm T_d,ref, e_T, T_a cho bốn bộ (plot_compare_cases.m đã có).
+- B1. Tham số và cổng của mỗi bộ; B2. Chỉ tiêu TK; B3. RMS e_T, TV, trợ lực thừa theo TC1-TC6 (seed 99999).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. ĐIỀU KIỆN TRƯỚC KHI VIẾT
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- D1. Người dùng đóng băng QuyChuan v1: bốn mục [CẦN CHỐT] (dự trữ trễ chịu được, trợ lực ngược, mức sai lệch tham số và trễ báo cáo độ bền, e_rel chuẩn) và việc đổi TK sang bốn cửa sổ
+  0.1-0.4 g hay không.
+- D2. Chọn lại tham số Map (khung Map), PI và PID (khung Linear) theo v1: cùng định nghĩa e_rel, cùng cách đo dự trữ ổn định, mở rộng lưới PID vì giá trị chọn nằm ở biên (Ki 48, Kp 2, Kd
+  0.08).
+- D3. Chạy TC1-TC6 từng bộ (seed local) rồi compare ở seed 99999 và vẽ Pareto chung; chốt Map nào vào bài (lead-only, lead-lag, hoặc cả hai).
+- D4. Hàm đo mới chưa viết: cửa sổ e_rel 0.1-0.3 g trong TK, dự trữ trễ bằng mô phỏng, trợ lực ngược, chỉ tiêu trợ lực thừa đầy đủ. Nếu không kịp thì ghi rõ trong bài là phần nào chỉ đo giải
+  tích.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. RỦI RO VÀ CÂU PHẢN BIỆN DỰ KIẾN
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- R1. 'PID là hiển nhiên tốt hơn Map vòng hở, đóng góp ở đâu?' Trả lời: đóng góp là định lượng đánh đổi dưới nhiễu cảm biến (TV, bang-bang), chỉ ra PI không đủ, và khung đánh giá công bằng;
+  đối thủ Map đã được cho lead-lag chứ không phải bản yếu nhất.
+- R2. 'Nhiễu cảm biến tự chọn.' Sigma = 1 bước phân giải là tự chọn (trừ v có đo); phải báo độ nhạy theo sigma hoặc nêu rõ hạn chế.
+- R3. 'Chỉ mô phỏng.' Thừa nhận; nêu Actuator, lượng tử và chu kỳ cập nhật đã có; hướng thử xe là việc sau.
+- R4. 'Công sức thiết kế không ngang': Map lead-lag 5 tham số/70 ứng viên, PID 4 tham số/90 ứng viên, PI 2 tham số/59 điểm, Map lead-only 1 tham số/24 điểm. Phải báo bảng công sức và lưới
+  mịn tương đương.
+- R5. 'Ngưỡng 5 %, 1 %, PM 45, GM 2 tự chọn.' Đã đặt trước; phải báo độ nhạy (ví dụ ngưỡng bang-bang 0.5-5 %).
+- R6. Tính mới nếu hội nghị coi so sánh Map với PID là quen thuộc: đẩy mạnh C1 (khung đánh giá) và C2 (cộng hưởng chặn PI).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. CÂU HỎI CẦN BÀN (từng cái một)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- B-1. Hội nghị hay tạp chí nào, hạn nộp, giới hạn trang, yêu cầu tiếng Anh? Hỏi GVHD (cần cho tính điểm cộng).
+- B-2. Ngôn ngữ bài: tiếng Anh (hầu hết hội nghị quốc tế) khác quy ước dự án (tiếng Việt); ai dịch, dùng bản viết tiếng Việt làm gốc?
+- B-3. Map đưa vào bài là lead-only, lead-lag, hay cả hai? Cả hai làm bài dày nhưng công sức Map lệch so với PID.
+- B-4. Có nên đưa PI_2K và Map hai bậc vào bài không: đề xuất chỉ một dòng bảng cổng đáng giá (kết quả âm).
+- B-5. Chọn đóng góp chính: C1 (phương pháp), C2 (cộng hưởng), hay C3 (số so sánh)?
+- B-6. Có đưa phần SMC hoặc RL vào bài hay để dành luận văn? Đề xuất để dành, để luận văn có đóng góp riêng.
+- B-7. Bao giờ chốt D1 (QuyChuan v1)? Mọi việc sau đều chờ.
+==============================================================================================================================================================================================

@@ -12,7 +12,7 @@ P. Mô hình đối tượng (Plant)           - chương plant.txt
 R. Giá trị đặt và giới hạn trợ lực     - chương ref.txt
 M. Bản đồ trợ lực truyền thống (Map)   - chương map.txt
 T. Ca thử và chỉ tiêu đánh giá         - chương TestCases.txt
-C. Bộ điều khiển PID, SMC              - đang làm (PID chỉnh lại bằng pidtune ở 1 ms, SMC chưa)
+C. Bộ điều khiển PI, PID, SMC           - đang làm (C1 PID cũ đã xóa; C2-C5 PI/PID mới; SMC chưa)
 L. Học tăng cường (RL)                 - đang làm (chương rl.txt chưa viết)
 G. Câu hỏi chung toàn luận văn         - phạm vi, đóng góp, tính mới
 
@@ -90,6 +90,55 @@ Chỉnh mới (tune_pid.m, DieuKhien_PID.txt mục 8.2): G1 = K/(J s^2 + C s + K
 Điểm yếu thật: mô hình thiết kế tuyến tính bỏ qua ma sát khô và phi tuyến lốp (Map cũng thế); tần số cắt bằng Map là một lựa chọn, bản bảo thủ 143 rad/s chưa chạy; chưa có nhiễu cảm biến;
 T_a của PID có gợn và gai khi mu nhảy bậc (DieuKhien_PID.txt 8.4).
 
+
+C2. Thầy hướng dẫn nói "muốn bám nhanh thì tăng $K_p$": vì sao PI không chỉ việc tăng $K_p$ cho nhanh?
+Câu hỏi có thể đặt: "Muốn bám nhanh thì tăng $K_p$, sao em không tăng, hoặc làm một bộ $K_p$ lớn hẳn dùng khi cần bám nhanh và một bộ $K_p$ vừa dùng khi bình thường?"
+Trả lời ngắn: với đối tượng này, $K_p$ không phải đòn bẩy chính của tốc độ. Tần số cắt của vòng PI xấp xỉ $\omega_c \approx K_i \cdot G(0)$ (với $G(0)$ = 0.83 là độ lợi tĩnh từ $T_a$ sang
+$T_s$), tức do khâu tích phân quyết định; $K_p \cdot G(0)$ chỉ cỡ 0.2 nên phần P đóng góp ít. Muốn nâng tốc độ phải nâng $K_i$, mà $K_i$ bị cộng hưởng của cột lái (khoảng 6.3 Hz) chặn qua độ
+dự trữ biên. Nâng $K_p$ quá khoảng 0.4 thì vòng cắt qua 1 lần thứ hai ngay sau đỉnh cộng hưởng, độ dự trữ pha tụt dưới 45 độ và dao động xuất hiện.
+Cơ sở (mô phỏng giấy bằng mô hình tuyến tính $G(s) = K/(J_{col}s^2 + C_{col}s + K + k_r)$ nhân trễ motor 100 Hz, giữ mẫu 1 ms và trễ 1 mẫu tính toán; script tạm, sẽ đo lại trên PRSM khi làm
+B1): $\omega_n$ = 39.7 rad/s, $\zeta$ = 0.155, đỉnh $|G|$ = 2.70 (8.6 dB) tại 38.7 rad/s. Với $K_i$ = 8: $\omega_c \approx$ 8 x 0.83 = 6.6 rad/s (số thiết kế cũ 7 rad/s), $|L(j7)|$ =
+sqrt(0.95^2 + 0.21^2) = 0.97. Bước đánh lái 1 N.m, $K_i$ = 8, mô phỏng từng bước 1 ms: $K_p$ = 0.25, 0.5, 1, 2, 4 cho thời gian về dưới 0.05 N.m lần lượt 625, 708, 971, 2763 ms và phân kỳ;
+nhanh hơn ở 50 ms đầu (e_T = 0.659, 0.471, 0.155) nhưng rung do cộng hưởng và T_a ở bước đầu = $K_p$ x e_T (4 N.m ở $K_p$ = 4, gần $T_{a,max}$). Số cũ: nâng $K_p$ từ 0.124 lên 0.303 ở
+$\omega_c$ = 6 chỉ giảm R 4 % (1.225 xuống 1.177).
+Điểm yếu thật: các con số trên là phân tích tuyến tính giữ góc vô-lăng và mô phỏng giấy, chưa gồm ma sát khô, bão hòa $T_{a,max}$ và nhiễu; trần $K_p$ phụ thuộc $K_i$ và cổng PM >= 45 độ là
+quy ước thực hành ([1] mục III.D), GM >= 2 là lựa chọn của tác giả; lời thầy đúng cho đối tượng có băng thông thấp hơn cộng hưởng rất nhiều, không đúng khi cộng hưởng nằm gần tần số cắt như
+ở đây.
+C3. Cộng hưởng, băng thông, độ dự trữ pha (PM) và độ dự trữ biên (GM) có nghĩa gì với PI, nhìn ở nhịp 1 ms?
+Câu hỏi có thể đặt: "Cộng hưởng ở đâu ra, băng thông là gì, PM và GM ảnh hưởng thế nào đến PI của em, cho ví dụ cụ thể?"
+Trả lời ngắn: cột lái là khối quán tính nhỏ nối vô-lăng bằng thanh xoắn rất cứng, tắt dần yếu, nên có tần số riêng $\omega_n = \sqrt{(K + k_r)/J_{col}}$ = 39.7 rad/s (6.3 Hz) và khuếch đại
+2.7 lần ở đó. Băng thông là tốc độ thay đổi nhanh nhất vòng kín còn bám được, xấp xỉ tần số cắt $\omega_c$ (nơi độ lợi vòng hở bằng 1). PM là số độ trễ pha còn dư tại $\omega_c$ trước khi
+phản hồi âm thành dương, đổi sang thời gian là PM/$\omega_c$: PI ở 7 rad/s chịu thêm cỡ 0.1 s trễ, Map ở khoảng 148 rad/s chỉ cỡ 5 ms. GM là hệ số nhân độ lợi còn dư trước khi mất ổn định;
+với PI, trễ pha của khâu I dời điểm pha -180 độ xuống sát đỉnh cộng hưởng nên GM giảm từ 14 (chỉ P, $K_p$ = 0.22) còn khoảng 1.8-2.2 ($K_i$ = 8).
+Cơ sở (mô phỏng giấy từng bước 1 ms, bước 1 N.m): chỉ P ($K_p$ = 0.25) sai số xác lập còn 0.829 = 1/(1 + 0.25 x 0.83), P một mình không triệt sai số tĩnh; $K_p$ = 0.25, $K_i$ = 8 về 0 sau
+khoảng 0.5 s (gần 3/$\omega_c$ = 0.43 s), phần I bằng phần P sau $T_i = K_p/K_i$ = 31 ms. Chỉ P: $K_p$ = 1 có PM 20 độ, $\omega_c$ = 52 rad/s, chịu thêm 6.8 ms trễ (mô phỏng thêm 4 ms: dao
+động còn 0.004, 6 ms: 0.155); phân kỳ ở khoảng $K_p$ = 3.1-3.3 (GM 3.1 ở $K_p$ = 1). $K_p$ = 0.25 và $K_i$ tăng: 4 và 8 êm, 12 rung nhẹ, 16 rung mạnh, 24 phân kỳ, tức mất ổn định ở khoảng
+gấp đôi $K_i$ = 8, khớp GM khoảng 1.8-2.2.
+Điểm yếu thật: đây là mô hình giấy một bậc tự do giữ góc, hai giá trị $k_r$ (30 và 0), chưa chạy trên PRSM; mô hình trễ (ZOH cộng 1 mẫu) lệch nhẹ so với thiết kế cũ (GM 2.36 và 2.02). Giải
+thích GM ở bản nháp đầu (phía giảm độ lợi, ổn định có điều kiện) sai và đã đính chính: GM nhỏ của PI là dự trữ phía tăng độ lợi.
+C4. Nếu PI không đạt thì vì sao cần PID, và PID có chắc cải thiện không?
+Câu hỏi có thể đặt: "Em dừng ở PI hay làm tiếp PID? Thêm khâu vi phân để làm gì, và nó có bù được cái PI thiếu không?"
+Trả lời ngắn: PI chỉ có hai tham số ($K_p$, $K_i$) và cả hai bị cộng hưởng chặn (mục C2, C3), nên băng thông của PI bị trần cứng khoảng 7 rad/s trong thiết kế cũ, chậm hơn Map nhiều lần ở
+bám động (R 1.105 so với 0.716 trên ca TK). Khâu vi phân D đáp ứng theo tốc độ đổi của $T_s$, cộng pha dương vào đúng vùng gần cộng hưởng nên có thể làm giảm chấn và cho phép nâng $\omega_c$
+mà vẫn giữ PM >= 45 độ; đó là lý do duy nhất để thêm D. Đây mới là GIẢ THUYẾT, chưa kiểm tra; cái giá chắc chắn là D khuếch đại nhiễu cảm biến tỷ lệ $K_d/T_{filt}$ (PID cũ ở 286 rad/s cho
+$T_a$ bang-bang khi có nhiễu, TV 2000-2500 N.m/s).
+Cơ sở: cổng chuyển sang PID phải viết TRƯỚC khi chạy PI, cùng quy tắc chọn với Map (khuỷu Pareto của R theo S): chỉ làm PID nếu không điểm PI nào đạt đồng thời R <= 1.02 x R_Map và S <=
+S_Map trên ca TK (kết quả cũ thỏa cổng này). Quyết định phải xét cả hai kết quả: trên ca TK PI kém Map về R, nhưng trên ca chuẩn cũ (nhiễu, 5 hạt giống) PI có RMS e_T nhỏ hơn Map ở TC1-TC5
+(0.499 so với 0.602 ở TC1, 0.674 so với 1.706 ở TC5) và lớn hơn ở TC6 (0.071 so với 0.012); trợ lực thừa sau khi mu giảm ở TC3 là -0.13 % so với -14.12 % của Map. Phương án thay thế rẻ hơn
+D: bộ lọc chặn (notch) quanh 35-39 rad/s hoặc feedforward theo góc/tốc độ vô-lăng (không đợi sai số), giải quyết đúng chỗ PI yếu (đánh lái nhanh, các đỉnh nhọn ở TC1 do $T_a$ chạm $T_{a,max}$
+ở 20 km/h).
+Điểm yếu thật: số liệu so sánh trên là của lần thiết kế cũ (đã xóa, sao lưu), phải đo lại khi làm lại; chưa biết D có nâng được $\omega_c$ hay không; GM >= 2 chặn PI là ngưỡng tự chọn (nguồn
+[1] chỉ đòi PM), hạ ngưỡng sẽ cho PI nhanh hơn nên cần thử trước khi kết luận "PI không đủ".
+C5. Có thể dùng hai bộ ($K_p$ lớn khi cần bám nhanh, $K_p$ vừa khi bình thường) không?
+Câu hỏi có thể đặt: "Gợi ý của thầy là một bộ $K_p$ lớn khi cần nhanh và một bộ vừa khi bình thường. Em đã thử chưa, nó lợi gì?"
+Trả lời ngắn: về lý thuyết được, nhưng lợi nhỏ vì bộ "lớn" vẫn phải ổn định riêng: trần $K_p$ là khoảng 0.4-0.5 nếu $K_i$ nhỏ và khoảng 0.25-0.3 nếu $K_i$ = 8, tức bộ nhanh chỉ hơn bộ thường
+cỡ gấp đôi và phải đi kèm $K_i$ nhỏ (chậm triệt sai số tĩnh). Lúc cần nhanh (đánh lái gấp) lại là lúc kích cộng hưởng, nên chính lúc đó dễ rung; khi $T_a$ chạm $T_{a,max}$ thì tăng $K_p$ vô
+ích; $K_p$ lớn khuếch đại nhiễu $T_s$ sang $T_a$ ($K_p$ x 0.0104 N.m); và cần luật chuyển bộ dựa trên tín hiệu đo (|e_T|, tốc độ vô-lăng) kèm trễ lặp để không giật. Biến thể hai bộ theo tốc
+độ xe (v <= 60 và v >= 65 km/h, nội suy tuyến tính) đã làm ở lần cũ, tương tự Map hai bậc.
+Cơ sở: mô phỏng giấy $K_i$ = 8 (mục C2): $K_p$ = 0.25 về dưới 0.05 N.m sau 625 ms, $K_p$ = 1 sau 971 ms (rung), $K_p$ = 2 sau 2763 ms; tức tăng $K_p$ làm nhanh 50 ms đầu nhưng làm xác lập
+chậm hơn. Cổng PM >= 45 độ tuyến tính loại $K_p$ = 0.5 ở $K_i$ = 8 (giao cắt thứ hai có PM 25 độ ở đường khô và 20 độ ở $k_r$ = 0).
+Điểm yếu thật: chưa đo trên PRSM; nếu hai bộ chỉ cải thiện R vài phần trăm (bằng cỡ độ lệch giữa các hạt giống) thì không đáng thêm độ phức tạp; nên kiểm bằng cổng nhận 2K viết trước (R giảm
+quá một ngưỡng mà S không tăng).
 
 ==============================================================================================================================================================================================
 L. HỌC TĂNG CƯỜNG (RL)

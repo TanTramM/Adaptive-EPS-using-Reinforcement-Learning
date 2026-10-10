@@ -1,9 +1,7 @@
 %% build_cum1.m
 % Use the Simulink API to build Cluster 1 (steering column, WITH torsion
 % spring, two inertias) as its own subsystem, saved as SteeringColumn.mdl
-% RIGHT INSIDE the Plant/ folder (parent of this script) - the "_s" suffix
-% distinguishes it from the hand-formatted version (SteeringColumn.mdl,
-% same folder). Matches Documents/Cum1_CEPS.txt, with the driver's
+% RIGHT INSIDE the Plant/ folder (parent of this script). Matches Documents/Cum1_CEPS.txt, with the driver's
 % STEERING WHEEL ANGLE theta1 as the ONLY steering input (Lee 2018 [1],
 % section IV.A: "the steering angle is an input command"; theta1 is what
 % the steering angle sensor measures - no angular-velocity sensor exists,

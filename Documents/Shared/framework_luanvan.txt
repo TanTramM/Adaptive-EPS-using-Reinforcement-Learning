@@ -1,0 +1,70 @@
+==============================================================================================================================================================================================
+FRAMEWORK LUẬN VĂN - Adaptive C-EPS: Map, bộ tuyến tính và bộ đề xuất (BẢN NHÁP ĐỂ BÀN, 2026-10-09)
+==============================================================================================================================================================================================
+File làm việc, KHÔNG phải mục lục chính thức. Mục đích: đặt khung từng chương (mục tiêu, nội dung, nguồn đã có, người làm, trạng thái) và các điểm cần bàn, trước khi viết. Quan hệ với bài
+báo (framework_baibao.txt): bài báo là tập con của chương 4, 5 và 7; luận văn phải có đóng góp riêng ngoài bài báo (chương 6 và độ sâu). Số trang là ƯỚC LƯỢNG chưa đối chiếu mẫu của trường.
+Mục [BÀN] là đề xuất chưa chốt; mục [CHƯA CHÍNH THỨC] là số chưa chạy theo quy chuẩn v1.
+==============================================================================================================================================================================================
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. LUẬN ĐIỂM TRUNG TÂM
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Đề tài ghi: điều khiển trợ lực lái điện thích ứng (Adaptive C-EPS) khắc phục trợ lực thừa khi hệ số bám mu đổi, bằng học tăng cường (RL). Hiện RL gần như bị bỏ (historychat_linear Lượt 84),
+nên tên đề tài và luận điểm cần khớp với nội dung thực làm.
+- Luận điểm đề xuất [BÀN]: bản đồ trợ lực vòng hở (thực hành hiện tại) hiệu chỉnh ở một mu nên trợ lực thừa khi mu đổi; điều khiển vòng kín bám mô-men đặt T_d,ref khắc phục được; nhưng bộ
+  hồi tiếp bị cộng hưởng cột lái và nhiễu cảm biến giới hạn, nên thiết kế phải có quy chuẩn và đánh đổi bám/êm có thể đo.
+- Chữ 'thích ứng' giữ được nhờ vòng kín tự bám T_d,ref khi mu đổi mà không cần ước lượng mu; nếu không có RL, cần GVHD đồng ý đổi tên đề tài (thủ tục khoa).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. BẢNG CHƯƠNG (đề xuất 7 chương) [BÀN]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Chương | nội dung | nguồn đã có | người làm | trạng thái | trang ước lượng
+- Ch.1 Tổng quan: C-EPS, trợ lực thừa, tài liệu (Lee 2018, Multi-Map EPS Li 2023, Saifia 2015, CEPS ANFIS-FOC, Valeo, Bosch); khoảng trống; mục tiêu; phạm vi. Nguồn: References.txt,
+  Blueprint. Chưa viết. 12-15 trang.
+- Ch.2 PRSM (Plant, Ref, Sensors, Actuator): cột lái, lốp Pacejka, 2-DOF, T_a,max(v), cảm biến nhiễu và lượng tử. Nguồn: plant.txt, ref.txt, Notes/PRSM. Đã có phần lớn. 20-25 trang.
+- Ch.3 Khung đánh giá: giá trị đặt, TC1-TC6 (TestCases.txt), chỉ tiêu R, S, TV, e_rel, trợ lực thừa; QuyChuan (cổng đặt trước, Pareto, cổng không bang-bang, seed). Nguồn: TestCases.txt,
+  QuyChuan.txt. Cần chốt v1. 10-12 trang.
+- Ch.4 Map (đối chứng): hiệu chỉnh độ dốc, khâu lead, lead-lag; vì sao cần lead (PM 45); hai bậc suy biến thành một. Nguồn: map.txt, LyThuyet_Map.txt. khung Map làm. 15-18 trang.
+- Ch.5 Bộ tuyến tính PI, PID (khung Linear): mô hình tuyến tính quanh giữ góc, cộng hưởng, giới hạn PI, PID và khâu D, PI_2K một đoạn, độ lợi cao tần và nhiễu. Nguồn: DieuKhien_PI.txt,
+  Result/Controllers/PI|PID. Cần chọn lại theo v1. 15-18 trang.
+- Ch.6 Bộ đề xuất: xem mục 3 (phương án A, B, C). Chưa làm lại. 20-25 trang.
+- Ch.7 So sánh và kết luận: Pareto mọi bộ, TC1-TC6 seed 99999, trợ lực thừa theo mu, độ bền; hạn chế; hướng phát triển. 12-15 trang. Tổng ước khoảng 105-135 trang.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. CHƯƠNG 6 - BỘ ĐỀ XUẤT: BA PHƯƠNG ÁN (CẦN CHỐT, quan trọng nhất)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Đây là chỗ quyết định luận văn có đóng góp riêng so với bài báo không. Dữ kiện: SMC đã làm bản đầu (trước khi khung đó chuyển sang Linear): bám hơn Map nhưng nhiễu cao gấp khoảng 2 lần PID,
+chưa hơn PID (historychat_linear Lượt 11); RL đã thử nhiều bậc nhưng chưa học được phản hồi đúng (historychat_map Lượt 193-220), lợi thế so với PID về bám chưa chứng minh.
+- A. SMC (điều khiển trượt, khung SMC mới làm) làm bộ đề xuất: cần một lợi thế đo được so với PID (độ bền khi sai lệch J_col, C_col, K, ma sát; hoặc ít nhạy nhiễu sau chỉnh); phải chọn lại
+  theo v1 (lớp biên, nới độ lợi nhiễu bằng Map; KI bù sai số tĩnh). Rủi ro: nếu không hơn PID thì là kết quả âm.
+- B. RL giữ làm bộ đề xuất: khớp tên đề tài; cần môi trường PRSM đã chốt và chỉ tiêu độ êm (phạt thay đổi T_a); rủi ro cao về thời gian, bài học bậc 1b là agent chưa học phản hồi.
+- C. Không có bộ thứ ba: luận văn gồm Map, PI, PID, SMC (hoặc không SMC) là các bộ so sánh, đóng góp là khung đánh giá và phân tích cộng hưởng; đổi tên đề tài. Nhẹ nhất, nhưng 'bộ đề xuất'
+  yếu.
+- Tiêu chí chọn [BÀN]: thời gian còn lại đến bảo vệ; ý kiến GVHD; khả năng có một lợi thế đo được ở ca mu đổi.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. PHÂN CÔNG VÀ THỨ TỰ
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Khung Map: chọn lại theo v1, lead-lag, TC, Ch.4. Khung Linear: chọn lại PI và PID, mở rộng lưới PID, TC, Ch.5. Chung: Ch.3 (khung đánh giá, QuyChuan v1), compare seed 99999, Ch.7.
+- Bước 1: người dùng đóng băng QuyChuan v1. Bước 2: chọn lại Map, PI, PID song song. Bước 3: compare, Pareto chung. Bước 4: viết bài báo và Ch.4, 5 cùng lúc. Bước 5: chốt Ch.6 rồi làm. Bước
+  6: Ch.1, 7, hoàn thiện.
+- Chương dạng .txt trong Documents/Thesis theo định dạng plant.txt (đoạn một dòng, $latex$, phương trình đánh số), sinh docx bằng tools/txt2docx.py; đã có plant, ref, TestCases, map; còn
+  pi.txt và các chương khác.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. CÂU HỎI HỘI ĐỒNG DỰ KIẾN (chuẩn bị sớm)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Q1. Vì sao không dùng RL như tên đề tài? Cần câu trả lời có số (RL chưa học được phản hồi, PID đã khắc phục tốt) và đề nghị đổi tên có sự đồng ý GVHD.
+- Q2. Vì sao so Map và PID mà không so điều khiển bền (H-vô-cùng, mờ)? Giới hạn phạm vi; nêu hướng sau.
+- Q3. Nhiễu cảm biến lấy ở đâu? Phần có nguồn (v 0.38 km/h, độ phân giải) và phần tự chọn (sigma = 1 bước); báo độ nhạy.
+- Q4. Vì sao PM 45 độ, GM 2, ngưỡng 5 % và 1 %? Quy ước thực hành (Lee mục III.D) và ngưỡng tự chọn, đã đặt trước; báo độ nhạy.
+- Q5. Có chạy trên xe thật không? Không; mô phỏng với Actuator trễ 100 Hz, cảm biến lượng tử, nêu hạn chế.
+- Q6. Vì sao lead-lag chỉ ở Map mà PID không có lọc đo ngoài khâu D? Nguyên tắc 'thứ gì Map làm được thì PID cũng làm được' và bộ lọc nằm trong khâu D.
+- Q7. Bang-bang có xảy ra ở xe thật không? Ở mô hình, cổng không bang-bang đặt để tránh; xe thật còn vòng dòng motor và giới hạn tốc độ đổi mô-men (hiểu biết chung, không nguồn trong repo).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. CÂU HỎI CẦN BÀN (từng cái một)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- L-1. Chương 6: A, B hay C? Và nếu A thì khung SMC mới (sắp mở) làm; khung Linear không làm SMC.
+- L-2. Đổi tên đề tài: hỏi GVHD khi nào, đề xuất tên mới là gì?
+- L-3. Mức chi tiết PRSM trong Ch.2: giữ đầy đủ suy diễn (như Cum1-3) hay rút gọn, vì Ch.2 đã dài.
+- L-4. Chương PI và PID tách riêng hay gộp thành một chương 'bộ tuyến tính'? Đề xuất gộp, PI_2K phụ lục.
+- L-5. Có đưa độ bền (sai lệch tham số, trễ) vào luận văn không? QuyChuan mục 4.8 mới báo cáo, chưa là cổng.
+- L-6. Động học motor và bộ lọc đo chung: làm hay ghi hạn chế? Trước đó đã quyết để sau, làm một lần cho mọi bộ.
+- L-7. Mốc thời gian bảo vệ và nộp, để xếp lịch ngược; chưa biết, hỏi GVHD.
+- L-8. Phụ lục: những gì đưa vào (kết quả âm PI_2K và Map hai bậc, chi tiết quét lưới, bảng số ứng viên).
+==============================================================================================================================================================================================

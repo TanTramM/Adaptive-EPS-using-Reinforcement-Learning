@@ -1,10 +1,10 @@
-function plot_compare_cases(ctrlList, level, runSeed)
+function plot_compare_cases(ctrlList, runSeed)
 %PLOT_COMPARE_CASES One figure per test case: T_s (with T_d,ref), e_T and T_a of several controllers on the same axes.
 %
-%   plot_compare_cases({'Map_6_8', 'PID', 'SMC'}, 'high', 90001)   % level 'none' (default) | 'high', one noise seed
+%   plot_compare_cases({'Map', 'PI', 'SMC'}, 99999)   % runSeed [] (default) = ideal sensors, a number = that noise seed
 %
-%   Reads the signal files written by run_test_cases(ctrl, level, runSeed) (Result/<ctrl>/TestCases for level none, else
-%   Result/<ctrl>/TestCases_noise/<level>_seed<seed>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
+%   Reads the signal files written by run_test_cases(ctrl, runSeed) (Result/Controllers/<ctrl>/TestCases for ideal sensors, else
+%   Result/Controllers/<ctrl>/TestCases_noise/seed_<5 digits>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
 %     Result/Compare/<A>_vs_<B>_vs_.../<A>_vs_<B>_vs_..._<case>_Ts_eT_Ta.png
 %   Each figure has 3 stacked charts, one line per controller (fixed colors, in the order of ctrlList):
 %     1. T_s of every controller plus the reference T_d,ref (black dashed)   2. e_T = T_s - T_d,ref   3. T_a
@@ -14,10 +14,9 @@ scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir); setup_paths;                              % result_dir
 addpath(scriptDir);                             % test_cases
-if nargin < 2, level = 'none'; end
-if nargin < 3, runSeed = 90001; end
+if nargin < 2, runSeed = []; end
 noiseNote = '';
-if ~strcmp(level, 'none'), noiseNote = sprintf(' (cảm biến có nhiễu: %s, seed %d)', level, runSeed); end
+if ~isempty(runSeed), noiseNote = sprintf(' (cảm biến có nhiễu, seed %05d)', runSeed); end
 
 % one fixed color per controller (color follows the entity, not its position in the list)
 col = zeros(numel(ctrlList), 3);
@@ -32,7 +31,7 @@ for k = 1:numel(TC)
     S = TC(k);
     D = cell(1, numel(ctrlList));
     for c = 1:numel(ctrlList)
-        D{c} = readtable(fullfile(srcDir(ctrlList{c}, level, runSeed), ...
+        D{c} = readtable(fullfile(srcDir(ctrlList{c}, runSeed), ...
             sprintf('%s_%s_signals.csv', ctrlList{c}, S.tag)));
     end
     f = figure('Visible', 'off', 'Position', [50 50 1200 900]);
@@ -72,17 +71,19 @@ end
 fprintf('plot_compare_cases: written to %s\n', outDir);
 end
 
-function d = srcDir(ctrl, level, runSeed)
-    if strcmp(level, 'none')
+function d = srcDir(ctrl, runSeed)
+    if isempty(runSeed)
         d = result_dir(ctrl, 'TestCases');
     else
-        d = result_dir(ctrl, 'TestCases_noise', sprintf('%s_seed%d', level, runSeed));
+        d = result_dir(ctrl, 'TestCases_noise', sprintf('seed_%05d', runSeed));
     end
 end
 
 function rgb = colorOf(ctrl)
     switch ctrl
-        case 'Map_6_8',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'Map',    rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'PI',     rgb = [0.165 0.471 0.839];   % #2a78d6 blue
+        case 'PI_2K',  rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'PID',    rgb = [0.922 0.408 0.204];   % #eb6834 orange
         case 'SMC',    rgb = [0.106 0.686 0.478];   % #1baf7a aqua
         case 'SMC_KI', rgb = [0.910 0.482 0.643];   % #e87ba4 magenta

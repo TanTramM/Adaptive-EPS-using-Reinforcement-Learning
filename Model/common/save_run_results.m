@@ -1,6 +1,6 @@
 function save_run_results(ctrlName, tag, data)
 %SAVE_RUN_RESULTS Save the signals and a time-response figure of ONE run of a
-%controller closed loop (Model_<ctrlName>_s.mdl) into Result/<ctrlName>/.
+%controller closed loop (Model_<ctrlName>.mdl) into Result/<ctrlName>/.
 %
 %   save_run_results('PID', 'S1_hold_angle_mu_step')            % data from base workspace
 %   save_run_results('PID', 'S1_hold_angle_mu_step', dataStruct) % data given

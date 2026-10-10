@@ -13,4 +13,7 @@ Quy ước: [n] trong mọi file .txt của Documents/ khớp đúng số ở đ
 [8] Bosch Motorsport. "Steering Wheel Angle Sensor LWS" (datasheet, 27/01/2026, độ phân giải góc và tốc độ góc, chu kỳ CAN 10 ms). bosch-motorsport.com.
 [9] Bosch Motorsport. "Acceleration Sensor MM5.10" (datasheet, 18/08/2020, độ phân giải gia tốc và tốc độ quay). bosch-motorsport.com.
 [10] Ragab, H., Givigi, S., Noureldin, A. "Automotive Speed Estimation: Sensor Types and Error Characteristics from OBD-II to ADAS." arXiv:2501.00242.
+[11] Seborg, D. E., Edgar, T. F., Mellichamp, D. A., Doyle III, F. J. "Process Dynamics and Control", 4th ed., Wiley, 2017 (mục 14.7, tr. 256-257: độ dự trữ biên, độ dự trữ pha, trễ thêm lớn nhất; mục 17.4, tr. 313: bộ lấy mẫu cộng khâu giữ bậc không tương đương trễ nửa chu kỳ). References/Process_Control.pdf.
+[12] Slotine, J.-J. E., Li, W. "Applied Nonlinear Control", Prentice Hall, 1991 (mục 7.1.3, tr. 285-288: luật u = u_hat - k sgn(s), k = F + eta, hệ số dự trữ độ lợi beta; mục 7.5: các nguồn bất định). References/slotine applied nonlinear control.pdf.
+[13] Nguyen, H. Q., Vu, V. T., Sename, O. "Combining adaptive neural-fuzzy inference system with field-oriented control strategy for electric power steering system in cars", Advances in Mechanical Engineering, 2025, 17(9), 1-34, DOI 10.1177/16878132251369152 (phương trình (12): T_a,max theo T_r,max và T_d,max; (14): T_a,max không vượt K_t i_m I_max). References/CEPS ANFIS-FOC Model.pdf.
 ================================================================================

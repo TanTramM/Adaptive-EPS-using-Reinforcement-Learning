@@ -1,0 +1,171 @@
+==============================================================================================================================================================================================
+QUY CHUẨN THIẾT KẾ VÀ ĐÁNH GIÁ CHUNG CHO MỌI BỘ ĐIỀU KHIỂN (Map, PI, PID, SMC, RL) - phiên bản 2, 2026-10-09
+==============================================================================================================================================================================================
+Văn bản này là quy chuẩn bắt buộc: MỖI LẦN thiết kế hoặc chỉnh một bộ điều khiển (Map, PI, PID, SMC là điều khiển trượt, RL là học tăng cường) đều phải tuân theo, kể cả khi làm ở khung chat
+khác. Mục đích: kết quả so sánh giữa các bộ không phụ thuộc vào việc người làm chọn ngưỡng nào, đo bằng cách nào, hay chỉnh công sức nhiều ít khác nhau. Nguyên nhân ra đời: quy tắc cũ chỉ
+ghi con số (sai số xác lập <= 3 %) mà không ghi CÁCH ĐO, nên khung PI/PID đo bằng mô phỏng ở cửa sổ cua 0.35 g còn khung Map dùng định nghĩa giải tích trên dải 0.1-0.3 g; hai định nghĩa khác
+nhau cho kết quả không so được.
+Cách dùng: đọc trước khi bắt đầu thiết kế; ghi vào file kế hoạch của bộ điều khiển (Documents/Notes/Controllers/DieuKhien_<Ctrl>.txt) mọi lựa chọn mà quy chuẩn để mở, TRƯỚC khi chạy mô phỏng
+chọn tham số; báo ngay nếu phát hiện cần sai khác. Nếu quy chuẩn này mâu thuẫn với mục "Quy tắc chọn tham số và so sánh" của Tracking/CLAUDE.md thì quy chuẩn này ưu tiên (mục đó là bản tóm
+tắt). Mục nào đề xuất nhưng chưa chốt số được đánh dấu [CẦN CHỐT] và phải được người dùng chốt trước khi dùng cho bộ điều khiển đầu tiên.
+Quy ước từ viết tắt dùng trong văn bản: PRSM = Plant (đối tượng, mô hình xe và cột lái), Reference (giá trị đặt mô-men tay lái), Sensors (cảm biến), Actuator (motor trợ lực): mọi phần của
+vòng kín trừ bộ điều khiển. TK = ca thử dùng để chọn tham số. TC1-TC6 = sáu ca thử chuẩn dùng để chấm điểm. RMS = căn bậc hai của trung bình bình phương. PM, GM = độ dự trữ pha và độ dự trữ
+biên (mức an toàn ổn định). ESC = hệ thống cân bằng điện tử cung cấp a_y và v qua mạng CAN.
+==============================================================================================================================================================================================
+PHẦN 1 - NGUYÊN TẮC
+==============================================================================================================================================================================================
+1.1. Chốt trước, ghi lại: mọi cổng, ngưỡng, lưới tham số, quy tắc chọn được viết ra TRƯỚC khi chạy mô phỏng chọn tham số. Sau khi đã thấy kết quả mà buộc phải đổi thì ghi trung thực lý do,
+thời điểm, và báo độ nhạy của kết luận với thay đổi đó cho mọi bộ.
+1.2. Một chỉ tiêu, một hàm: mỗi chỉ tiêu ở Phần 4 chỉ được tính bằng MỘT hàm trong Model/Sim/script (hoặc Model/common) dùng chung cho mọi bộ điều khiển; không bộ nào được tự định nghĩa lại.
+Mọi chỉ tiêu tính trên tín hiệu THẬT của mô hình (T_s, e_T, T_a thật), không phải tín hiệu bộ điều khiển đo qua cảm biến.
+1.3. Tách ca thiết kế và ca chấm điểm: chọn tham số chỉ trên ca TK (và, riêng với RL, trên tập kịch bản huấn luyện riêng, mục 3.3); TC1-TC6 chỉ để chấm điểm, không bao giờ được dùng để
+chỉnh.
+1.4. Công bằng nghĩa là cùng luật chơi, không phải cùng cấu trúc: mỗi bộ ở dạng tốt nhất hợp lý của nó, được chỉnh bằng cùng cổng, cùng ca, cùng cách chọn, cùng độ mịn lưới (hoặc cùng ngân
+sách thử). Khác biệt cấu trúc (tín hiệu đọc, có khâu tích phân hay không, số tham số) là thứ đem ra so, không phải thiên lệch cần xóa; phải được ghi trong bảng ở mục 7.2.
+1.5. Không thêm phần ngoài lõi cho bộ nào (mục 2.4). Thứ gì một bộ được thêm thì bộ khác cũng được thêm, hoặc không bộ nào có.
+==============================================================================================================================================================================================
+PHẦN 2 - MÔI TRƯỜNG VÀ GIAO DIỆN
+==============================================================================================================================================================================================
+2.1. Cùng PRSM cho mọi bộ: model PRSM không bộ điều khiển nào được sửa. Chu kỳ điều khiển 1 ms cho mọi bộ; bộ nào cần chu kỳ khác (ví dụ RL chạy chậm hơn) phải giải thích và báo kèm.
+2.2. Tín hiệu được đọc (đã qua khối Sensors có lượng tử, chu kỳ cập nhật, nhiễu khi có seed): T_s, theta1 (góc vô-lăng), theta2_dot (tốc độ cột lái), v, gamma (tốc độ quay thân xe), a_y.
+Không được đọc hệ số bám mu, beta, T_d (mô-men tay người), hay bất kỳ trạng thái nội của mô hình. Bộ điều khiển tự tính e_T = T_s - T_d,ref nếu cần (khối Reference dùng chung). Ngoài ra bộ
+điều khiển được đọc hai tín hiệu của môi trường: T_a_lim (lệnh sau khi chặn, từ Actuator) và T_a_max (giới hạn trợ lực T_a,max(v) của vận tốc đo, từ AssistLimit); đây là thông số cài đặt mà
+ECU biết, không phải trạng thái của mô hình, và mọi bộ được đọc như nhau.
+2.3. Giới hạn T_a,max(v) nằm ở khối AssistLimit (Model/PRSM/AssistLimit): MỘT bảng duy nhất, đã gồm dự phòng F = T_f = 2.0 N.m (ma sát khô Coulomb của cột lái, params.json): T_a,max = nhu
+cầu lớn nhất + F, sau Slotine và Li [12] mục 7.1.3 (7.14)-(7.15) k = F + eta với F là cận của sai số mô hình, mục 7.5 liệt kê ma sát trong các nguồn bất định; gain margin beta = 1 vì khối
+Actuator coi độ lợi motor bằng 1; eta thuộc thiết kế bộ điều khiển nên không cộng vào kích thước motor; Nguyen et al. [13] phương trình (14) đòi khả năng motor không nhỏ hơn nhu cầu. F = T_f
+là lựa chọn của tác giả (người dùng chốt 2026-10-09); độ nhạy báo ở F = 1 và 3 N.m. Phép chặn và trễ motor 100 Hz nằm ở khối Actuator, nhận T_a_max làm đầu vào. Bộ điều khiển KHÔNG tự chặn
+T_a, không mô hình motor và không giữ bản sao riêng của bảng T_a,max; khối Actuator trả T_a_lim để dùng cho chống bão hòa; bộ nào cần giá trị giới hạn (SMC đặt độ lợi, RL chuẩn hóa hành
+động) khai báo cổng vào tên T_a_max, build_closed_loop nối theo tên.
+2.4. Phần lõi được phép của từng loại (mọi thứ ngoài bảng này là phần ngoài lõi và bị CẤM cho mọi bộ):
+- Map: bảng trợ lực tra theo T_s và v, vùng chết, giới hạn độ dốc K_max, khâu bù sớm pha lead.
+- PI, PID: khâu tỷ lệ, tích phân, vi phân có bộ lọc bậc 1 hằng số Tf (vi phân lấy trên T_s đo), chống bão hòa tích phân tính ngược, tối đa lập lịch theo v.
+- SMC: mặt trượt, luật chuyển, khâu tích phân, đạo hàm T_s đo qua lọc bậc 1 (giống PID, người dùng chốt 2026-10-09, lý do ở DieuKhien_SMC.txt mục A3).
+- RL: lịch sử quan sát (số bước n_hist), chuẩn hóa quan sát, co giãn và làm mượt hành động. Hàm thưởng chỉ dùng khi huấn luyện; khi chấm điểm agent chạy tất định (không nhiễu khám phá).
+2.5. Cấm cho mọi bộ: lọc đo T_s đặt trước bộ điều khiển, bộ lọc chặn (notch), feedforward theo góc hoặc tốc độ vô-lăng, đọc mu hoặc mô hình plant để bù. (Người dùng chốt 2026-10-08: quá phức
+tạp.) Bộ lọc nằm BÊN TRONG một khâu của lõi (bộ lọc của khâu D, cực p của khâu lead, lọc ước lượng đạo hàm của SMC) là một phần của khâu đó, được phép.
+==============================================================================================================================================================================================
+PHẦN 3 - CA THỬ VÀ SEED
+==============================================================================================================================================================================================
+3.1. Ca thiết kế TK (Model/Sim/script/test_cases.m, test_cases('TK')), CHUNG cho mọi bộ, dựng theo vùng làm việc của xe chứ không theo khả năng của bộ nào: đường khô mu 0.8 trừ một bậc mu ở
+khối 60 km/h; ba khối tốc độ 20, 60, 100 km/h (cùng miền tốc độ với TC1-TC6); mức a_y phủ 0.1-0.4 g ở nơi Plant đạt được (20 km/h chỉ tới khoảng 0.2 g nên dùng 0.1/0.15/0.18 g). Mỗi khối
+gồm: (A) bậc thang giữ cua, mỗi bậc 1 s chuyển và 3 s giữ, cửa sổ chấm static là 1 s cuối của bậc (đã ổn định, để bộ có tích phân chậm không bị nhầm sai số chưa kịp xác lập là sai số xác
+lập); (B) lái sin 0.5 Hz bốn chu kỳ quanh nền 0.1 g biên 0.05 g (20 km/h) hoặc nền 0.2 g biên 0.1 g (60 và 100 km/h), cửa sổ sine bỏ 0.5 s đầu; (C) chỉnh lái nhỏ +-0.03 g quanh nền, cửa sổ
+small dài 6 s; (D) chỉ ở khối 60 km/h: giữ 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8, hai cửa sổ mu_drop và mu_rise là 2 s sau mỗi bậc (đo đáp ứng, không phải xác lập); mu 0.6 không có trong
+TC1-TC6. Tổng 117 s, 19 cửa sổ, nền sin không vượt 0.3 g. Ca TK không đổi nếu không có lý do ghi rõ cho mọi bộ.
+3.2. Ca chấm điểm TC1-TC6 (giữ nguyên như định nghĩa hiện hành trong test_cases.m và Documents/Thesis/TestCases.txt; người dùng chốt 2026-10-08 giữ 6 ca): TC1 đường khô nhiều tốc độ; TC2
+chạy đường hỗn hợp 150 s (5 lần đổi mu); TC3 mu giảm đột ngột khi cua gắt 100 km/h; TC4 vũng nước khi đổi làn 80 km/h; TC5 lái sin ở mu 0.2 không đổi; TC6 mu tăng giữa cua. Báo cáo theo ba
+nhóm: A mu không đổi (TC1, TC5, cửa sổ khô của TC2), B mu đổi (TC3, TC4, TC6, cửa sổ đổi mu của TC2), C hỗn hợp (TC2 toàn ca); không cộng gộp điểm giữa các nhóm.
+3.3. Seed: mỗi bộ chọn tham số trên TK bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, RL dải huấn luyện riêng chưa gán); chạy TC1-TC6 riêng lẻ bằng cảm biến lý
+tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các thư mục seed_99999 do lệnh so sánh sinh ra trong thư mục của từng bộ. RL: tập kịch bản
+huấn luyện phải tách rời khỏi TK và TC1-TC6 (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của mục 6.2 chạy thêm MỘT seed thứ hai cùng dải của bộ
+đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
+==============================================================================================================================================================================================
+PHẦN 4 - CHỈ TIÊU (mỗi chỉ tiêu một hàm; mô tả thủ tục đo)
+==============================================================================================================================================================================================
+Trạng thái cột "hàm": CÓ = đã có trong Model; CẦN VIẾT = quy chuẩn yêu cầu nhưng chưa có hàm.
+4.1. R (độ bám, %): sai số tương đối của e_T = T_s - T_d,ref trên bốn nhóm cửa sổ của TK: static (các bậc giữ cua 0.1-0.4 g), dyn (lái sin), small (chỉnh lái nhỏ), mu (2 s sau mỗi bậc mu).
+R_g = 100 x RMS(e_T trên các cửa sổ của nhóm g) / trung bình |T_d,ref| trên các cửa sổ đó; R = trung bình ĐỀU của bốn R_g (không nhóm nào chiếm ưu thế chỉ vì cửa sổ dài hơn; chuẩn hóa theo
+T_d,ref để nhóm mô-men lớn không lấn át). Cho điểm chọn báo độ nhạy khi đổi từng trọng số +-50 %. Bỏ 2 s đầu của ca. Với TC1-TC6 báo thêm RMS e_T toàn ca (N.m) và lớn nhất của |e_T|. Hàm:
+tk_run.m (toàn ca: m.R, m.Rg, m.RgNm), tk_block_scores.m (theo khối tốc độ), Gates.mdl (theo cửa sổ: RWin, refWin, cntWin, từ đó dựng R ngoài khối). Trạng thái: CÓ (đã cập nhật 2026-10-09,
+chưa chạy).
+4.2. S (độ ồn, N.m): RMS của T_a sau khi lọc cao qua 5 Hz (lọc thông cao bậc 1: a = dt/(1/(2 pi 5) + dt), hp = T_a - lọc thông thấp(T_a)) trên toàn ca, bỏ 2 s đầu; đo phần mô-men trợ lực dao
+động nhanh mà lệnh lái (dưới khoảng 2 Hz) không giải thích được, chủ yếu là nhiễu cảm biến bị khuếch đại. Hàm: tk_run.m, tk_block_scores.m. Trạng thái: CÓ.
+4.3. TV (tổng biến thiên của T_a, N.m/s) = tổng |T_a[k] - T_a[k-1]| chia cho thời gian chấm. S_cmd: như S nhưng trên lệnh T_a_cmd của bộ điều khiển (cho thấy bang-bang mà giới hạn T_a,max
+che đi). Trạng thái: CÓ.
+4.4. Độ chính xác tĩnh e_rel (%): e_rel = 100 x |trung bình e_T| / trung bình |T_d,ref| trên TỪNG cửa sổ static của TK (11 cửa sổ: 3 ở 20 km/h, 4 ở 60 km/h, 4 ở 100 km/h, a_y 0.1-0.4 g), lấy
+giá trị lớn nhất; cũng báo có dấu (âm = trợ lực thừa, tay lái nhẹ hơn mong muốn; dương = tay lái nặng hơn). Không bộ nào được miễn một cửa sổ; bộ không đạt ở vùng nào thì xử theo mục 5.6.
+Hàm: tk_run.m (m.erel, m.erelWin, m.erelSigned, m.erelLabel), tk_block_scores.m. Trạng thái: CÓ (cập nhật 2026-10-09, chưa chạy).
+4.5. Chỉ tiêu trợ lực thừa (chỉ các ca đổi mu TC2, TC3, TC4, TC6): (a) sai số xác lập sau khi mu đổi, có dấu, tính theo % T_d,ref, trên cửa sổ ổn định sau đổi mu (dương = tay lái nặng hơn
+mong muốn, âm = trợ lực thừa); (b) đỉnh |e_T| trong 2 s sau thời điểm đổi mu; (c) thời gian hồi phục: từ thời điểm đổi mu tới khi |e_T| < 0.1 N.m và giữ như vậy 1 s; (d) đỉnh |T_a|. Trạng
+thái: (a) CÓ (cột Mean_eT_signed_pct_of_Tdref của run_test_cases.m); (b), (c), (d) CẦN VIẾT.
+4.6. Trợ lực ngược chiều: tỉ lệ thời gian chấm mà |T_s| >= 0.5 N.m và T_a ngược dấu T_s (bộ điều khiển đẩy ngược chiều tay người). Quan trọng với SMC và RL. Cổng: tỉ lệ <= 1 % (người dùng
+chốt 2026-10-09; 1 % tự chọn, báo độ nhạy 0.5-5 %). Hàm: tk_run.m (m.rev), gates_fcn.m (revFrac). Trạng thái: CÓ.
+4.7. Nỗ lực điều khiển: RMS và lớn nhất của |T_a|; báo cáo, không làm cổng. Trạng thái: CÓ (run_test_cases.m).
+4.8. Độ bền (báo cáo, không làm cổng ở phiên bản 1): chạy TC1-TC6 với sai lệch tham số plant +-20 % từng tham số một (J_col, C_col, K, T_f, e_p0) và thêm trễ thuần cảm biến 1, 2, 5 ms; báo
+R, S và có ổn định hay không; điểm so sánh là mức suy giảm so với bản danh định. Đặc biệt cần cho SMC (được cho là bền) và RL (khả năng tổng quát hóa). Trạng thái: CẦN VIẾT (con số +-20 % và
+các mức trễ [CẦN CHỐT]).
+4.9. Khả năng hiện thực: số tham số chỉnh, số phép tính mỗi chu kỳ (bậc bảng, số khối, kích thước mạng với RL), bộ nhớ trạng thái. Báo cáo, không làm cổng.
+==============================================================================================================================================================================================
+PHẦN 5 - CỔNG CỨNG CHUNG (điểm tham số không qua cổng thì bị loại trước khi chọn)
+==============================================================================================================================================================================================
+5.1. Ổn định: không phân kỳ ở mọi ca TK và TC1-TC6.
+5.2. Dự trữ ổn định đo bằng MÔ PHỎNG, áp chung cho mọi bộ (kể cả SMC và RL không tuyến tính hóa được): chạy lại TK với (a) độ lợi của Actuator nhân đôi và (b) thêm một trễ thuần bằng MỘT chu
+kỳ điều khiển (1 ms) giữa bộ điều khiển và Actuator; cả hai lần phải còn ổn định. Mất ổn định = có tín hiệu không hữu hạn, hoặc R (mục 4.1) tăng hơn gấp đôi so với lần chạy danh định (gấp
+đôi là lựa chọn của tác giả, báo độ nhạy 1.5-3 lần). Nguồn khái niệm: Seborg et al. [11] mục 14.7 (tr. 256-257): độ dự trữ biên GM là hệ số mà độ lợi vòng có thể tăng trước khi mất ổn định,
+trễ thêm lớn nhất bằng PM x pi / (180 x omega_g) (phương trình 14-63), khuyến nghị GM 1.7-4.0 và PM 30-45 độ; mục 17.4 (tr. 313): bộ lấy mẫu cộng khâu giữ bậc không tương đương một trễ bằng
+nửa chu kỳ lấy mẫu. Con số 1 ms = một chu kỳ điều khiển = 2 lần trễ nửa chu kỳ là LỰA CHỌN của tác giả (người dùng chốt 2026-10-09): dự phòng cho trễ chưa mô hình hóa (thời gian tính, truyền
+tin, vòng dòng motor), báo độ nhạy ở 0.5 ms và 2-5 ms. Ngưỡng tính bằng thời gian chứ không bằng độ vì trễ ngoài đời là thời gian tuyệt đối (cùng PM 45 độ, PID băng thông 115 rad/s chịu được
+6.8 ms còn PI băng thông 7 rad/s chịu được 112 ms). Với bộ có mô hình tuyến tính (Map, PI, PID) vẫn tính PM, GM trên hai mặt đường (k_r = 30 và 0) chỉ để BÁO CÁO, không còn là cổng (hàm
+pi_margins.m, pid_margins.m, design_lead.m). Trạng thái: CẦN VIẾT: khối trễ thuần và hệ số độ lợi trên đường bộ điều khiển -> Actuator trong build_closed_loop, và hàm chạy TK với hai thay
+đổi đó.
+5.3. Độ chính xác tĩnh: e_rel <= 3 % theo mục 4.4 trên mọi cửa sổ static, cả hai dấu (3 % là ràng buộc gốc của Map, tự chọn, chưa có nguồn ngoài; báo độ nhạy ở 3 và 5 %).
+5.4. Không bang-bang: chạy TK hai lần (cảm biến lý tưởng và có nhiễu, seed local), tỉ lệ mẫu từ 2 s mà |T_a_cmd| chạm giới hạn T_a,max(v) của Actuator; loại nếu tỉ lệ có nhiễu trừ tỉ lệ lý
+tưởng > 1 % (1 % tự chọn; báo độ nhạy 0.5 đến 5 %). Hàm: tk_bangbang.m (CÓ). Chỉ cần đánh giá cho các điểm chung kết ở mục 6.
+5.5. Không trợ lực ngược chiều: chỉ tiêu mục 4.6 <= 1 %.
+5.6. Thứ tự ưu tiên của các cổng (người dùng chốt 2026-10-09): (1) ổn định và độ dư (5.1, 5.2); (2) không trợ lực ngược chiều (5.5); (3) không bang-bang (5.4); (4) độ chính xác tĩnh (5.3).
+Nguyên tắc xếp: cổng bảo đảm phép đo còn hợp lệ đứng trước cổng dùng chính phép đo đó; lệnh T_a nhảy +-T_a,max mỗi 1 ms không thực hiện được trên motor thật và mô hình chưa có vòng dòng
+điện, nên độ chính xác đo trên một thiết kế bang-bang không đáng tin. Nhãn an toàn hay thoải mái không được dùng vì chỉ là cách gọi của tác giả. Nếu một bộ không có điểm nào qua mọi cổng ở
+một vùng thì bỏ cổng thấp nhất, chọn điểm vi phạm ít nhất (e_rel lớn nhất nhỏ nhất; với bang-bang là chênh lệch tỉ lệ chạm giới hạn nhỏ nhất) và ghi bộ X không đạt cổng Y ở vùng Z; KHÔNG
+miễn cổng riêng cho bộ nào. Báo thêm một dòng độ nhạy: nếu đặt độ chính xác lên trên bang-bang thì điểm chọn của bộ đó đổi thế nào (tính lại từ dữ liệu quét).
+==============================================================================================================================================================================================
+PHẦN 6 - QUY TẮC CHỌN THAM SỐ
+==============================================================================================================================================================================================
+6.1. Quét một lưới tham số (hoặc, với RL, một tập ứng viên). Lưới phải ghi cơ sở của từng cận min max và độ phân giải, cận lưới ưu tiên lấy từ biên khả thi tuyến tính hoặc vật lý chứ không
+đặt tay; điểm chọn nằm ở biên lưới thì phải mở rộng lưới một bước (quy tắc hai giai đoạn đặt trước: thô rồi mịn quanh điểm tốt nhất) và kiểm độ phân giải bằng cách giảm nửa bước quanh điểm
+chọn: R và S đổi dưới 5 % thì lưới đủ mịn.
+6.2. Chọn điểm chạy TC1-TC6: trong các điểm qua cổng cứng, lấy các điểm có R <= 1.05 x R nhỏ nhất CỦA CHÍNH BỘ ĐÓ, chọn S nhỏ nhất, rồi kiểm cổng không bang-bang theo thứ tự S tăng dần (hàm
+pick_by_tolerance.m). Bám là ưu tiên một (mục tiêu đề tài là khắc phục trợ lực thừa, tức bám T_d,ref), êm là ưu tiên hai. KHÔNG dùng ngưỡng S_max chung và KHÔNG dùng quy tắc khuỷu để chọn
+(khuỷu chỉ để vẽ mặt Pareto). Báo thêm, chỉ để đọc và không dùng để chọn: R của mỗi bộ tại mức S bằng S của Map.
+6.3. Kết luận chính của một phép so sánh là so cả mặt Pareto (R, S) của các bộ trên cùng trục, không phải so một điểm: mặt của A nằm hẳn dưới mặt của B thì A tốt hơn với mọi quy tắc chọn;
+hai mặt cắt nhau thì báo A tốt hơn khi ưu tiên êm, B khi ưu tiên bám, kèm điểm cắt; hai mặt trùng nhau một đoạn thì nói là cùng đánh đổi và bộ nào chỉ kéo dài thêm; dải S không chồng nhau
+thì nói thẳng là không so trực tiếp được.
+6.4. Ngưỡng hòa 5 %: chênh lệch nhỏ hơn 5 % (hoặc nhỏ hơn độ phân tán giữa các seed nếu lớn hơn) coi là ngang nhau, không nói bộ nào hơn.
+6.5. Số bậc theo vận tốc (Map hai K_max, PI_2K, PID lập lịch): bản nhiều bậc chỉ được giữ nếu R giảm ít nhất 5 % mà S không tăng so với bản một bậc của chính bộ đó, đo trên TK; không đạt thì
+ghi là kết quả âm và dùng bản một bậc cho so sánh chính.
+6.6. Riêng RL: tham số được chọn là checkpoint (số bước huấn luyện) và trọng số hàm thưởng; huấn luyện ít nhất 3 seed huấn luyện khác nhau, báo trung bình và độ phân tán; ngưỡng hòa không
+nhỏ hơn độ phân tán giữa các seed; báo ngân sách huấn luyện (số bước, thời gian) và số cấu hình đã thử, ngang nhau về công sức thiết kế với các bộ khác càng tốt (báo rõ nếu không); chạy
+agent tất định khi chấm điểm.
+6.7. Báo số ứng viên đã mô phỏng của mỗi bộ (hiện: PI 59, PID 90, Map theo khung SMC) để người đọc thấy công sức thiết kế có ngang nhau không.
+==============================================================================================================================================================================================
+PHẦN 7 - BÁO CÁO VÀ QUY TRÌNH
+==============================================================================================================================================================================================
+7.1. Mỗi bộ điều khiển có một file kế hoạch và nhật ký Documents/Notes/Controllers/DieuKhien_<Ctrl>.txt: ghi quy tắc đặt trước (trích từ quy chuẩn này kèm mọi lựa chọn để mở), lưới và cơ sở
+của lưới, kết quả quét, điểm chọn, ngoại lệ so với quy chuẩn (nếu có) kèm lý do trung thực.
+7.2. Bảng khác biệt cấu trúc trong luận văn: với mỗi bộ ghi tín hiệu đọc (T_s, v, a_y qua T_d,ref...), có khâu tích phân hay không, số tham số chỉnh, số ứng viên đã thử, ngoại lệ so với quy
+chuẩn. Đây là thứ giúp người đọc hiểu một bộ hơn bộ khác vì cấu trúc hay vì chỉnh.
+7.3. Báo cáo kết quả theo ba nhóm ca (mục 3.2) kèm bảng từng ca; với nhóm đổi mu dùng chỉ tiêu mục 4.5; không lấy trung bình giữa các nhóm. Báo cùng lúc R, S, TV, S_cmd, độ chính xác tĩnh,
+trợ lực ngược chiều, bang-bang cho mọi bộ.
+7.4. Kết quả so sánh nhiều bộ: Result/Compare/<A>_vs_<B>/ bằng seed chung 99999 (make_pair_comparisons) và hình mặt Pareto chồng nhau. Kết luận trong luận văn viết theo dạng đánh đổi và khác
+biệt cấu trúc, không viết "bộ này chỉnh tốt hơn" khi khác biệt đến từ cấu trúc.
+7.5. Thay đổi quy chuẩn: chỉ người dùng được duyệt; mỗi thay đổi ghi vào phần "Nhật ký thay đổi" cuối file này kèm ngày, lý do, và danh sách bộ điều khiển phải chọn lại hoặc chạy lại; áp
+dụng đồng thời cho mọi bộ.
+==============================================================================================================================================================================================
+PHẦN 8 - HIỆN TRẠNG ÁP DỤNG (cập nhật mỗi khi đổi)
+==============================================================================================================================================================================================
+- Cập nhật 2026-10-09 (T_a,max): đã thêm dự phòng F = T_f vào make_ta_max.m và ref.json; tách khối AssistLimit (build_assistlimit, test_assistlimit PASS); Actuator đổi giao diện sang In
+  T_a_cmd, T_a_max (test_actuator PASS); build_closed_loop nối T_a_max (kiểm bằng bộ điều khiển tạm: nhận T_a_max theo tên, Actuator chặn đúng); test_tk PASS (29 kiểm), test_gates PASS. Chưa
+  chạy lại bất kỳ ca nào của bộ điều khiển.
+- Phiên bản 2 (2026-10-09): ca TK, R, e_rel, thứ tự cổng đã chốt. Đã cập nhật mã: test_cases.m (buildTK), tk_run.m, tk_block_scores.m, gates_fcn.m, build_gates.m, test_gates.m. CHƯA CHẠY lại
+  bất kỳ mô phỏng nào; Gates.mdl phải dựng lại bằng build_gates(true) (hai đầu ra mới refWin, cntWin) rồi chạy test_gates.
+- Chưa làm: (a) cổng độ dư mục 5.2 (khối trễ thuần và hệ số độ lợi trong build_closed_loop, hàm chạy); (b) chỉ tiêu trợ lực thừa 4.5 (b, c, d); (c) báo độ bền 4.8; (d) cơ sở của lưới và quy
+  tắc hai giai đoạn 6.1 cho từng bộ; (e) chỉnh sửa các script còn dùng TK cũ (khối 28 s, tốc độ 30/60/100, cửa sổ steady_v, R tính N.m): run_pi_sweep, run_pid_sweep, run_pi_2k_tk, select_pi,
+  select_pid, design_map, map_tk_erel, run_mapll_sweep.
+- Bộ phải chọn lại theo bản này: Map, PI, PID (PI_2K và Map hai bậc đã bỏ, chỉ giữ một dòng kết quả âm). Kết quả đã có của các bộ này được chọn trên TK cũ nên không dùng để so sánh nữa.
+- Còn mở: mức sai lệch tham số và các mức trễ của mục 4.8 (chỉ báo cáo, không làm cổng).
+==============================================================================================================================================================================================
+NHẬT KÝ THAY ĐỔI QUY CHUẨN
+==============================================================================================================================================================================================
+- 2026-10-08, phiên bản 1: lập văn bản từ các quy tắc đã chốt trong Tracking/CLAUDE.md (bỏ S_max chung, chọn R trong 5 % rồi S nhỏ nhất, cổng không bang-bang, không phần ngoài lõi, giữ 6 TC)
+  và bổ sung theo đề xuất của người dùng sau khi phát hiện hai khung đo sai số xác lập khác nhau: thủ tục đo cho mọi chỉ tiêu, dự trữ ổn định bằng mô phỏng cho SMC và RL, chỉ tiêu trợ lực
+  thừa, trợ lực ngược chiều, độ bền, quy tắc cho RL, cơ sở của lưới, báo cáo theo ba nhóm ca. Bộ phải chọn lại khi áp dụng đầy đủ: Map, PI, PID.
+- 2026-10-09, phiên bản 2 (người dùng chốt trong phiên khung Linear, ghi đè phiên bản 1; bản cũ chưa vào git, chỉ có bản sao tạm): (1) ca TK dựng lại theo vùng làm việc của xe: khối
+  20/60/100 km/h, a_y 0.1-0.4 g, nền sin 0.1/0.2 g, thêm bậc mu 0.8 -> 0.6 -> 0.8 ở khối 60 km/h, 117 s; (2) R gộp thành MỘT số, trung bình đều bốn nhóm R_g tương đối theo T_d,ref (static,
+  dyn, small, mu); (3) e_rel lớn nhất trên 11 cửa sổ static, cả hai dấu, không miễn bộ nào; (4) cổng dự trữ ổn định đo bằng mô phỏng cho mọi bộ: độ lợi x2 và trễ thêm 1 ms, PM/GM tuyến tính
+  chỉ báo cáo (nguồn Seborg [11]); (5) trợ lực ngược <= 1 % thành cổng; (6) thứ tự cổng: ổn định, trợ lực ngược, bang-bang, chính xác, không có nhãn an toàn/thoải mái, kèm quy tắc chung khi
+  không điểm nào qua mọi cổng; (7) quy tắc chọn giữ A (R trong 5 % rồi S nhỏ nhất) cộng so mặt Pareto; (8) seed thứ hai cho điểm chung kết. Phải chọn lại: Map, PI, PID.
+- 2026-10-09, bổ sung mục 2.4 (người dùng chốt trong phiên khung SMC): PID và SMC đều lấy đạo hàm sai số bằng vi phân T_s đo qua lọc bậc 1 hằng số Tf, không dựng lại từ K (theta1_dot -
+  theta2_dot); ước lượng ngoài vòng kín cho thấy cách dựng qua góc nhiễu hơn khoảng 25 lần do cảm biến theta1 thô hơn (DieuKhien_SMC.txt mục A3). SMC bỏ "bộ lọc ước lượng đạo hàm theta1"
+  khỏi lõi. PID không đổi (đã vi phân trên T_s đo). Không bộ nào phải chọn lại vì thay đổi này.
+- 2026-10-09, bổ sung phiên bản 2 (người dùng chốt): T_a,max = nhu cầu + F (F = T_f, Slotine và Li [12], Nguyen et al. [13]); tách khối AssistLimit khỏi Actuator; bộ điều khiển được đọc
+  T_a_max và T_a_lim (2.2, 2.3). Ảnh hưởng: mọi bộ điều khiển và kết quả cũ phải chạy lại (đã xóa sạch); ref.txt mục 1.5 và Bảng 3 đã cập nhật.

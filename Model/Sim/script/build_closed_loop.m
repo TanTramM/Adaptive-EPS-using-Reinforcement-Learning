@@ -1,17 +1,18 @@
 function build_closed_loop(ctrlName)
-%BUILD_CLOSED_LOOP Build the runnable closed-loop model Model_<ctrlName>_s.mdl: Plant -> Sensors -> controller -> Actuator -> Plant.
+%BUILD_CLOSED_LOOP Build the runnable closed-loop model Model_<ctrlName>.mdl: Plant -> Sensors -> controller -> Actuator -> Plant.
 %
-%   build_closed_loop('Map_6_8')        % also 'PID', 'SMC', 'SMC_KI', ... (any controller block with the interface below)
+%   build_closed_loop('Map')        % also 'PID', 'SMC', 'SMC_KI', ... (any controller block with the interface below)
 %
 %   Sources (must already exist; PRSM models carry no suffix): PRSM/Plant/Plant.mdl, PRSM/Ref/Reference.mdl, PRSM/Sensors/Sensors.mdl,
-%   PRSM/Actuator/Actuator.mdl and Controllers/<ctrl>/<ctrl>_s.mdl (root subsystem named like the controller); the closed loop is written to Controllers/<ctrl>/Model_<ctrl>_s.mdl.
+%   PRSM/AssistLimit/AssistLimit.mdl, PRSM/Actuator/Actuator.mdl and Controllers/<ctrl>/<ctrl>.mdl (root subsystem named like the controller); the closed loop is written to Controllers/<ctrl>/Model_<ctrl>.mdl.
 %
 %   Plug and play: the controller block is the ONLY part that changes between models. It is wired BY NAME:
 %     - every Inport of the controller is fed from the bus signal of the same name: the measured T_s, theta1, theta2_dot, v,
-%       gamma, a_y (output of Sensors, plain name) and T_a_lim (command after the assist limit, from the Actuator);
+%       gamma, a_y (output of Sensors, plain name), T_a_lim (command after the assist limit, from the Actuator) and T_a_max (the assist
+%       limit T_a,max(v) of the measured speed, from AssistLimit; a controller that needs the limit, e.g. SMC, declares an Inport T_a_max);
 %     - the measured signals the controller has no Inport for end in Terminator blocks;
 %     - its output T_a (the command) goes to the Actuator (Inport T_a_cmd); the Actuator output T_a goes to the Plant.
-%   The controller computes e_T = T_s - T_d,ref itself (if it uses it); the assist limit T_a,max(v) and the motor lag are in the Actuator.
+%   The controller computes e_T = T_s - T_d,ref itself (if it uses it); the assist limit T_a,max(v) is in AssistLimit, the clamp and the motor lag are in the Actuator.
 %
 %   Root level (runnable):
 %     From Workspace  sc_theta1, sc_v, sc_mu   ([t value] matrices in base) -> Model_<ctrl> (subsystem) ->
@@ -24,7 +25,10 @@ function build_closed_loop(ctrlName)
 %     +-- Plant       In : theta1, T_a, v, mu           Out: T_s, a_y, gamma, theta2_dot (true)
 %     +-- Sensors     In : T_s, theta1, theta2_dot, v, gamma, a_y (true)   Out: <signal>_meas
 %     +-- <ctrl>      In : (any of the measured signals, T_a_lim)         Out: T_a
-%     +-- Actuator    In : T_a_cmd, v (measured)        Out: T_a, T_a_lim
+%     +-- AssistLimit In : v (measured)                 Out: T_a_max
+%     +-- Delay_ctrl  In : T_a_cmd                      Out: to Actuator (ctrl_delay, default 0 s, QuyChuan 5.2)
+%     +-- Actuator    In : T_a_cmd, T_a_max             Out: T_a, T_a_lim
+%     +-- Gain_act    In : T_a                          Out: T_a to Plant (act_gain_mult, default 1, QuyChuan 5.2)
 %     +-- Reference_true  In : v, a_y (TRUE)            Out: T_d_ref   (scoring only, not wired to the controller)
 %     +-- Sum_eT_true  e_T = T_s - T_d_ref on TRUE values (scoring only): the scored e_T is what the driver feels
 %   Goto tags: <signal>_true = true values, plain names (T_s, v, ...) = measured values read by the controller.
@@ -32,18 +36,19 @@ function build_closed_loop(ctrlName)
 %   Solver: MaxStep = 0.002 s, StopTime = 10 s (run_test_cases.m overrides the stop time). Run by hand, the model saves its signals
 %   and a figure to Result/<ctrl>/ through StopFcn (Model/save_run_results.m).
 %
-%   Usage: run load_<ctrl>.m first (it runs load_plant, load_ref, load_sensors, load_actuator), build every source block, then
-%   >> build_closed_loop('Map_6_8')
+%   Usage: run load_<ctrl>.m first (it runs load_plant, load_ref, load_sensors, load_assistlimit, load_actuator), build every source block, then
+%   >> build_closed_loop('Map')
 
-modelName = ['Model_' ctrlName '_s'];
+modelName = ['Model_' ctrlName];
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir); setup_paths;
 
 src = {fullfile(modelDir, 'PRSM', 'Plant', 'Plant.mdl'), fullfile(modelDir, 'PRSM', 'Ref', 'Reference.mdl'), ...
-       fullfile(modelDir, 'PRSM', 'Sensors', 'Sensors.mdl'), fullfile(modelDir, 'PRSM', 'Actuator', 'Actuator.mdl'), ...
-       fullfile(modelDir, 'Controllers', ctrlName, [ctrlName '_s.mdl'])};
+       fullfile(modelDir, 'PRSM', 'Sensors', 'Sensors.mdl'), fullfile(modelDir, 'PRSM', 'AssistLimit', 'AssistLimit.mdl'), ...
+       fullfile(modelDir, 'PRSM', 'Actuator', 'Actuator.mdl'), ...
+       fullfile(modelDir, 'Controllers', ctrlName, [ctrlName '.mdl'])};
 
 if bdIsLoaded(modelName), close_system(modelName, 0); end
 modelPath = fullfile(modelDir, 'Controllers', ctrlName, [modelName '.mdl']);
@@ -95,17 +100,17 @@ end
 
 %% ===================== Plant + Sensors + controller + Actuator =====================
 function buildLoop(sub, srcNames, ctrlName)
-    names = {'Plant', 'Reference_true', 'Sensors', 'Actuator'};
-    srcIdx = [1 2 3 4];
-    xs = [600 1000 760 1000]; ys = [60 600 60 400];
+    names = {'Plant', 'Reference_true', 'Sensors', 'AssistLimit', 'Actuator'};
+    srcIdx = [1 2 3 4 5];
+    xs = [600 1000 760 1000 1000]; ys = [60 600 60 300 400];
     for i = 1:numel(names)
         add_block(findRootSubsystem(srcNames{srcIdx(i)}), [sub '/' names{i}]);
         moveBlock([sub '/' names{i}], xs(i), ys(i));
     end
-    add_block(findRootSubsystem(srcNames{5}), [sub '/' ctrlName]);
+    add_block(findRootSubsystem(srcNames{6}), [sub '/' ctrlName]);
     moveBlock([sub '/' ctrlName], 300, 400);
     plant = [sub '/Plant']; refTrue = [sub '/Reference_true']; sens = [sub '/Sensors'];
-    act = [sub '/Actuator']; ctl = [sub '/' ctrlName];
+    act = [sub '/Actuator']; lim = [sub '/AssistLimit']; ctl = [sub '/' ctrlName];
 
     addInport(sub, 'theta1', 1, 40,  60);
     addInport(sub, 'v',      2, 40, 140);
@@ -152,15 +157,35 @@ function buildLoop(sub, srcNames, ctrlName)
         f = addFrom(sub, ctlIns{i}, 200, 400 + 40*(i-1));
         add_line(sub, [f '/1'], portRef(ctl, ctlIns{i}), 'autorouting', 'on');
     end
-    % ----- Actuator: controller command + measured speed in, T_a to the Plant, T_a_lim back to the bus -----
+    % ----- AssistLimit: measured speed in, the assist limit T_a_max out to the bus (Actuator and, by name, the controller) -----
+    add_line(sub, [addFrom(sub, 'v', 900, 300) '/1'], portRef(lim, 'v'), 'autorouting', 'on');
+    g = addGoto(sub, 'T_a_max', 1200, 300);
+    add_line(sub, portRef(lim, 'T_a_max'), [g '/1'], 'autorouting', 'on');
+    % ----- Actuator: controller command + the assist limit in, T_a to the Plant, T_a_lim back to the bus -----
     g = addGoto(sub, 'T_a_cmd', 500, 400);
     add_line(sub, portRef(ctl, 'T_a'), [g '/1'], 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'T_a_cmd', 900, 400) '/1'], portRef(act, 'T_a_cmd'), 'autorouting', 'on');
-    add_line(sub, [addFrom(sub, 'v',       900, 440) '/1'], portRef(act, 'v'), 'autorouting', 'on');
+
+    % Delay_ctrl: pure transport delay on T_a_cmd to the Actuator (ctrl_delay [s], default 0 s; QuyChuan 5.2)
+    del = [sub '/Delay_ctrl'];
+    add_block('simulink/Continuous/Transport Delay', del);
+    set_param(del, 'DelayTime', 'ctrl_delay', 'InitialOutput', '0');
+    moveBlock(del, 880, 400);
+    add_line(sub, [addFrom(sub, 'T_a_cmd', 780, 400) '/1'], 'Delay_ctrl/1', 'autorouting', 'on');
+    add_line(sub, 'Delay_ctrl/1', portRef(act, 'T_a_cmd'), 'autorouting', 'on');
+
+    add_line(sub, [addFrom(sub, 'T_a_max', 880, 440) '/1'], portRef(act, 'T_a_max'), 'autorouting', 'on');
     g = addGoto(sub, 'T_a_lim', 1200, 400);
     add_line(sub, portRef(act, 'T_a_lim'), [g '/1'], 'autorouting', 'on');
-    g = addGoto(sub, 'T_a', 1200, 440);
-    add_line(sub, portRef(act, 'T_a'), [g '/1'], 'autorouting', 'on');
+
+    % Gain_act: actuator gain multiplier on T_a to the Plant (act_gain_mult [-], default 1; QuyChuan 5.2)
+    gain = [sub '/Gain_act'];
+    add_block('simulink/Math Operations/Gain', gain);
+    set_param(gain, 'Gain', 'act_gain_mult');
+    moveBlock(gain, 1140, 440);
+    add_line(sub, portRef(act, 'T_a'), 'Gain_act/1', 'autorouting', 'on');
+    g = addGoto(sub, 'T_a', 1230, 440);
+    add_line(sub, 'Gain_act/1', [g '/1'], 'autorouting', 'on');
+
     add_line(sub, [addFrom(sub, 'T_a', 500, 100) '/1'], portRef(plant, 'T_a'), 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'T_a', 1400, 280) '/1'], 'T_a/1', 'autorouting', 'on');
     add_line(sub, [addFrom(sub, 'T_a_cmd', 1400, 360) '/1'], 'T_a_cmd/1', 'autorouting', 'on');

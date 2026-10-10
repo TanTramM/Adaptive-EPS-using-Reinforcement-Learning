@@ -1,6 +1,6 @@
 function test_plant()
 %TEST_PLANT Verify the closed-loop Plant.mdl (built by build_plant.m
-%from the regenerated "_s" clusters). Self-contained.
+%from the regenerated clusters). Self-contained.
 %
 %   Requires exactly 1 root-level subsystem with ports found BY NAME:
 %   In : theta1, T_a, v, mu | Out: T_s, a_y, gamma, theta2_dot (theta2 and beta are internal; checked against the Newton solution through T_s, a_y, gamma)

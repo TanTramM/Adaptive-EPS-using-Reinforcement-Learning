@@ -1,21 +1,20 @@
 %% build_actuator.m
 % Use the Simulink API to build the Actuator (motor) block, saved as Actuator.mdl RIGHT INSIDE the Actuator/ folder (parent of this
-% script). Every controller of the closed loop writes its command T_a_cmd into this block, which models the motor:
+% script). Every controller of the closed loop writes its command T_a_cmd into this block, which models the motor. The assist limit
+% T_a,max(v) is NOT held here: it comes from the AssistLimit block (PRSM/AssistLimit) as the input T_a_max.
 %
-%   T_a_max  = T_a,max(v)                                   1-D table (Documents/Ref/ref.txt section 1.5, data/ref.json field Ta_max)
-%   T_a_lim  = max(-T_a_max, min(T_a_cmd, T_a_max))         assist limit
+%   T_a_lim  = max(-T_a_max, min(T_a_cmd, T_a_max))         assist limit (clamp)
 %   T_a      = Gm(s) * T_a_lim,   Gm(s) = wm/(s + wm)       motor lag, Lee 2018 equation (10), wm = 2*pi*100 Hz (data/actuator.json)
 %
 % T_a goes to the Plant; T_a_lim (before the lag) is the signal a controller with an integrator uses for anti-windup.
 %
 % HIERARCHY (see CLAUDE.md, "Quy tac dung model Simulink"):
 %
-%   Actuator            In : T_a_cmd, v        Out: T_a, T_a_lim
-%     +-- T_a_max       In : v                 Out: T_a_max
+%   Actuator            In : T_a_cmd, T_a_max  Out: T_a, T_a_lim
 %     +-- Cal T_a_lim   In : T_a_cmd, T_a_max  Out: T_a_lim   ("Cal " prefix: the parent has an output port named T_a_lim)
 %     +-- Motor         In : T_a_lim           Out: T_a
 %
-% Parameters: Tamax_v_bp_ms, Tamax_table, motor_wm - run Model/load_actuator.m BEFORE building.
+% Parameters: motor_wm - run Model/PRSM/Actuator/load_actuator.m BEFORE building.
 %
 % Usage (run from this folder, Actuator/script/):
 %   >> run('../../load_actuator.m')
@@ -46,13 +45,10 @@ createSubsystem(sub);
 moveBlock(sub, 50, 50);
 
 addInport(sub, 'T_a_cmd', 1, 40, 60);
-addInport(sub, 'v',       2, 40, 260);
+addInport(sub, 'T_a_max', 2, 40, 260);
 addOutport(sub, 'T_a',     1, 1000, 160);
 addOutport(sub, 'T_a_lim', 2, 1000, 60);
 
-s1 = [sub '/T_a_max'];
-createSubsystem(s1); moveBlock(s1, 360, 260); buildTaMax(s1);
-add_line(sub, 'v/1', 'T_a_max/1', 'autorouting', 'on');
 g = addGoto(sub, 'T_a_max', 480, 270); add_line(sub, 'T_a_max/1', [g '/1'], 'autorouting', 'on');
 
 s2 = [sub '/Cal T_a_lim'];
@@ -71,19 +67,6 @@ save_system(modelName, modelPath);
 close_system(modelName, 0);
 fprintf('Created: %s\n', modelPath);
 
-end
-
-%% ===================== T_a_max = T_a,max(v) ============================
-function buildTaMax(s)
-    addInport(s, 'v', 1, 40, 60);
-    addOutport(s, 'T_a_max', 1, 320, 60);
-    full = [s '/Lookup_Tamax'];
-    add_block('simulink/Lookup Tables/1-D Lookup Table', full);
-    set_param(full, 'Table', 'Tamax_table', 'BreakpointsForDimension1', 'Tamax_v_bp_ms', ...
-        'InterpMethod', 'Linear point-slope', 'ExtrapMethod', 'Clip');
-    moveBlock(full, 160, 50);
-    add_line(s, 'v/1', 'Lookup_Tamax/1', 'autorouting', 'on');
-    add_line(s, 'Lookup_Tamax/1', 'T_a_max/1', 'autorouting', 'on');
 end
 
 %% ===================== T_a_lim = max(-T_a_max, min(T_a_cmd, T_a_max)) ====

@@ -1,15 +1,15 @@
-function M = run_test_cases(ctrlName, level, runSeed)
+function M = run_test_cases(ctrlName, runSeed)
 %RUN_TEST_CASES Run the standard test cases (test_cases.m) on one controller and save the results.
 %
-%   M = run_test_cases('Map_6_8')      % also 'PID', 'SMC', 'SMC_KI', ...
-%   M = run_test_cases('PID', 'high', 90003)   % with sensor noise: level 'none' | 'high', one noise seed
+%   M = run_test_cases('Map')            % ideal sensors
+%   M = run_test_cases('Map', 99999)     % noisy sensors, run seed 99999 (the scoring seed of the standard test cases)
 %
-%   Noise (Sensors subsystem, data/sensors.json, Documents/Sim/ThucTeHoa.txt): the level and seed are passed to the model per run
+%   Noise (Sensors subsystem, data/sensors.json, Documents/Sim/ThucTeHoa.txt): the seed is passed to the model per run
 %   (sensor_noise_vars.m), so every controller sees the same noise sequence for the same seed. All metrics and plots use the TRUE
 %   signals (log_T_s, log_e_T... come from the scoring Reference), not what the controller measured. A noisy run is saved in
-%   Result/<ctrl>/TestCases_noise/<level>_seed<seed>/ (figures only for the default seed); no argument = no noise, folder TestCases.
+%   Result/Controllers/<ctrl>/TestCases_noise/seed_<5 digits>/ (figures saved for every seed: one noise seed per controller); no seed = ideal sensors, folder TestCases.
 %
-%   Runs Model_<ctrlName>_s.mdl (run load_<ctrl> and build the closed-loop model first). For every case:
+%   Runs Model_<ctrlName>.mdl (run load_<ctrl> and build the closed-loop model first). For every case:
 %     Result/<ctrlName>/TestCases/<ctrlName>_<case>_signals.csv        t, theta1, v, mu, a_y target, T_s, T_d_ref, e_T, T_a, a_y
 %     Result/<ctrlName>/TestCases/<ctrlName>_<case>_time_response.png  6 panels: T_s vs T_d,ref | e_T | T_a | theta1 | mu | v
 %   and one table Result/<ctrlName>/TestCases/<ctrlName>_test_case_metrics.csv:
@@ -20,18 +20,15 @@ function M = run_test_cases(ctrlName, level, runSeed)
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir);
-if nargin < 2, level = 'none'; end
-defaultSeed = jsondecode(fileread(fullfile(modelDir, 'data', 'sensors.json'))).seeds.default_run_seed;
-if nargin < 3, runSeed = defaultSeed; end
-noiseVars = sensor_noise_vars(level, runSeed);
+if nargin < 2, runSeed = []; end
+noiseVars = sensor_noise_vars(runSeed);
 saveFigs = true;
-if strcmp(level, 'none')
+if isempty(runSeed)
     outDir = result_dir(ctrlName, 'TestCases');
 else
-    outDir = result_dir(ctrlName, 'TestCases_noise', sprintf('%s_seed%d', level, runSeed));
-    saveFigs = (runSeed == defaultSeed);
+    outDir = result_dir(ctrlName, 'TestCases_noise', sprintf('seed_%05d', runSeed));
 end
-mdl = ['Model_' ctrlName '_s'];
+mdl = ['Model_' ctrlName];
 
 TC = test_cases();
 rows = {};

@@ -1,8 +1,7 @@
 %% build_cum3.m
 % Use the Simulink API to build Cluster 3 (2-DOF vehicle body dynamics) as
 % its own subsystem, saved as Bike2DOF.mdl RIGHT INSIDE the Plant/
-% folder - the "_s" suffix distinguishes it from the hand-formatted
-% version (Bike2DOF.mdl, same folder). Matches Documents/Cum3_2DOF.txt,
+% folder. Matches Documents/Cum3_2DOF.txt,
 % Eq.(4),(5),(3):
 %
 %   Eq.(4) beta_dot  = (F_yf+F_yr)/(m*v) - gamma

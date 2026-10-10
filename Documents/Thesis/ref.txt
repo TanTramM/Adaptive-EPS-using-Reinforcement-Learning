@@ -63,8 +63,8 @@ Mục tiêu điều khiển là $e_T = 0$. Vì giá trị đặt thay đổi the
   [ \mathrm{sgn}(a_y)\,e_T<0\;\Leftrightarrow\;|T_s|<|T_{d,ref}| ]
 
 tức tay lái nhẹ hơn mức tài xế mong muốn ở cùng vận tốc và gia tốc ngang; trường hợp ngược lại là thiếu trợ lực. Các chỉ tiêu đánh giá dựa trên $e_T$ được trình bày cùng kịch bản mô phỏng ở các mục sau.
-1.5. Nhu cầu trợ lực lớn nhất
-Mô-men trợ lực lớn nhất $T_{a,max}$ là mức mà bộ điều khiển có thể phải cung cấp để đưa $T_s$ về giá trị đặt; nó dùng để đặt giới hạn bão hòa cho mọi bộ điều khiển. Ở trạng thái xác lập, theo (6) của chương trước $T_s = T_r - T_a$, nên để $T_s = T_{d,ref}$ cần:
+1.5. Giới hạn trợ lực
+Giới hạn mô-men trợ lực $T_{a,max}$ gồm hai phần: nhu cầu trợ lực lớn nhất $T_{a,req,max}$, là mức mà bộ điều khiển có thể phải cung cấp để đưa $T_s$ về giá trị đặt, và một lượng dự phòng $F$ cho phần bất định mà mô hình không có (công thức (7)); giới hạn này đặt bão hòa cho mọi bộ điều khiển. Ở trạng thái xác lập, theo (6) của chương trước $T_s = T_r - T_a$, nên để $T_s = T_{d,ref}$ cần:
 
   (4)  T_a,req(v, a_y, mu) = T_r(v, a_y, mu) - T_d,ref(v, a_y)
   [ T_{a,req}(v,a_y,\mu)=T_r(v,a_y,\mu)-T_{d,ref}(v,a_y) ]
@@ -74,29 +74,33 @@ Mô-men phản hồi $T_r$ lớn nhất trên đường khô, nên nhu cầu tr�
   (5)  a_y,lim(v) = min(a_y,max(v, 0.8), 0.4 g)
   [ a_{y,lim}(v)=\min\big(a_{y,max}(v,0.8),\;0.4\,g\big) ]
 
-  (6)  T_a,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_d,ref(v, a_y)]
-  [ T_{a,max}(v)=\max_{0\le a_y\le a_{y,lim}(v)}\big[T_r(v,a_y,0.8)-T_{d,ref}(v,a_y)\big] ]
+  (6)  T_a,req,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_d,ref(v, a_y)]
+  [ T_{a,\mathrm{req,max}}(v)=\max_{0\le a_y\le a_{y,lim}(v)}\big[T_r(v,a_y,0.8)-T_{d,ref}(v,a_y)\big] ]
 
-$T_r$ tại mỗi điểm được tính bằng cách giải trạng thái xác lập của mô hình ở gia tốc ngang cho trước. Ở trạng thái xác lập, cân bằng mô-men quanh trọng tâm cho lực bên cầu trước $F_{yf} = m a_y l_r / (l_f + l_r)$; góc trượt cầu trước và pneumatic trail do đó chỉ phụ thuộc $a_y$ và $\mu$, nên $T_r$ không phụ thuộc vận tốc: tại 0.4 g, $T_r = 9.92$ N.m ở mọi tốc độ. Kết quả ở Bảng 3 cho thấy hiệu $T_r - T_{d,ref}$ tăng theo gia tốc ngang, nên giá trị lớn nhất luôn nằm tại $a_{y,lim}$. Từ 30 km/h trở lên, $a_{y,lim} = 0.4$ g và $T_{a,max}$ giảm dần theo vận tốc chỉ vì $T_{d,ref}$ tăng theo vận tốc. Ở 20 km/h và 25 km/h, giới hạn góc nhỏ của mô hình chặn gia tốc ngang dưới 0.4 g nên $T_{a,max}$ thấp hơn hẳn.
-Bảng 3: Nhu cầu trợ lực lớn nhất theo vận tốc ($\mu = 0.8$, trạng thái xác lập)
-$v$ [km/h] | $a_{y,lim}$ [g] | $T_r$ [N.m] | $T_{d,ref}$ [N.m] | $T_{a,max}$ [N.m]
-20 | 0.201 | 5.238 | 1.501 | 3.737
-25 | 0.310 | 7.875 | 1.810 | 6.066
-30 | 0.400 | 9.917 | 2.113 | 7.804
-35 | 0.400 | 9.917 | 2.260 | 7.657
-40 | 0.400 | 9.917 | 2.400 | 7.517
-45 | 0.400 | 9.917 | 2.534 | 7.383
-50 | 0.400 | 9.917 | 2.663 | 7.254
-55 | 0.400 | 9.917 | 2.785 | 7.132
-60 | 0.400 | 9.917 | 2.900 | 7.017
-65 | 0.400 | 9.917 | 3.018 | 6.900
-70 | 0.400 | 9.917 | 3.136 | 6.781
-75 | 0.400 | 9.917 | 3.236 | 6.681
-80 | 0.400 | 9.917 | 3.300 | 6.617
-85 | 0.400 | 9.917 | 3.338 | 6.579
-90 | 0.400 | 9.917 | 3.370 | 6.547
-95 | 0.400 | 9.917 | 3.392 | 6.525
-100 | 0.400 | 9.917 | 3.400 | 6.517
+$T_r$ tại mỗi điểm được tính bằng cách giải trạng thái xác lập của mô hình ở gia tốc ngang cho trước. Ở trạng thái xác lập, cân bằng mô-men quanh trọng tâm cho lực bên cầu trước $F_{yf} = m a_y l_r / (l_f + l_r)$; góc trượt cầu trước và pneumatic trail do đó chỉ phụ thuộc $a_y$ và $\mu$, nên $T_r$ không phụ thuộc vận tốc: tại 0.4 g, $T_r = 9.92$ N.m ở mọi tốc độ. Kết quả ở Bảng 3 cho thấy hiệu $T_r - T_{d,ref}$ tăng theo gia tốc ngang, nên giá trị lớn nhất luôn nằm tại $a_{y,lim}$. Từ 30 km/h trở lên, $a_{y,lim} = 0.4$ g và $T_{a,req,max}$ giảm dần theo vận tốc chỉ vì $T_{d,ref}$ tăng theo vận tốc. Ở 20 km/h và 25 km/h, giới hạn góc nhỏ của mô hình chặn gia tốc ngang dưới 0.4 g nên $T_{a,req,max}$ thấp hơn hẳn.
+Công thức (4) là nhu cầu ở trạng thái xác lập và bỏ qua ma sát khô Coulomb của cột lái $T_f = 2$ N.m [1], một phần bất định có cận biết trước: khi ma sát ngược chiều trợ lực, nhu cầu có thể tăng thêm tới $T_f$. Theo Slotine và Li [12], mục 7.1.3, phương trình (7.14)-(7.15), độ lớn tác động điều khiển cần có là $\hat u - k\,\mathrm{sgn}(s)$ với $k = F + \eta$, trong đó $F$ là cận của sai số mô hình và $\eta > 0$ là biên dự trữ của luật điều khiển; mục 7.5 liệt kê ma sát trong các nguồn bất định cần tính đến. Giới hạn của motor vì vậy được đặt bằng nhu cầu cộng cận bất định:
+  (7)  T_a,max(v) = T_a,req,max(v) + F,   F = T_f
+  [ T_{a,max}(v)=T_{a,\mathrm{req,max}}(v)+F,\qquad F=T_f ]
+Hệ số dự trữ độ lợi $\beta$ của [12] (phương trình (7.16)-(7.20)) bằng 1 vì khối Actuator coi độ lợi motor bằng 1; biên $\eta$ thuộc thiết kế của bộ điều khiển chứ không thuộc kích thước motor nên không cộng ở đây. Nguyen và cộng sự [13], phương trình (12) và (14), cũng đặt nhu cầu trợ lực lớn nhất theo cách của (6) và yêu cầu khả năng của motor không nhỏ hơn nhu cầu đó, nên dự trữ không âm là điều kiện cần. Tự chọn(6): lấy $F = T_f$ và bỏ $\beta$, $\eta$; sai số của $T_r$ so với thực tế chưa có cận định lượng nên chưa cộng thêm; độ nhạy báo ở $F$ = 1 và 3 N.m.
+Bảng 3: Giới hạn trợ lực theo vận tốc ($\mu = 0.8$, trạng thái xác lập, đã cộng dự phòng $F$)
+$v$ [km/h] | $a_{y,lim}$ [g] | $T_r$ [N.m] | $T_{d,ref}$ [N.m] | $T_{a,req,max}$ [N.m] | $F$ [N.m] | $T_{a,max}$ [N.m]
+20 | 0.201 | 5.238 | 1.501 | 3.737 | 2.0 | 5.737
+25 | 0.310 | 7.875 | 1.810 | 6.066 | 2.0 | 8.066
+30 | 0.400 | 9.917 | 2.113 | 7.804 | 2.0 | 9.804
+35 | 0.400 | 9.917 | 2.260 | 7.657 | 2.0 | 9.657
+40 | 0.400 | 9.917 | 2.400 | 7.517 | 2.0 | 9.517
+45 | 0.400 | 9.917 | 2.534 | 7.383 | 2.0 | 9.383
+50 | 0.400 | 9.917 | 2.663 | 7.254 | 2.0 | 9.254
+55 | 0.400 | 9.917 | 2.785 | 7.132 | 2.0 | 9.132
+60 | 0.400 | 9.917 | 2.900 | 7.017 | 2.0 | 9.017
+65 | 0.400 | 9.917 | 3.018 | 6.900 | 2.0 | 8.900
+70 | 0.400 | 9.917 | 3.136 | 6.781 | 2.0 | 8.781
+75 | 0.400 | 9.917 | 3.236 | 6.681 | 2.0 | 8.681
+80 | 0.400 | 9.917 | 3.300 | 6.617 | 2.0 | 8.617
+85 | 0.400 | 9.917 | 3.338 | 6.579 | 2.0 | 8.579
+90 | 0.400 | 9.917 | 3.370 | 6.547 | 2.0 | 8.547
+95 | 0.400 | 9.917 | 3.392 | 6.525 | 2.0 | 8.525
+100 | 0.400 | 9.917 | 3.400 | 6.517 | 2.0 | 8.517
 
-Bảng 3 là nhu cầu trợ lực ước lượng từ mô hình, không phải khả năng của motor: luận văn không có số liệu motor cụ thể, nên giả thiết motor luôn sinh được $T_{a,max}$. Vì $T_r$ tỉ lệ thuận với cánh tay đòn $e_p$ (Tự chọn(3) và (4) của chương trước), độ lớn của $T_{a,max}$ chỉ đúng về bậc độ lớn; điều quan trọng cho bài toán là mọi bộ điều khiển được so sánh với cùng một giới hạn. Ràng buộc đặt lên mô-men trợ lực vì vậy là $|T_a| \le T_{a,max}(v)$, nội suy tuyến tính theo vận tốc giữa các hàng của Bảng 3.
+Bảng 3 là giới hạn ước lượng từ mô hình, không phải số liệu của một motor cụ thể: luận văn không có thông số motor, nên giả thiết motor luôn sinh được $T_{a,max}$ (đã gồm dự phòng $F$). Vì $T_r$ tỉ lệ thuận với cánh tay đòn $e_p$ (Tự chọn(3) và (4) của chương trước), độ lớn của $T_{a,max}$ chỉ đúng về bậc độ lớn; điều quan trọng cho bài toán là mọi bộ điều khiển được so sánh với cùng một giới hạn. Ràng buộc đặt lên mô-men trợ lực vì vậy là $|T_a| \le T_{a,max}(v)$, nội suy tuyến tính theo vận tốc giữa các hàng của Bảng 3.
 ==============================================================================================================================================================================================

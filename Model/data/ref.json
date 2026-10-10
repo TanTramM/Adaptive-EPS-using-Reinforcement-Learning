@@ -414,7 +414,7 @@
     ]
   },
   "Ta_max": {
-    "x_note": "Assist limit of Documents/Ref/ref.txt section 1.5 (Eq. (4)-(6), Table 3), mu = 0.8: a_y,max from data/plant_limits.json, a_y,lim = min(a_y,max, 0.4 g), T_a,max = T_r - T_d,ref at a_y,lim [N.m]. Demand estimate of the model, not motor capability. Written by Model/Ref/script/make_ta_max.m.",
+    "x_note": "Assist limit of Documents/Thesis/ref.txt section 1.5 (Eq. (4)-(7), Table 3), mu = 0.8: a_y,max from data/plant_limits.json, a_y,lim = min(a_y,max, 0.4 g), Ta_req_Nm = T_r - T_d,ref at a_y,lim [N.m] (demand of the model), F_Nm = bound of the uncertainty left out of the model = dry friction T_f, Ta_max_Nm = Ta_req_Nm + F_Nm (Slotine and Li 7.15). Written by Model/PRSM/Ref/script/make_ta_max.m.",
     "v_kmh": [
       20,
       25,
@@ -510,7 +510,7 @@
       3.391875,
       3.4
     ],
-    "Ta_max_Nm": [
+    "Ta_req_Nm": [
       3.7371853478022983,
       6.0656811714684595,
       7.8039341476654869,
@@ -528,6 +528,26 @@
       6.5470021476654816,
       6.5251271476654864,
       6.5170021476654814
+    ],
+    "F_Nm": 2,
+    "Ta_max_Nm": [
+      5.7371853478022983,
+      8.0656811714684586,
+      9.8039341476654869,
+      9.65698814766548,
+      9.51700214766548,
+      9.3830061476654816,
+      9.2543761476654876,
+      9.1320591476654815,
+      9.0170021476654814,
+      8.8995021476654816,
+      8.7814461476654824,
+      8.6811691476654822,
+      8.617002147665481,
+      8.5788771476654819,
+      8.54700214766548,
+      8.5251271476654864,
+      8.5170021476654814
     ]
   }
 }

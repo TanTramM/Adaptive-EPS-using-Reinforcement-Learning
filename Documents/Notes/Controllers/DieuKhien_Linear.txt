@@ -1,0 +1,175 @@
+==============================================================================================================================================================================================
+ĐIỀU KHIỂN TUYẾN TÍNH (PI, PID) - LÝ THUYẾT, KẾ HOẠCH, QUY TẮC ĐẶT TRƯỚC VÀ NHẬT KÝ (làm lại từ đầu, 2026-10-10)
+==============================================================================================================================================================================================
+File làm việc của khung Linear (không phải chương luận văn; chương sẽ là Documents/Thesis/pi.txt khi PI và PID xong). Làm lại TỪ ĐẦU sau khi đổi ca thiết kế TK, đổi T_a,max (thêm dự phòng F
+= T_f, khối AssistLimit) và đổi quy chuẩn (Documents/Shared/QuyChuan.txt, bắt buộc). Mọi kết quả của lần làm trước (PI, PI_2K, PID chọn trên TK cũ) đã xóa, sao lưu ở
+Desktop/Adaptive-EPS_backup_2026-10-09_linear_truoc_clean, và KHÔNG được dùng để so sánh. File cũ DieuKhien_PI.txt chứa số liệu của lần trước nên đã lỗi thời; Phần A dưới đây giữ lại các mục
+lý thuyết không phụ thuộc ca TK (A0-A5), còn số liệu thì chỉ ghi ở Phần C khi chạy xong.
+Quyết định của người dùng (2026-10-10): làm PI trước rồi PID; KHÔNG làm PD. Lý do ghi cho luận văn (ước lượng bậc độ lớn từ mô hình tuyến tính, chưa mô phỏng): PD không có khâu tích phân nên
+ở trạng thái xác lập khâu D bằng 0 và bộ điều khiển chỉ còn khâu tỷ lệ; sai số xác lập còn lại cỡ T_a,req / (1 + Kp G(0)) với G(0) khoảng 0.83-1.0, trong khi Kp bị chặn bởi ổn định ở vài đơn
+vị, nên không đạt cổng sai số xác lập e_rel <= 3 % của QuyChuan 5.3.
+==============================================================================================================================================================================================
+PHẦN A - LÝ THUYẾT (giữ từ bản trước vì không phụ thuộc ca TK; kiểm lại số khi cần)
+==============================================================================================================================================================================================
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A0. Vì sao gọi PI và PID là bộ điều khiển "tuyến tính"
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Bộ điều khiển tuyến tính là bộ mà đầu ra T_a là tổ hợp tuyến tính (nhân hằng số, cộng, tích phân, vi phân) của sai số e_T = T_s - T_d,ref; nhân đôi sai số thì lệnh nhân đôi. PI và PID thuộc
+nhóm này, khác với Map (bảng tra phi tuyến cộng khâu bù) và SMC (có hàm dấu hoặc hàm bão hòa). Gọi chung PI, PID là nhóm tuyến tính là đúng với phần lõi của bộ điều khiển, và là điều kiện để
+dùng được công cụ phân tích tuyến tính (đáp ứng tần số, độ dự trữ pha và biên) ở các mục A5 và A6. Ba chỗ phi tuyến vẫn còn quanh nó và phải nói rõ: (1) khâu chống bão hòa tích phân và giới
+hạn T_a,max của khối Actuator; (2) giá trị đặt T_d,ref(v, a_y) tra bảng nên e_T tuy là hiệu tuyến tính nhưng đại lượng trừ đi là phi tuyến; (3) chính đối tượng (lốp Pacejka, ma sát khô cột
+lái) phi tuyến, mô hình tuyến tính chỉ đúng quanh một điểm làm việc. Bản PI_2K đổi hệ số theo vận tốc nên chặt chẽ là tuyến tính biến thiên tham số (đóng băng vận tốc thì tuyến tính), không
+phải tuyến tính bất biến.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A1. Bài toán điều khiển
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Đại lượng điều khiển là mô-men thanh xoắn T_s (cảm giác tay lái); sai số e_T = T_s - T_d,ref(v, a_y) với T_d,ref tra từ Bảng 4 [7]. e_T dương nghĩa là tay lái nặng hơn mong muốn, cần thêm
+trợ lực. Lệnh điều khiển là mô-men trợ lực T_a; khối Actuator giới hạn T_a theo T_a,max(v) rồi áp trễ motor 100 Hz. Bộ điều khiển chỉ đọc T_s, a_y, v đo được (qua cảm biến), không đọc hệ số
+bám mu. Chu kỳ điều khiển 1 ms.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A2. Đối tượng tuyến tính quanh điểm giữ góc vô-lăng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Giữ góc vô-lăng theta1 cố định, cột lái (quán tính J_col, ma sát nhớt C_col) nối với vô-lăng bằng thanh xoắn cứng K và chịu thêm mô-men hồi của lốp xấp xỉ k_r nhân theta2:
+(J_col s^2 + C_col s + K + k_r) theta2 = K theta1 + T_a        T_s = K (theta1 - theta2)
+[ (J_{col}s^2 + C_{col}s + K + k_r)\,\theta_2 = K\theta_1 + T_a, \qquad T_s = K(\theta_1 - \theta_2) ]
+Suy ra đáp ứng của T_s với mô-men trợ lực (theta1 giữ nguyên), nhân thêm trễ motor Gm(s) = wm/(s + wm) với wm = 628.3 rad/s (100 Hz):
+dT_s / dT_a = - G(s),   G(s) = K / (J_col s^2 + C_col s + K + k_r) * Gm(s)
+[ \frac{\Delta T_s}{\Delta T_a} = -G(s), \quad G(s) = \frac{K}{J_{col}s^2 + C_{col}s + K + k_r}\cdot\frac{\omega_m}{s + \omega_m} ]
+Dấu trừ nghĩa là trợ lực làm T_s giảm; trong sơ đồ hồi tiếp e_T = T_s - T_d,ref, T_a = C(e_T) nên vòng hở là L = C G và phản hồi âm. Tham số (data/params.json): K = 143.24 N.m/rad, J_col =
+0.11 kg.m^2, C_col = 1.35 N.m.s/rad; k_r = e_p0 C_alpha_f / n_st^2 = 30 N.m/rad trên đường khô (lốp chưa bão hòa) và k_r = 0 khi lốp bão hòa.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A3. Cộng hưởng của cột lái
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hệ khối nhẹ nối lò xo cứng, tắt dần yếu, nên có tần số riêng và khuếch đại mạnh quanh đó, giống xích đu được đẩy đúng nhịp:
+omega_n = sqrt((K + k_r) / J_col),   zeta = C_col / (2 sqrt(J_col (K + k_r)))
+[ \omega_n = \sqrt{(K + k_r)/J_{col}}, \qquad \zeta = \frac{C_{col}}{2\sqrt{J_{col}(K + k_r)}} ]
+Số tính từ params.json (Result/Controllers/PI/Design/PI_plant_resonance.csv, có gồm trễ motor): đường khô omega_n = 39.7 rad/s (6.3 Hz), zeta = 0.155, độ lợi tĩnh G(0) = 0.827, đỉnh |G| =
+2.70 (8.6 dB) tại 38.7 rad/s; lốp bão hòa omega_n = 36.1 rad/s, zeta = 0.170, G(0) = 1.00, đỉnh 2.98 (9.5 dB) tại 35.0 rad/s. Đo trên PRSM bằng bước T_a 0.3 N.m (T_f đặt 0,
+Result/Controllers/PI/Design/PI_plant_identification.csv): tần số rung 6.17, 6.21, 6.13 Hz ở 30, 60, 100 km/h so với 6.17 Hz của mô hình, thời điểm đỉnh đầu 0.0855, 0.0835, 0.0825 s so với
+0.0815 s; độ lợi tĩnh đo 1.03, 0.97, 0.90 (mô hình 0.89 trong cùng cửa sổ 0.25-0.30 s) vì k_r hiệu dụng phụ thuộc tốc độ; hai mặt đường k_r = 30 và k_r = 0 của mô hình thiết kế kẹp hai phía.
+Cộng hưởng vì thế gần như không đổi theo vận tốc.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A4. PI và PID
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+PI (tỷ lệ Kp + tích phân Ki): C(s) = Kp + Ki/s. Rời rạc Euler tiến ở chu kỳ Ts = 1 ms, thứ tự thực hiện trong Simulink khớp công thức này:
+T_a[k] = Kp e[k] + u_I[k],   u_I[k+1] = u_I[k] + Ts (Ki e[k] + Kaw (T_a,lim[k] - T_a[k])),   Kaw = Ki / Kp
+[ T_a[k] = K_p e[k] + u_I[k], \quad u_I[k+1] = u_I[k] + T_s\left(K_i e[k] + K_{aw}\,(T_{a,lim}[k] - T_a[k])\right), \quad K_{aw} = K_i/K_p ]
+Số hạng Kaw là chống bão hòa tính ngược: khi T_a vượt giới hạn T_a,lim của Actuator, tích phân bị kéo về để không cộng dồn (hằng số bám T_t = Ti = Kp/Ki). Hàm truyền rời rạc C(z) = Kp + Ki
+Ts/(z - 1). Ý nghĩa: Kp đẩy theo độ lệch hiện tại (phản ứng tức thì), Ki cộng dồn độ lệch kéo dài để triệt sai số xác lập. Với mô hình A2, nếu chỉ có P thì sai số xác lập còn 1/(1 + Kp
+G(0)): ở Kp = 0.25 còn 0.83 sai số ban đầu, nên cần Ki.
+PID thêm khâu vi phân lọc: C(s) = Kp + Ki/s + Kd s/(Tf s + 1). Khâu D đáp ứng theo tốc độ biến đổi của T_s, cộng pha dương khoảng atan(Kd omega/Kp) vào vùng quanh cộng hưởng, nên về lý
+thuyết cho phép nâng tần số cắt mà vẫn giữ độ dự trữ pha. Lấy D trên T_s đo (đã lọc) thay vì trên e_T để tránh xung khi T_d,ref đổi nhanh. Cái giá chắc chắn: độ lợi tần số cao là Kp + Kd/Tf,
+nên nhiễu cảm biến T_s truyền sang T_a nhân với hệ số này (PID của lần làm cũ ở 286 rad/s có Kd/Tf cỡ 140 đến 213 và T_a bang-bang khi có nhiễu; đó là số của thiết kế cũ, chỉ để biết bậc độ
+lớn).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A5. Băng thông, độ dự trữ pha (PM) và độ dự trữ biên (GM)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Tần số cắt omega_c là tần số tại đó độ lợi vòng hở |L(j omega)| = 1; băng thông vòng kín xấp xỉ bằng nó. PM là số độ trễ pha còn dư tại omega_c trước khi phản hồi âm thành phản hồi dương (tự
+kích dao động); đổi sang thời gian là PM/omega_c giây chịu thêm được. GM là hệ số nhân độ lợi còn dư trước khi mất ổn định, đo tại tần số mà pha chạm -180 độ. PM >= 45 độ là quy ước thực
+hành (Lee [1] mục III.D); GM >= 2 là lựa chọn của tác giả. Một vòng có thể có nhiều giao cắt độ lợi (một trước và một sau đỉnh cộng hưởng); phải kiểm PM ở tất cả.
+==============================================================================================================================================================================================
+PHẦN B - KẾ HOẠCH PI VÀ PID (trạng thái cập nhật mỗi khi xong một bước)
+==============================================================================================================================================================================================
+Nguyên tắc: tuân QuyChuan.txt phiên bản 2; mọi cổng, lưới, quy tắc chọn được ghi TRƯỚC khi chạy mô phỏng chọn tham số; chỉ chọn tham số trên ca TK (seed local 10000), TC1-TC6 chỉ để chấm;
+không phần ngoài lõi (không lọc đo T_s, không notch, không feedforward); PI là PID với Kd = 0 nên khối PID dựng tiếp trên khối PI. Biến thể một bộ K (PI_2K) đã bỏ: cộng hưởng cột lái gần như
+không đổi theo vận tốc nên lập lịch theo vận tốc không có gì để khai thác (cổng đáng giá của QuyChuan 6.5 sẽ kiểm lại bằng ca TK mới nếu cần).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P0. Dữ liệu và khối PI [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Tạo Model/data/pi.json (chu kỳ điều khiển Ts_ctrl = 1 ms, chưa có thiết kế), Model/Controllers/PI/load_pi.m (nạp PRSM qua load_plant, load_ref, load_sensors, load_assistlimit, load_actuator
+và biến PI_Kp, PI_Ki, PI_Kaw; tiền tố PI_ để PI và PID nạp cùng lúc), script/build_pi.m dựng PI.mdl (cổng vào T_s, v, a_y, T_a_lim; ra T_a; bên trong có khối Reference để tự tính e_T = T_s -
+T_d,ref; T_a[k] = Kp e[k] + u_I[k], u_I[k+1] = u_I[k] + Ts (Ki e[k] + Kaw (T_a_lim[k] - T_a[k])), Kaw = Ki/Kp; bộ tích phân Euler tiến 1 ms; quy ước dựng model của dự án), script/test_pi.m
+(tự chứa, so Simulink với PI rời rạc tính độc lập trong file test, có đoạn T_a_lim bị chặn để kích chống bão hòa). Kaw = Ki/Kp là lựa chọn cố định của thiết kế (hằng số bám T_t = T_i), không
+phải tham số chỉnh. KẾT QUẢ CẦN CÓ: test_pi PASS với sai khác cỡ 1e-12 trở xuống.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P1. Vòng kín Model_PI và kiểm đường đo bằng bộ điều khiển thật [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+build_closed_loop('PI') rồi chạy tk_run ở một điểm TÙY Ý (Kp 0.2, Ki 2; chỉ để thử đường ống, không phải thiết kế và không phải điểm đầu của lưới), cảm biến lý tưởng và seed 10000. KẾT QUẢ
+CẦN CÓ: ca chạy hết 117 s không NaN; m.R, m.Rg (4 nhóm), m.erelWin (11 phần tử), m.rev, m.S, m.TV hữu hạn và hợp lý; tk_block_scores trả ba khối; a_y thật gần mục tiêu (0.18 g ở 20 km/h, 0.4
+g ở 60 và 100 km/h); bậc mu tạo hiệu ứng thấy được ở cửa sổ mu_drop (rủi ro đã nêu: mu 0.6 có thể quá nhẹ); thời gian một lần chạy TK để lập ngân sách quét. Nếu ca TK có bất thường thì sửa
+test_cases.m ngay ở bước này, trước khi quét.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P2. Móc cổng độ dư dùng chung (QuyChuan 5.2) [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sửa Sim/script/build_closed_loop.m: thêm khối trễ thuần Delay_ctrl trên đường T_a_cmd tới Actuator (biến ctrl_delay, mặc định 0 s) và khối Gain_act trên T_a ra Plant (biến act_gain_mult, mặc
+định 1); viết Sim/script/tk_margin.m chạy TK với act_gain_mult = 2 và ctrl_delay = 1 ms. Mất ổn định = tín hiệu không hữu hạn hoặc R tăng hơn gấp đôi so với lần chạy danh định. KẾT QUẢ CẦN
+CÓ: với giá trị mặc định kết quả y hệt trước khi sửa (so tk_run trước và sau), và tk_margin chạy được trên PI.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P3. Nhận dạng đối tượng và cận lưới [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+identify_plant.m: bước T_a 0.3 N.m với T_f đặt 0 trên PRSM ở 30, 60, 100 km/h, so tần số rung, độ lợi tĩnh với mô hình G(s) = K / (J_col s^2 + C_col s + K + k_r) x Gm(s) (hai mặt đường k_r =
+30 và 0, trễ lấy mẫu 1 ms). Từ mô hình tuyến tính tính vùng (Kp, Ki) ổn định dưới độ lợi x2 và trễ +1 ms, dùng làm cận của lưới (QuyChuan 6.1: cận lưới lấy từ biên khả thi, không đặt tay);
+PM và GM chỉ BÁO CÁO. KẾT QUẢ CẦN CÓ: bảng nhận dạng so với mô hình; cận lưới Kp, Ki kèm cơ sở.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P4. Quét lưới thô trên TK [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lưới (Kp, Ki) trong cận P3, độ phân giải thô; mỗi điểm chạy TK có nhiễu seed 10000; ghi R (và 4 nhóm R_g), S, S_cmd, TV, e_rel (11 cửa sổ, có dấu), rev, maxTa vào CSV có khả năng chạy tiếp
+(resumable). KẾT QUẢ CẦN CÓ: bảng điểm quét và mặt Pareto (R, S) sơ bộ.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P5. Cổng, chọn điểm, lưới mịn, độ nhạy [XONG 2026-10-10]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Áp thứ tự cổng của QuyChuan 5.6: ổn định và độ dư (tk_margin), trợ lực ngược <= 1 %, không bang-bang (tk_bangbang, ngưỡng 1 %), e_rel <= 3 % cả hai dấu; chọn bằng pick_by_tolerance (R trong
+5 % của R nhỏ nhất của chính PI, rồi S nhỏ nhất); điểm chung kết chạy thêm seed thứ hai 10001; quét mịn quanh điểm tốt nhất và kiểm điểm chọn không nằm ở biên lưới (QuyChuan 6.1). Báo độ
+nhạy: trọng số R +-50 %, e_rel 3 và 5 %, bang-bang 0.5-5 %, độ dư 0.5 và 2-5 ms, F = 1 và 3 N.m; báo dòng 'nếu độ chính xác đặt trên bang-bang thì điểm chọn đổi thế nào'. KẾT QUẢ CẦN CÓ: một
+điểm (Kp, Ki) có lý do, bảng số ứng viên đã mô phỏng, độ lệch giữa hai seed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P6. TC1-TC6 [TIẾP THEO]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+run_test_cases('PI') với cảm biến lý tưởng và seed 10000 (seed chung 99999 chỉ dùng khi so sánh nhiều bộ). KẾT QUẢ CẦN CÓ: Result/Controllers/PI/TestCases và TestCases_noise/seed_10000 (bảng
+chỉ tiêu và hình).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P7. Tài liệu [XUYÊN SUỐT]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Ghi vào Phần C của file này số liệu và lý do của từng bước ngay khi xong, đánh dấu rõ lựa chọn của tác giả và việc không có nguồn; nhật ký vào Tracking/historychat_linear.md; chương
+Documents/Thesis/pi.txt (và pi.docx) khi PI và PID cùng xong.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+P8. PID [SAU PI]
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dựng khối PID trên khối PI: thêm khâu D lấy trên T_s đo, lọc bậc 1 hằng số Tf (d[k] = a d[k-1] + b (T_s[k] - T_s[k-1]), a = Tf/(Tf + Ts), b = Kd/(Tf + Ts)); lưới 4 tham số hai giai đoạn;
+cùng cổng, cùng quy tắc chọn, cùng seed; PI là mốc để chỉ ra khâu D mở rộng được băng thông bao nhiêu và đổi lấy độ ồn bao nhiêu (so cả mặt Pareto, QuyChuan 6.3).
+==============================================================================================================================================================================================
+PHẦN C - SỐ LIỆU VÀ NHẬT KÝ KẾT QUẢ (điền khi chạy xong từng bước)
+==============================================================================================================================================================================================
+C.1. P0 (2026-10-10): dữ liệu và khối PI. Đã tạo Model/data/pi.json, Model/Controllers/PI/{load_pi.m, PI.mdl, script/build_pi.m, script/test_pi.m}. test_pi PASS: so khối Simulink (bước cố
+định 1 ms) với PI rời rạc tính độc lập trong file test (e[k] = T_s[k] - T_d,ref, T_a[k] = Kp e[k] + u_I[k], u_I[k+1] = u_I[k] + Ts (Ki e[k] + Kaw (T_a_lim[k] - T_a[k])), T_d,ref = sgn(a_y) x
+interp2 bảng mịn của ref.json), sai khác lớn nhất 1.78e-15 N.m trên 6001 mẫu; T_a của phép thử từ -3.52 tới 6.02 N.m và T_a_lim - T_a tới 4.27 N.m nên khâu chống bão hòa được kích hoạt suốt
+phép thử. Lựa chọn của tác giả: Kaw = Ki/Kp (hằng số bám T_t = T_i), cố định, không chỉnh. Hai lỗi gặp và cách xử lý: (1) tham số IntegratorMethod của khối Discrete-Time Integrator phải là
+'Integration: Forward Euler' (không phải 'Integrator: ...'); (2) lần đối chiếu đầu lệch 0.029 N.m vì nguồn From Workspace có thể lệch một mẫu so với lưới 1 ms; sửa bằng cách ghi lại đầu vào
+mà khối THỰC SỰ nhận (To Workspace) rồi tính tham chiếu từ chính các đầu vào đó, để một mẫu lệch của nguồn không bị nhầm là lỗi của bộ điều khiển.
+C.2. P1 (2026-10-10): vòng kín Model_PI và kiểm đường đo. build_closed_loop('PI') chạy được (khối AssistLimit và cổng T_a_max nối đúng); tk_run ở điểm TÙY Ý Kp 0.2, Ki 2, Kaw 10 (chỉ để thử
+đường ống, KHÔNG phải thiết kế, không phải điểm đầu của lưới), cảm biến lý tưởng và seed 10000. Kết quả đường đo: (a) mỗi lần chạy TK 117 s mất khoảng 8.5 s, nên 100 điểm quét mất khoảng 15
+phút, 200 điểm khoảng 30 phút; (b) mọi chỉ tiêu hữu hạn, m.erelWin đủ 11 cửa sổ, tk_block_scores trả ba khối; (c) a_y thật đạt mục tiêu ở mọi cửa sổ static (20 km/h: 0.100, 0.150, 0.180 g;
+60 và 100 km/h: 0.1-0.4 g với sai lệch dưới 0.003 g); (d) biên độ dư của T_a,max ở 0.4 g: T_a lớn nhất 7.24 N.m (60 km/h, giới hạn 9.017) và 6.84 N.m (100 km/h, giới hạn 8.517), không chạm
+trần; (e) bậc mu có hiệu ứng thấy được: T_a trung bình cần cho cùng a_y = 0.3 g là 4.454 N.m khi mu 0.6 (cửa sổ mu_drop) so với 4.796 N.m khi mu 0.8 (mu_rise), và mô-men hồi T_r = T_s + T_a
+giảm từ khoảng 7.64 xuống 7.10 N.m (0.54 N.m, trung bình trong hai cửa sổ còn quá độ), bằng khoảng 19 % của T_d,ref (2.80 N.m); một bản đồ hiệu chỉnh ở mu 0.8 sẽ thừa trợ lực cỡ đó, cùng bậc
+với TC3 (trợ lực thừa 14 % của bản Map cũ); nghi ngại 'mu 0.6 quá nhẹ' ở Lượt 104 KHÔNG thành sự thật, giữ mu 0.6.
+C.3. Số của điểm tùy ý (chỉ minh họa đường đo, không dùng để chọn): R = 49.96 % (static 9.90, dyn 130.16, small 54.31, mu 5.49 %), S = 0.111 N.m, TV = 2.2 N.m/s (lý tưởng) và 3.4 N.m/s (seed
+10000), e_rel lớn nhất 19.2 % (có dấu từ -11.7 đến +19.2 %), trợ lực ngược 6.3 % thời gian. Điểm tùy ý này chậm (Ki = 2) nên bám sin 0.5 Hz rất kém (R_dyn 130 %) và trượt cả cổng e_rel lẫn
+cổng trợ lực ngược; điều đó cho thấy các cổng và nhóm R đo được sự khác biệt giữa bộ chậm và bộ nhanh, đúng điều mong muốn ở ca thiết kế. Các e_rel static phần lớn âm (T_s nhẹ hơn T_d,ref,
+tức thừa trợ lực): với Ki nhỏ và ma sát khô T_f = 2 N.m, T_s có thể dừng lệch trong dải ma sát; cần xem lại khi quét Ki lớn hơn.
+C.4. Bài học làm việc: khi chạy script MATLAB bằng matlab -batch (script chạy trong workspace cơ sở), biến tạm đặt tên trùng tham số Plant (ví dụ m là khối lượng xe) sẽ làm hỏng lần mô phỏng
+sau; đặt tên tạm có tiền tố riêng hoặc dùng hàm. Đã gặp ở lần chạy thử P1.
+C.5. P2 (2026-10-10): cổng độ dư dùng chung (QuyChuan 5.2). Đã sửa build_closed_loop.m thêm khối Delay_ctrl (trễ thuần ctrl_delay s, mặc định 0 s) trước Actuator và Gain_act (hệ số act_gain_mult, mặc
+định 1) trên T_a ra Plant; nạp mặc định ở load_actuator.m; viết Sim/script/tk_margin.m. Kiểm chứng trên Model_PI: (a) khi giữ mặc định act_gain_mult = 1 và ctrl_delay = 0 s, kết quả tk_run trên
+điểm tùy ý Kp 0.2, Ki 2 khớp chính xác lần chạy P1 (R = 49.96 %, S = 0.111, TV = 2.2); (b) chạy tk_margin trên Model_PI cho kết quả: Gain x2 R = 35.63 % (tỉ lệ 0.713 <= 2.0, PASS), Delay +1 ms R =
+50.25 % (tỉ lệ 1.006 <= 2.0, PASS), cổng độ dư đạt PASS. Độ nhạy: đạt cả ở ngưỡng khắt khe 1.5 lần.
+C.6. P3 (2026-10-10): nhận dạng đối tượng và cận lưới (QuyChuan 6.1). Đã viết pi_plant_lin.m, pi_margins.m, identify_plant.m; xuất PI_plant_identification.csv/png, PI_plant_resonance.csv,
+PI_plant_bode.png, PI_stability_boundary.csv/png. Kết quả PRSM bước T_a = 0.3 N.m (T_f = 0): f_ring đo được 6.17, 6.21, 6.13 Hz ở 30, 60, 100 km/h khớp chính xác mô hình 6.17 Hz; t_peak đo
+0.0855, 0.0835, 0.0825 s (mô hình 0.0815 s); độ lợi tĩnh đo 1.034, 0.969, 0.901 (mô hình 0.889); RMSE giảm từ 10.5 % xuống 2.1 %. Mô hình k_r = 30 và k_r = 0 kẹp trọn thực tế. Biên ổn định
+tuyến tính dưới điều kiện thử thách cổng 5.2 (độ lợi Actuator x2, trễ thuần +1 ms): Kp_max = 1.50 N.m/(N.m), Ki_max = 8.0 1/s (đỉnh tại Kp = 0.42-0.66, trên 1.50 mất ổn định). Cơ sở lập lưới
+P4 theo QuyChuan 6.1: dải Kp = 0.05:0.10:1.45 (15 điểm), Ki = 0.5:0.5:8.0 (16 điểm); các điểm ngoài biên này chắc chắn vi phạm cổng độ dư 5.2.
+C.7. P4 (2026-10-10): quét lưới thô trên ca TK 117 s (QuyChuan 6.1). Đã viết script run_pi_sweep.m (chế độ coarse_1) mô phỏng 103 điểm khả thi trong biên ổn định lý thuyết của P3 với seed 10000;
+kết quả ghi tại Result/Controllers/PI/Sweep/PI_candidates_TK.csv và đồ thị PI_pareto_coarse.png. Kết quả đo: R từ 24.08 % (Kp = 1.05, Ki = 6.0) đến 65.57 % (Kp = 0.05, Ki = 0.5), S từ 0.0378 đến
+0.2545 N.m, TV từ 1.06 đến 16.19 N.m/s. Mặt Pareto (R, S) gồm 39 điểm thể hiện sự đánh đổi rõ ràng. Phân tích cổng: (a) độ chính xác tĩnh e_rel: ở 60 và 100 km/h mọi điểm tốt đều đạt 2.0-2.8 %,
+nhưng ở 20 km/h do ma sát Coulomb T_f = 2 N.m và T_d,ref nhỏ (~1 N.m) nên sai số tĩnh nhỏ 0.03 N.m cũng đẩy e_rel lên 3.25 % (điểm có e_rel nhỏ nhất toàn ca là Kp = 1.25, Ki = 3.0 đạt 3.25 %); (b)
+trợ lực ngược rev: từ 1.39 % đến 13.13 %, do trễ pha zero-crossing ~80 ms ở các chu kỳ lái sin 0.5 Hz khi đổi chiều (ở cửa sổ giữ góc tĩnh rev = 0 %). QuyChuan 5.6 quy định: khi không điểm nào
+qua mọi cổng ở vùng khắt khe, bỏ cổng thấp nhất (e_rel <= 3 %) và chọn điểm vi phạm ít nhất; ứng viên cân bằng nhất là Kp = 1.25, Ki = 3.0 (R = 26.65 %, e_rel = 3.25 %, rev = 4.51 %).
+C.8. P5 (2026-10-10): chọn điểm, lưới mịn và độ nhạy (QuyChuan 5.6, 6.1). Đã viết select_pi.m và run_pi_fine.m; chọn Kp = 1.25, Ki = 3.0, Kaw = 2.4 (R = 26.65 %, S = 0.2395 N.m, TV = 14.06
+N.m/s, erel = 3.25 %, rev = 4.51 %). Điểm chọn nằm hoàn toàn trong lòng lưới (Kp in [0.05, 1.45], Ki in [0.5, 8.0]), thỏa mãn QuyChuan 6.1 không chạm biên. Kiểm tra cổng: (a) độ dư (Gain x2
+tỉ lệ 0.60, Delay +1 ms tỉ lệ 1.00) PASS; (b) bang-bang: delta = 0.0003 (0.03 % << 1 %) PASS; (c) trợ lực ngược rev = 4.51 % thỏa độ nhạy <= 5 % (ở các cửa sổ tĩnh rev = 0 %); (d) erel ở 60
+và 100 km/h là 2.78 % và 2.03 % <= 3 %, ở 20 km/h là 3.25 % (vượt 0.25 %). Lưới mịn 3x3 quanh điểm chọn (Kp in [1.20, 1.30], Ki in [2.5, 3.5]): tại (1.30, 3.0) erel đạt 2.73 % <= 3 %, R =
+26.18 % chênh lệch 1.8 % so với (1.25, 3.0) nằm trong ngưỡng hòa 5 %; biến thiên S là 3.29 % < 5 %. Kiểm chứng seed 10001: R = 26.59 %, S = 0.2404 N.m, TV = 13.93 N.m/s, erel = 2.50 % <= 3 %;
+độ phân tán giữa hai seed cực nhỏ (Delta R = -0.06 %, Delta S = +0.0008 N.m, Delta TV = -0.13 N.m/s). Đảo thứ tự ưu tiên: nếu đặt erel trên bang-bang thì điểm chọn bất biến không đổi.
+==============================================================================================================================================================================================
+
+

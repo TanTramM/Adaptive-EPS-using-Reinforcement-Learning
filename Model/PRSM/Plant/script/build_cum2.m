@@ -1,8 +1,7 @@
 %% build_cum2.m
 % Use the Simulink API to build Cluster 2 (nonlinear Pacejka tire
 % interaction) as its own subsystem, saved as Tires.mdl RIGHT INSIDE the
-% Plant/ folder - the "_s" suffix distinguishes it from the hand-formatted
-% version (Tires.mdl, same folder). Matches Documents/Cum2_Pacejka.txt,
+% Plant/ folder. Matches Documents/Cum2_Pacejka.txt,
 % Eq.(1)-(14):
 %
 %   Section 1 - Tire slip angles:

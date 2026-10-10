@@ -7,7 +7,13 @@ function make_ta_max()
 %   a_y,max(v, 0.8) is read from data/plant_limits.json (Plant/script/make_plant_limits.m), T_d,ref from the fine table of
 %   data/ref.json (make_ref_table.m); T_r is the steady-state road torque of the Plant, solved in plain MATLAB from
 %   data/params.json. T_a,req increases with a_y, so the maximum is at a_y,lim; this is checked on a 0.025 g grid.
-%   Result: T_a,max is a demand estimate of the model, not a motor capability. Used by every controller (saturation).
+%   Safety margin (QuyChuan.txt 2.3): the motor limit is the demand PLUS the bound F of the uncertainty that the model leaves out,
+%       T_a,max(v) = T_a,req(v at a_y,lim) + F,     F = T_f (dry Coulomb friction of the column, data/params.json)
+%   after Slotine and Li, Applied Nonlinear Control, section 7.1.3 equations (7.14)-(7.15): control magnitude u = u_hat - k sgn(s) with
+%   k = F + eta, F = bound of the modelling error, eta > 0 the reaching margin of the controller (not of the motor, so eta is not added
+%   here); section 7.5 lists friction among the uncertainties. The gain margin beta of equations (7.16)-(7.20) is 1 because the Actuator
+%   motor gain is 1 in this model. Nguyen et al. (CEPS ANFIS-FOC, equations (12) and (14)) require motor capability >= max T_a,req.
+%   T_a,req alone is kept in Ta_req_Nm. Used by the AssistLimit block (every controller and the Actuator read the limit from it).
 %   Saves Result/Reference/Reference_Ta_max_by_speed_mu0p8.csv.
 %
 %   Run order: make_plant_limits (Plant), make_ref_table (Ref), then this script.
@@ -28,7 +34,8 @@ tdref = @(v, ay) interp2(ref.fine.ay_breakpoints_g(:)', ref.fine.v_breakpoints_k
 muCal = 0.8;
 vKmh  = ref.fine.v_breakpoints_kmh(:)';
 nV = numel(vKmh);
-ayMax = zeros(1, nV); ayLim = ayMax; TrTop = ayMax; TdTop = ayMax; TaMax = ayMax;
+ayMax = zeros(1, nV); ayLim = ayMax; TrTop = ayMax; TdTop = ayMax; TaReq = ayMax;
+F = P.T_f;                                     % bound of the uncertainty left out of the model [N.m]: dry friction of the column
 for j = 1:nV
     v = vKmh(j) / 3.6;
     ayMax(j) = interp2(lim.a_y.mu(:)', lim.a_y.v_kmh(:), lim.a_y.table, muCal, vKmh(j), 'linear');
@@ -41,22 +48,24 @@ for j = 1:nV
     Td = tdref(vKmh(j), lv);
     Ta = Tr - Td;
     assert(all(diff(Ta) > 0), 'T_a,req is not increasing with a_y at %g km/h', vKmh(j));
-    TaMax(j) = Ta(end); TrTop(j) = Tr(end); TdTop(j) = Td(end);
+    TaReq(j) = Ta(end); TrTop(j) = Tr(end); TdTop(j) = Td(end);
 end
+TaMax = TaReq + F;
 
 ref.Ta_max = struct( ...
-    'x_note', ['Assist limit of Documents/Ref/ref.txt section 1.5 (Eq. (4)-(6), Table 3), mu = 0.8: a_y,max from data/plant_limits.json, ' ...
-               'a_y,lim = min(a_y,max, 0.4 g), T_a,max = T_r - T_d,ref at a_y,lim [N.m]. Demand estimate of the model, not motor capability. ' ...
-               'Written by Model/Ref/script/make_ta_max.m.'], ...
-    'v_kmh', vKmh, 'a_y_max_g', ayMax, 'a_y_lim_g', ayLim, 'T_r_top_Nm', TrTop, 'T_d_ref_top_Nm', TdTop, 'Ta_max_Nm', TaMax);
+    'x_note', ['Assist limit of Documents/Thesis/ref.txt section 1.5 (Eq. (4)-(7), Table 3), mu = 0.8: a_y,max from data/plant_limits.json, ' ...
+               'a_y,lim = min(a_y,max, 0.4 g), Ta_req_Nm = T_r - T_d,ref at a_y,lim [N.m] (demand of the model), F_Nm = bound of the uncertainty ' ...
+               'left out of the model = dry friction T_f, Ta_max_Nm = Ta_req_Nm + F_Nm (Slotine and Li 7.15). Written by Model/PRSM/Ref/script/make_ta_max.m.'], ...
+    'v_kmh', vKmh, 'a_y_max_g', ayMax, 'a_y_lim_g', ayLim, 'T_r_top_Nm', TrTop, 'T_d_ref_top_Nm', TdTop, 'Ta_req_Nm', TaReq, ...
+    'F_Nm', F, 'Ta_max_Nm', TaMax);
 fid = fopen(jsonPath, 'w');
 fwrite(fid, jsonencode(ref, 'PrettyPrint', true));
 fclose(fid);
 
-T = table(vKmh(:), ayMax(:), ayLim(:), TrTop(:), TdTop(:), TaMax(:), 'VariableNames', ...
-    {'v_kmh', 'a_y_max_g', 'a_y_lim_g', 'T_r_Nm', 'T_d_ref_Nm', 'Ta_max_Nm'});
+T = table(vKmh(:), ayMax(:), ayLim(:), TrTop(:), TdTop(:), TaReq(:), repmat(F, nV, 1), TaMax(:), 'VariableNames', ...
+    {'v_kmh', 'a_y_max_g', 'a_y_lim_g', 'T_r_Nm', 'T_d_ref_Nm', 'Ta_req_Nm', 'F_Nm', 'Ta_max_Nm'});
 writetable(T, fullfile(result_dir('Reference'), 'Reference_Ta_max_by_speed_mu0p8.csv'));
-fprintf('make_ta_max: wrote data/ref.json field Ta_max. T_a,max(v) = %s N.m at %s km/h\n', mat2str(round(TaMax, 3)), mat2str(vKmh));
+fprintf('make_ta_max: wrote data/ref.json field Ta_max. F = %g N.m, T_a,req = %s, T_a,max = %s N.m at %s km/h\n', F, mat2str(round(TaReq, 3)), mat2str(round(TaMax, 3)), mat2str(vKmh));
 end
 
 function P = loadPlant(modelDir)

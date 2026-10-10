@@ -1,7 +1,6 @@
 %% build_reference.m
 % Build the "Reference" block (T_d,ref(v,a_y)),
-% saved as Reference.mdl RIGHT INSIDE the Ref/ folder - the "_s" suffix
-% distinguishes it from a hand-formatted version (Reference.mdl). Matches
+% saved as Reference.mdl RIGHT INSIDE the Ref/ folder. Matches
 % Blueprint_OverAssist_RL.txt section 1.3:
 %
 %   T_d,ref(v, a_y) = sgn(a_y) * LUT(v, |a_y|)   (2-D linear interpolation on

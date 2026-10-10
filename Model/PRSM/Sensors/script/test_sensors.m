@@ -1,22 +1,22 @@
 function test_sensors(modelName)
 %TEST_SENSORS Check the Sensors subsystem (add_sensors.m): on its own, then inside a closed-loop model.
 %
-%   test_sensors            % closed-loop part on Model_PID_s
-%   test_sensors('Model_Map_6_8_s')
+%   test_sensors            % closed-loop part on Model_PID
+%   test_sensors('Model_Map')
 %
-%   Run first: run('<Model>/load_pid.m') (or load_map_6_8.m) and the matching build_model_*.m.
+%   Run first: run('<Model>/load_pid.m') (or load_map_6_8_6_8.m) and the matching build_model_*.m.
 %   Part A, Sensors alone (harness model built here, signals T_s, a_y, v; reference values computed independently from
 %   data/sensors.json):
-%     (1) level 'none': measured = input exactly (chain bypassed);
-%     (2) quantizer + hold alone (level 'high' with the noise variance set to 0 inside this test) with a ramp input: measured is an integer multiple of the resolution step; it is constant inside every
+%     (1) ideal sensors (no seed): measured = input exactly (chain bypassed);
+%     (2) quantizer + hold alone (noise variance set to 0 inside this test) with a ramp input: measured is an integer multiple of the resolution step; it is constant inside every
 %         update period (10 ms for a_y and v; 1 ms for T_s is the logging grid itself); the error to the input stays within one half
 %         step plus the input change inside the period; and the value does change (at least 5 distinct values over the ramp);
-%     (3) level 'high' with a constant input: mean and std of (measured - input) match a Monte Carlo of
+%     (3) noisy sensors with a constant input: mean and std of (measured - input) match a Monte Carlo of
 %         step*round((c + sigma*n)/step) - c computed here (std within 8%, mean within 5 standard errors);
 %     (4) same seed repeats the measured sequence, another seed is uncorrelated (|corr| < 0.1); noise of different signals is
 %         uncorrelated.
-%   Part B, closed loop (modelName): level 'none' gives log_*_meas == log_* exactly; the logged e_T equals T_s - T_d_ref on
-%   TRUE values to 1e-9 at every level; level 'high' runs without NaN.
+%   Part B, closed loop (modelName): ideal sensors give log_*_meas == log_* exactly; the logged e_T equals T_s - T_d_ref on
+%   TRUE values to 1e-9 in both modes; the noisy run has no NaN.
 if nargin < 1, modelName = ''; end
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));   % Model/
@@ -31,11 +31,11 @@ sigH = cellfun(@(s) highSigma(jr.signals.(s)), sig);
 tEnd = 30; g = (0:1e-3:tEnd)' + 0.5e-3;          % grid at the middle of every 1 ms step
 cst = [2.2034, 1.9234, 20];                      % constant inputs (not on the quantizer grid, except v = 20 m/s which is)
 slope = [0.2, 0.05, 0.3];                        % ramp slopes (units/s)
-A0 = runHarness('none', 90001, cst, [], g, sig, tEnd);
+A0 = runHarness([], cst, [], g, sig, tEnd);
 for i = 1:3
-    assert(max(abs(A0.(sig{i}) - cst(i))) == 0, '(1) level none: %s measured differs from the input', sig{i});
+    assert(max(abs(A0.(sig{i}) - cst(i))) == 0, '(1) ideal sensors: %s measured differs from the input', sig{i});
 end
-R = runHarness('high', 90001, zeros(1, 3), slope, g, sig, tEnd, true);
+R = runHarness(99999, zeros(1, 3), slope, g, sig, tEnd, true);
 nDistinct = zeros(1, 3);
 for i = 1:3
     m = R.(sig{i}); u = slope(i) * g;
@@ -49,9 +49,9 @@ for i = 1:3
     nDistinct(i) = numel(unique(m));
     assert(nDistinct(i) >= 5, '(2) %s measured does not change over the ramp', sig{i});
 end
-H1 = runHarness('high', 90001, cst, [], g, sig, tEnd);
-H2 = runHarness('high', 90001, cst, [], g, sig, tEnd);
-H3 = runHarness('high', 90002, cst, [], g, sig, tEnd);
+H1 = runHarness(99999, cst, [], g, sig, tEnd);
+H2 = runHarness(99999, cst, [], g, sig, tEnd);
+H3 = runHarness(99998, cst, [], g, sig, tEnd);
 rng(1); nMC = 2e5;
 dAll = cell(1, 3);
 for i = 1:3
@@ -76,28 +76,28 @@ assignin('base', 'sc_v', [t, 20 * ones(size(t))]);
 assignin('base', 'sc_mu', [t, 0.8 * ones(size(t))]);
 if ~bdIsLoaded(modelName), load_system(modelName); end
 w = t >= 2 & t <= 29;
-for lv = {'none', 'high'}
-    L = runLoop(modelName, lv{1}, 90001);
-    assert(max(abs(L.e_T - (L.T_s - L.T_d_ref))) < 1e-9, '(B) logged e_T ~= T_s - T_d_ref at level %s', lv{1});
-    assert(all(isfinite(L.T_s)) && all(isfinite(L.T_a)), '(B) NaN at level %s', lv{1});
-    if strcmp(lv{1}, 'none')
-        assert(max(abs(L.T_s_meas(w) - L.T_s(w))) == 0 && max(abs(L.a_y_meas(w) - L.a_y(w))) == 0, '(B) level none: measured ~= true');
+for lv = {[], 99999}
+    L = runLoop(modelName, lv{1});
+    assert(max(abs(L.e_T - (L.T_s - L.T_d_ref))) < 1e-9, '(B) logged e_T ~= T_s - T_d_ref in mode %s', modeName(lv{1}));
+    assert(all(isfinite(L.T_s)) && all(isfinite(L.T_a)), '(B) NaN in mode %s', modeName(lv{1}));
+    if isempty(lv{1})
+        assert(max(abs(L.T_s_meas(w) - L.T_s(w))) == 0 && max(abs(L.a_y_meas(w) - L.a_y(w))) == 0, '(B) ideal: measured ~= true');
     else
-        assert(max(abs(L.T_s_meas(w) - L.T_s(w))) > 0, '(B) level %s: measured equals true', lv{1});
+        assert(max(abs(L.T_s_meas(w) - L.T_s(w))) > 0, '(B) noisy: measured equals true');
     end
 end
 end
 if isempty(modelName), modelName = 'Sensors'; end
-fprintf('[%s] TEST PASS: Sensors alone: none = bypass; quantizer alone = quantized (steps T_s %.3g, a_y %.3g, v %.3g) and held (%g, %g, %g s); high noise std/mean match Monte Carlo; seeds repeat/uncorrelated. Closed loop: e_T = T_s - T_d_ref on true values at every level\n', ...
+fprintf('[%s] TEST PASS: Sensors alone: none = bypass; quantizer alone = quantized (steps T_s %.3g, a_y %.3g, v %.3g) and held (%g, %g, %g s); noise std/mean match Monte Carlo; seeds repeat/uncorrelated. Closed loop: e_T = T_s - T_d_ref on true values in both modes\n', ...
     modelName, step(1), step(2), step(3), per(1), per(2), per(3));
 end
 
 function s = highSigma(r)
-    if isfield(r, 'sigma_high'), s = r.sigma_high; else, s = r.resolution; end
+    if isfield(r, 'sigma_noise'), s = r.sigma_noise; else, s = r.resolution; end
 end
 
-function L = runHarness(level, seed, cst, slope, g, sig, tEnd, noNoise)
-    if nargin < 8, noNoise = false; end
+function L = runHarness(runSeed, cst, slope, g, sig, tEnd, noNoise)
+    if nargin < 7, noNoise = false; end
     mdl = 'test_sensors_harness';
     if bdIsLoaded(mdl), close_system(mdl, 0); end
     new_system(mdl);
@@ -117,7 +117,7 @@ function L = runHarness(level, seed, cst, slope, g, sig, tEnd, noNoise)
         add_line(mdl, ['Sensors/' num2str(i)], [lg '/1']);
     end
     set_param(mdl, 'StopTime', num2str(tEnd), 'MaxStep', '1e-3', 'ReturnWorkspaceOutputs', 'on');
-    V = sensor_noise_vars(level, seed);
+    V = sensor_noise_vars(runSeed);
     if noNoise
         for nm = fieldnames(V)'
             if startsWith(nm{1}, 'noise_var_'), V.(nm{1}) = 0; end
@@ -135,8 +135,12 @@ function L = runHarness(level, seed, cst, slope, g, sig, tEnd, noNoise)
     close_system(mdl, 0);
 end
 
-function L = runLoop(modelName, level, seed)
-    V = sensor_noise_vars(level, seed);
+function s = modeName(x)
+    if isempty(x), s = 'ideal'; else, s = 'noisy'; end
+end
+
+function L = runLoop(modelName, runSeed)
+    V = sensor_noise_vars(runSeed);
     in = Simulink.SimulationInput(modelName);
     in = in.setModelParameter('StopTime', '30');
     fn = fieldnames(V);
