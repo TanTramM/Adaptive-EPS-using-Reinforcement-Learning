@@ -3,17 +3,17 @@ function plot_compare_cases(ctrlList, runSeed)
 %
 %   plot_compare_cases({'Map', 'PI', 'SMC'}, 99999)   % runSeed [] (default) = ideal sensors, a number = that noise seed
 %
-%   Reads the signal files written by run_test_cases(ctrl, runSeed) (Result/Controllers/<ctrl>/TestCases for ideal sensors, else
-%   Result/Controllers/<ctrl>/TestCases_noise/seed_<5 digits>/; the signals are the TRUE ones, scored by the scoring Reference) and writes
-%     Result/Compare/<A>_vs_<B>_vs_.../<A>_vs_<B>_vs_..._<case>_Ts_eT_Ta.png
+%   Reads the signal files written by run_cases(ctrl, runSeed) (Result/Controllers/<ctrl>/Cases/<ctrl>_<CASE>_sig_<sens>.csv; the signals
+%   are the TRUE ones, scored by the scoring Reference) and writes
+%     Result/Compare/<A>_vs_<B>_vs_.../<A>_vs_<B>_vs_..._<CASE>_cmp_<sens>.png
 %   Each figure has 3 stacked charts, one line per controller (fixed colors, in the order of ctrlList):
 %     1. T_s of every controller plus the reference T_d,ref (black dashed)   2. e_T = T_s - T_d,ref   3. T_a
-%   The controllers must have been run on the same test_cases.m definition.
+%   The controllers must have been run on the same make_cases.m definition.
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir); setup_paths;                              % result_dir
-addpath(scriptDir);                             % test_cases
+addpath(scriptDir);                             % make_cases
 if nargin < 2, runSeed = []; end
 noiseNote = '';
 if ~isempty(runSeed), noiseNote = sprintf(' (cảm biến có nhiễu, seed %05d)', runSeed); end
@@ -26,13 +26,13 @@ gridColor = [0.85 0.85 0.85];
 
 tag = strjoin(ctrlList, '_vs_');
 outDir = result_dir('Compare', tag);
-TC = test_cases();
+TC = make_cases();
 for k = 1:numel(TC)
     S = TC(k);
     D = cell(1, numel(ctrlList));
     for c = 1:numel(ctrlList)
         D{c} = readtable(fullfile(srcDir(ctrlList{c}, runSeed), ...
-            sprintf('%s_%s_signals.csv', ctrlList{c}, S.tag)));
+            sprintf('%s_%s_sig_%s.csv', ctrlList{c}, S.tag, sensor_tag(runSeed))));
     end
     f = figure('Visible', 'off', 'Position', [50 50 1200 900]);
     tl = tiledlayout(3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
@@ -64,19 +64,15 @@ for k = 1:numel(TC)
         grid(a, 'on'); a.GridColor = gridColor; a.GridAlpha = 1; a.Box = 'off';
     end
     linkaxes(ax, 'x'); xlim(ax(1), [0 D{1}.t(end)]);
-    exportgraphics(f, fullfile(outDir, sprintf('%s_%s_Ts_eT_Ta.png', tag, S.tag)), 'Resolution', 130);
+    exportgraphics(f, fullfile(outDir, sprintf('%s_%s_cmp_%s.png', tag, S.tag, sensor_tag(runSeed))), 'Resolution', 130);
     close(f);
     fprintf('plot_compare_cases: %s done\n', S.tag);
 end
 fprintf('plot_compare_cases: written to %s\n', outDir);
 end
 
-function d = srcDir(ctrl, runSeed)
-    if isempty(runSeed)
-        d = result_dir(ctrl, 'TestCases');
-    else
-        d = result_dir(ctrl, 'TestCases_noise', sprintf('seed_%05d', runSeed));
-    end
+function d = srcDir(ctrl, ~)
+    d = result_dir(ctrl, 'Cases');
 end
 
 function rgb = colorOf(ctrl)

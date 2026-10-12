@@ -3,8 +3,19 @@
   "Ts_ctrl": 0.001,
   "design": {
     "variant": "integral",
-    "lambda": 20.0,
-    "Phi": 2.0,
-    "Tf": 0.005
+    "lambda": 5,
+    "Phi": 50,
+    "Tf": 0.01,
+    "CALIB_R_pct": 25.0797915102655,
+    "CALIB_S_Nm": 0.334281918935394,
+    "CALIB_TV_Nm_per_s": 87.6061001325883,
+    "CALIB_erel_pct": 3.86293865526673,
+    "CALIB_rev_pct": 5.12691193989617,
+    "f_sat_delta": 0.0010347736106642552,
+    "margin_ratio_gain": 0.59594124432267859,
+    "margin_ratio_delay": 0.99929746769762684,
+    "tier": "fallback: least violation of rev (e_rel weighted 0.1)",
+    "design_seed": 20000,
+    "date": "2026-10-11 11:49:27"
   }
 }

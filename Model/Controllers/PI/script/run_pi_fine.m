@@ -4,9 +4,8 @@ function res = run_pi_fine()
 %   res = run_pi_fine()
 %
 %   Procedure:
-%     1. Fine grid scan around chosen point (Kp = 1.25, Ki = 3.0) with half-step resolution:
-%        dKp = 0.05 -> Kp in [1.20, 1.25, 1.30]
-%        dKi = 0.50 -> Ki in [2.5, 3.0, 3.5]
+%     1. Fine grid scan around the design stored in data/pi.json (written by select_pi) with half-step resolution:
+%        dKp = 0.05, dKi = 0.50 (Ki capped at 8, the linear stability bound under stress)
 %        (9 points total, tests resolution sufficiency per QuyChuan 6.1).
 %     2. Verification of chosen point under second seed 10001 (QuyChuan 5.6).
 %     3. Sensitivity analysis:
@@ -17,27 +16,29 @@ function res = run_pi_fine()
 %        - Ranking change if accuracy priority is inverted above bang-bang.
 %
 %   Outputs:
-%     Saved to Result/Controllers/PI/Sweep/PI_fine_sweep.csv
-%              Result/Controllers/PI/Sweep/PI_sensitivity_report.csv
+%     Saved to Result/Controllers/PI/Calib/PI_CALIB_fine_s10000.csv
+%              Result/Controllers/PI/Calib/PI_CALIB_sens_s10000.csv
 %              and updated data/pi.json.
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
 
-outDir = result_dir('PI', 'Sweep');
-fineFile = fullfile(outDir, 'PI_fine_sweep.csv');
+outDir = result_dir('PI', 'Calib');
+fineFile = fullfile(outDir, 'PI_CALIB_fine_s10000.csv');
 
 % Ensure model and variables are ready
 evalin('base', sprintf('run(''%s'')', strrep(fullfile(modelDir, 'Controllers', 'PI', 'load_pi.m'), '\', '/')));
 mdl = 'Model_PI';
 if ~bdIsLoaded(mdl), load_system(mdl); end
-TKcase = test_cases('TK');
+TKcase = make_cases('CALIB');
 blocks = [20 60 100];
 
 % 1. Fine grid points
-kpFine = [1.20, 1.25, 1.30];
-kiFine = [2.5, 3.0, 3.5];
+J0 = jsondecode(fileread(fullfile(modelDir, 'data', 'pi.json')));
+Kp0 = J0.design.Kp; Ki0 = J0.design.Ki;
+kpFine = Kp0 + [-0.05 0 0.05]; kpFine = kpFine(kpFine > 0);
+kiFine = unique(Ki0 + [-0.5 0 0.5]); kiFine = kiFine(kiFine > 0);
 
 if exist(fineFile, 'file')
     TFine = readtable(fineFile);
@@ -45,7 +46,7 @@ else
     TFine = table();
 end
 
-fprintf('run_pi_fine: Scanning 3x3 fine grid around Kp=1.25, Ki=3.0 (seed 10000)...\n');
+fprintf('run_pi_fine: Scanning fine grid around Kp=%.2f, Ki=%.1f (seed 10000)...\n', Kp0, Ki0);
 for kp = kpFine
     for ki = kiFine
         kaw = ki / kp;
@@ -54,8 +55,8 @@ for kp = kpFine
         end
         vars = struct('PI_Kp', kp, 'PI_Ki', ki, 'PI_Kaw', kaw);
         tStart = tic;
-        [L, m] = tk_run(mdl, 10000, vars);
-        sc = tk_block_scores(L, TKcase, blocks);
+        [L, m] = calib_run(mdl, 10000, vars);
+        sc = calib_block_scores(L, TKcase, blocks);
         elTime = toc(tStart);
 
         row = table(kp, ki, kaw, ...
@@ -80,7 +81,7 @@ for kp = kpFine
 end
 
 % Check resolution sufficiency (QuyChuan 6.1: dR, dS < 5%)
-iNom = find(abs(TFine.Kp - 1.25) < 1e-4 & abs(TFine.Ki_1_per_s - 3.0) < 1e-4, 1);
+iNom = find(abs(TFine.Kp - Kp0) < 1e-4 & abs(TFine.Ki_1_per_s - Ki0) < 1e-4, 1);
 R_nom = TFine.R_pct(iNom);
 S_nom = TFine.S_Nm(iNom);
 maxDeltaR_pct = 100 * max(abs(TFine.R_pct - R_nom)) / R_nom;
@@ -97,9 +98,9 @@ else
 end
 
 % 2. Second seed verification (seed 10001)
-fprintf('\nSimulating chosen PI (Kp=1.25, Ki=3.0) with second seed (10001)...\n');
-varsNom = struct('PI_Kp', 1.25, 'PI_Ki', 3.0, 'PI_Kaw', 3.0 / 1.25);
-[L_s2, m_s2] = tk_run(mdl, 10001, varsNom);
+fprintf('\nSimulating chosen PI (Kp=%.2f, Ki=%.1f) with second seed (10001)...\n', Kp0, Ki0);
+varsNom = struct('PI_Kp', Kp0, 'PI_Ki', Ki0, 'PI_Kaw', Ki0 / Kp0);
+[L_s2, m_s2] = calib_run(mdl, 10001, varsNom);
 deltaR_seed = m_s2.R - R_nom;
 deltaS_seed = m_s2.S - S_nom;
 deltaTV_seed = m_s2.TV - TFine.TV_Nm_per_s(iNom);
@@ -127,11 +128,17 @@ for g = 1:4
         groups{g}, R_plus, R_minus, R_nom);
 end
 
-% 4. Inversion check: if accuracy was ranked above bang-bang
-fprintf('\nPriority inversion check (QuyChuan 5.6):\n');
-fprintf('  If accuracy (erel) was ranked above bang-bang, does the chosen point change?\n');
-fprintf('  Answer: NO. Candidate (Kp=1.25, Ki=3.0) already has the lowest erel (3.25%%) across all 103 points,\n');
-fprintf('  so prioritizing accuracy over bang-bang still selects exactly Kp=1.25, Ki=3.0.\n');
+% 4. Sensitivity to the reverse-assist gate (QuyChuan 5.5 v4: rev is report-only; choice recomputed from the coarse sweep table)
+fprintf('\nSensitivity to the reverse-assist gate (erel <= 5%%, R within 5%% of R_min, then smallest S):\n');
+Tsw = readtable(fullfile(outDir, 'PI_CALIB_sweep_s10000.csv'));
+revLims = [1 5 Inf]; sameAs5 = NaN;
+for q = 1:numel(revLims)
+    admQ = (Tsw.erel_pct <= 5.0) & (Tsw.rev_pct <= revLims(q));
+    if ~any(admQ), fprintf('  rev <= %g%%: no admissible point\n', revLims(q)); continue; end
+    iq = pick_by_tolerance(Tsw.R_pct, Tsw.S_Nm, admQ, 0.05); iq = iq(1);
+    fprintf('  rev <= %g%%: Kp %.2f, Ki %.1f (R %.2f%%, S %.4f, erel %.2f%%, rev %.2f%%)\n', revLims(q), Tsw.Kp(iq), Tsw.Ki_1_per_s(iq), Tsw.R_pct(iq), Tsw.S_Nm(iq), Tsw.erel_pct(iq), Tsw.rev_pct(iq));
+    if isinf(revLims(q)), sameAs5 = double(abs(Tsw.Kp(iq) - Kp0) < 1e-4 && abs(Tsw.Ki_1_per_s(iq) - Ki0) < 1e-4); end
+end
 
 % 5. Save sensitivity report
 sensTable = table({ ...
@@ -141,12 +148,12 @@ sensTable = table({ ...
     'Max fine grid delta R [%]'; ...
     'Max fine grid delta S [%]'; ...
     'Resolution sufficient (< 5%)'; ...
-    'Priority inversion invariant'}, ...
-    [R_nom; m_s2.R; deltaR_seed; maxDeltaR_pct; maxDeltaS_pct; double(resSuff); 1], ...
+    'Chosen point is the no-rev-gate choice'}, ...
+    [R_nom; m_s2.R; deltaR_seed; maxDeltaR_pct; maxDeltaS_pct; double(resSuff); sameAs5], ...
     [S_nom; m_s2.S; deltaS_seed; 0; 0; 0; 0], ...
     [TFine.TV_Nm_per_s(iNom); m_s2.TV; deltaTV_seed; 0; 0; 0; 0], ...
     'VariableNames', {'Condition', 'R_pct', 'S_Nm', 'TV_Nm_per_s'});
-sensFile = fullfile(outDir, 'PI_sensitivity_report.csv');
+sensFile = fullfile(outDir, 'PI_CALIB_sens_s10000.csv');
 writetable(sensTable, sensFile);
 fprintf('run_pi_fine: Sensitivity report written to %s.\n', sensFile);
 

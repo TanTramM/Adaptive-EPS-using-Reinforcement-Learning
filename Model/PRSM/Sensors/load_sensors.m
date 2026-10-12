@@ -2,7 +2,7 @@
 % Put the Sensors subsystem variables (sensors_on, noise_var_*, noise_seed_*, sens_delta_*, sens_Tupd_*) in the base workspace.
 % Default: ideal sensors (chain bypassed), so every closed-loop model runs exactly as without sensors unless a script asks for them.
 % Define the base variable noise_run_seed (a number, e.g. 99999) BEFORE running this script to get the sensor chain with noise by hand;
-% test scripts instead pass the values per run with SimulationInput.setVariable (see run_test_cases.m).
+% test scripts instead pass the values per run with SimulationInput.setVariable (see run_cases.m).
 % Sources: data/sensors.json, Documents/Notes/PRSM/ThucTeHoa.txt Mục 1.
 
 modelDir = fileparts(fileparts(fileparts(mfilename('fullpath'))));   % Model/ (this file is Model/PRSM/Sensors/)

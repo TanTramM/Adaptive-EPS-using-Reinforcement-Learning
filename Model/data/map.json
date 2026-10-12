@@ -1,5 +1,6 @@
 {
   "x_note": "Map controller data. calibration: dry-road points (mu = 0.8) written by Controllers/Map/script/calibrate_map.m (Ts_Nm = T_d,ref, Ta_Nm = assist that gives it).",
+  "x_design_note": "design: written by Controllers/Map/script/select_map.m (QuyChuan v5). Kmax = slope limit of the table (N.m per N.m). g_min = lowest gain of the lag stage over 0.2-2 Hz that the design grid was asked to keep (grid level, not a bound of the result). lead = (s/z + 1)/(s/p + 1), z and p in rad/s, p > z. lag = (s/z1 + 1)/(s/p1 + 1), z1 and p1 in rad/s, p1 < z1; absent means lead only. Both stages have DC gain 1; Tustin at Ts_ctrl. lag_gain_2Hz = |lag(j 2 pi 2 Hz)| >= 0.707 is the steering-band constraint (QuyChuan 6.2). PM_deg, GM: linear margins at Kmax (report only). CALIB_* = scores of the chosen point on CALIB (seed 00000); bangbang = report-only f_sat rates; margin_ratio_* = R(gain x2)/R and R(delay +1 ms)/R.",
   "calibration": {
     "ay_step_g": 0.005,
     "ay_lim_g": [
@@ -3117,23 +3118,36 @@
   "design": {
     "Ts_ctrl": 0.001,
     "Ts0": 0.3,
-    "Kmax": 6.75,
+    "Kmax": 6,
+    "g_min": 0.7,
     "lead": {
-      "z": 59.8199422214928,
-      "p": 1665.95745505585,
-      "PM_deg": 45.2084037447081
+      "z": 33.5009375175479,
+      "p": 600.10834977333
     },
-    "Kstab": 9.5,
-    "Kacc": 6.75,
-    "TK_R_pct": 32.185119299344,
-    "TK_S_Nm": 0.477267900640432,
-    "TK_TV_Nm_per_s": 367.66967855448,
-    "TK_erel_pct": 57.1224268522887,
-    "TK_rev_pct": 1.09042530064956,
-    "f_sat_delta": 0.00169563742923975,
-    "margin_ratio_gain": 0.63257061103926415,
-    "margin_ratio_delay": 1.0000290117857606,
+    "PM_deg": 45.2918851662139,
+    "GM": 5.67419952326386,
+    "lag": {
+      "z1": 28.1275792678243,
+      "p1": 10.6884801217732
+    },
+    "rule": "J = R*S with lag gain at 2 Hz >= 0.707 (QuyChuan v5)",
+    "CALIB_J": 6.7429281793505034,
+    "lag_gain_2Hz": 0.7096165680369515,
+    "CALIB_R_pct": 27.0539425999772,
+    "CALIB_S_Nm": 0.249240130322306,
+    "CALIB_TV_Nm_per_s": 92.5160268022381,
+    "CALIB_erel_pct": 3.16677017588234,
+    "CALIB_rev_pct": 0.214780741037034,
+    "bangbang": {
+      "f_ideal": 2.6086729680611473E-5,
+      "f_noisy": 3.47823062408153E-5,
+      "f_noisy2": 2.6086729680611473E-5,
+      "delta": 4.3477882801019133E-6,
+      "spread": 8.6955765602038265E-6
+    },
+    "margin_ratio_gain": 0.781189762207495,
+    "margin_ratio_delay": 1.00044836772244,
     "design_seed": 0,
-    "date": "2026-10-10 02:04:31"
+    "date": "2026-10-11 20:55:26"
   }
 }

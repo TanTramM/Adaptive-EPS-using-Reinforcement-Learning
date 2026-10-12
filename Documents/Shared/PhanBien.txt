@@ -1,6 +1,7 @@
 ==============================================================================================================================================================================================
 CÂU HỎI PHẢN BIỆN VÀ CÁCH TRẢ LỜI
 ==============================================================================================================================================================================================
+GHI CHÚ 2026-10-10: tên ca trong file này (TK, TC1-TC6) là tên CŨ; từ 2026-10-10 dùng CALIB, DRY, SLIP, WEAVE (bảng đổi tên ở Tracking/CLAUDE.md, mục 5 phần Làm một bộ điều khiển). Số liệu giữ nguyên như lúc viết.
 File dùng chung cho toàn luận văn, chia section theo chương. Mỗi mục gồm: câu hỏi hội đồng có thể đặt, câu trả lời ngắn (nói miệng được trong 30 giây), cơ sở và số liệu kèm theo để trả lời khi
 bị hỏi sâu, và điểm yếu thật cần thừa nhận. Nguyên tắc: không chối điểm yếu đã biết, nêu rõ nó ảnh hưởng tới kết luận nào và đã kiểm tra độ nhạy ra sao. Cập nhật dần sau mỗi lần phản biện với
 người hướng dẫn hoặc khi phát hiện thêm điểm yếu.

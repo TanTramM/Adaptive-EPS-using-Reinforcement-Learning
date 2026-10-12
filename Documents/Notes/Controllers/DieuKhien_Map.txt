@@ -1,0 +1,110 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH VÀ NHẬT KÝ LÀM LẠI MAP (LEAD-LAG) - khung Map, bắt đầu 2026-10-11
+==============================================================================================================================================================================================
+Văn bản này ghi MỌI lựa chọn đặt trước khi chạy mô phỏng chọn tham số (QuyChuan 1.1 và 7.1) và, bên dưới, kết quả từng bước. Lý thuyết và cách đọc độ lợi, pha nằm ở LyThuyet_Map.txt Phần 10.
+A1. Cấu trúc (người dùng chốt 2026-10-11, theo [1] mục III.A phương trình (16) và III.D): T_a,map = sgn(T_s) x M(v, |T_s|) (bảng tra, vùng chết T_s0 = 0.3 N.m, độ dốc chặn K_max = K), rồi
+khâu lead H_lead(s) = (s/z + 1)/(s/p + 1) với p > z, rồi khâu lag H_lag(s) = (s/z1 + 1)/(s/p1 + 1) với p1 < z1; độ lợi DC của cả hai bằng 1 nên không đổi sai số xác lập. Rời rạc hóa Tustin 1
+ms. Map chỉ đọc T_s và v.
+A2. Tham số và cách chọn: K (độ dốc lớn nhất) là tham số DUY NHẤT chọn bằng mô phỏng trên CALIB (seed local 00000). Bộ (z, p, z1, p1) là hàm của K, tính offline bằng phân tích tuyến tính
+(không mô phỏng vòng kín): với mỗi K chọn bộ có độ lợi tần số cao K x (p/z) x (p1/z1) nhỏ nhất trong các bộ qua cổng ổn định; hòa thì PM lớn hơn. Vùng chết 0.3 N.m cố định (lựa chọn của tác
+giả, LyThuyet_Map 3.2). Bảng M lấy từ hiệu chỉnh đường khô tới 0.4 g, không đổi.
+A3. Cổng của bước thiết kế khâu bù (tuyến tính): với mọi điểm làm việc đã xét (17 tốc độ 20-100 km/h x 4 điểm của map_op_points = 68 mô hình tuyến tính, đường khô và đường trơn) và các độ
+dốc k = K x {0.25, 0.5, 0.75, 1}: vòng kín ổn định (tiêu chuẩn Nyquist), PM >= 45 độ ở mọi giao cắt độ lợi, GM >= 2. Mô hình vòng hở L(jw) = -k H_lead H_lag G_motor(100 Hz) exp(-jw 1 ms)
+G_cotlai(jw) (map_margins.m). Lưu ý: cổng ổn định của QuyChuan 5.2 đo bằng MÔ PHỎNG (độ lợi x2, trễ +1 ms) sẽ chạy ở Bước 4; PM, GM tuyến tính ở đây là điều kiện thiết kế và được báo cáo.
+A4. Lưới (cơ sở theo QuyChuan 6.1: cận lấy từ biên vật lý hoặc khả thi, không đặt tay; hai giai đoạn thô rồi mịn; kiểm độ phân giải): lead z từ 5 tới 500 rad/s (từ dưới dải tay lái 3 rad/s
+tới trên tần số cắt khoảng 160 rad/s), p/z từ 1.2 tới 300 với p <= 3142 rad/s (tần số Nyquist pi/Ts của bước 1 ms; bảng cũ có p = 6415 vượt mức này); lag z1 từ 8 tới 120 rad/s, p1/z1 từ 0.1
+tới 0.9 với p1 >= 3 rad/s (góc cắt của lag không thấp hơn dải tay lái 0.5 Hz = 3.1 rad/s; cận p1 là lựa chọn của tác giả). Giai đoạn thô: 24 giá trị z, 25 giá trị p/z (cách đều thang log), 8
+giá trị z1 (log), 6 giá trị p1/z1 (đều). Giai đoạn mịn: quanh bộ tốt nhất của giai đoạn thô, +-1 bước thô, 9 giá trị mỗi tham số. Điểm chọn nằm ở biên cận thì báo và mở rộng một bước; kiểm
+độ phân giải bằng cách so độ lợi tần số cao giai đoạn thô với giai đoạn mịn (thay đổi dưới 5 % thì lưới đủ mịn).
+A5. Lưới K: bảng thiết kế khâu bù (tuyến tính, rẻ) cho K = 4 tới 14 bước 0.5. Mô phỏng CALIB (Bước 4) chỉ cho các K có bộ khả thi và K >= K_acc ứng với e_rel 5 % (khoảng 5.5, từ phân tích
+giải tích 9 cửa sổ 0.1-0.3 g), sau đó mịn bước 0.125 quanh điểm chọn.
+A6. Cổng cho Bước 4 (mô phỏng CALIB, QuyChuan bản 4): ổn định và dự trữ (độ lợi x2, trễ +1 ms, mục 5.2); trợ lực ngược (mục 4.6, 5.5): KHÔNG phải cổng (người dùng chốt 2026-10-11 ở khung kia), chỉ ĐO và báo cáo (số lần, độ lớn đỉnh, tỉ lệ thời gian)
+kèm độ nhạy nếu đặt cổng 1 % hoặc 5 %; không bang-bang <= 1 % (mục 5.4, người dùng chốt giữ 1 %); độ chính xác tĩnh e_rel <= 5 % trên 9 cửa sổ static 0.1-0.3 g (mục 5.3, người dùng
+chốt 2026-10-11; báo độ nhạy 3 % và 10 %). Thứ tự và quy tắc dự phòng theo mục 5.6. Quy tắc chọn (đã đổi 2026-10-11, xem B11): cực tiểu J = R x S (pick_by_balance.m) trong các điểm qua cổng và ràng buộc dải lái (độ lợi lag tại 2 Hz >= 0.707); quy tắc cũ R trong 5 % rồi S nhỏ nhất (pick_by_tolerance.m) chỉ báo cáo.
+A7. Bản đối chứng chỉ lead (tắt lag): cùng quy trình, cùng CALIB, cùng seed, để so lead với lead-lag trên cùng ca (QuyChuan 6.5 và nhật ký thay đổi 2026-10-11). Báo cả số K đã mô phỏng và số
+bộ (z, p, z1, p1) đã xét của mỗi bản (QuyChuan 6.7).
+A8. Thuật toán Bước 2 (design_leadlag.m, sweep_leadlag.m; không sửa các hàm cũ để giữ kiểm thử bản chỉ lead): đánh giá hàng loạt các ứng viên trên từng mô hình tuyến tính
+(map_margins_batch.m, cùng định nghĩa với map_margins.m); mô hình khó nhất xét trước, ứng viên rớt ở mô hình nào thì loại ngay; ứng viên còn lại sau khi qua cả 68 mô hình và 4 độ dốc mới
+được xếp theo độ lợi tần số cao. Cách xếp thứ tự chỉ ảnh hưởng tốc độ, không ảnh hưởng kết quả. Kiểm bằng test_leadlag_design.m: batch trùng map_margins.m trên các ứng viên mẫu và trùng các
+giá trị đã biết (không bù K = 6.75: PM -6.5 độ; lead (59.82, 1666) K = 6.75: PM 45.2, GM 4.56; lead-lag (38.3, 952, 25, 8.75) K = 10: PM 45.4, GM 4.85 tại 60 km/h).
+A9. Đầu ra Bước 2 (Result/Controllers/Map/Design/): Map_design_leadlag.csv và Map_design_lead.csv (cột K, ok, z, p, z1, p1, PM, GM, wc, HF, noise_Nm, số ứng viên khả thi),
+Map_design_compare.png (độ lợi tần số cao và nhiễu lệnh theo K của hai bản), Map_bode_leadlag.png (đáp ứng tần số khâu bù và vòng hở tại K chọn minh họa). Nhật ký kết quả viết ở mục B bên
+dưới.
+==============================================================================================================================================================================================
+B. NHẬT KÝ KẾT QUẢ
+==============================================================================================================================================================================================
+B1 (2026-10-11, Bước 0-1 xong, Bước 2 dừng ở một quyết định thiết kế). Đã làm: sao lưu Map (Desktop/Adaptive-EPS_backup_2026-10-11_Map_truoc_leadlag); QuyChuan 2.4 (lõi Map có lag), 5.3
+(e_rel 5 %, người dùng chốt 2026-10-11; báo độ nhạy 3 % và 10 %), 6.7; người dùng chốt: giữ bang-bang 1 %, trợ lực ngược đo trước khi quyết, cấu trúc lead-lag đầy đủ, lưới rộng hơn và mịn
+hơn (A4, A5).
+B2. Công cụ Bước 2 đã viết và kiểm: map_margins_batch.m (đánh giá hàng loạt, trùng map_margins.m trên 240 bộ ba ngẫu nhiên), map_margins.m và map_noise_gain.m nhận thêm lag (tương thích bản
+cũ: test_step3 vẫn PASS), design_leadlag.m (hai giai đoạn thô-mịn, loại sớm theo mô hình khó nhất), test_leadlag_design.m PASS 14 kiểm. Giá trị đã biết khớp: không bù K = 6.75 PM -6.5 độ;
+lead (59.82, 1666) PM 45.2, GM 4.56, HF 188; lead-lag (38.3, 952, 25, 8.75) K = 10 PM 45.4, GM 4.85, HF 87.0.
+B3. PHÁT HIỆN (chạy thử trên bốn mô hình ở 60 km/h, chưa chạy 68 mô hình): tiêu chí đã đặt trước "độ lợi tần số cao K x (p/z) x (p1/z1) nhỏ nhất" BỊ SUY BIẾN khi lag được tự do: bộ chọn luôn
+dồn lag vào cận lưới (p1/z1 = 0.1, p1 = 3.1 rad/s, z1 khoảng 31 rad/s) vì lag càng mạnh thì HF càng nhỏ. Kết quả: lead-lag khả thi tới K = 30 (lead đơn dừng ở K khoảng 9.5), HF chỉ 10.3 (K =
+6), 19.1 (K = 8), 30.1 (K = 10), 75.7 (K = 20), 179.8 (K = 30), tần số cắt tụt từ 154-187 rad/s (lead đơn) xuống 71-116 rad/s. Lag mạnh như vậy hạ độ lợi vòng khoảng 10 lần ở dải 10-30 rad/s
+nên K không còn nghĩa là độ lợi thật ở dải lái; đáp ứng động (nhóm dyn của R) sẽ chậm, trong khi sai số tĩnh chỉ phụ thuộc K nên có vẻ tốt. Cận lưới, không phải vật lý, quyết định kết quả:
+không dùng được.
+B4. Đề xuất sửa, đặt trước khi chạy 68 mô hình: ràng buộc vật lý lên lag, độ lợi của khâu lag tại mép dải lái (2 Hz = 12.57 rad/s; QuyChuan 4.2 coi lệnh lái dưới khoảng 2 Hz) không nhỏ hơn
+g_min. Thử trên bốn mô hình ở 60 km/h (HF của lead đơn trong ngoặc): g_min = 0.9: K = 6: HF 74.8 (127.7), K = 8: 149 (340), K = 10: 313 (không khả thi), K = 12 trở lên không khả thi; g_min =
+0.8: K = 6: 53.6, K = 8: 101, K = 10: 159, K = 12: 302, K = 14 trở lên không khả thi. Điểm chọn nằm đúng trên ràng buộc (bộ lag z1 = 31 rad/s, p1 = 19.2 rad/s với 0.9; z1 = 34.1, p1 = 14.3
+với 0.8), nên g_min mới là tham số thiết kế thật. Chờ người dùng chọn: (A) cố định g_min một giá trị (đề xuất 0.9, báo độ nhạy 0.8) rồi quét K như kế hoạch; (B) coi g_min là tham số thứ hai
+quét trên CALIB với vài mức (ví dụ 1.0 là lead đơn, 0.9, 0.8); (C) bỏ lag. design_leadlag.m đã nhận tham số bandGain = [g_min, 12.57] (mặc định g_min = 0 là KHÔNG ràng buộc, chỉ để kiểm thử,
+không dùng chọn tham số).
+B5. Chưa chạy quét 68 mô hình x K = 4 tới 14 (sweep_leadlag.m chưa viết); chờ quyết định ở B4. Thời gian bốn mô hình: khoảng 10-25 s mỗi K cho lead-lag, dưới 1 s cho lead đơn; 68 mô hình
+chưa đo.
+B6 (2026-10-11, người dùng chọn cách B ở B4). Lý do: g_min là đánh đổi nhiễu lấy độ bám nên để CALIB đo (R, S) thay vì đặt tay một mức; mức 0.9 đề xuất ở B4 không có cơ sở ngoài cảm giác, và
+tôi đã đề xuất cách A chỉ vì chi phí. ĐẶT TRƯỚC khi quét: g_min thuộc {1.0, 0.9, 0.8, 0.7, 0.6} (1.0 = không lag, bản lead đơn đối chứng; cận 0.6 là lựa chọn của tác giả: nếu điểm chọn nằm ở
+0.6 thì mở thêm mức 0.5 và 0.4); K từ 5 (dưới K_acc ứng với e_rel 5 %, khoảng 5.5, không cần) bước 0.5 tới 10 rồi bước 1 tới 30; mỗi mức dừng ở K đầu tiên không khả thi. Thiết kế khâu bù cho
+mỗi cặp (g_min, K) trên 68 mô hình (sweep_leadlag.m), rồi mô phỏng CALIB (Bước 4) cho các cặp khả thi với K >= 5; quy tắc chọn theo QuyChuan áp lên TOÀN BỘ các cặp (g_min, K) như một tập
+chung; nếu điểm chọn nằm ở một mức g_min nằm giữa thì mịn thêm một mức xen giữa (ví dụ 0.85) và K bước 0.125 quanh đó. Công sức báo theo QuyChuan 6.7: số cặp (g_min, K) đã mô phỏng và số bộ
+(z, p, z1, p1) đã xét (cột n_tried); mục tiêu ngang PI 59 và PID 90 mô phỏng. Thời gian đo: 68 mô hình, thiết kế một K mất khoảng 8 s (lead đơn) và khoảng 150 s (lead-lag); sweep_leadlag.m
+chạy nền, ghi từng dòng vào Map_design_leadlag.csv (chạy lại sẽ bỏ qua dòng đã có).
+B7 (2026-10-11, kết quả Bước 2: thiết kế khâu bù, 68 mô hình, xong). sweep_leadlag.m đã chạy xong năm mức g_min (68 dòng trong Result/Controllers/Map/Design/Map_design_leadlag.csv, hình
+Map_design_compare.png): tổng 933 400 ứng viên đã xét, khoảng 5900 s tính; kiểm độc lập bằng map_margins trên lưới 9000 điểm cho PM nhỏ nhất 45.00 độ (không dòng nào dưới 45), mọi điểm chọn
+không nằm ở cận lưới (cờ at_bound đều 0, nên ràng buộc g_min chứ không phải cận lưới quyết định). K lớn nhất còn khả thi (K đầu tiên không khả thi): g_min 1.0 (lead đơn) 8.0 (8.5); 0.9: 10
+(11); 0.8: 12 (13); 0.7: 14 (15); 0.6: 16 (17). LƯU Ý: K lớn nhất của lead đơn là 8.0, thấp hơn K_stab = 9.5 của bản cũ, vì cận p <= 3142 rad/s (Nyquist của bước 1 ms) mới; bản cũ chọn p =
+6415 ở K = 9.5 không thực hiện được ở bước 1 ms (Tustin). Nhiễu lệnh T_a (độ lệch chuẩn, N.m) tại K = 6.5: lead đơn 0.421; g_min 0.9: 0.282; 0.8: 0.215; 0.7: 0.168; 0.6: 0.133. Độ lợi cao
+tần tại K = 6.5: 164.4, 95.4, 65.2, 46.9, 35.3. Tần số cắt tại K = 6.5: 164, 135, 122, 112, 104 rad/s. Cùng mức nhiễu khoảng 0.3 N.m: lead đơn đạt tại K khoảng 5.5-6 (0.307, 0.357), g_min
+0.9 tại K = 7 (0.318), g_min 0.8 tại K = 8.5 (0.308), g_min 0.7 tại K = 10 (0.310), g_min 0.6 tại K = 11 (0.299). Vì sai số xác lập chỉ phụ thuộc K, lag cho cùng nhiễu với K lớn hơn nên độ
+chính xác tốt hơn; cái giá là tần số cắt thấp hơn và đáp ứng động chậm hơn, chỉ CALIB cho biết mức nào đáng. Bộ khâu bù chọn theo K của từng mức nằm trong CSV (z, p, z1, p1).
+B8. Kế hoạch Bước 4 (chờ người dùng xác nhận; theo A5 và B6): mô phỏng CALIB (seed 00000) cho các cặp (g_min, K) trên lưới K thô {6, 7, 8, 9, 10, 12, 14, 16} chỉ lấy các K khả thi của từng
+mức: lead đơn K = 6, 7, 8 (3 cặp); 0.9: 6-10 (5 cặp); 0.8: 6-10, 12 (6 cặp); 0.7: 6-10, 12, 14 (7 cặp); 0.6: 6-10, 12, 14, 16 (8 cặp): 29 cặp. K = 5 và 5.5 bỏ vì e_rel giải tích của 9 cửa sổ
+0.1-0.3 g tại K = 5.5 vừa đúng 5.0 % và đo mô phỏng thường cao hơn khoảng 10 %, tại K = 5 là 14.7 %. Rồi mịn quanh điểm chọn (K bước 0.25 hoặc 0.125, thêm mức g_min xen giữa nếu cần): dự
+kiến thêm 10-15 cặp, tổng khoảng 40-45 cặp, ngang PI (59) và PID (90). Mỗi cặp chạy: CALIB có nhiễu, CALIB lý tưởng (cho bang-bang), CALIB với độ lợi motor x2 và với trễ thêm 1 ms (dự trữ ổn
+định), nên số mô phỏng thật khoảng 4 lần số cặp; báo cả hai số.
+B9 (2026-10-11, kết quả Bước 3 và 4). Bước 3: map_variables ghép lead x lag thành khối rời rạc bậc 2 (Tustin 1 ms, độ lợi DC 1), test_map PASS (kiểm 1-3). Bước 4: run_calib_sweep.m (4 mô
+phỏng CALIB mỗi cặp: có nhiễu seed 0, lý tưởng, độ lợi x2, trễ +1 ms) cho 37 cặp (g_min, K) = 29 thô (B8) + 8 mịn (g_min 0.75 và 0.65 tại K 8, 9, 10; g_min 0.7 tại K 7.5, 8.5), tổng 148 mô
+phỏng, ghi Result/Controllers/Map/Calib/Map_CALIB_sweep_s00000.csv; select_map.m áp cổng (ổn định và dự trữ, bang-bang 1 %, e_rel 5 %; trợ lực ngược chỉ báo cáo theo QuyChuan 4.6, 5.5) rồi
+quy tắc R trong 5 % thì S nhỏ nhất. Mọi cặp qua dự trữ (R_gain/R <= 0.89, R_delay/R <= 1.001) và e_rel 5 %; một cặp rớt bang-bang (lead đơn K 8, delta 1.11 %). R nhỏ nhất đạt cổng 24.58 %
+(g_min 0.9, K 10). CHỌN: g_min 0.7, K 8: lead (37.03, 834.88) rad/s, lag (28.13, 10.69) rad/s; R 25.63 %, S 0.2824 N.m, TV 137.5 N.m/s, e_rel 0.68 %, trợ lực ngược 0.23 %, bang-bang delta
+0.0000. Đối chứng lead đơn chọn theo cùng quy tắc: K 6, lead (55.26, 1176.40), R 25.85 %, S 0.4098, TV 269.2, e_rel 3.17 %, rev 0.88 %. Độ nhạy: đặt cổng rev 1 % hoặc 5 % không đổi điểm
+chọn. Cùng R (khác 1 %) lead-lag cho S thấp hơn 31 % và TV thấp hơn 49 % so với lead đơn. Lưu ý: mặt (R, S) phẳng, g_min 0.65 K 9 có R 25.88 % vừa vượt dung sai 5 % (25.80 %), nên điểm chọn
+nằm sát biên dung sai.
+B10 (2026-10-11, quét K vượt cận tuyến tính theo QuyChuan v5 mục 9.5: PM chỉ là công cụ thiết kế, cận lưới mở rộng tới khi cổng chặn hoặc R phẳng). 12 cặp (lead đơn K 10-40 với khâu bù của K
+8; g_min 0.7 K 16-40 với khâu bù của K 14; g_min 0.6 K 20, 30 với khâu bù của K 16), mỗi cặp 4 mô phỏng, file Map_CALIB_sweepbeyondA_s00000.csv và Map_CALIB_sweepbeyondB_s00000.csv. Không
+cặp nào mất ổn định theo mô phỏng. R phẳng: lead đơn 24.40-24.82 %, g_min 0.7 25.39-25.40 %, g_min 0.6 26.07 %; S tăng theo K (g_min 0.7: 0.282 tại K 8 lên 0.415-0.445); lead đơn rớt
+bang-bang từ K 10 (delta 1.65-4.78 %). Chọn lại trên 49 cặp: vẫn g_min 0.7 K 8 (lead-lag) và K 6 (lead đơn). Hạn chế: khâu bù không thiết kế lại cho K vượt cận, một seed.
+B11 (2026-10-11, chọn lại Map theo QuyChuan v5 và ràng buộc dải lái). Quy chuẩn đổi: cổng chỉ còn ổn định có độ dư (calib_margin không số) và e_rel 5 %; bang-bang và trợ lực ngược chỉ báo
+cáo; chọn cực tiểu J = R x S. Lưới mở rộng theo 6.1: g_min thêm 0.5, 0.4, 0.3, 0.25 (cận q của lag nới 0.1 -> 0.05 cho mức 0.25), K thêm 5.75, 5.8, 6.5; tổng 73 cặp khác nhau, 68 qua e_rel 5
+%. J nhỏ nhất theo mức g_min (K 6): 1.0: 10.6; 0.9: 8.26; 0.8: 7.30; 0.7: 6.74; 0.65: 6.98; 0.6: 6.31; 0.5: 5.98; 0.4: 5.67; 0.3: 5.51; 0.25: 5.11, tức không có cực tiểu bên trong (mỗi bước
+giảm hơn 5 %), dừng ở cận lag p1 >= 3 rad/s. Điểm J thuần (g_min 0.25, K 5.8): R 37.73 %, S 0.1354, e_rel 4.62 %; bốn ca RMS e_T 0.807, 0.645, 1.495, 1.677 N.m, vũng nước -121.6 %, DRY
+v40a0p3r +18.1 %: chậm quá. K bị e_rel chặn: 5.5 cho 8.61 %, 5.75 cho 5.02 %, 5.8 cho 4.62 %, 6 cho 3.16 %. QUYẾT ĐỊNH (người dùng chốt phương án A): thêm ràng buộc dải lái vào quy chuẩn
+(QuyChuan 6.2): khâu lag giữ độ lợi >= 0.707 (-3 dB) tại 2 Hz (dải lái 0.2-2 Hz, Nguyen 2025); đã cài vào select_map.m (cột lag_gain_2Hz, g_band). KẾT QUẢ: chọn g_min 0.7, K 6: lead (33.50,
+600.11), lag (28.13, 10.69) rad/s (độ lợi lag tại 2 Hz 0.71), R 27.05 %, S 0.2492, TV 92.5, J 6.743, e_rel 3.17 %, rev 0.21 %, bang-bang delta 0.000 (hai seed), qua calib_margin (độ lợi x2:
+R x0.78; trễ +1 ms: R x1.00). Độ nhạy: a = 0.5 và a = 2 cùng điểm; không có ràng buộc: g_min 0.25, K 5.8; quy tắc cũ 5 %: g_min 0.7, K 8.5. Lead đơn (đối chứng): K 6, R 25.85 %, S 0.4098, J
+10.60. Bốn ca (seed 00000, RMS e_T N.m, S, TV, rev %): DRY 0.689, 0.150, 78.3, 0.14; SLIP 0.538, 0.161, 95.1, 0.04; WEAVE 1.327, 0.160, 47.2, 0.05; EDGE 1.535, 0.129, 22.3, 0.02 (điểm cũ
+g_min 0.7, K 8: 0.628/0.201, 0.530/0.203, 1.325/0.177, 1.253/0.143). Cửa sổ: vũng nước -86.8 %, down_post -4.1 %, ice_tr +9.4 %, ice_ss +1.5 %, EDGE 0.4 g 99.7 / 56.8 / 52.5 % (40 / 60 / 100
+km/h). PHÁT HIỆN: DRY v40a0p3r +13.0 % (K 8: +0.5 %), DRY tối đa |e| 13.0 % dù e_rel CALIB 3.17 %, vì cửa sổ static của CALIB chỉ ở 20, 60, 100 km/h; đã báo trong nhật ký thay đổi QuyChuan
+cho khung COMMON. Sao lưu: Desktop/Adaptive-EPS_backup_2026-10-11_Map_truoc_leadlag (Cases_0p7_K8, map_0p7_K8.json).
+B12 (2026-10-12, làm lại các tài liệu và mã cũ của Map sau khi chốt phương án A; chưa chạy so sánh với bộ khác). KẾT QUẢ CHỌN KHÔNG ĐỔI (g_min 0.7, K 6); không chạy lại mô phỏng chọn điểm.
+ĐÃ LÀM: (1) sao lưu ra Desktop/Adaptive-EPS_backup_2026-10-12_Map_lam_lai_tai_lieu (script_cu, docs, Design_cu, Calib_cu); (2) xóa 10 script lead đơn cũ trong Model/Controllers/Map/script:
+design_map, run_step5, test_step3, test_step5, sweep_stability, map_bangbang_scan, plot_step5, plot_step3, design_lead, knee_point (các mục B1-B8 phía trên nhắc tới chúng là lịch sử); sửa
+chú thích load_map.m; (3) map.json: thêm trường x_design_note giải thích Kmax, g_min, lead, lag, lag_gain_2Hz; (4) map_k_accuracy.m ghi file theo dung sai (Map_K_for_accuracy_<tol>pct.csv)
+vì file cũ bị khóa; plot_step2.m dùng K của map.json và dung sai 5 %; test_step2 và test_map và test_leadlag_design đều PASS; (5) xóa kết quả cũ trong Result/Controllers/Map/Design:
+Map_step3_*, Map_stability_lead_sweep.csv, Map_design_compare.png (file Map_K_for_accuracy.csv cũ không xóa được vì đang được chương trình khác mở; thay bằng hai file _3pct và _5pct); (6)
+tools/build_map_txt.py viết lại hoàn toàn (số lấy từ csv và json, sinh thêm ba hình Map_bode.png, Map_CALIB_pick_s00000.png, Map_CALIB_pareto_s00000.png), sinh lại Documents/Thesis/map.txt
+và map.docx theo v5 (lead-lag, J cộng ràng buộc dải lái, năm ca DREWS); (7) LyThuyet_Map.txt: viết lại Phần 2, 5-9, sửa 3.4, 4.3, 4.6, thêm nhãn cho 4.4, 4.7-4.9 (bản lead đơn), cập nhật
+Phần 10; (8) tools/build_outline_docx.py: sửa các mục Map và chương khung đánh giá; bỏ các bảng và hình so sánh Map_vs_* cũ (thuộc Map lead đơn), thay bằng ghi chú chờ chạy lại; sinh lại hai
+docx dàn ý. SỐ CÔNG SỨC THIẾT KẾ (QuyChuan 6.7, báo riêng): 18 giá trị K của bảng, 73 cặp (g_min, K) (61 cặp thiết kế, 12 cặp vượt cận), 292 mô phỏng CALIB (4 mỗi cặp), 103 thiết kế tuyến
+tính với 1 630 706 khâu ứng viên kiểm trên mô hình tuyến tính; tham số chỉnh bằng mô phỏng: K và g_min. VIỆC CÒN LẠI: so sánh seed 99999 với PI, PID, SMC, ISMC (Result/Compare/Map_vs_* vẫn
+là của Map cũ), khung kia kiểm ràng buộc dải lái trên điểm đã chọn.

@@ -1,6 +1,7 @@
 ==============================================================================================================================================================================================
 FRAMEWORK LUẬN VĂN - Adaptive C-EPS: Map, bộ tuyến tính và bộ đề xuất (BẢN NHÁP ĐỂ BÀN, 2026-10-09)
 ==============================================================================================================================================================================================
+GHI CHÚ 2026-10-10: tên ca trong file này (TK, TC1-TC6) là tên CŨ; từ 2026-10-10 dùng CALIB, DRY, SLIP, WEAVE (bảng đổi tên ở Tracking/CLAUDE.md, mục 5 phần Làm một bộ điều khiển). Số liệu giữ nguyên như lúc viết.
 File làm việc, KHÔNG phải mục lục chính thức. Mục đích: đặt khung từng chương (mục tiêu, nội dung, nguồn đã có, người làm, trạng thái) và các điểm cần bàn, trước khi viết. Quan hệ với bài
 báo (framework_baibao.txt): bài báo là tập con của chương 4, 5 và 7; luận văn phải có đóng góp riêng ngoài bài báo (chương 6 và độ sâu). Số trang là ƯỚC LƯỢNG chưa đối chiếu mẫu của trường.
 Mục [BÀN] là đề xuất chưa chốt; mục [CHƯA CHÍNH THỨC] là số chưa chạy theo quy chuẩn v1.

@@ -45,7 +45,7 @@ e_T = T_s - T_d_ref;
 if ~(isfinite(T_s) && isfinite(T_d_ref) && isfinite(T_a) && isfinite(T_a_cmd) && isfinite(T_a_lim))
     nonf = 1;
 else
-    a = Ts / (1 / (2 * pi * fHp) + Ts);              % first-order low-pass weight, as in tk_run.m
+    a = Ts / (1 / (2 * pi * fHp) + Ts);              % first-order low-pass weight, as in calib_run.m
     lpTa  = (1 - a) * lpTa  + a * T_a;               % same as filter(a, [1 -(1-a)], x) started at 0
     lpCmd = (1 - a) * lpCmd + a * T_a_cmd;
     maxE = max(maxE, abs(e_T));

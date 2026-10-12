@@ -1,12 +1,14 @@
 function test_map()
-%TEST_MAP Verify Map.mdl (Map controller block: dead zone + calibrated assist curve with slope limit, one lead).
+%TEST_MAP Verify Map.mdl (Map controller block: dead zone + calibrated assist curve with slope limit, then the lead-lag compensator).
 %   Self-contained: the expected values are computed here from data/map.json (calibration points and design), NOT with the design scripts.
 %
 %   Harness: Step sources for T_s and v -> Map -> To Workspace.
-%   (1) Steady output (0.45 s after the step) equals sgn(T_s)*M(v,|T_s|) for a grid of T_s (both signs, dead zone, inside and beyond the
+%   (1) Steady output (7.95 s after the step, long enough for the slowest lag pole 1/p1 of the designs, 0.32 s) equals sgn(T_s)*M(v,|T_s|) for a grid of T_s (both signs, dead zone, inside and beyond the
 %       calibration range) and v (table rows and between rows), where M is rebuilt here from the calibration points with
 %       M_k = min(T_a,cal,k, M_(k-1) + Kmax*(T_s,k - T_s,k-1)); between speed rows the table is interpolated linearly.
-%   (2) Dynamic: the output samples after a step in T_s follow the Tustin lead (s/z+1)/(s/p+1) at every speed.
+%   (2) Dynamic: the output samples after a step in T_s follow the Tustin compensator of data/map.json (lead, times lag when design.lag exists) at every speed.
+%   (3) Dynamic with the lag: with a lead-lag design (z, p, z1, p1) set in the base workspace through map_variables, the step response follows
+%       lead x lag, each stage discretised by hand with Tustin and multiplied (second-order difference equation); DC gain stays 1.
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
@@ -28,7 +30,7 @@ add_block('simulink/Sinks/To Workspace', [harness '/Out'], 'VariableName', 'y', 
 add_line(harness, 'Step_Ts/1', portRef([harness '/Map'], 'T_s'));
 add_line(harness, 'Const_v/1', portRef([harness '/Map'], 'v'));
 add_line(harness, portRef([harness '/Map'], 'T_a'), 'Out/1');
-set_param(harness, 'StopTime', '0.5', 'MaxStep', '1e-3', 'ReturnWorkspaceOutputs', 'on');
+set_param(harness, 'StopTime', '8.0', 'MaxStep', '1e-3', 'ReturnWorkspaceOutputs', 'on');
 set_param(harness, 'SolverType', 'Variable-step');
 
 %% (1) steady output
@@ -51,11 +53,31 @@ amp = 2.0;
 for vk = [40 62.5 100]
     [t, y] = runOne(harness, vk / 3.6, amp);
     Mv = referenceAssist(cal, d, vk, amp);              % steady value of the map for the step
-    exp_ = Mv * leadStep(d.lead.z, d.lead.p, Tsamp, 40);   % samples after the step (sample 0 = first tick of the step)
+    z1 = []; p1 = []; if isfield(d, 'lag') && isfinite(d.lag.z1), z1 = d.lag.z1; p1 = d.lag.p1; end   % the compensator of data/map.json
+    exp_ = Mv * compStep(d.lead.z, d.lead.p, z1, p1, Tsamp, 40);   % samples after the step (sample 0 = first tick of the step)
     got = interp1(t, y, 0.05 + (0:39)' * Tsamp + 1e-6, 'previous');
     e = max(abs(got - exp_));
     assert(e < 1e-6 * max(1, abs(Mv)), 'lead step at %g km/h: max error %.3g', vk, e);
-    fprintf('[Map] (2) step response at %g km/h matches the Tustin lead, max error %.2g N.m\n', vk, e);
+    fprintf('[Map] (2) step response at %g km/h matches the Tustin compensator of map.json, max error %.2g N.m\n', vk, e);
+end
+
+%% (3) dynamic: lead-lag step (design of g_min = 0.8, K = 6.5 from Map_design_leadlag.csv)
+dLL = d; dLL.Kmax = 6.5;
+dLL.lead = struct('z', 33.5009375175479, 'p', 800.059669163243);
+dLL.lag  = struct('z1', 34.1302033445218, 'p1', 14.3346854046992);
+VLL = map_variables(evalin('base', 'calibrate_map_cached()'), dLL);
+fn = fieldnames(VLL);
+for i = 1:numel(fn), assignin('base', fn{i}, VLL.(fn{i})); end
+assert(numel(VLL.Map_H_den) == 3, 'lead-lag must be second order');
+assert(abs(sum(VLL.Map_H_num) / sum(VLL.Map_H_den) - 1) < 1e-12, 'DC gain of the compensator must be 1');
+for vk = [40 100]
+    [t, y] = runOne(harness, vk / 3.6, amp);
+    Mv = referenceAssist(cal, dLL, vk, amp);
+    exp_ = Mv * compStep(dLL.lead.z, dLL.lead.p, dLL.lag.z1, dLL.lag.p1, Tsamp, 40);
+    got = interp1(t, y, 0.05 + (0:39)' * Tsamp + 1e-6, 'previous');
+    e = max(abs(got - exp_));
+    assert(e < 1e-6 * max(1, abs(Mv)), 'lead-lag step at %g km/h: max error %.3g', vk, e);
+    fprintf('[Map] (3) step response at %g km/h matches the Tustin lead-lag (second order), max error %.2g N.m\n', vk, e);
 end
 close_system(harness, 0);
 close_system(mdlFile, 0);
@@ -70,11 +92,17 @@ function [t, y] = runOne(harness, v, Ts)
     t = ts.Time; y = squeeze(ts.Data);
 end
 
-function s = leadStep(z, p, Ts, n)
-% Unit-step response samples of the Tustin lead (s/z+1)/(s/p+1), by hand: H(q) = (b0 + b1 q^-1)/(1 + a1 q^-1)
+function s = compStep(z, p, z1, p1, Ts, n)
+% Unit-step response samples of the Tustin lead (s/z+1)/(s/p+1) times, if z1 is given, the lag (s/z1+1)/(s/p1+1), by hand:
+% each stage (b0 + b1 q^-1)/(1 + a1 q^-1), stages multiplied by polynomial convolution.
     a = 2 / Ts;
-    b0 = (a / z + 1) / (a / p + 1); b1 = (1 - a / z) / (a / p + 1); a1 = (1 - a / p) / (a / p + 1);
-    s = filter([b0 b1], [1 a1], ones(n, 1));
+    stage = @(zz, pp) deal([(a / zz + 1) (1 - a / zz)] / (a / pp + 1), [1 (1 - a / pp) / (a / pp + 1)]);
+    [num, den] = stage(z, p);
+    if ~isempty(z1)
+        [n2, d2] = stage(z1, p1);
+        num = conv(num, n2); den = conv(den, d2);
+    end
+    s = filter(num, den, ones(n, 1));
 end
 
 function y = referenceAssist(cal, d, v_kmh, Ts)

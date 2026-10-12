@@ -33,7 +33,7 @@ function build_closed_loop(ctrlName)
 %     +-- Sum_eT_true  e_T = T_s - T_d_ref on TRUE values (scoring only): the scored e_T is what the driver feels
 %   Goto tags: <signal>_true = true values, plain names (T_s, v, ...) = measured values read by the controller.
 %
-%   Solver: MaxStep = 0.002 s, StopTime = 10 s (run_test_cases.m overrides the stop time). Run by hand, the model saves its signals
+%   Solver: MaxStep = 0.002 s, StopTime = 10 s (run_cases.m overrides the stop time). Run by hand, the model saves its signals
 %   and a figure to Result/<ctrl>/ through StopFcn (Model/save_run_results.m).
 %
 %   Usage: run load_<ctrl>.m first (it runs load_plant, load_ref, load_sensors, load_assistlimit, load_actuator), build every source block, then

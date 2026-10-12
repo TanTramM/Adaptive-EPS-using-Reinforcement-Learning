@@ -1,6 +1,6 @@
 function ok = test_gates()
 %TEST_GATES Test of Gates.mdl (MATLAB Function block built by build_gates.m).
-%   A) gates_fcn.m called sample by sample == independent vectorised formulas (the formulas of tk_run.m / tk_block_scores.m);
+%   A) gates_fcn.m called sample by sample == independent vectorised formulas (the formulas of calib_run.m / calib_block_scores.m);
 %   B) the block inside Simulink (fixed 1 ms sample time) on the same signals == A.
 %   Self-contained: the signals are synthetic, the reference is computed here, not read from another script.
 

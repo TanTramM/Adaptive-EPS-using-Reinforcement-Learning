@@ -1,5 +1,5 @@
 ==============================================================================================================================================================================================
-QUY CHUẨN THIẾT KẾ VÀ ĐÁNH GIÁ CHUNG CHO MỌI BỘ ĐIỀU KHIỂN (Map, PI, PID, SMC, RL) - phiên bản 2, 2026-10-09
+QUY CHUẨN THIẾT KẾ VÀ ĐÁNH GIÁ CHUNG CHO MỌI BỘ ĐIỀU KHIỂN (Map, PI, PID, SMC, RL) - phiên bản 5, 2026-10-11 (bổ sung: rev chỉ báo cáo; 6.2 J = R x S cộng ràng buộc dải lái)
 ==============================================================================================================================================================================================
 Văn bản này là quy chuẩn bắt buộc: MỖI LẦN thiết kế hoặc chỉnh một bộ điều khiển (Map, PI, PID, SMC là điều khiển trượt, RL là học tăng cường) đều phải tuân theo, kể cả khi làm ở khung chat
 khác. Mục đích: kết quả so sánh giữa các bộ không phụ thuộc vào việc người làm chọn ngưỡng nào, đo bằng cách nào, hay chỉnh công sức nhiều ít khác nhau. Nguyên nhân ra đời: quy tắc cũ chỉ
@@ -9,8 +9,9 @@ Cách dùng: đọc trước khi bắt đầu thiết kế; ghi vào file kế h
 chọn tham số; báo ngay nếu phát hiện cần sai khác. Nếu quy chuẩn này mâu thuẫn với mục "Quy tắc chọn tham số và so sánh" của Tracking/CLAUDE.md thì quy chuẩn này ưu tiên (mục đó là bản tóm
 tắt). Mục nào đề xuất nhưng chưa chốt số được đánh dấu [CẦN CHỐT] và phải được người dùng chốt trước khi dùng cho bộ điều khiển đầu tiên.
 Quy ước từ viết tắt dùng trong văn bản: PRSM = Plant (đối tượng, mô hình xe và cột lái), Reference (giá trị đặt mô-men tay lái), Sensors (cảm biến), Actuator (motor trợ lực): mọi phần của
-vòng kín trừ bộ điều khiển. TK = ca thử dùng để chọn tham số. TC1-TC6 = sáu ca thử chuẩn dùng để chấm điểm. RMS = căn bậc hai của trung bình bình phương. PM, GM = độ dự trữ pha và độ dự trữ
-biên (mức an toàn ổn định). ESC = hệ thống cân bằng điện tử cung cấp a_y và v qua mạng CAN.
+vòng kín trừ bộ điều khiển. CALIB = ca thử dùng để chọn tham số. DRY, SLIP, WEAVE = ba ca thử chuẩn dùng để chấm điểm; EDGE = ca thứ tư chỉ báo cáo cho vùng cực trên 0.3 g (cửa sổ ext_* của
+CALIB cũng thuộc vùng này). RMS = căn bậc hai của trung bình bình phương. PM, GM = độ dự trữ pha và độ dự trữ biên (mức an toàn ổn định). ESC = hệ thống cân bằng điện tử cung cấp a_y và v
+qua mạng CAN.
 ==============================================================================================================================================================================================
 PHẦN 1 - NGUYÊN TẮC
 ==============================================================================================================================================================================================
@@ -18,8 +19,8 @@ PHẦN 1 - NGUYÊN TẮC
 thời điểm, và báo độ nhạy của kết luận với thay đổi đó cho mọi bộ.
 1.2. Một chỉ tiêu, một hàm: mỗi chỉ tiêu ở Phần 4 chỉ được tính bằng MỘT hàm trong Model/Sim/script (hoặc Model/common) dùng chung cho mọi bộ điều khiển; không bộ nào được tự định nghĩa lại.
 Mọi chỉ tiêu tính trên tín hiệu THẬT của mô hình (T_s, e_T, T_a thật), không phải tín hiệu bộ điều khiển đo qua cảm biến.
-1.3. Tách ca thiết kế và ca chấm điểm: chọn tham số chỉ trên ca TK (và, riêng với RL, trên tập kịch bản huấn luyện riêng, mục 3.3); TC1-TC6 chỉ để chấm điểm, không bao giờ được dùng để
-chỉnh.
+1.3. Tách ca thiết kế và ca chấm điểm: chọn tham số chỉ trên ca CALIB (và, riêng với RL, trên tập kịch bản huấn luyện riêng, mục 3.3); DRY, SLIP, WEAVE chỉ để chấm điểm, không bao giờ được dùng
+để chỉnh.
 1.4. Công bằng nghĩa là cùng luật chơi, không phải cùng cấu trúc: mỗi bộ ở dạng tốt nhất hợp lý của nó, được chỉnh bằng cùng cổng, cùng ca, cùng cách chọn, cùng độ mịn lưới (hoặc cùng ngân
 sách thử). Khác biệt cấu trúc (tín hiệu đọc, có khâu tích phân hay không, số tham số) là thứ đem ra so, không phải thiên lệch cần xóa; phải được ghi trong bảng ở mục 7.2.
 1.5. Không thêm phần ngoài lõi cho bộ nào (mục 2.4). Thứ gì một bộ được thêm thì bộ khác cũng được thêm, hoặc không bộ nào có.
@@ -38,7 +39,8 @@ là lựa chọn của tác giả (người dùng chốt 2026-10-09); độ nh�
 T_a, không mô hình motor và không giữ bản sao riêng của bảng T_a,max; khối Actuator trả T_a_lim để dùng cho chống bão hòa; bộ nào cần giá trị giới hạn (SMC đặt độ lợi, RL chuẩn hóa hành
 động) khai báo cổng vào tên T_a_max, build_closed_loop nối theo tên.
 2.4. Phần lõi được phép của từng loại (mọi thứ ngoài bảng này là phần ngoài lõi và bị CẤM cho mọi bộ):
-- Map: bảng trợ lực tra theo T_s và v, vùng chết, giới hạn độ dốc K_max, khâu bù sớm pha lead.
+- Map: bảng trợ lực tra theo T_s và v, vùng chết, giới hạn độ dốc K_max, rồi khâu bù lead-lag gồm khâu lead (sớm pha) nối tiếp khâu lag (hạ độ lợi tần số cao); độ lợi DC của cả hai bằng 1
+  nên không đổi sai số xác lập (nguồn [1] mục III.A phương trình (16) và III.D; thêm khâu lag ngày 2026-10-11).
 - PI, PID: khâu tỷ lệ, tích phân, vi phân có bộ lọc bậc 1 hằng số Tf (vi phân lấy trên T_s đo), chống bão hòa tích phân tính ngược, tối đa lập lịch theo v.
 - SMC: mặt trượt, luật chuyển, khâu tích phân, đạo hàm T_s đo qua lọc bậc 1 (giống PID, người dùng chốt 2026-10-09, lý do ở DieuKhien_SMC.txt mục A3).
 - RL: lịch sử quan sát (số bước n_hist), chuẩn hóa quan sát, co giãn và làm mượt hành động. Hàm thưởng chỉ dùng khi huấn luyện; khi chấm điểm agent chạy tất định (không nhiễu khám phá).
@@ -47,86 +49,116 @@ tạp.) Bộ lọc nằm BÊN TRONG một khâu của lõi (bộ lọc của kh�
 ==============================================================================================================================================================================================
 PHẦN 3 - CA THỬ VÀ SEED
 ==============================================================================================================================================================================================
-3.1. Ca thiết kế TK (Model/Sim/script/test_cases.m, test_cases('TK')), CHUNG cho mọi bộ, dựng theo vùng làm việc của xe chứ không theo khả năng của bộ nào: đường khô mu 0.8 trừ một bậc mu ở
-khối 60 km/h; ba khối tốc độ 20, 60, 100 km/h (cùng miền tốc độ với TC1-TC6); mức a_y phủ 0.1-0.4 g ở nơi Plant đạt được (20 km/h chỉ tới khoảng 0.2 g nên dùng 0.1/0.15/0.18 g). Mỗi khối
-gồm: (A) bậc thang giữ cua, mỗi bậc 1 s chuyển và 3 s giữ, cửa sổ chấm static là 1 s cuối của bậc (đã ổn định, để bộ có tích phân chậm không bị nhầm sai số chưa kịp xác lập là sai số xác
-lập); (B) lái sin 0.5 Hz bốn chu kỳ quanh nền 0.1 g biên 0.05 g (20 km/h) hoặc nền 0.2 g biên 0.1 g (60 và 100 km/h), cửa sổ sine bỏ 0.5 s đầu; (C) chỉnh lái nhỏ +-0.03 g quanh nền, cửa sổ
-small dài 6 s; (D) chỉ ở khối 60 km/h: giữ 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8, hai cửa sổ mu_drop và mu_rise là 2 s sau mỗi bậc (đo đáp ứng, không phải xác lập); mu 0.6 không có trong
-TC1-TC6. Tổng 117 s, 19 cửa sổ, nền sin không vượt 0.3 g. Ca TK không đổi nếu không có lý do ghi rõ cho mọi bộ.
-3.2. Ca chấm điểm TC1-TC6 (giữ nguyên như định nghĩa hiện hành trong test_cases.m và Documents/Thesis/TestCases.txt; người dùng chốt 2026-10-08 giữ 6 ca): TC1 đường khô nhiều tốc độ; TC2
-chạy đường hỗn hợp 150 s (5 lần đổi mu); TC3 mu giảm đột ngột khi cua gắt 100 km/h; TC4 vũng nước khi đổi làn 80 km/h; TC5 lái sin ở mu 0.2 không đổi; TC6 mu tăng giữa cua. Báo cáo theo ba
-nhóm: A mu không đổi (TC1, TC5, cửa sổ khô của TC2), B mu đổi (TC3, TC4, TC6, cửa sổ đổi mu của TC2), C hỗn hợp (TC2 toàn ca); không cộng gộp điểm giữa các nhóm.
-3.3. Seed: mỗi bộ chọn tham số trên TK bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, RL dải huấn luyện riêng chưa gán); chạy TC1-TC6 riêng lẻ bằng cảm biến lý
-tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các thư mục seed_99999 do lệnh so sánh sinh ra trong thư mục của từng bộ. RL: tập kịch bản
-huấn luyện phải tách rời khỏi TK và TC1-TC6 (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của mục 6.2 chạy thêm MỘT seed thứ hai cùng dải của bộ
-đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
+3.1. Ca thiết kế CALIB (Model/Sim/script/make_cases.m, make_cases('CALIB')), CHUNG cho mọi bộ, dựng theo vùng làm việc của xe chứ không theo khả năng của bộ nào: đường khô mu 0.8 trừ một bậc
+mu ở khối 60 km/h; ba khối tốc độ 20, 60, 100 km/h (cùng miền tốc độ với DRY, SLIP, WEAVE); mức a_y phủ 0.1-0.4 g ở nơi Plant đạt được (20 km/h chỉ tới khoảng 0.2 g nên dùng 0.1/0.15/0.18 g).
+Mỗi khối gồm: (A) bậc thang giữ cua, mỗi bậc 1 s chuyển và 3 s giữ, cửa sổ chấm static là 1 s cuối của bậc (đã ổn định, để bộ có tích phân chậm không bị nhầm sai số chưa kịp xác lập là sai số
+xác lập); (B) lái sin 0.5 Hz bốn chu kỳ quanh nền 0.1 g biên 0.05 g (20 km/h) hoặc nền 0.2 g biên 0.1 g (60 và 100 km/h), cửa sổ sine bỏ 0.5 s đầu; (C) chỉnh lái nhỏ +-0.03 g quanh nền, cửa sổ
+small dài 6 s; (D) chỉ ở khối 60 km/h: giữ 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8, hai cửa sổ mu_drop và mu_rise là 2 s sau mỗi bậc (đo đáp ứng, không phải xác lập); mu 0.6 không có trong DRY,
+SLIP, WEAVE. Tổng 117 s, 19 cửa sổ, nền sin không vượt 0.3 g. Từ phiên bản 4 (2026-10-11) hai cửa sổ 0.4 g (60 và 100 km/h) mang nhãn ext_* thay vì static_*: chỉ báo cáo e_rel có dấu
+(m.eextSigned), KHÔNG vào R và KHÔNG vào cổng e_rel; việc chọn tham số chỉ dùng 9 cửa sổ static 0.1-0.3 g (vùng thường). Lý do: ở 0.4 g bảng của Map bị chặn độ dốc nên e_rel của Map lớn do cấu
+trúc (60 km/h 57 %, 100 km/h 47 %), làm cổng 3 % không thể đạt và ép chọn theo quy tắc dự phòng 5.6. Ca CALIB không đổi nếu không có lý do ghi rõ cho mọi bộ.
+3.2. Ca chấm điểm DRY, SLIP, WEAVE (người dùng chốt 2026-10-10, thay sáu ca TC1-TC6 cũ; ba ca mới chỉ ghép lại các đoạn của sáu ca cũ, cùng tốc độ, mức a_y và mu, không thêm tình huống mới;
+định nghĩa trong make_cases.m và Documents/Thesis/cases.txt). Mỗi ca trả lời MỘT câu hỏi. DRY (mu = 0.8 không đổi, 129 s): đường khô, ba bậc a_y 0.1-0.3 g ở 20, 40, 60, 80, 100 km/h; hỏi sai
+số tĩnh có gần không không; chỉ tiêu chính max |e_rel| theo mục 4.4 (cũ TC1). SLIP (63 s): mu đổi khi đang cua, ba cảnh nối nhau bằng đoạn đi thẳng (đổi tốc độ 0.2 s cho mỗi km/h, tối thiểu 4
+s, để gia tốc dọc không quá 2.2 m/s2), theo thứ tự pud (80 km/h, đổi làn 0.2 g, vũng nước 0.4 s), up (60 km/h, 0.15 g, mu 0.3 -> 0.8), down (100 km/h, 0.3 g, mu 0.8 -> 0.3; bản đầu 0.35 g, đổi
+2026-10-11 để ca nằm trong vùng thường), trong đó down vẫn ĐẶT CUỐI (ở 0.35 g xe trượt mà người lái vòng hở không thoát được, cảnh sau nó nổ số; ở 0.3 g xe còn ổn định nhưng thứ tự giữ
+nguyên); hỏi trợ lực có còn đúng khi độ bám đổi không; chỉ tiêu chính là chỉ tiêu trợ lực thừa của mục 4.5 (cũ TC4, TC6, TC3). WEAVE (61 s): lái liên tục, mu không đổi trong từng cảnh: slal
+(50 km/h, mu 0.8, sin 0.15 g 0.25 Hz), lane (80 km/h, mu 0.3, một chu kỳ 0.1 g), ice (100 km/h, mu 0.2, sin 0.15 g 0.3 Hz); hỏi có bám khi đang đánh lái và có êm không; chỉ tiêu chính RMS e_T
+trong cửa sổ, kèm S, TV và trợ lực ngược (cũ TC5 và các đoạn lái của TC2). Hành trình hỗn hợp 150 s (cũ TC2) bỏ khỏi phần chấm điểm vì chồng chéo với ba ca kia. EDGE (87 s, thêm 2026-10-11,
+CHỈ BÁO CÁO, không là cổng và không vào điểm): vùng cực trên 0.3 g, đường khô mu 0.8, ba cảnh giữ cua 0.35 g rồi 0.4 g ở 40, 60, 100 km/h (mỗi bậc 5 s, cửa sổ 1 s cuối, đổi chiều trái-phải-trái)
+và một cảnh lái sin 60 km/h nền 0.2 g biên 0.2 g (0 đến 0.4 g) 0.25 Hz ba chu kỳ; chỉ tiêu mục 4.10. Báo cáo theo từng ca, không cộng gộp điểm giữa các ca. Lý do đổi: sáu ca chồng chéo và khó
+đọc; chưa ca nào được công bố ra ngoài.
+RAMP (308.6 s, thêm 2026-10-11, CHỈ BÁO CÁO, không là cổng, không vào điểm và KHÔNG đổi CALIB): đổi tốc độ khi xe đang cua trên đường khô mu 0.8, như phanh hoặc tăng ga trong khúc cua. Ba cảnh
+nối nhau bằng đoạn đi thẳng, giữ a_y ở lo 0.15 g, mid 0.225 g, hi 0.275 g (trái, phải, trái): từ 100 km/h giữ a_y 4 s, rồi tốc độ giảm xuống v_min và tăng lại 100 km/h với gia tốc dọc trung
+bình 0.5 m/s2 (đỉnh 0.79 m/s2 vì đường cong (1 - cos)). v_min là tốc độ thấp nhất mà mức a_y còn dưới 98 % giới hạn Plant (plant_limits.json, mu 0.8), làm tròn lên 0.5 km/h: 20, 21.5 và 24
+km/h. Hỏi: khi tốc độ đổi, sai số mô-men có còn nhỏ và như nhau ở hai chiều không (không có trễ do ma sát khô của cột lái). Cửa sổ <cảnh>_dn và <cảnh>_up là cả đoạn giảm và đoạn tăng; báo
+e_rel có dấu từng cửa sổ, RMS e_T, S, TV như EDGE. Lý do thêm: CALIB chỉ có ba tốc độ nên không thấy vùng 25-45 km/h, 0.25-0.3 g, nơi bản đồ trợ lực cần độ dốc vượt K_max (khung Map thấy Map K
+6 lệch +13 % ở DRY v40a0p3r); sửa riêng CALIB cho vùng đó bị coi là chỉnh cho riêng Map, và nếu sửa thì phải quét đều mỗi bước 10 km/h, nên người dùng chốt giữ CALIB, ghi đây là hạn chế đã
+biết, và để RAMP lộ hiện tượng này như một ca chấm báo cáo áp cho mọi bộ như nhau. Mọi bộ đều chọn tham số trên CALIB theo cùng quy tắc nên RAMP không thiên vị bộ nào. Tên gọi tắt cả bộ ca:
+DREWS = DRY, RAMP, SLIP, EDGE, WEAVE.
+3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, RL dải huấn luyện riêng chưa gán); chạy DRY, SLIP, WEAVE (và EDGE) riêng
+lẻ bằng cảm biến lý tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các file *_s99999.* do lệnh so sánh sinh ra trong thư mục Cases của từng
+bộ. RL: tập kịch bản huấn luyện phải tách rời khỏi CALIB và DRY, SLIP, WEAVE (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của mục 6.2 chạy thêm
+MỘT seed thứ hai cùng dải của bộ đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
 ==============================================================================================================================================================================================
 PHẦN 4 - CHỈ TIÊU (mỗi chỉ tiêu một hàm; mô tả thủ tục đo)
 ==============================================================================================================================================================================================
 Trạng thái cột "hàm": CÓ = đã có trong Model; CẦN VIẾT = quy chuẩn yêu cầu nhưng chưa có hàm.
-4.1. R (độ bám, %): sai số tương đối của e_T = T_s - T_d,ref trên bốn nhóm cửa sổ của TK: static (các bậc giữ cua 0.1-0.4 g), dyn (lái sin), small (chỉnh lái nhỏ), mu (2 s sau mỗi bậc mu).
-R_g = 100 x RMS(e_T trên các cửa sổ của nhóm g) / trung bình |T_d,ref| trên các cửa sổ đó; R = trung bình ĐỀU của bốn R_g (không nhóm nào chiếm ưu thế chỉ vì cửa sổ dài hơn; chuẩn hóa theo
-T_d,ref để nhóm mô-men lớn không lấn át). Cho điểm chọn báo độ nhạy khi đổi từng trọng số +-50 %. Bỏ 2 s đầu của ca. Với TC1-TC6 báo thêm RMS e_T toàn ca (N.m) và lớn nhất của |e_T|. Hàm:
-tk_run.m (toàn ca: m.R, m.Rg, m.RgNm), tk_block_scores.m (theo khối tốc độ), Gates.mdl (theo cửa sổ: RWin, refWin, cntWin, từ đó dựng R ngoài khối). Trạng thái: CÓ (đã cập nhật 2026-10-09,
-chưa chạy).
+4.1. R (độ bám, %): sai số tương đối của e_T = T_s - T_d,ref trên bốn nhóm cửa sổ của CALIB: static (các bậc giữ cua 0.1-0.3 g, 9 cửa sổ; hai cửa sổ 0.4 g là nhóm ext, ngoài R), dyn (lái sin),
+small (chỉnh lái nhỏ), mu (2 s sau mỗi bậc mu). R_g = 100 x RMS(e_T trên các cửa sổ của nhóm g) / trung bình |T_d,ref| trên các cửa sổ đó; R = trung bình ĐỀU của bốn R_g (không nhóm nào chiếm
+ưu thế chỉ vì cửa sổ dài hơn; chuẩn hóa theo T_d,ref để nhóm mô-men lớn không lấn át). Cho điểm chọn báo độ nhạy khi đổi từng trọng số +-50 %. Bỏ 2 s đầu của ca. Với DRY, SLIP, WEAVE báo thêm
+RMS e_T toàn ca (N.m) và lớn nhất của |e_T|. Hàm: calib_run.m (toàn ca: m.R, m.Rg, m.RgNm), calib_block_scores.m (theo khối tốc độ), Gates.mdl (theo cửa sổ: RWin, refWin, cntWin, từ đó dựng R
+ngoài khối). Trạng thái: CÓ (đã cập nhật 2026-10-09, chưa chạy).
 4.2. S (độ ồn, N.m): RMS của T_a sau khi lọc cao qua 5 Hz (lọc thông cao bậc 1: a = dt/(1/(2 pi 5) + dt), hp = T_a - lọc thông thấp(T_a)) trên toàn ca, bỏ 2 s đầu; đo phần mô-men trợ lực dao
-động nhanh mà lệnh lái (dưới khoảng 2 Hz) không giải thích được, chủ yếu là nhiễu cảm biến bị khuếch đại. Hàm: tk_run.m, tk_block_scores.m. Trạng thái: CÓ.
-4.3. TV (tổng biến thiên của T_a, N.m/s) = tổng |T_a[k] - T_a[k-1]| chia cho thời gian chấm. S_cmd: như S nhưng trên lệnh T_a_cmd của bộ điều khiển (cho thấy bang-bang mà giới hạn T_a,max
-che đi). Trạng thái: CÓ.
-4.4. Độ chính xác tĩnh e_rel (%): e_rel = 100 x |trung bình e_T| / trung bình |T_d,ref| trên TỪNG cửa sổ static của TK (11 cửa sổ: 3 ở 20 km/h, 4 ở 60 km/h, 4 ở 100 km/h, a_y 0.1-0.4 g), lấy
-giá trị lớn nhất; cũng báo có dấu (âm = trợ lực thừa, tay lái nhẹ hơn mong muốn; dương = tay lái nặng hơn). Không bộ nào được miễn một cửa sổ; bộ không đạt ở vùng nào thì xử theo mục 5.6.
-Hàm: tk_run.m (m.erel, m.erelWin, m.erelSigned, m.erelLabel), tk_block_scores.m. Trạng thái: CÓ (cập nhật 2026-10-09, chưa chạy).
-4.5. Chỉ tiêu trợ lực thừa (chỉ các ca đổi mu TC2, TC3, TC4, TC6): (a) sai số xác lập sau khi mu đổi, có dấu, tính theo % T_d,ref, trên cửa sổ ổn định sau đổi mu (dương = tay lái nặng hơn
-mong muốn, âm = trợ lực thừa); (b) đỉnh |e_T| trong 2 s sau thời điểm đổi mu; (c) thời gian hồi phục: từ thời điểm đổi mu tới khi |e_T| < 0.1 N.m và giữ như vậy 1 s; (d) đỉnh |T_a|. Trạng
-thái: (a) CÓ (cột Mean_eT_signed_pct_of_Tdref của run_test_cases.m); (b), (c), (d) CẦN VIẾT.
-4.6. Trợ lực ngược chiều: tỉ lệ thời gian chấm mà |T_s| >= 0.5 N.m và T_a ngược dấu T_s (bộ điều khiển đẩy ngược chiều tay người). Quan trọng với SMC và RL. Cổng: tỉ lệ <= 1 % (người dùng
-chốt 2026-10-09; 1 % tự chọn, báo độ nhạy 0.5-5 %). Hàm: tk_run.m (m.rev), gates_fcn.m (revFrac). Trạng thái: CÓ.
-4.7. Nỗ lực điều khiển: RMS và lớn nhất của |T_a|; báo cáo, không làm cổng. Trạng thái: CÓ (run_test_cases.m).
-4.8. Độ bền (báo cáo, không làm cổng ở phiên bản 1): chạy TC1-TC6 với sai lệch tham số plant +-20 % từng tham số một (J_col, C_col, K, T_f, e_p0) và thêm trễ thuần cảm biến 1, 2, 5 ms; báo
-R, S và có ổn định hay không; điểm so sánh là mức suy giảm so với bản danh định. Đặc biệt cần cho SMC (được cho là bền) và RL (khả năng tổng quát hóa). Trạng thái: CẦN VIẾT (con số +-20 % và
-các mức trễ [CẦN CHỐT]).
+động nhanh mà lệnh lái (dưới khoảng 2 Hz) không giải thích được, chủ yếu là nhiễu cảm biến bị khuếch đại. Hàm: calib_run.m, calib_block_scores.m. Trạng thái: CÓ.
+4.3. TV (tổng biến thiên của T_a, N.m/s) = tổng |T_a[k] - T_a[k-1]| chia cho thời gian chấm. S_cmd: như S nhưng trên lệnh T_a_cmd của bộ điều khiển (cho thấy bang-bang mà giới hạn T_a,max che
+đi). Trạng thái: CÓ.
+4.4. Độ chính xác tĩnh e_rel (%): e_rel = 100 x |trung bình e_T| / trung bình |T_d,ref| trên TỪNG cửa sổ static của CALIB (9 cửa sổ: 3 ở 20 km/h, 3 ở 60 km/h, 3 ở 100 km/h, a_y 0.1-0.3 g; hai
+cửa sổ 0.4 g ext_* chỉ báo cáo có dấu, m.eextSigned), lấy giá trị lớn nhất; cũng báo có dấu (âm = trợ lực thừa, tay lái nhẹ hơn mong muốn; dương = tay lái nặng hơn). Không bộ nào được miễn một
+cửa sổ; bộ không đạt ở vùng nào thì xử theo mục 5.6. Hàm: calib_run.m (m.erel, m.erelWin, m.erelSigned, m.erelLabel), calib_block_scores.m. Trạng thái: CÓ (cập nhật 2026-10-09, chưa chạy).
+4.5. Chỉ tiêu trợ lực thừa (chỉ ca SLIP (các cảnh down, pud, up)): (a) sai số xác lập sau khi mu đổi, có dấu, tính theo % T_d,ref, trên cửa sổ ổn định sau đổi mu (dương = tay lái nặng hơn mong
+muốn, âm = trợ lực thừa); (b) đỉnh |e_T| trong 2 s sau thời điểm đổi mu; (c) thời gian hồi phục: từ thời điểm đổi mu tới khi |e_T| < 0.1 N.m và giữ như vậy 1 s; (d) đỉnh |T_a|. Trạng thái: (a)
+CÓ (cột Mean_eT_signed_pct_of_Tdref của run_make_cases.m); (b), (c), (d) CẦN VIẾT.
+4.6. Trợ lực ngược chiều: tỉ lệ thời gian chấm mà |T_s| >= 0.5 N.m và T_a ngược dấu T_s (bộ điều khiển đẩy ngược chiều tay người). Quan trọng với SMC và RL. CHỈ BÁO CÁO, KHÔNG CÒN LÀ CỔNG từ 2026-10-11
+(trước đó cổng <= 1 %, người dùng chốt 2026-10-09; xem nhật ký thay đổi). Hàm: calib_run.m (m.rev), gates_fcn.m (revFrac). Trạng thái: CÓ.
+4.7. Nỗ lực điều khiển: RMS và lớn nhất của |T_a|; báo cáo, không làm cổng. Trạng thái: CÓ (run_make_cases.m).
+4.8. Độ bền (báo cáo, không làm cổng ở phiên bản 1): chạy DRY, SLIP, WEAVE với sai lệch tham số plant +-20 % từng tham số một (J_col, C_col, K, T_f, e_p0) và thêm trễ thuần cảm biến 1, 2, 5
+ms; báo R, S và có ổn định hay không; điểm so sánh là mức suy giảm so với bản danh định. Đặc biệt cần cho SMC (được cho là bền) và RL (khả năng tổng quát hóa). Trạng thái: CẦN VIẾT (con số
++-20 % và các mức trễ [CẦN CHỐT]).
 4.9. Khả năng hiện thực: số tham số chỉnh, số phép tính mỗi chu kỳ (bậc bảng, số khối, kích thước mạng với RL), bộ nhớ trạng thái. Báo cáo, không làm cổng.
+4.10. Ca EDGE (chỉ báo cáo, mục 3.2): e_rel có dấu từng cửa sổ giữ cua 0.35 và 0.4 g (dương = thiếu trợ lực), RMS e_T toàn ca và ở cửa sổ sin, S, TV, đỉnh |T_a| tính bằng % của T_a,max(v) (gần
+100 % nghĩa là chạm giới hạn trợ lực), tỉ lệ trợ lực ngược. Hàm: run_cases.m (cột Mean_eT_signed_pct_of_Tdref, S_Nm, Rev_pct, Peak_Ta_pct_of_Tamax). Không có ngưỡng; không dùng để chọn tham
+số.
 ==============================================================================================================================================================================================
 PHẦN 5 - CỔNG CỨNG CHUNG (điểm tham số không qua cổng thì bị loại trước khi chọn)
 ==============================================================================================================================================================================================
-5.1. Ổn định: không phân kỳ ở mọi ca TK và TC1-TC6.
-5.2. Dự trữ ổn định đo bằng MÔ PHỎNG, áp chung cho mọi bộ (kể cả SMC và RL không tuyến tính hóa được): chạy lại TK với (a) độ lợi của Actuator nhân đôi và (b) thêm một trễ thuần bằng MỘT chu
-kỳ điều khiển (1 ms) giữa bộ điều khiển và Actuator; cả hai lần phải còn ổn định. Mất ổn định = có tín hiệu không hữu hạn, hoặc R (mục 4.1) tăng hơn gấp đôi so với lần chạy danh định (gấp
-đôi là lựa chọn của tác giả, báo độ nhạy 1.5-3 lần). Nguồn khái niệm: Seborg et al. [11] mục 14.7 (tr. 256-257): độ dự trữ biên GM là hệ số mà độ lợi vòng có thể tăng trước khi mất ổn định,
-trễ thêm lớn nhất bằng PM x pi / (180 x omega_g) (phương trình 14-63), khuyến nghị GM 1.7-4.0 và PM 30-45 độ; mục 17.4 (tr. 313): bộ lấy mẫu cộng khâu giữ bậc không tương đương một trễ bằng
-nửa chu kỳ lấy mẫu. Con số 1 ms = một chu kỳ điều khiển = 2 lần trễ nửa chu kỳ là LỰA CHỌN của tác giả (người dùng chốt 2026-10-09): dự phòng cho trễ chưa mô hình hóa (thời gian tính, truyền
-tin, vòng dòng motor), báo độ nhạy ở 0.5 ms và 2-5 ms. Ngưỡng tính bằng thời gian chứ không bằng độ vì trễ ngoài đời là thời gian tuyệt đối (cùng PM 45 độ, PID băng thông 115 rad/s chịu được
-6.8 ms còn PI băng thông 7 rad/s chịu được 112 ms). Với bộ có mô hình tuyến tính (Map, PI, PID) vẫn tính PM, GM trên hai mặt đường (k_r = 30 và 0) chỉ để BÁO CÁO, không còn là cổng (hàm
-pi_margins.m, pid_margins.m, design_lead.m). Trạng thái: CẦN VIẾT: khối trễ thuần và hệ số độ lợi trên đường bộ điều khiển -> Actuator trong build_closed_loop, và hàm chạy TK với hai thay
-đổi đó.
-5.3. Độ chính xác tĩnh: e_rel <= 3 % theo mục 4.4 trên mọi cửa sổ static, cả hai dấu (3 % là ràng buộc gốc của Map, tự chọn, chưa có nguồn ngoài; báo độ nhạy ở 3 và 5 %).
-5.4. Không bang-bang: chạy TK hai lần (cảm biến lý tưởng và có nhiễu, seed local), tỉ lệ mẫu từ 2 s mà |T_a_cmd| chạm giới hạn T_a,max(v) của Actuator; loại nếu tỉ lệ có nhiễu trừ tỉ lệ lý
-tưởng > 1 % (1 % tự chọn; báo độ nhạy 0.5 đến 5 %). Hàm: tk_bangbang.m (CÓ). Chỉ cần đánh giá cho các điểm chung kết ở mục 6.
-5.5. Không trợ lực ngược chiều: chỉ tiêu mục 4.6 <= 1 %.
-5.6. Thứ tự ưu tiên của các cổng (người dùng chốt 2026-10-09): (1) ổn định và độ dư (5.1, 5.2); (2) không trợ lực ngược chiều (5.5); (3) không bang-bang (5.4); (4) độ chính xác tĩnh (5.3).
-Nguyên tắc xếp: cổng bảo đảm phép đo còn hợp lệ đứng trước cổng dùng chính phép đo đó; lệnh T_a nhảy +-T_a,max mỗi 1 ms không thực hiện được trên motor thật và mô hình chưa có vòng dòng
-điện, nên độ chính xác đo trên một thiết kế bang-bang không đáng tin. Nhãn an toàn hay thoải mái không được dùng vì chỉ là cách gọi của tác giả. Nếu một bộ không có điểm nào qua mọi cổng ở
-một vùng thì bỏ cổng thấp nhất, chọn điểm vi phạm ít nhất (e_rel lớn nhất nhỏ nhất; với bang-bang là chênh lệch tỉ lệ chạm giới hạn nhỏ nhất) và ghi bộ X không đạt cổng Y ở vùng Z; KHÔNG
-miễn cổng riêng cho bộ nào. Báo thêm một dòng độ nhạy: nếu đặt độ chính xác lên trên bang-bang thì điểm chọn của bộ đó đổi thế nào (tính lại từ dữ liệu quét).
+5.1. Ổn định: không phân kỳ ở mọi ca CALIB và DRY, SLIP, WEAVE.
+5.2. Dự trữ ổn định đo bằng MÔ PHỎNG, áp chung cho mọi bộ (kể cả SMC và RL không tuyến tính hóa được): chạy lại CALIB với (a) độ lợi của Actuator nhân đôi và (b) thêm một trễ thuần bằng MỘT chu
+kỳ điều khiển (1 ms) giữa bộ điều khiển và Actuator; cả hai lần phải còn ổn định. Mất ổn định = có tín hiệu không hữu hạn, hoặc R (mục 4.1) tăng hơn gấp đôi so với lần chạy danh định (gấp đôi là
+lựa chọn của tác giả, báo độ nhạy 1.5-3 lần). Nguồn khái niệm: Seborg et al. [11] mục 14.7 (tr. 256-257): độ dự trữ biên GM là hệ số mà độ lợi vòng có thể tăng trước khi mất ổn định, trễ thêm lớn
+nhất bằng PM x pi / (180 x omega_g) (phương trình 14-63), khuyến nghị GM 1.7-4.0 và PM 30-45 độ; mục 17.4 (tr. 313): bộ lấy mẫu cộng khâu giữ bậc không tương đương một trễ bằng nửa chu kỳ lấy
+mẫu. Con số 1 ms = một chu kỳ điều khiển = 2 lần trễ nửa chu kỳ là LỰA CHỌN của tác giả (người dùng chốt 2026-10-09): dự phòng cho trễ chưa mô hình hóa (thời gian tính, truyền tin, vòng dòng
+motor), báo độ nhạy ở 0.5 ms và 2-5 ms. Ngưỡng tính bằng thời gian chứ không bằng độ vì trễ ngoài đời là thời gian tuyệt đối (cùng PM 45 độ, PID băng thông 115 rad/s chịu được 6.8 ms còn PI băng
+thông 7 rad/s chịu được 112 ms). Với bộ có mô hình tuyến tính (Map, PI, PID) vẫn tính PM, GM trên hai mặt đường (k_r = 30 và 0) chỉ để BÁO CÁO, không còn là cổng (hàm pi_margins.m, pid_margins.m,
+design_lead.m). Trạng thái: CẦN VIẾT: khối trễ thuần và hệ số độ lợi trên đường bộ điều khiển -> Actuator trong build_closed_loop, và hàm chạy CALIB với hai thay đổi đó.
+5.3. Độ chính xác tĩnh: e_rel <= 5 % theo mục 4.4 trên mọi cửa sổ static (9 cửa sổ 0.1-0.3 g, không gồm ext), cả hai dấu (người dùng chốt 2026-10-11, trước đó 3 %; cả 3 % lẫn 5 % đều là con
+  số tự chọn, chưa có nguồn ngoài, 3 % là ràng buộc gốc của Map; báo độ nhạy ở 3 % và 10 % cho mọi bộ).
+5.4. Bang-bang: CHỈ BÁO CÁO, KHÔNG CÒN LÀ CỔNG từ 2026-10-11 (người dùng chốt). Đo bằng cách chạy CALIB ba lần (cảm biến lý tưởng và hai seed có nhiễu cùng dải), tỉ lệ mẫu từ 2 s mà |T_a_cmd|
+chạm giới hạn T_a,max(v) của Actuator; báo f lý tưởng, f có nhiễu, Delta = trung bình của (f có nhiễu - f lý tưởng) trên hai seed và độ phân tán |Delta1 - Delta2|, cùng S_cmd và TV. Trước đây là
+cổng Delta <= 1 % (1 % tự chọn, không có nguồn). Hàm: calib_bangbang.m (CÓ), chỉ đo cho điểm đã chọn. Điểm chọn không bị ảnh hưởng vì J = R x S đã phạt độ ồn (mục 9.5).
+5.5. Trợ lực ngược chiều: KHÔNG phải cổng từ 2026-10-11; chỉ báo cáo tỉ lệ mục 4.6 cho mọi bộ ở CALIB và ở các ca DRY, SLIP, WEAVE, EDGE (cột Rev_pct), kèm độ nhạy: điểm chọn đổi thế nào nếu
+đặt lại cổng rev <= 1 % hoặc <= 5 % (tính lại từ dữ liệu quét).
+5.6. Thứ tự ưu tiên của các cổng (người dùng chốt 2026-10-09): (1) ổn định và độ dư (5.1, 5.2); (2) độ chính xác tĩnh (5.3). Bang-bang (5.4) và trợ lực ngược chiều (5.5) đã bỏ khỏi danh sách cổng ngày 2026-10-11 (chỉ báo cáo).
+Nguyên tắc xếp: cổng bảo đảm phép đo còn hợp lệ đứng trước cổng dùng chính phép đo đó; lệnh T_a nhảy +-T_a,max mỗi 1 ms không thực hiện được trên motor thật và mô hình chưa có vòng dòng điện,
+nên độ chính xác đo trên một thiết kế bang-bang không đáng tin. Nhãn an toàn hay thoải mái không được dùng vì chỉ là cách gọi của tác giả. Nếu một bộ không có điểm nào qua mọi cổng ở một vùng
+thì bỏ cổng thấp nhất, chọn điểm vi phạm ít nhất (e_rel lớn nhất nhỏ nhất; với bang-bang là chênh lệch tỉ lệ chạm giới hạn nhỏ nhất) và ghi bộ X không đạt cổng Y ở vùng Z; KHÔNG miễn cổng
+riêng cho bộ nào. Báo thêm một dòng độ nhạy: nếu đặt độ chính xác lên trên bang-bang thì điểm chọn của bộ đó đổi thế nào (tính lại từ dữ liệu quét).
 ==============================================================================================================================================================================================
 PHẦN 6 - QUY TẮC CHỌN THAM SỐ
 ==============================================================================================================================================================================================
 6.1. Quét một lưới tham số (hoặc, với RL, một tập ứng viên). Lưới phải ghi cơ sở của từng cận min max và độ phân giải, cận lưới ưu tiên lấy từ biên khả thi tuyến tính hoặc vật lý chứ không
 đặt tay; điểm chọn nằm ở biên lưới thì phải mở rộng lưới một bước (quy tắc hai giai đoạn đặt trước: thô rồi mịn quanh điểm tốt nhất) và kiểm độ phân giải bằng cách giảm nửa bước quanh điểm
 chọn: R và S đổi dưới 5 % thì lưới đủ mịn.
-6.2. Chọn điểm chạy TC1-TC6: trong các điểm qua cổng cứng, lấy các điểm có R <= 1.05 x R nhỏ nhất CỦA CHÍNH BỘ ĐÓ, chọn S nhỏ nhất, rồi kiểm cổng không bang-bang theo thứ tự S tăng dần (hàm
-pick_by_tolerance.m). Bám là ưu tiên một (mục tiêu đề tài là khắc phục trợ lực thừa, tức bám T_d,ref), êm là ưu tiên hai. KHÔNG dùng ngưỡng S_max chung và KHÔNG dùng quy tắc khuỷu để chọn
-(khuỷu chỉ để vẽ mặt Pareto). Báo thêm, chỉ để đọc và không dùng để chọn: R của mỗi bộ tại mức S bằng S của Map.
+6.2. Chọn điểm chạy DRY, SLIP, WEAVE (phiên bản 5, sửa ngày 2026-10-11): trong các điểm qua cổng cứng (ổn định có độ dư 5.2, độ chính xác tĩnh 5.3) VÀ qua ràng buộc dải lái dưới đây, chọn
+điểm có J = R x S nhỏ nhất (hàm pick_by_balance.m, a = 1; báo độ nhạy a = 0.5 và 2, và điểm mà quy tắc cũ 'R trong 5 % của R nhỏ nhất, rồi S nhỏ nhất' sẽ chọn, hàm pick_by_tolerance.m). J
+đổi 1 % êm lấy 1 % bám, không đơn vị, không phụ thuộc một điểm cực trị nên không nhảy khi lưới đổi. KHÔNG dùng ngưỡng S_max chung và KHÔNG dùng quy tắc khuỷu để chọn (khuỷu chỉ để vẽ mặt
+Pareto). RÀNG BUỘC DẢI LÁI (người dùng chốt 2026-10-11): mọi khâu lọc hoặc làm chậm nằm bên trong bộ điều khiển phải giữ độ lợi tại 2 Hz (12.57 rad/s) không nhỏ hơn 1/căn 2 (-3 dB); 2 Hz là
+cận trên của dải đánh lái của người, 0.2-2.0 Hz, không quá 5 Hz (Nguyen, Vu, Sename 2025, tr. 19, trích Yong 2019), còn -3 dB là định nghĩa thông thường của băng thông nên không phải số tự
+chọn. Áp cho từng bộ: Map = độ lợi của khâu lag (lead là khâu sớm pha, không tính); PID = bộ lọc Tf của khâu D; SMC = lớp biên hoặc bộ lọc nếu có; bộ không có hàm truyền (RL): đo bằng mô
+phỏng với lệnh T_s dạng sin 2 Hz. Lý do thêm: nếu không có ràng buộc này J giảm đơn điệu khi khâu lag sâu hơn vì làm chậm hạ S nhanh hơn R tăng (Map: J nhỏ nhất theo mức g_min = 10.6 ở 1.0,
+6.74 ở 0.7, 5.11 ở 0.25 là cận lưới của lag p1 >= 3 rad/s; R 25.9 % lên 37.7 %, vũng nước -87 % lên -122 %), tức J thưởng đúng sự chậm trái mục tiêu bám. Bám vẫn là ưu tiên một, được bảo vệ
+bằng ràng buộc này chứ không bằng dung sai 5 %. Hàm dùng chung: Model/common/pick_by_balance.m.
 6.3. Kết luận chính của một phép so sánh là so cả mặt Pareto (R, S) của các bộ trên cùng trục, không phải so một điểm: mặt của A nằm hẳn dưới mặt của B thì A tốt hơn với mọi quy tắc chọn;
 hai mặt cắt nhau thì báo A tốt hơn khi ưu tiên êm, B khi ưu tiên bám, kèm điểm cắt; hai mặt trùng nhau một đoạn thì nói là cùng đánh đổi và bộ nào chỉ kéo dài thêm; dải S không chồng nhau
 thì nói thẳng là không so trực tiếp được.
 6.4. Ngưỡng hòa 5 %: chênh lệch nhỏ hơn 5 % (hoặc nhỏ hơn độ phân tán giữa các seed nếu lớn hơn) coi là ngang nhau, không nói bộ nào hơn.
-6.5. Số bậc theo vận tốc (Map hai K_max, PI_2K, PID lập lịch): bản nhiều bậc chỉ được giữ nếu R giảm ít nhất 5 % mà S không tăng so với bản một bậc của chính bộ đó, đo trên TK; không đạt thì
+6.5. Số bậc theo vận tốc (Map hai K_max, PI_2K, PID lập lịch): bản nhiều bậc chỉ được giữ nếu R giảm ít nhất 5 % mà S không tăng so với bản một bậc của chính bộ đó, đo trên CALIB; không đạt thì
 ghi là kết quả âm và dùng bản một bậc cho so sánh chính.
 6.6. Riêng RL: tham số được chọn là checkpoint (số bước huấn luyện) và trọng số hàm thưởng; huấn luyện ít nhất 3 seed huấn luyện khác nhau, báo trung bình và độ phân tán; ngưỡng hòa không
 nhỏ hơn độ phân tán giữa các seed; báo ngân sách huấn luyện (số bước, thời gian) và số cấu hình đã thử, ngang nhau về công sức thiết kế với các bộ khác càng tốt (báo rõ nếu không); chạy
 agent tất định khi chấm điểm.
-6.7. Báo số ứng viên đã mô phỏng của mỗi bộ (hiện: PI 59, PID 90, Map theo khung SMC) để người đọc thấy công sức thiết kế có ngang nhau không.
+6.7. Báo số ứng viên đã mô phỏng của mỗi bộ (PI 59, PID 90 theo lần quét cũ) để người đọc thấy công sức thiết kế có ngang nhau không. Với Map lead-lag báo RIÊNG hai số: số giá trị K đã mô
+  phỏng trên CALIB (tham số chỉnh bằng mô phỏng) và số bộ (z, p, z1, p1) đã xét ở bước thiết kế tuyến tính (không mô phỏng vòng kín).
 ==============================================================================================================================================================================================
 PHẦN 7 - BÁO CÁO VÀ QUY TRÌNH
 ==============================================================================================================================================================================================
@@ -134,8 +166,8 @@ PHẦN 7 - BÁO CÁO VÀ QUY TRÌNH
 của lưới, kết quả quét, điểm chọn, ngoại lệ so với quy chuẩn (nếu có) kèm lý do trung thực.
 7.2. Bảng khác biệt cấu trúc trong luận văn: với mỗi bộ ghi tín hiệu đọc (T_s, v, a_y qua T_d,ref...), có khâu tích phân hay không, số tham số chỉnh, số ứng viên đã thử, ngoại lệ so với quy
 chuẩn. Đây là thứ giúp người đọc hiểu một bộ hơn bộ khác vì cấu trúc hay vì chỉnh.
-7.3. Báo cáo kết quả theo ba nhóm ca (mục 3.2) kèm bảng từng ca; với nhóm đổi mu dùng chỉ tiêu mục 4.5; không lấy trung bình giữa các nhóm. Báo cùng lúc R, S, TV, S_cmd, độ chính xác tĩnh,
-trợ lực ngược chiều, bang-bang cho mọi bộ.
+7.3. Báo cáo kết quả theo ba nhóm ca chấm DRY, SLIP, WEAVE (mục 3.2) kèm bảng từng ca, và ca EDGE (chỉ báo cáo) tách riêng cùng bảng e_ext của CALIB; với nhóm đổi mu dùng chỉ tiêu mục 4.5;
+không lấy trung bình giữa các nhóm. Báo cùng lúc R, S, TV, S_cmd, độ chính xác tĩnh, trợ lực ngược chiều, bang-bang cho mọi bộ.
 7.4. Kết quả so sánh nhiều bộ: Result/Compare/<A>_vs_<B>/ bằng seed chung 99999 (make_pair_comparisons) và hình mặt Pareto chồng nhau. Kết luận trong luận văn viết theo dạng đánh đổi và khác
 biệt cấu trúc, không viết "bộ này chỉnh tốt hơn" khi khác biệt đến từ cấu trúc.
 7.5. Thay đổi quy chuẩn: chỉ người dùng được duyệt; mỗi thay đổi ghi vào phần "Nhật ký thay đổi" cuối file này kèm ngày, lý do, và danh sách bộ điều khiển phải chọn lại hoặc chạy lại; áp
@@ -153,9 +185,124 @@ PHẦN 8 - HIỆN TRẠNG ÁP DỤNG (cập nhật mỗi khi đổi)
   select_pid, design_map, map_tk_erel, run_mapll_sweep.
 - Bộ phải chọn lại theo bản này: Map, PI, PID (PI_2K và Map hai bậc đã bỏ, chỉ giữ một dòng kết quả âm). Kết quả đã có của các bộ này được chọn trên TK cũ nên không dùng để so sánh nữa.
 - Còn mở: mức sai lệch tham số và các mức trễ của mục 4.8 (chỉ báo cáo, không làm cổng).
+- 2026-10-10, phiên bản 3 (người dùng chốt): ca TK đổi tên CALIB; sáu ca TC1-TC6 thay bằng ba ca DRY, SLIP, WEAVE (mục 3.2); hàm tk_* đổi thành calib_*, test_cases thành make_cases, run_test_cases thành run_cases; kết quả đặt trong Result/Controllers/<Ctrl>/{Design,Calib,Cases} với tên file theo quy tắc đặt tên của Tracking/CLAUDE.md; trường dữ liệu TK_* trong data/*.json đổi thành CALIB_*. Cổng, ngưỡng, quy tắc chọn tham số (chạy trên CALIB, nội dung ca không đổi) KHÔNG đổi, nên không bộ nào phải chọn lại tham số; chỉ chấm lại trên ba ca mới. Các mục lịch sử bên dưới giữ tên cũ (TK, TC1-TC6).
+- 2026-10-11, phiên bản 4: mã đã cập nhật (make_cases.m: CALIB với ext_*, ba ca chấm, EDGE; calib_run.m: e_ext; run_cases.m); test_calib PASS (30 kiểm). EDGE đã chạy cho Map (s00000) và
+  PID (s10000), chưa chạy cho PI, SMC, ISMC. Kết quả CALIB và Cases của mọi bộ chọn trên định nghĩa cũ (11 cửa sổ) CHƯA tính lại; Map làm lại trước (khung Map).
+==============================================================================================================================================================================================
+PHẦN 9 - NGUỒN CỦA CÁC MỐC VÀ VIỆC CÒN LẠI (phiên bản 5, 2026-10-11)
+==============================================================================================================================================================================================
+Dàn ý do khung Linear đề xuất và người dùng duyệt ngày 2026-10-11; khung COMMON tìm nguồn trong References/ và trên mạng. Mỗi mốc có một trong ba nhãn: [NGUỒN] đã kiểm trong file gốc hoặc
+nguồn công khai đã mở được (ghi trang hoặc đường dẫn); [GIẢI THÍCH] suy ra được từ vật lý, dữ liệu hoặc thống kê, không phải chọn tay; [CẦN NGUỒN] chưa tìm được hoặc chưa mở được bản gốc, kèm
+hướng xử lý. Các Phần 1-8 giữ nguyên cho tới khi khung Linear làm lại các mục đánh dấu "VIỆC CỦA LINEAR"; mục nào ở đây mâu thuẫn với Phần 1-8 thì Phần 9 ưu tiên sau khi người dùng duyệt kết
+quả.
+9.1. Môi trường (Phần 2 của dàn ý)
+- Chu kỳ điều khiển 1 ms: [NGUỒN] Nguyen, Vu, Sename (2025), References/CEPS ANFIS-FOC Model.pdf, trang 32 của PDF: ECU EPS của Bosch và Nexteer dùng vi điều khiển 200-300 MHz, "supporting
+  control loops below 1 ms", và tốc độ điều khiển 1 kHz là mức "required in EPS applications". Lee 2018 không nêu chu kỳ (đã tìm trong PDF, không có). Bỏ phương án dự phòng "tỉ lệ với cộng
+  hưởng 6.2 Hz".
+- Dự phòng F = T_f = 2 N.m: [NGUỒN] Slotine và Li mục 7.1.3 (cận bất định), T_f từ Lee 2018 Bảng III; băng thông motor 100 Hz: [NGUỒN] Lee 2018 Bảng III. Không đổi.
+- Nhiễu cảm biến sigma = 1 bước lượng tử: [NGUỒN GIÁN TIẾP] độ phân giải và độ chính xác lấy từ datasheet cảm biến (Valeo cho mô-men và góc, Bosch LWS cho góc vô-lăng, Bosch MM5.10-R cho a_y
+  và gamma, Ragab và cộng sự cho tốc độ xe; References.txt [7]-[10], [17]); người dùng chốt 2026-10-11 coi các số trích từ datasheet là đã có nguồn và đúng. Tôi chưa mở được bản datasheet gốc
+  để đối chiếu từng số (đường dẫn tải trả 404, tìm kiếm không nêu mật độ nhiễu), nên ghi rõ đây là nguồn người dùng bảo đảm.
+- Chu kỳ cập nhật v, a_y, gamma = 10 ms: [NGUỒN GIÁN TIẾP] datasheet Bosch (LWS: chu kỳ CAN 10 ms; MM5.10-R: tốc độ cập nhật CAN 100 Hz hoặc 200 Hz, bảng hiệu chuẩn 68924043); người dùng chốt
+  2026-10-11 coi các số trích từ datasheet là đã có nguồn và đúng. Riêng chu kỳ của tín hiệu tốc độ xe qua ESC không có bảng thông điệp CAN công khai để đối chiếu; vẫn ghi theo datasheet.
+  Không cần báo độ nhạy riêng cho mốc này.
+- Phần lõi từng bộ và danh sách cấm: không số, giữ (mục 2.4, 2.5).
+9.2. Ca thử và seed (Phần 3 của dàn ý)
+- Dải a_y của CALIB và EDGE (0.1-0.3 g và 0.4 g): [NGUỒN] bảng T_d,ref của Li và Xia (Bảng 4, tới 0.4 g) và [GIẢI THÍCH] giới hạn Plant (data/plant_limits.json). Tốc độ 20, 60, 100 km/h:
+  [GIẢI THÍCH] phủ dải 20-100 km/h. Bậc mu 0.8 -> 0.6 trong dải 0.2-0.8: [GIẢI THÍCH]. Seed 10000, 99999: quy ước, không ảnh hưởng kết quả. Không đổi.
+9.3. Chỉ tiêu (Phần 4 của dàn ý)
+- Lọc cao của S ở 5 Hz: [NGUỒN] Nguyen, Vu, Sename (2025), trang 19 của PDF (trích luận án Yong W., Jilin University, 2019): tài xế lái ở tần số khoảng 0.2-2.0 Hz và không vượt 5.0 Hz, dải
+  hay gặp nhất là 0.2-1.0 Hz. Vậy 5 Hz là cận trên của dải lái của người, nên S chỉ đo dao động nằm ngoài dải lái; mốc 2 Hz dùng ở Map (g_min) là cận trên của dải lái thường gặp. Đã có nguồn,
+  không cần đổi số.
+- Trọng số bằng nhau của 4 nhóm R: [GIẢI THÍCH] không ưu tiên nhóm nào, báo độ nhạy +-50 %. Bỏ 2 s đầu ca: [GIẢI THÍCH] thời gian quá độ khởi động.
+- Ngưỡng |T_s| >= 0.5 N.m của chỉ tiêu trợ lực ngược (chỉ báo cáo): [NGUỒN GIÁN TIẾP] Heinrich và cộng sự (2022), Automotive and Engine Technology 7, 53-64, doi:10.1007/s41104-021-00093-2,
+  trang 3 của PDF: "a range of 0.44-0.58 Nm was identified as the perceptible tactile threshold", trích Buschardt (2003), luận án "Synthetische Lenkmomente", TU Berlin (chưa đọc bản gốc, cách
+  trích như Nguyen trích Yong). 0.5 N.m nằm trong dải 0.44-0.58 N.m nên là mốc có nguồn; báo thêm độ nhạy ở 0.3 và 1.0 N.m.
+9.4. Cổng (Phần 5 của dàn ý)
+- Độ dư độ lợi x2: [NGUỒN] Seborg mục 14.7 (GM khuyến nghị 1.7-4.0); độ dư trễ +1 ms: [NGUỒN] Seborg mục 17.4 (lấy mẫu và giữ tương đương trễ dt/2) cộng [GIẢI THÍCH] một chu kỳ trễ tính toán
+  của bộ điều khiển số. Đã có, không đổi.
+- Định nghĩa mất ổn định (5.2): GIỮ NGUYÊN "R tăng hơn 2 lần so với danh định" (người dùng chốt 2026-10-12, không đổi). Đề xuất tiêu chí không số theo Seborg Chương 11 (tín hiệu không hữu
+  hạn, biên độ |e_T| tăng dần, lệnh bám giới hạn liên tục) đã được cài thử và bỏ: đo trên điểm đối chứng cố ý xấu (PI Kp 30 Ki 2000, R tăng 2.36 lần; PID Kp 40 Ki 2000, R tăng 2.57 lần) cả
+  hai vẫn qua, vì mô-men bị chặn bởi T_a,max và có chống bão hòa nên mô phỏng không phát nổ; tiêu chí chỉ bắt được nổ số. Con số 2 là lựa chọn của tác giả, báo độ nhạy 1.5, 2, 3
+  (calib_margin.m có sẵn).
+- Không bang-bang (ngưỡng 1 %): [CẦN NGUỒN] không có tài liệu nêu ngưỡng. Đề xuất thay bằng mốc thống kê [GIẢI THÍCH]: loại điểm khi chênh lệch Delta = f_có nhiễu - f_lý tưởng lớn hơn độ phân
+  tán giữa các seed của Delta đo được trên chính điểm đó (cần seed thứ hai cùng dải, QuyChuan 3.3); báo thêm độ nhạy ở 1 %. VIỆC CỦA LINEAR: tính độ phân tán seed cho các điểm chung kết.
+- Sai số tĩnh e_rel <= 5 %: [NGUỒN] Deborne, Khouri Silva, Kemeny (2014), SAE Technical Paper 2014-01-0447, doi:10.4271/2014-01-0447, mục Conclusion (trang 5): ngưỡng phân biệt (JND) của
+  mô-men vô-lăng đo trên 18 người (22-56 tuổi), ở 1, 3, 5 N.m, xác suất đúng 79.4 %, ngoài lúc lái: theo chiều kim đồng hồ từ 14.8 % (1 N.m) xuống 10.2 % (5 N.m), ngược chiều từ 18 % xuống
+  12.7 %, JND giảm khi mô-men tăng. Mô-men tham chiếu của ta nằm trong 1.0-3.4 N.m nên JND tương ứng khoảng 10-18 %; 5 % thấp hơn nửa JND nhỏ nhất đo được nên sai số tĩnh dưới ngưỡng cảm nhận.
+  Bài chỉ đo lúc không lái và mô-men tĩnh, chưa đo khi đang lái, ghi trong hạn chế. Tài liệu phụ: Pang, Tan, Durlach (1991), Perception & Psychophysics 49(6), 531-540, trang 1: JND lực khoảng
+  7 % ở 2.5-10 N bằng ngón tay (đã đọc bản PDF). Giữ 5 %, báo độ nhạy 3 % và 10 % (10 % bằng JND nhỏ nhất của vô-lăng).
+9.5. Quy tắc chọn (Phần 6 của dàn ý)
+- Ràng buộc tích phân PID Ti >= Pu/2 và PI Ti >= Pu/1.2: [NGUỒN] Seborg Bảng 12.7 (trang 227 của PDF, phương pháp chu kỳ liên tục của Ziegler và Nichols; Kcu và Pu đo từ mô hình). Bộ lọc đạo
+  hàm Tf >= 0.1 Td: [NGUỒN] Seborg phương trình 8-12 (trang 141: hằng số alpha thường 0.05-0.2, hay dùng 0.1). Map PM >= 45 độ: [NGUỒN] Seborg mục 14.7 (PM 30-45 độ), chỉ là công cụ thiết kế,
+  không còn là cận lưới. Các mục này đã kiểm trong References/Process_Control.pdf.
+- Điểm chọn cực tiểu J = R x S: [GIẢI THÍCH] trao đổi phần trăm ngang nhau, không phụ thuộc đơn vị. Ngưỡng hòa thay 5 % bằng độ phân tán giữa các seed: [GIẢI THÍCH] thống kê. Lập lịch theo
+  vận tốc chỉ giữ khi R giảm hơn ngưỡng hòa mà S không tăng. Cận lưới mở rộng tới khi một cổng chặn hoặc R phẳng; so mặt Pareto và báo số ứng viên: giữ, không số.
+- Ràng buộc dải lái (mục 6.2, thêm 2026-10-11): [GIẢI THÍCH] và [NGUỒN] Nguyen 2025 tr. 19 (dải lái 0.2-2.0 Hz); mốc -3 dB là định nghĩa băng thông. VIỆC CỦA LINEAR và SMC: kiểm điểm đã chọn
+  (PID: Tf của khâu D có giữ độ lợi >= 0.707 tại 2 Hz không; SMC: lớp biên hoặc bộ lọc nếu có) và chọn lại nếu vi phạm; Map đã làm.
+- VIỆC CỦA LINEAR (a) KHÔNG ĐỔI: giữ tiêu chí R tăng hơn 2 lần (người dùng chốt 2026-10-12, xem trên); đã xong: (b) tính độ phân tán seed cho cổng bang-bang
+  và ngưỡng hòa; (c) chọn lại điểm PI, PID theo quy tắc J = R x S và ràng buộc Ti, Tf trên CALIB mới; (d) báo độ nhạy e_rel 3 % và 10 %, ngưỡng rev 0.3 và 1.0 N.m. Các mốc cảm biến (sigma, chu
+  kỳ cập nhật) đã có nguồn, không còn trong danh sách việc.
+9.6. Báo cáo và nhật ký thay đổi (Phần 7 của dàn ý)
+- Giữ. Ghi phiên bản 5 là MỘT lần đổi duy nhất, nêu rõ làm sau khi thấy kết quả của phiên bản 4 (PI, PID chạy lại trên CALIB v4), kèm độ nhạy ở các mốc cũ (e_rel 3 % và 5 %, rev 1 % và 5 %,
+  quy tắc R trong 5 %).
+
 ==============================================================================================================================================================================================
 NHẬT KÝ THAY ĐỔI QUY CHUẨN
 ==============================================================================================================================================================================================
+- 2026-10-11 (cùng ngày, lần bốn): thêm ca RAMP (mục 3.2) vào make_cases() (năm ca: DRY, RAMP, SLIP, WEAVE, EDGE), CHỈ BÁO CÁO; CALIB giữ nguyên. Người dùng bác phương án thêm cửa sổ static ở
+  40 km/h vào CALIB vì giống chỉnh riêng cho Map (nếu sửa thì phải quét mỗi bước 10 km/h). Ảnh hưởng: MỌI bộ chạy thêm RAMP khi chạy run_cases (308.6 s mô phỏng); không cổng, không điểm chọn
+  nào đổi; run_cases.m và make_pair_comparisons.m lấy ca từ make_cases() nên tự thêm RAMP.
+- 2026-10-11, bổ sung phiên bản 5 (người dùng chốt, sau khi chọn lại Map theo J = R x S): mục 6.2 viết lại: chọn điểm cực tiểu J = R x S (thay quy tắc 'R trong 5 % rồi S nhỏ nhất' ở thân văn
+  bản, vốn mâu thuẫn với 9.5) cộng RÀNG BUỘC DẢI LÁI: khâu lọc hoặc làm chậm trong bộ điều khiển giữ độ lợi >= 0.707 (-3 dB) tại 2 Hz. Lý do: trên Map, J = R x S không có cực tiểu bên trong
+  (cực tiểu mỗi mức g_min: 10.6, 8.26, 7.30, 6.74, 6.31, 5.98, 5.67, 5.51, 5.11 tại g_min 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, dừng ở cận lưới lag), điểm J (g_min 0.25, K 5.8) làm R
+  25.6 % lên 37.7 %, trợ lực thừa trên vũng nước -87 % lên -122 %. Với ràng buộc, Map chọn g_min 0.7, K 6 (R 27.05 %, S 0.249, J 6.74, e_rel 3.17 %); điểm cũ theo quy tắc 5 % là g_min 0.7, K
+  8.5. ĐÂY LÀ LẦN THỨ TƯ ĐỔI QUY TẮC SAU KHI THẤY KẾT QUẢ (e_rel 3 -> 5 %, rev, bang-bang, và ràng buộc này), đưa ra sau khi thấy J suy biến trên Map; báo cáo phải nêu và báo điểm chọn khi
+  không có ràng buộc (g_min 0.25, K 5.8) và theo quy tắc 5 %. Ảnh hưởng: PI, PID, SMC, ISMC kiểm ràng buộc trên điểm đã chọn (PI không có khâu lọc nên đạt; PID: Tf; SMC: lớp biên). PHÁT HIỆN
+  KÈM THEO (Map, ca DRY): cửa sổ static của CALIB chỉ ở 20, 60, 100 km/h nên cổng e_rel không thấy sai số ở tốc độ khác; Map K 6 có e_rel CALIB 3.17 % nhưng ca DRY v40a0p3r +13.0 % (K 8:
+  +0.5 %) vì độ dốc K giới hạn bảng ở 40 km/h; khung COMMON xét có thêm cửa sổ static ở 40 hoặc 80 km/h không.
+- 2026-10-11 (cùng ngày, lần ba): người dùng chốt các số trích từ datasheet cảm biến (độ phân giải, nhiễu sigma = 1 bước, chu kỳ cập nhật 1 ms và 10 ms) là đã có nguồn và đúng; mục 9.1 đổi
+  nhãn sang [NGUỒN GIÁN TIẾP] và bỏ yêu cầu báo độ nhạy sigma và chu kỳ ESC. Còn [CẦN NGUỒN]: chỉ ngưỡng bang-bang (đã đề xuất mốc thống kê).
+- 2026-10-11, bổ sung phiên bản 5 (người dùng chốt, sau khi khung Linear đo độ phân tán seed): bang-bang (mục 5.4) đổi từ CỔNG sang CHỈ BÁO CÁO; thứ tự cổng còn ổn định có độ dư > độ chính
+  xác tĩnh. Lý do: ngưỡng 1 % không có nguồn; quy tắc thống kê đề xuất ở 9.4 (Delta lớn hơn độ phân tán seed) loại HẾT mọi điểm PID đo được (Delta 0.02-0.63 % mẫu, dương và ổn định giữa
+  hai seed, độ phân tán 0.004-0.08 %), tức không phân biệt được; quy tắc Delta <= f lý tưởng là tự chế. Kiểm tra tác động trên dữ liệu có sẵn: PI, PID: mọi finalist đo được (Delta <= 0.63
+  %) qua ngưỡng 1 % nên bỏ cổng không đổi điểm chọn; Map (55 điểm qua e_rel <= 5 % ở bảng quét chính và quét vượt cận): quy tắc J = R x S chọn cùng điểm có và không có cổng (các điểm rớt
+  cổng 1 % có S 0.66-0.91, J lớn hơn nhiều). THAY ĐỔI NÀY LÀ LẦN THỨ BA ĐỔI CỔNG SAU KHI THẤY KẾT QUẢ (e_rel 3 % sang 5 %, rev, bang-bang), nhưng điểm chọn không đổi. Ảnh hưởng mã:
+  select_pi.m, select_pid.m (đo bang-bang chỉ cho điểm chọn); cần cập nhật tương tự select_map.m, design_map.m, run_calib_sweep.m (Map) và select_smc.m, run_smc_sweep.m, select_ismc.m,
+  run_ismc_sweep.m (SMC, ISMC) khi các khung đó làm.
+- 2026-10-11 (cùng ngày, sau khi người dùng thêm ba bài vào References/): đã đọc SAE 2014-01-0447 (Deborne và cộng sự: JND mô-men vô-lăng 10.2-18 %), Pang và cộng sự 1991 (JND lực 7 %) và
+  Heinrich và cộng sự 2022 (ngưỡng xúc giác 0.44-0.58 N.m, trích Buschardt 2003). Hai mốc đổi nhãn: e_rel 5 % thành [NGUỒN], ngưỡng rev 0.5 N.m thành [NGUỒN GIÁN TIẾP]. Luận án Yong 2019 (dải
+  lái 0.2-2.0 Hz) và Buschardt 2003 được coi là đã có theo cách trích gián tiếp qua Nguyen 2025 và Heinrich 2022. Còn [CẦN NGUỒN]: sigma cảm biến, chu kỳ ESC của tín hiệu tốc độ xe, ngưỡng
+  bang-bang.
+- 2026-10-11, phiên bản 5 (người dùng duyệt dàn ý do khung Linear đề xuất; khung COMMON tìm nguồn): thêm Phần 9 gắn nhãn [NGUỒN], [GIẢI THÍCH], [CẦN NGUỒN] cho từng mốc (1 ms, 10 ms, 5 Hz,
+  e_rel 5 %, mất ổn định, bang-bang, Ti, Tf, PM). Đã có nguồn mới: chu kỳ 1 ms và dải lái 0.2-2.0 Hz (không quá 5 Hz) từ Nguyen 2025; JND lực 7 % (Pang 1991); định nghĩa ổn định (Seborg Chương
+  11). Còn [CẦN NGUỒN]: sigma cảm biến, chu kỳ ESC của tín hiệu tốc độ, ngưỡng rev 0.5 N.m, ngưỡng bang-bang. Chưa đổi mã hay kết quả; việc làm lại của Linear nằm ở 9.5.
+- 2026-10-11, bổ sung phiên bản 4 (người dùng chốt, sau khi làm lại PI và PID trên CALIB mới): trợ lực ngược chiều (mục 4.6, 5.5) đổi từ CỔNG <= 1 % sang CHỈ BÁO CÁO; thứ tự cổng còn ổn
+  định và độ dư > không bang-bang > độ chính xác. Lý do: ngưỡng 1 % là tự chọn, không có nguồn; trên lưới PI và PID rev nhỏ nhất vẫn khoảng 1.4 % (không điểm nào qua), và rev đếm cả những
+  lúc T_a đổi dấu trễ hơn T_s khi lái sin hoặc đổi mu nên có phần là hệ quả của trễ, không riêng lỗi bộ điều khiển (nhận định này chưa kiểm theo từng cửa sổ); cổng làm kẹp Ki ở khoảng 3 và
+  loại điểm có R nhỏ nhất (PID: R 19.2 % tại Ki 8, rev 7.7 %, bị loại, so với R 24.5 % được chọn). THAY ĐỔI NÀY LÀM SAU KHI ĐÃ THẤY kết quả (không điểm nào qua rev <= 1 %), và là lần thứ
+  hai đổi cổng sau khi thấy kết quả trong ngày (lần một: e_rel 3 % -> 5 %), nên báo cáo phải nêu điều đó cùng độ nhạy ở cổng rev <= 1 %, <= 5 % và không cổng. Ảnh hưởng: áp dụng cho MỌI
+  bộ; điểm đã chọn của Map, PI, PID, SMC, ISMC bằng quy tắc có cổng rev phải chọn lại từ dữ liệu quét (chọn lại bằng cách lọc bảng quét, nhưng điểm chung kết mới cần chạy lại bang-bang và
+  độ dư; điểm nằm ở biên lưới phải mở rộng lưới theo 6.1). Rev vẫn được báo cáo ở bốn ca.
+- 2026-10-11, phiên bản 4 (người dùng chốt, kế hoạch làm lại Map): (1) CALIB giữ nguyên ca nhưng hai cửa sổ 0.4 g chuyển sang nhóm ext_*, ngoài R và ngoài cổng e_rel (9 cửa sổ static 0.1-0.3
+  g); thêm chỉ tiêu báo cáo e_ext có dấu; (2) SLIP, cảnh down: 0.35 g -> 0.3 g; (3) ca mới EDGE (vùng cực, chỉ báo cáo, mục 3.2 và 4.10) gộp vào make_cases() (bốn ca), run_cases.m thêm cột
+  S_Nm, Rev_pct, Peak_Ta_pct_of_Tamax. Ảnh hưởng: R và e_rel đổi định nghĩa nên MỌI bảng quét và điểm chọn cũ của Map, PI, PID, SMC, ISMC (chọn trên định nghĩa 11 cửa sổ) lỗi thời và phải chọn lại trên
+  CALIB mới (CHƯA CHẠY, chờ người dùng); kết quả DRY, SLIP, WEAVE cũ của SLIP/down không còn so được. Bản 3 ghi 'không bộ nào phải chọn lại' nay bị thay bằng dòng này.
+  Lý do (người dùng chốt 2026-10-11): vùng lái thường quan trọng hơn vùng cực, kỹ sư thật không đánh đổi ổn định và độ êm ở vùng lái thường vì vùng cực; bảng T_d,ref gần phẳng ở 0.3-0.4 g
+  (60 km/h tăng 2.8 -> 2.9 N.m; Ren và Deng 2014 cũng thấy mô-men tăng chậm dần tới hằng số) nên Map cần độ dốc rất lớn, vượt trần ổn định K_stab = 9.5 (tính giải tích: e_rel ở 0.4 g còn 42
+  % tại K = 9.5 và 10 % tại K = 30). THAY ĐỔI NÀY LÀM SAU KHI ĐÃ THẤY e_rel 57 % của Map ở 0.4 g, nên báo cáo phải nêu điều đó cùng độ nhạy: cổng 3 % và 5 % trên 0.1-0.3 g, và kết quả ca
+  EDGE của MỌI bộ. Ngưỡng e_rel 3 % và các ngưỡng 1 % (trợ lực ngược, bang-bang) KHÔNG đổi trong lần này. Phương án đã bàn và bác: trung bình có trọng số cho e_rel (che cửa sổ xấu, thêm hai
+  tham số tự chọn); cắt bảng T_d,ref ở 0.3 g (phải tính lại T_a,max và chạy lại mọi thứ); Map hai bậc K theo a_y (K cao không vượt K_stab, CALIB không còn ca để chọn K đó).
+- 2026-10-11, bổ sung phiên bản 4 (người dùng chốt: Map làm theo bài báo [1], lead-lag đầy đủ): mục 2.4 phần lõi của Map thêm khâu lag (nối tiếp khâu lead, độ lợi DC bằng 1); mục 6.7 báo
+  riêng số K đã mô phỏng và số bộ (z, p, z1, p1) xét ở bước thiết kế tuyến tính. Lý do: [1] III.A phương trình (16) và III.D dùng lead-lag (lead tăng pha tối đa khoảng 55 độ, lag hạ độ lợi
+  tần số cao); trên mô hình tuyến tính tại 60 km/h, 0.2 g, lead-lag K = 10 đạt PM 45.4 độ với độ lợi tần số cao 87 so với 188 của lead K = 6.75 (nhiễu lệnh 0.75 so 1.46 N.m). Thay đổi này
+  làm sau khi đã thấy Map chỉ lead kém PI ở 5 trong 6 ca cũ, nên báo cáo phải nêu điều đó và giữ bản chỉ lead như một biến thể đối chứng chạy trên cùng CALIB. Ảnh hưởng: chỉ Map phải làm lại
+  bước thiết kế khâu bù, dựng model, quét K và chạy ca; các bộ khác không phải chọn lại vì thay đổi này.
+- 2026-10-11, bổ sung phiên bản 4 (người dùng chốt, khi bắt đầu làm lại Map lead-lag): cổng độ chính xác tĩnh e_rel đổi từ 3 % sang 5 % (mục 5.3), trên 9 cửa sổ static 0.1-0.3 g. Lý do: cả 3
+  % và 5 % đều tự chọn, không có nguồn ngoài; 5 % nằm trong dải độ nhạy mà quy chuẩn đã bắt báo; theo tính toán giải tích trên Map, với 5 % khoảng K thấp nhất cho phép là khoảng 5.5 thay vì
+  khoảng 6.25 với 3 %, và hai cổng 3 % (độ chính xác) và 1 % (trợ lực ngược) chỉ để lại một khe rất hẹp. THAY ĐỔI NÀY LÀM SAU KHI ĐÃ THẤY kết quả của Map (không K nào đạt 3 % cùng 1 % trợ
+  lực ngược), nên báo cáo phải nêu và báo độ nhạy ở 3 % và 10 %. Ngưỡng 1 % của bang-bang không đổi (người dùng chốt giữ bang-bang 1 %); trợ lực ngược không còn là cổng (xem mục 4.6, 5.5 và bullet
+  đầu của phiên bản 4). Ảnh hưởng: áp dụng cho MỌI bộ; các điểm đã chọn với cổng 3 % có thể đổi (cổng nới ra), cần chọn lại từ dữ liệu quét khi chọn lại với R mới (khung COMMON và các khung PI, PID, SMC).
 - 2026-10-08, phiên bản 1: lập văn bản từ các quy tắc đã chốt trong Tracking/CLAUDE.md (bỏ S_max chung, chọn R trong 5 % rồi S nhỏ nhất, cổng không bang-bang, không phần ngoài lõi, giữ 6 TC)
   và bổ sung theo đề xuất của người dùng sau khi phát hiện hai khung đo sai số xác lập khác nhau: thủ tục đo cho mọi chỉ tiêu, dự trữ ổn định bằng mô phỏng cho SMC và RL, chỉ tiêu trợ lực
   thừa, trợ lực ngược chiều, độ bền, quy tắc cho RL, cơ sở của lưới, báo cáo theo ba nhóm ca. Bộ phải chọn lại khi áp dụng đầy đủ: Map, PI, PID.
@@ -169,3 +316,4 @@ NHẬT KÝ THAY ĐỔI QUY CHUẨN
   khỏi lõi. PID không đổi (đã vi phân trên T_s đo). Không bộ nào phải chọn lại vì thay đổi này.
 - 2026-10-09, bổ sung phiên bản 2 (người dùng chốt): T_a,max = nhu cầu + F (F = T_f, Slotine và Li [12], Nguyen et al. [13]); tách khối AssistLimit khỏi Actuator; bộ điều khiển được đọc
   T_a_max và T_a_lim (2.2, 2.3). Ảnh hưởng: mọi bộ điều khiển và kết quả cũ phải chạy lại (đã xóa sạch); ref.txt mục 1.5 và Bảng 3 đã cập nhật.
+- 2026-10-10, phiên bản 3 (người dùng chốt): ca TK đổi tên CALIB; sáu ca TC1-TC6 thay bằng ba ca DRY, SLIP, WEAVE (mục 3.2); hàm tk_* đổi thành calib_*, test_cases thành make_cases, run_test_cases thành run_cases; kết quả đặt trong Result/Controllers/<Ctrl>/{Design,Calib,Cases} với tên file theo quy tắc đặt tên của Tracking/CLAUDE.md; trường dữ liệu TK_* trong data/*.json đổi thành CALIB_*. Cổng, ngưỡng, quy tắc chọn tham số (chạy trên CALIB, nội dung ca không đổi) KHÔNG đổi, nên không bộ nào phải chọn lại tham số; chỉ chấm lại trên ba ca mới. Các mục lịch sử bên dưới giữ tên cũ (TK, TC1-TC6).

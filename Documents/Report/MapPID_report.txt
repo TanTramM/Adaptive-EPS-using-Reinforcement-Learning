@@ -1,0 +1,149 @@
+========================================================================================================================
+Over-assist mitigation in column-type electric power steering: assist map versus PID torque feedback (progress report, 2026-10-10)
+========================================================================================================================
+Master thesis progress report, HCMUT. Student: Tran Minh Tan. Supervisor: Dr. Phung Thanh Huy. This report summarizes the model, the evaluation method, the two controllers that are planned for a first paper (an assist map, Map, which is the industrial baseline, and a PID controller that tracks a reference steering torque; PI is shown as the intermediate step), the results obtained so far and the open issues. All numbers are generated from the simulation result files; the code is in MATLAB/Simulink R2023a.
+
+------------------------------------------------------------------------------------------------------------------------
+1. Problem
+------------------------------------------------------------------------------------------------------------------------
+In a column-type electric power steering (C-EPS) system an electric motor adds an assist torque T_a to the column so that the driver feels a steering torque that depends on speed and lateral acceleration. Production systems compute T_a from a calibrated assist map of the measured torsion-bar torque T_s and the vehicle speed v. The map is calibrated on a dry road. When the road friction coefficient mu drops while the car is cornering, the self-aligning torque of the front tires collapses; with the same assist the driver suddenly needs less hand torque than intended. This is over-assist: the steering feels too light exactly when the front tires are close to their grip limit.
+The question studied here is how much a closed-loop controller that tracks a reference steering torque T_d,ref(v, a_y) removes over-assist compared with the assist map, and what it costs in assist-torque smoothness when realistic sensor noise and quantization are present. The comparison is made under one shared set of rules fixed before tuning (Section 3).
+
+------------------------------------------------------------------------------------------------------------------------
+2. Model
+------------------------------------------------------------------------------------------------------------------------
+2.1. Closed loop
+The simulation is built from interchangeable blocks (Figure 1): Plant, Sensors, the controller, AssistLimit and Actuator, together called PRSM (everything except the controller). The driver is a steering-angle source theta1(t) computed from a target lateral acceleration on a dry road, so every controller receives exactly the same steering input, and when mu drops the driver keeps the same angle. The controller reads measured signals by port name; scoring always uses the TRUE signals.
+[Figure 1: Closed-loop structure used for every controller (dashed blocks only for stability-margin tests; scoring uses the true T_s and T_d,ref) | Result/Report/Map_vs_PID/Map_vs_PID_block.png]
+2.2. Plant
+The steering column is modelled with the torsion bar and one column inertia (Lee et al. 2018), with viscous damping and Coulomb friction smoothed by tanh:
+  (1)  T_s = K (theta1 - theta2)
+  [ T_s = K\left(\theta_1 - \theta_2\right) ]
+  (2)  J_col theta2_ddot = T_a - T_r + T_s - T_f tanh(c theta2_dot) - C_col theta2_dot
+  [ J_{col}\,\ddot{\theta}_2 = T_a - T_r + T_s - T_f\tanh\left(c\,\dot{\theta}_2\right) - C_{col}\,\dot{\theta}_2 ]
+The front lateral force follows the Pacejka Magic Formula with D = mu F_zf, so the self-aligning torque T_r (pneumatic trail plus caster) depends on mu. The vehicle is a linear two-degree-of-freedom bicycle model with states sideslip beta and yaw rate gamma at constant speed:
+  (3)  m v (beta_dot + gamma) = F_yf + F_yr,   Iz gamma_dot = l_f F_yf - l_r F_yr,   a_y = (F_yf + F_yr) / m
+  [ m v\left(\dot{\beta} + \gamma\right) = F_{yf} + F_{yr},\quad I_z\dot{\gamma} = l_f F_{yf} - l_r F_{yr},\quad a_y = \dfrac{F_{yf} + F_{yr}}{m} ]
+The four states (theta2, theta2_dot, beta, gamma) are the minimum the physics requires: the controllers do not read them, but every scored quantity (T_s, a_y, T_r) is produced by them, and the column states create the resonance that limits the feedback bandwidth (Section 4).
+Table 1: Main plant parameters (data/params.json)
+symbol | value | source
+K (torsion bar) | 143.24 N.m/rad | Lee 2018
+J_col, C_col | 0.11 kg.m2, 1.35 N.m.s/rad | Lee 2018
+T_f (Coulomb friction) | 2.0 N.m | Lee 2018
+m, Iz | 1573 kg, 2873 kg.m2 | Rajamani
+l_f, l_r | 1.10 m, 1.58 m | Rajamani
+C_alpha_f (front axle) | 160000 N/rad | Rajamani (2 x 80000)
+
+2.3. Reference, assist limit, actuator and sensors
+The reference steering torque T_d,ref(v, a_y) is a 17 x 17 table built from published ideal steering-torque data (20-100 km/h, 0-0.4 g). The assist limit is T_a,max(v) = T_a,req(v) + F with F = T_f = 2.0 N.m as the bound on unmodelled friction (structure of Slotine and Li, Sec. 7.1.3); T_a,max = 5.74, 9.80, 9.02, 8.52 N.m at 20, 30, 60, 100 km/h. The actuator clamps the command to +-T_a,max and adds a first-order motor lag of 100 Hz. Everything runs at 1 ms.
+Sensors add white noise (standard deviation one resolution step, an assumption), quantization and the update period of each signal: T_s 0.01 N.m every 1 ms, steering angle 0.1 deg, column speed 4 deg/s, speed 1 km/h, yaw rate 0.1 deg/s and a_y 0.01 g every 10 ms (CAN, assumed). Without a seed the sensors are ideal.
+
+------------------------------------------------------------------------------------------------------------------------
+3. Evaluation method (fixed before tuning, Documents/Shared/QuyChuan.txt)
+------------------------------------------------------------------------------------------------------------------------
+3.1. Cases
+Parameters are tuned on one calibration case, CALIB (117 s, dry road, blocks at 20, 60 and 100 km/h: steady cornering 0.1-0.4 g, 0.5 Hz sine steering, small corrections, and a mu step 0.8 -> 0.6 -> 0.8 at 60 km/h), with one local noise seed per controller (Map 00000, PI/PID 10000). Controllers are scored on three different cases that each answer one question, with the shared seed 99999:
+Table 2: Scoring cases
+case | question | content
+DRY (129 s) | steady accuracy on the dry road (map design condition) | 20-100 km/h, three cornering levels each, mu 0.8
+SLIP (63 s) | over-assist when grip changes while cornering | pud: 0.4 s puddle in a lane change; up: mu 0.3 -> 0.8; down: mu 0.8 -> 0.3 at 0.35 g, 100 km/h
+WEAVE (61 s) | tracking and smoothness while steering continuously | slalom (mu 0.8), lane change (mu 0.3), sine at 100 km/h (mu 0.2)
+
+3.2. Metrics, gates and selection rule
+R is the tracking error on CALIB: the RMS of e_T = T_s - T_d,ref in four window groups (steady cornering, sine, small corrections, after mu steps), each normalized by the mean |T_d,ref| of the group, averaged with equal weights [%]. S is the RMS of T_a after a 5 Hz first-order high-pass filter [N.m], i.e. the part of the assist torque that the driver input does not explain (mainly amplified sensor noise). The steady error is e_rel = 100 x mean(e_T) / mean(|T_d,ref|) in each steady cornering window; negative means over-assist.
+Hard gates, in priority order: (1) stability with margin, measured by simulation (actuator gain x2 and an extra 1 ms delay must not double R); (2) reverse assist (T_a opposite to T_s with |T_s| >= 0.5 N.m) <= 1 % of the time; (3) no bang-bang: noise must not raise the fraction of samples at T_a,max by more than 1 %; (4) |e_rel| <= 3 % in every steady window. Selection: among the points that pass, keep those with R within 5 % of the controller's own best R and take the smallest S. If no point passes, the lowest gate is dropped and the point violating least is taken (fallback rule). The main conclusion compares whole Pareto fronts (R, S), not single points.
+
+------------------------------------------------------------------------------------------------------------------------
+4. Controllers
+------------------------------------------------------------------------------------------------------------------------
+4.1. Assist map (Map)
+T_a = sgn(T_s) M(v, |T_s|) followed by a lead compensator (s/z + 1)/(s/p + 1), discretized with Tustin at 1 ms. M passes through dry-road calibration points (979 points, the assist that makes T_s = T_d,ref at mu 0.8), has a dead zone |T_s| < 0.3 N.m and its slope is limited to K_max. The map reads only T_s and v: it has no reference, no feedback error and no integrator.
+Three limits bound K_max: K_acc = 6.75 (smallest slope giving <= 3 % dry steady error from 40 km/h), K_stab = 9.5 (largest slope for which a lead reaches PM >= 45 deg on 68 linearized operating points), and the bang-bang gate (K <= 7.5). The selection gives K_max = 6.75 with lead z = 59.8 rad/s, p = 1666 rad/s (PM 45.2 deg). The lead has a high-frequency gain K p/z = 188, which amplifies sensor noise.
+4.2. PI and PID
+T_a = Kp e_T + Ki int(e_T) + Kd d/dt(T_s,meas) filtered by 1/(Tf s + 1), with back-calculation anti-windup on the actuator clamp (Kaw = Ki/Kp) and the reference T_d,ref(v, a_y) computed inside the controller from measured v and a_y. The derivative acts on the measured T_s, not on e_T, to avoid kicks when the reference changes. PI is the special case Kd = 0. The grid bounds come from the stability boundary of the linearized loop under the margin test (PI: Kp <= 1.5, Ki <= 8 1/s); PI was swept on 103 points and PID on 455 points (coarse then fine).
+Table 3: Selected points and their CALIB scores (local seeds)
+item | Map | PI | PID
+parameters | K_max 6.75, lead z 59.8, p 1666 rad/s | Kp 1.25, Ki 3.0 1/s | Kp 1.50, Ki 3.0 1/s, Kd 0.015 s, Tf 3.5 ms
+tuned parameters / simulations | 1 / 11 | 2 / 103 | 4 / 455
+high-frequency gain | 188 | 1.25 | 5.8
+R [%] | 32.19 | 26.65 | 24.43
+S [N.m] | 0.477 | 0.240 | 0.248
+TV [N.m/s] | 367.7 | 14.1 | 29.5
+max |e_rel| [%] | 57.12 | 3.25 | 3.13
+reverse assist [%] | 1.09 | 4.51 | 3.74
+
+Table 4: Gate status of the selected points (none passes all gates: selected by the fallback rule)
+Gate (order) | Map | PI | PID
+1 stable + margin (gain x2, +1 ms) | pass | pass | pass
+2 reverse assist <= 1 % | fail (1.09) | fail (4.51) | fail (3.74)
+3 no bang-bang (<= 1 % extra saturation) | pass | pass | pass
+4 |e_rel| <= 3 % in all windows | fail (57.1) | fail (3.25) | fail (3.13)
+
+
+------------------------------------------------------------------------------------------------------------------------
+5. Results
+------------------------------------------------------------------------------------------------------------------------
+5.1. Loop shape and the column resonance
+The linearized plant from T_a to T_s has a lightly damped column resonance at 6.1 Hz (Figure 2). It caps the bandwidth of PI: increasing Kp or Ki beyond the bounds above destroys the margin. The map needs a large lead at its slope, and the PID uses its derivative for the same purpose. On the discrete (1 ms, one-sample delay) linear column model the selected loops have phase margins of 41 deg (Map), 12 deg (PI) and 34 deg (PID), with peak sensitivity Ms 1.8, 5.1 and 1.9. The PI margin is small: its selection passed the simulated margin gate (gain x2, +1 ms) because that gate only checks that R does not double, which is a weaker requirement than PM >= 45 deg.
+[Figure 2: Plant and open-loop frequency responses of the selected Map, PI and PID | Result/Report/Map_vs_PID/Map_vs_PID_bode.png]
+5.2. Calibration case: trade-off between tracking and smoothness
+Figure 3 shows every simulated point and the Pareto front of each controller. PID reaches the lowest tracking error (R 24.4 %), PI is close (R 26.7 %) and is the smoothest; the map stays at R 32.2 % and S 0.48 N.m. Its front lies to the right of the PI and PID fronts over the whole range of S where they overlap, so the ranking does not depend on how a single point is chosen. Note that the seeds differ (Map 00000, PI/PID 10000); the seed-to-seed spread measured for PI and PID is below 0.3 % of R.
+[Figure 3: Pareto fronts (R, S) on CALIB, stars = selected points | Result/Report/Map_vs_PID/Map_vs_PID_CALIB_pareto.png]
+Figure 4 gives e_rel per steady window. The map meets the 3 % gate only in 9 of the 11 windows; it fails only at 0.4 g (worst window 60 km/h, 0.4 g: 57.1 % too heavy), because above about 0.3 g the dry-road demand grows much faster than T_d,ref and the slope limit K_max (bounded by stability and bang-bang) cannot follow; this is a structural limit of the map, not a measurement error. PI and PID stay within 3.3 % in every window; the small excess over 3 % occurs at 0.1 g, where T_d,ref is small and Coulomb friction (2 N.m) matters.
+[Figure 4: Steady-state error in the 11 cornering windows of CALIB | Result/Report/Map_vs_PID/Map_vs_PID_CALIB_erel.png]
+5.3. Scoring cases
+Table 5: Scoring cases, noisy sensors, shared seed 99999
+Case | metric | Map | PI | PID
+DRY | RMS e_T [N.m] | 0.644 | 0.485 | 0.453
+DRY | max |e_T| [N.m] | 3.54 | 2.37 | 2.19
+DRY | TV of T_a [N.m/s] | 325 | 19 | 36
+SLIP | RMS e_T [N.m] | 0.600 | 0.381 | 0.350
+SLIP | max |e_T| [N.m] | 3.31 | 2.67 | 2.10
+SLIP | TV of T_a [N.m/s] | 330 | 24 | 41
+WEAVE | RMS e_T [N.m] | 1.308 | 0.709 | 0.643
+WEAVE | max |e_T| [N.m] | 3.01 | 2.53 | 1.97
+WEAVE | TV of T_a [N.m/s] | 179 | 35 | 53
+DRY | max |e_rel| in 15 windows [%] | 2.75 | 1.58 | 1.90
+
+[Figure 5: Whole-case RMS e_T and total variation of T_a | Result/Report/Map_vs_PID/Map_vs_PID_bars_s99999.png]
+5.4. Over-assist (SLIP case)
+Table 6 lists the mean error as a percentage of T_d,ref in the SLIP windows (negative = steering too light = over-assist). After the friction drop at 0.35 g and 100 km/h the map settles at -14.1 % while PI and PID return to -0.09 % and -0.09 %. Inside the 0.4 s puddle every controller is too slow to react, but the map error is larger (-83.5 % against -50.3 % for PID).
+Table 6: Mean error in % of T_d,ref in the SLIP windows (negative = over-assist)
+Window | meaning | Map | PI | PID
+pud_in | inside 0.4 s puddle (mu 0.2), 80 km/h | -83.5 | -56.4 | -50.3
+up_post | after mu 0.3 -> 0.8, 60 km/h, 0.15 g | 0.6 | -0.1 | -0.1
+down_pre | before mu drop, 100 km/h, 0.35 g | 17.4 | -1.2 | -1.1
+down_post | after mu 0.8 -> 0.3, settled | -14.1 | -0.1 | -0.1
+
+[Figure 6: SLIP case, last scene (mu 0.8 -> 0.3 at 48 s while cornering at 0.35 g, 100 km/h) | Result/Report/Map_vs_PID/Map_vs_PID_SLIP_zoom_down_s99999.png]
+[Figure 7: SLIP case, whole case | Result/Report/Map_vs_PID/Map_vs_PID_SLIP_resp_s99999.png]
+[Figure 8: WEAVE case | Result/Report/Map_vs_PID/Map_vs_PID_WEAVE_resp_s99999.png]
+
+------------------------------------------------------------------------------------------------------------------------
+6. Discussion and open issues
+------------------------------------------------------------------------------------------------------------------------
+Structural difference. PI and PID remove the mean over-assist because they read a_y (through T_d,ref) and integrate the error; the map has neither. The gap on SLIP is therefore a difference of structure, not of tuning, and must be stated as such. On the dry calibration case, which is the design condition of the map, PI and PID still track better.
+Noise. Smoothness is set by the high-frequency gain of each controller: PI 1.25, PID 5.8, Map 188 (lead). One quantization step of T_s (0.01 N.m every 1 ms) passed through these gains explains why the map has the largest total variation of T_a even without a derivative term.
+Margin gate. The simulated margin gate accepted a PI with a linear phase margin of about 12 deg (Ms 5.1) and a PID with 34 deg. It needs a stricter criterion (for example oscillation detection, or PM and Ms where a linear model exists) before the method is frozen.
+Gates. No controller passes all four gates: reverse assist is 1-4 % of the time for all of them (phase lag at the steering reversals of the 0.5 Hz sine), and e_rel slightly exceeds 3 % at 0.1 g for PI and PID and widely at 0.4 g for the map. The points were selected with the fallback rule. Before the paper the gate values (3 %, 1 %) need either a justification or a sensitivity study (3 and 5 %), and the mu step of CALIB (0.8 -> 0.6) is too mild to load the over-assist mechanism.
+Limitations. Simulation only; the driver is an open-loop steering-angle source (after a slide at 0.35 g on mu 0.3 the car does not recover, which is why that scene is the last one of SLIP); motor modelled as a first-order lag; noise level assumed (one resolution step); the plant is checked against its own equations and orders of magnitude from the literature, not against vehicle data.
+
+------------------------------------------------------------------------------------------------------------------------
+7. Planned paper and next steps
+------------------------------------------------------------------------------------------------------------------------
+Planned paper: assist map versus PI/PID torque feedback for over-assist mitigation in C-EPS, with three contributions: (C1) an evaluation framework with gates fixed before tuning, whole Pareto fronts and a no-bang-bang gate; (C2) the column resonance limits PI and the high-frequency gain of each controller sets the assist-torque noise; (C3) quantified over-assist of the map under friction changes. Next steps: fix the open gate issues and freeze the method; mu step of CALIB; sensitivity to gates, noise level and seed; robustness to plant parameter errors (+-20 %); choose the venue. A sliding-mode controller (SMC, ISMC) is kept for the thesis.
+
+------------------------------------------------------------------------------------------------------------------------
+8. Code
+------------------------------------------------------------------------------------------------------------------------
+MATLAB/Simulink R2023a; all code and comments are in English. Every Simulink model is generated by a build script through the Simulink API and has exactly one test that compares it with an independent calculation.
+
+Table 7: Repository layout
+path | content
+Model/setup_paths.m | adds every code folder to the path (the only file that knows the layout)
+Model/data/*.json | single data source: plant parameters, reference, sensors, actuator, each controller
+Model/PRSM/<part>/ | Plant, Ref, Sensors, AssistLimit, Actuator: build_*.m, test_*.m, load_*.m
+Model/Controllers/<Ctrl>/ | load_<ctrl>.m, <Ctrl>.mdl, Model_<Ctrl>.mdl (closed loop), script/ (design, sweep, selection, tests)
+Model/Sim/script/ | build_closed_loop.m, make_cases.m, calib_run.m, run_cases.m, make_pair_comparisons.m
+Result/ | mirrors Model/: Controllers/<Ctrl>/{Design, Calib, Cases}, Compare/<A>_vs_<B>
+tools/build_report_en.py | generates the figures, this report and the slide deck from the result files

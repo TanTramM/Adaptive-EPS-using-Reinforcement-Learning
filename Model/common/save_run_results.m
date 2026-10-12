@@ -6,8 +6,8 @@ function save_run_results(ctrlName, tag, data)
 %   save_run_results('PID', 'S1_hold_angle_mu_step', dataStruct) % data given
 %
 %   Files (folder Result/<ctrlName>/):
-%     <ctrlName>_<tag>_signals.csv        t, T_s, T_d_ref, e_T, T_a, a_y (10 ms grid)
-%     <ctrlName>_<tag>_time_response.png  T_s vs T_d_ref, e_T, T_a
+%     <ctrlName>_<tag>_sig.csv        t, T_s, T_d_ref, e_T, T_a, a_y (10 ms grid)
+%     <ctrlName>_<tag>_resp.png  T_s vs T_d_ref, e_T, T_a
 %
 %   data (optional): struct with column vectors t, T_s, T_d_ref, e_T, T_a, a_y.
 %   Without it the signals are read from the base-workspace timeseries
@@ -55,7 +55,7 @@ function save_run_results(ctrlName, tag, data)
 
     T = table(data.t(:), data.T_s(:), data.T_d_ref(:), data.e_T(:), data.T_a(:), data.a_y(:), ...
         'VariableNames', {'t_s', 'T_s_Nm', 'T_d_ref_Nm', 'e_T_Nm', 'T_a_Nm', 'a_y_mps2'});
-    writetable(T, fullfile(outDir, [base '_signals.csv']));
+    writetable(T, fullfile(outDir, [base '_sig.csv']));
 
     fig = figure('Visible', 'off', 'Position', [100 100 900 700]);
     subplot(3, 1, 1);
@@ -65,7 +65,7 @@ function save_run_results(ctrlName, tag, data)
     plot(data.t, data.e_T, 'k'); grid on; ylabel('e_T [N.m]'); title('e_T = T_s - T_{d,ref}');
     subplot(3, 1, 3);
     plot(data.t, data.T_a, 'm'); grid on; ylabel('T_a [N.m]'); xlabel('t [s]'); title('assist torque T_a');
-    exportgraphics(fig, fullfile(outDir, [base '_time_response.png']), 'Resolution', 120);
+    exportgraphics(fig, fullfile(outDir, [base '_resp.png']), 'Resolution', 120);
     close(fig);
-    fprintf('save_run_results: saved %s_signals.csv and %s_time_response.png in %s\n', base, base, outDir);
+    fprintf('save_run_results: saved %s_sig.csv and %s_resp.png in %s\n', base, base, outDir);
 end

@@ -1,6 +1,7 @@
 """Convert a thesis chapter written in the Documents/ .txt convention into a Word .docx.
 
-Usage:  python tools/txt2docx.py Documents/Plant/plant.txt Documents/Plant/plant.docx
+Usage:  python tools/txt2docx.py Documents/Plant/plant.txt Documents/Plant/plant.docx [--paper]
+        --paper: article layout for Documents/Paper/paper.txt (11 pt, 2 cm margins, numbered headings, Abstract and References as headings)
 
 Text conventions (one logical item per line, no hard wrapping):
   ====...  / ----...        separator lines, ignored
@@ -9,9 +10,9 @@ Text conventions (one logical item per line, no hard wrapping):
   "1.1. Title"               subsection      -> Heading 3 (number removed)
   "  (n)  ascii formula"     equation line, the NEXT line "  [ latex ]" is converted to a native Word
                              equation (OMML) and numbered (n) at the right margin
-  "  Bảng n: caption"        table caption; following lines containing " | " are the table rows
+  "  Bảng n: caption"        table caption (English: "Table n: caption"); following lines containing " | " are the table rows
                              (first row = header) until a blank line
-  "  [Hình n: caption]"      figure placeholder (empty box + caption)
+  "  [Hình n: caption]"      figure placeholder (English: "[Figure n: caption]") (empty box + caption)
   "  [Hình n: caption | path/to/image.png]"   figure with the image inserted (path relative to the repo root;
                              if the file is missing a placeholder is used and a warning printed)
   any other non-empty line   body paragraph (justified)
@@ -243,11 +244,14 @@ def latex_to_omath(latex):
 FONT = 'Times New Roman'
 
 
+FONT_SCALE = 1.0          # 11/13 in paper mode (see build)
+
+
 def set_font(run_or_style, size=None, bold=None):
     f = run_or_style.font
     f.name = FONT
     if size:
-        f.size = Pt(size)
+        f.size = Pt(size * FONT_SCALE)
     if bold is not None:
         f.bold = bold
     rpr = run_or_style.element.get_or_add_rPr() if hasattr(run_or_style, 'element') and hasattr(
@@ -292,18 +296,22 @@ def add_rich(p, text, size=13, bold=False, italic=False):
         r = p.add_run(text[pos:]); set_font(r, size, bold=bold); r.italic = italic
 
 
-def build(txt_path, docx_path):
+def build(txt_path, docx_path, paper=False):
+    """paper=True: article layout (11 pt, 2 cm margins, section numbers kept in the headings, 'Abstract' and 'References' as headings)."""
+    global FONT_SCALE
+    FONT_SCALE = 11.0 / 13.0 if paper else 1.0
     lines = open(txt_path, encoding='utf-8').read().splitlines()
     doc = Document()
     sec = doc.sections[0]
     sec.page_height, sec.page_width = Cm(29.7), Cm(21.0)
-    sec.left_margin, sec.right_margin, sec.top_margin, sec.bottom_margin = Cm(3.0), Cm(2.0), Cm(2.0), Cm(2.0)
-    text_width = 21.0 - 3.0 - 2.0
+    lm = 2.0 if paper else 3.0
+    sec.left_margin, sec.right_margin, sec.top_margin, sec.bottom_margin = Cm(lm), Cm(2.0), Cm(2.0), Cm(2.0)
+    text_width = 21.0 - lm - 2.0
 
     normal = doc.styles['Normal']
     set_font(normal, 13)
     pf = normal.paragraph_format
-    pf.line_spacing = 1.3; pf.space_after = Pt(6); pf.space_before = Pt(0)
+    pf.line_spacing = 1.15 if paper else 1.3; pf.space_after = Pt(6); pf.space_before = Pt(0)
     for lvl, size in ((1, 16), (2, 14), (3, 13)):
         st = doc.styles['Heading %d' % lvl]
         set_font(st, size, bold=True)
@@ -318,8 +326,8 @@ def build(txt_path, docx_path):
     h3 = re.compile(r'^\s*(\d+)\.(\d+)\.\s+(.*)$')
     eq = re.compile(r'^\s*\((\d+)\)\s+(.*)$')
     latex = re.compile(r'^\s*\[\s(.*)\s\]\s*$')
-    tabcap = re.compile(r'^\s*(Bảng\s+\d+[.:].*)$')
-    figcap = re.compile(r'^\s*\[(Hình\s+\d+[.:].*)\]\s*$')
+    tabcap = re.compile(r'^\s*((?:Bảng|Table)\s+\d+[.:].*)$')
+    figcap = re.compile(r'^\s*\[((?:Hình|Figure)\s+\d+[.:].*)\]\s*$')
 
     seps = [i for i, l in enumerate(lines) if re.match(r'^\s*={20,}\s*$', l)]
     title_idx = seps[0] + 1 if len(seps) >= 2 else None
@@ -333,10 +341,16 @@ def build(txt_path, docx_path):
             doc.add_heading(s, level=1); i += 1; continue
         mh3 = h3.match(raw)
         if mh3 and len(mh3.group(3)) < 120:
-            add_rich(doc.add_heading('', level=3), mh3.group(3).strip(), 13, bold=True); i += 1; continue
+            ttl = mh3.group(3).strip()
+            if paper: ttl = '%s.%s. %s' % (mh3.group(1), mh3.group(2), ttl)
+            add_rich(doc.add_heading('', level=3), ttl, 13, bold=True); i += 1; continue
         mh2 = h2.match(raw)
         if mh2 and len(mh2.group(2)) < 120:
-            add_rich(doc.add_heading('', level=2), mh2.group(2).strip(), 14, bold=True); i += 1; continue
+            ttl = mh2.group(2).strip()
+            if paper: ttl = '%s. %s' % (mh2.group(1), ttl)
+            add_rich(doc.add_heading('', level=2), ttl, 14, bold=True); i += 1; continue
+        if paper and (s == 'Abstract' or s.startswith('References (')):
+            add_rich(doc.add_heading('', level=2), s.split(' (')[0], 14, bold=True); i += 1; continue
         me = eq.match(raw)
         if me and i + 1 < len(lines) and latex.match(lines[i + 1]):
             num = me.group(1); lx = latex.match(lines[i + 1]).group(1)
@@ -405,4 +419,4 @@ def build(txt_path, docx_path):
 
 
 if __name__ == '__main__':
-    build(sys.argv[1], sys.argv[2])
+    build(sys.argv[1], sys.argv[2], paper=('--paper' in sys.argv[3:]))

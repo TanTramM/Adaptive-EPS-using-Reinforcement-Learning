@@ -6,33 +6,23 @@ làm); bài gốc [1]
 Lee, Kim, Kim (2018), References/lee2018.pdf (đã đọc lại mục III.A, III.D ngày 2026-10-09); phần "kiểm độc lập" do khung 1 tính ngày 2026-10-09 bằng MATLAB (mục 4.7).
 Chú thích viết tắt dùng xuyên suốt: EPS (Electric Power Steering, trợ lực lái điện); T_s (mô-men cảm biến ở trụ lái, cái tay người lái cảm nhận); T_a (mô-men trợ lực của motor); T_r (mô-men
 cản do lốp, ngược chiều); T_d,ref (giá trị đặt: mô-men tay lái ĐẸP mà người lái muốn); e_T = T_s - T_d,ref (sai số bám); PM (phase margin, dự trữ pha: còn cách mốc mất ổn định bao nhiêu độ
-pha); GM (gain margin, dự trữ độ lợi: độ lợi vòng còn tăng được bao nhiêu lần); R (RMS, căn bình phương trung bình, của e_T: độ bám); S (RMS của T_a sau lọc cao 5 Hz: độ giật do nhiễu); TK
-(ca hiệu chỉnh, dùng để chọn tham số); TC1-TC6 (sáu ca thử chuẩn dùng để chấm điểm).
-==============================================================================================================================================================================================
-PHẦN 1 - BÀI TOÁN VÀ VAI TRÒ CỦA MAP
-==============================================================================================================================================================================================
-1.1. Vì sao cần Map trong luận văn. Đề tài khắc phục trợ lực thừa (over-assist) của EPS khi hệ số bám mu giảm. Theo [4], EPS truyền thống chỉ xét vận tốc xe và mô-men tay lái; khi mu giảm,
-mô-men cản T_r giảm nhưng bộ điều khiển vẫn cấp trợ lực như cũ, nên tay lái nhẹ quá, tài xế mất cảm giác đường. Map chính là dạng điều khiển truyền thống đó nên nó là CHUẨN SO SÁNH: phải có
-đúng điểm yếu ấy (trợ lực thừa khi mu giảm) và không được bị làm yếu thêm ở chỗ khác (hiệu chỉnh kém trên đường khô, tự dao động), nếu không phần cải thiện của bộ điều khiển đề xuất (RL) sẽ
-bị thổi phồng.
-1.2. Cơ chế trợ lực thừa, suy từ phương trình trụ lái. Trụ lái: J_col*theta2_ddot = T_a - T_r + K*(theta1 - theta2) - C_col*theta2_dot, với T_s = K*(theta1 - theta2). Ở trạng thái xác lập
-(tốc độ góc bằng 0) ta có:
-  T_s = T_r - T_a
-Map đặt T_a = M(v, T_s) chỉ phụ thuộc v và T_s, không biết mu. Khi mu giảm, T_r giảm nhưng hàm M không đổi, nên T_s giảm theo: tay lái nhẹ hơn mong muốn. Đó là nguồn của trợ lực thừa, và là
-lý do Map "không nhìn thấy mu" là đặc tính cố hữu chứ không phải lỗi thiết kế.
-1.3. Giao diện. Map chỉ đọc hai tín hiệu ĐO: T_s và v, lấy mẫu 1 ms (bằng chu kỳ cập nhật T_s của mô hình cảm biến). Không đọc mu, a_y, không tính e_T, không có khâu tích phân. Giá trị đặt
-T_d,ref không xuất hiện lúc chạy mà đã được "nhúng" vào bảng lúc hiệu chỉnh (mục 2). Đầu ra T_a đi vào khối Actuator (chặn T_a,max(v) rồi trễ motor 100 Hz); Map không tự chặn lệnh.
+pha); GM (gain margin, dự trữ độ lợi: độ lợi vòng còn tăng được bao nhiêu lần); R (RMS, căn bình phương trung bình, của e_T: độ bám); S (RMS của T_a sau lọc cao 5 Hz: độ giật do nhiễu); CALIB
+(ca hiệu chỉnh, dùng để chọn tham số); DREWS (năm ca chấm: DRY, RAMP, SLIP, EDGE, WEAVE).
 ==============================================================================================================================================================================================
 PHẦN 2 - CẤU TRÚC
 ==============================================================================================================================================================================================
-2.1. Hai phần nối tiếp, theo [1] mục III.A (phương trình (15) và (16)): bản đồ mô-men (quan hệ một-một T_s -> T_a, có vùng chết) rồi khâu bù ổn định đặt SAU bản đồ.
+2.1. Hai phần nối tiếp, theo [1] mục III.A (phương trình (15) và (16)): bản đồ mô-men (quan hệ một-một T_s -> T_a, có vùng chết) rồi khâu bù đặt SAU bản đồ.
   (1)  T_a,map = sgn(T_s) * M(v, |T_s|)          M: bảng hai chiều theo vận tốc và |T_s|, nội suy tuyến tính
-  (2)  T_a = H(z) * T_a,map,   H(s) = (s/z + 1) / (s/p + 1)        khâu sớm pha (lead), z là điểm không, p là điểm cực, p > z
+  (2)  T_a = H(z) * T_a,map,   H(s) = (s/z + 1)/(s/p + 1) * (s/z1 + 1)/(s/p1 + 1)      lead (z, p, p > z) nhân lag (z1, p1, p1 < z1); mỗi khâu có độ lợi một chiều bằng 1
 2.2. Vì sao cần khâu bù: [1] viết "bộ điều khiển cần khâu bù ổn định vì độ lợi trợ lực cao và tính phi tuyến của bản đồ làm hệ mất ổn định". Lý lẽ định lượng ở mục 4.4. Vì sao đặt SAU bản
 đồ: bản đồ là phi tuyến, nếu đặt khâu bù trước thì nó làm méo T_s đưa vào bảng và bản đồ biến méo đó thành sai số tĩnh; đặt sau thì bản đồ nhận T_s nguyên vẹn, khâu bù chỉ tạo hình động học
-cho lệnh ra (độ lợi một chiều bằng 1, nên không đổi sai số xác lập).
-2.3. Một độ dốc cho mọi vận tốc (Map): MỘT độ dốc lớn nhất K_max và MỘT khâu lead chung cho mọi vận tốc, T_a = H(z) * T_a,map. Trước 2026-10-09 có bản hai bậc Map_2K (bậc thấp v <= 60 km/h,
-bậc cao v >= 65 km/h, hai khâu lead chạy song song và trộn theo trọng số w(v)); bản đó đã bị bỏ theo quyết định của người dùng vì với các cổng chung nó suy biến thành một bậc (mục 5.3).
+cho lệnh ra (độ lợi một chiều của cả hai khâu bằng 1, nên không đổi sai số xác lập).
+2.3. Vì sao có thêm khâu lag (người dùng chốt 2026-10-11: Map làm đầy đủ theo [1], lead-lag). Lead cho pha dương quanh tần số cắt để vòng ổn định nhưng nhân nhiễu nhanh lên p/z lần; [1] dùng
+nhiều lead và một lag, lag hạ độ lợi ở tần số trung và cao nên giảm nhiễu lệnh mà không lấy lại pha tại tần số cắt (hai khâu ở hai dải tần khác nhau, mục 10.3). Cái giá: lag làm lệnh chậm
+với tín hiệu chậm (mục 10.5). Nếu để lag tự do, tiêu chí giảm nhiễu kéo cực của lag về cận lưới và vòng chậm tùy ý; vì vậy lag bị chặn bằng ràng buộc dải lái (độ lợi của lag tại 2 Hz không
+nhỏ hơn 0.707, quy chuẩn 6.2) và mức độ chặn được dùng làm tham số quét g_min (mục 4.6, 5.2).
+2.4. Một độ dốc cho mọi vận tốc (Map): MỘT độ dốc lớn nhất K_max và MỘT khâu bù chung cho mọi vận tốc, T_a = H(z) * T_a,map. Trước 2026-10-09 có bản hai bậc Map_2K (bậc thấp v <= 60 km/h,
+bậc cao v >= 65 km/h, hai khâu lead chạy song song và trộn theo trọng số w(v)); bản đó đã bị bỏ theo quyết định của người dùng vì với các cổng lúc đó nó suy biến thành một bậc (mục 5.5).
 ==============================================================================================================================================================================================
 PHẦN 3 - DỰNG BẢN ĐỒ TRÊN ĐƯỜNG KHÔ
 ==============================================================================================================================================================================================
@@ -58,31 +48,42 @@ hàng chục và hàng trăm. Vì vượt xa mức một vòng ổn định đư
 Nơi độ dốc tự nhiên nhỏ hơn K_max, bản đồ đi đúng qua điểm hiệu chỉnh; nơi vượt, bản đồ nằm thấp hơn điểm hiệu chỉnh và sai lệch cộng dồn theo T_s. Đây là chỗ Map CHẤP NHẬN sai số xác lập để
 đổi lấy ổn định và độ êm. K_max chưa biết ở bước này: nó là kết quả của mục 4 và 5.
 3.4. Sai số xác lập trên đường khô. Với một bản đồ đã dựng, vòng kín dừng ở điểm cân bằng thỏa (nghiệm duy nhất vì bản đồ đơn điệu; lúc đó khâu bù không còn tác dụng):
-  (6)  T_s = T_r(v, a_y, 0.8) - M(v, T_s),   e_T = T_s - T_d,ref,   e_T% = 100 * e_T / T_d,ref
-Điều kiện độ chính xác của Map: |e_T%| <= 3 % trong 0.1-0.3 g, ở mọi vận tốc từ 40 km/h (Tự chọn(2); 3 % là mức tay lái lệch rất nhỏ; không áp dụng 20-35 km/h vì xung đột với cổng bang-bang,
-mục 5.1). K nhỏ nhất đạt điều kiện này tại mỗi vận tốc gọi là K_acc(v):
+  (6)  T_s = T_r(v, a_y, 0.8) - M(v, T_s),   e_T = T_s - T_d,ref,   e_rel = 100 * |trung binh e_T| / trung binh |T_d,ref|
+Cổng của quy chuẩn v5 (QuyChuan 5.3, người dùng chốt 2026-10-11, thay điều kiện cũ "|e_T%| <= 3 % trong 0.1-0.3 g từ 40 km/h" của Map): e_rel đo BẰNG MÔ PHỎNG trên chín cửa sổ static của
+CALIB (20 km/h: 0.10, 0.15, 0.18 g; 60 và 100 km/h: 0.1, 0.2, 0.3 g), lớn nhất không quá 5 %. Khâu bù có độ lợi một chiều bằng 1 nên e_rel gần như chỉ do K_max quyết định (seed 00000, trung
+bình trên các khâu bù đã thử cùng K):
+K        | 5.00 | 5.50 | 5.75 | 5.80 | 6.00 | 6.50 | 7.00 | 8.00
+e_rel [%] | 16.90 | 8.61 | 5.02 | 4.61 | 3.16 | 2.40 | 1.76 | 0.88
+K nhỏ nhất qua cổng là 5.80 (tại 5.75 là 5.02 %, vừa vượt). Phân tích tĩnh theo từng vận tốc (không mô phỏng, hàm map_k_accuracy, dung sai 5 % trong 0.1-0.3 g, file
+Design/Map_K_for_accuracy_5pct.csv) cho K_acc(v), K nhỏ nhất để sai số tĩnh không vượt dung sai ở vận tốc đó:
 v [km/h] | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 55 | 60 | 65 | 70 | 75 | 80 | 85 | 90 | 95 | 100
-K_acc    | 7.50 | 13.00 | 8.00 | 7.25 | 6.75 | 6.75 | 6.75 | 6.75 | 6.25 | 5.50 | 5.25 | 5.25 | 5.50 | 5.50 | 5.50 | 5.75 | 5.75
+K_acc    | 7.00 | 12.75 | 7.25 | 6.50 | 6.25 | 6.25 | 5.75 | 5.50 | 5.25 | 5.00 | 4.75 | 4.75 | 4.75 | 4.75 | 5.00 | 5.25 | 5.50
+Đọc: K_acc(40 km/h) = 6.25 lớn hơn K_max = 6.0 nên ở 40 km/h, 0.3 g bản đồ nằm thấp hơn điểm hiệu chỉnh; các cửa sổ static của CALIB chỉ ở 20, 60 và 100 km/h nên cổng e_rel KHÔNG thấy chỗ
+này, và ca DRY (cửa sổ v40a0p3r) cho sai số 13.0 %. Người dùng đã bác việc thêm cửa sổ ở 40 km/h vào CALIB (giống chỉnh riêng cho Map; muốn thêm phải quét mỗi bước 10 km/h); kết quả được báo
+cáo như hiện có.
 ==============================================================================================================================================================================================
-PHẦN 4 - ỔN ĐỊNH VÀ KHÂU BÙ (LEAD)
+PHẦN 4 - ỔN ĐỊNH VÀ KHÂU BÙ (LEAD VÀ LAG)
 ==============================================================================================================================================================================================
 4.1. Mô hình tuyến tính của đối tượng. Xét xe quay vòng ổn định tại (v, a_y, mu), góc vô-lăng theta1 giữ không đổi (tài xế giữ góc); đầu vào T_a, đầu ra T_s = K*(theta1 - theta2). Đạo hàm
 riêng lấy bằng sai phân trung tâm của chính các phương trình Plant tại điểm cân bằng. Kết quả: độ lợi một chiều của đối tượng từ T_a tới T_s bằng -0.99 (20 km/h) tới -0.81 (100 km/h) (thêm
 trợ lực làm T_s giảm), một cặp cực dao động nhẹ tắt -6.8 +- j38.3 rad/s ở 60 km/h (tần số riêng của trụ lái và thanh xoắn sqrt(K/J_col) = 36.1 rad/s, hệ số tắt dần khoảng 0.18) và một cặp
 cực chậm của thân xe. Khi v, a_y, mu đổi, tần số cặp cực dao động đổi dưới 5 %: ổn định của vòng bị chi phối bởi TRỤ LÁI, không bởi thân xe. Ma sát Coulomb không được tuyến tính hóa (chỉ giữ
-ma sát nhớt C_col), là trường hợp bất lợi cho ổn định (Tự chọn(3)).
+ma sát nhớt C_col), là trường hợp bất lợi cho ổn định (Tự chọn(2)).
 Dạng gọn dùng để tính tay (khung 1 dùng chung cho PI, PID): G_col(s) = K_t / (J_col*s^2 + C_col*s + K_t + k_r), K_t = 143.24, J_col = 0.11, C_col = 1.35; k_r = 30 (đường khô, lốp ở vùng
 tuyến tính) hoặc 0 (lốp bão hòa); độ lợi một chiều G(0) = 0.827 (khô) hoặc 1.0 (bão hòa); tần số riêng 39.7 (36.1) rad/s, hệ số tắt dần 0.155 (0.170), đỉnh |G| khoảng 2.7-3.0 quanh 35-39
 rad/s. Motor: G_m(s) = w_m/(s + w_m), w_m = 2*pi*100 = 628.3 rad/s.
 4.2. Vòng hở. Gọi k là độ dốc của bản đồ tại điểm làm việc, 0 < k <= K_max (bản đồ đi qua mọi độ dốc từ 0 tới K_max khi T_s đổi). Với dấu trừ vì thêm trợ lực làm T_s giảm:
   (8)  L(s) = -k * H(s) * G_m(s) * exp(-s*T_d) * G(s),   T_d = 1 ms
-T_d = 1 ms là trễ tương đương của lấy mẫu: T_s cập nhật mỗi 1 ms và bộ điều khiển lấy mẫu mỗi 1 ms, lấy tổng bảo thủ bằng một chu kỳ (Tự chọn(4)). Phép Tustin của lead chỉ làm lệch ở tần số
+T_d = 1 ms là trễ tương đương của lấy mẫu: T_s cập nhật mỗi 1 ms và bộ điều khiển lấy mẫu mỗi 1 ms, lấy tổng bảo thủ bằng một chu kỳ (Tự chọn(3)). Phép Tustin của lead chỉ làm lệch ở tần số
 gần 1/T_ctl, đã được trễ này bao phủ.
-4.3. Điều kiện ổn định (cổng cứng). Với mọi điểm làm việc đã xét (a_y, mu) = (0, 0.8), (0.3 g, 0.8), (0, 0.2), (0.15 g, 0.2) ở mỗi vận tốc, và mọi độ dốc k thuộc {0.25, 0.5, 0.75, 1} *
-K_max: vòng kín ổn định, PM >= 45 độ tại MỌI tần số mà |L| = 1, GM >= 2 tại mọi tần số mà pha bằng -180 độ. Vì sao xét cả k nhỏ hơn K_max: bản đồ phi tuyến có độ dốc thay đổi từ 0 tới K_max
-khi T_s đổi, nên vòng phải ổn định ở mọi độ dốc trung gian. PM >= 45 độ: [1] mục III.D viết "hệ cần dự trữ pha lớn hơn 45 độ để ổn định bền vững" (Tự chọn(5) là việc áp ngưỡng đó cho mọi k
-và mọi điểm làm việc). GM >= 2 là lựa chọn của tác giả, không có nguồn.
-4.4. Vì sao PHẢI có lead - lập luận định lượng.
+4.3. Vai trò của PM và GM trong quy chuẩn v5. Với mọi điểm làm việc đã xét (a_y, mu) = (0, 0.8), (0.3 g, 0.8), (0, 0.2), (0.15 g, 0.2) ở mỗi vận tốc, và mọi độ dốc k thuộc {0.25, 0.5, 0.75,
+1} * K_max, vòng hở L = -k * H * G_m * exp(-s*T_d) * G có PM >= 45 độ tại MỌI tần số mà |L| = 1 và GM >= 2 tại mọi tần số mà pha bằng -180 độ. Vì sao xét cả k nhỏ hơn K_max: bản đồ phi tuyến
+có độ dốc thay đổi từ 0 tới K_max khi T_s đổi, nên vòng phải ổn định ở mọi độ dốc trung gian. PM >= 45 độ: [1] mục III.D viết "hệ cần dự trữ pha lớn hơn 45 độ để ổn định bền vững" (Tự
+chọn(4) là việc áp ngưỡng đó cho mọi k và mọi điểm làm việc); GM >= 2 là lựa chọn của tác giả, không có nguồn. THAY ĐỔI so với phiên bản cũ (2026-10-11, QuyChuan 5.2 và 9.4): hai số này
+không còn là cổng chọn tham số mà là CÔNG CỤ THIẾT KẾ (ràng buộc khi tìm khâu bù, mục 4.6) và số báo cáo; cổng ổn định là dự trữ đo bằng mô phỏng (calib_margin: chạy lại CALIB với độ lợi
+động cơ nhân hai và với trễ thêm một chu kỳ 1 ms; tiêu chí không dùng ngưỡng số: tín hiệu hữu hạn, không dao động tăng dần ở mọi cửa sổ static, không bão hòa liên tục; sàng sơ bộ bằng tỉ số
+R <= 2 R danh định).
+4.4. Vì sao PHẢI có lead - lập luận định lượng (bản lead đơn K = 6.75; vật lý và phương pháp vẫn đúng, đây là minh họa).
 (a) Ý nghĩa PM. Đưa vào vòng một sóng sin biên độ 1 tần số w. Đi hết một vòng nó quay về với biên độ |L(jw)| và trễ pha thêm góc pha của L. Vì phản hồi là phản hồi ÂM, tín hiệu đã bị lật dấu
 một lần; nếu nó lại trễ thêm đúng 180 độ thì lật dấu lần hai, thành CỘNG vào tín hiệu gốc (như tiếng hú micro-loa), và nếu biên độ sau vòng >= 1 thì dao động tự lớn dần. Điểm cần đọc là tần
 số cắt w_c (|L| = 1); PM = 180 độ + pha(L tại w_c). PM > 0: sóng quay về chưa cộng hết nên tắt dần.
@@ -100,26 +101,34 @@ một mẫu là cú sốc khắc nghiệt và lệnh 105.6 thực tế bị ch�
 cộng 0 (độ lợi một chiều bằng 1, nên không đổi sai số xác lập). Hệ số của lead là hằng số chọn offline, lead KHÔNG "biết" cần bù bao nhiêu. Tương đương "đi trước" thời gian: 64.1 độ tại 161
 rad/s = 1.119 rad / 161 = 6.95 ms. Rời rạc hóa Tustin T = 1 ms với z = 59.82, p = 1665.96: y[k] = 0.0911*y[k-1] + 15.648*x[k] - 14.739*x[k-1] (x = T_a,map vào, y = T_a ra), độ lợi một chiều
 (15.648-14.739)/(1-0.0911) = 1.0. Bước nhảy nhiễu ở x được nhân 15.65 ở mẫu đầu: đó là nguồn khuếch đại nhiễu.
-4.6. Thiết kế lead (z, p) cho mỗi K. (i) Lưới 36 giá trị z từ 8 tới 400 rad/s và 40 giá trị tỉ số p/z từ 1.5 tới 120, cách đều thang log: 1440 cặp (Tự chọn(6)). (ii) Giữ cặp thỏa cổng mục
-4.3. (iii) Chọn cặp có độ lợi tần số cao (hf gain) k*p/z NHỎ NHẤT; hòa thì chọn PM lớn hơn. Vì sao tiêu chí này: hf gain là mức lead khuếch đại nhiễu cảm biến thành nhiễu lệnh; nhiễu T_a ước
-lượng = độ lệch chuẩn đầu ra của k*H*G_m khi nhiễu trắng T_s (độ lệch chuẩn 0.0104 N.m, phổ phẳng tới tần số Nyquist pi/T_ctl) đi qua. (iv) K từ 10 trở lên không cặp nào đạt PM 45 độ (kể cả
-K = 12...18), nên K_stab = 9.5. Kết quả (đối tượng 60 km/h):
-K | z | p | PM [độ] | GM | w_c [rad/s] | hf gain k*p/z | nhiễu T_a [N.m]
-1.0 | 42.8 | 158 | 45.3 | 10.77 | 59 | 4 | 0.02
-3.0 | 42.8 | 433 | 46.1 | 5.12 | 108 | 30 | 0.12
-5.0 | 53.5 | 849 | 45.0 | 4.58 | 137 | 79 | 0.26
-6.0 | 53.5 | 1190 | 45.4 | 4.23 | 158 | 133 | 0.37
-7.0 | 59.8 | 1864 | 45.4 | 4.53 | 165 | 218 | 0.47
-8.0 | 59.8 | 2611 | 45.2 | 4.28 | 183 | 349 | 0.61
-9.5 | 59.8 | 6415 | 45.1 | 4.19 | 211 | 1019 | 0.85
-Tính chất cần nhớ: z gần như không đổi (43-60), p tăng rất nhanh khi K tiến tới K_stab; ổn định của đối tượng gần như không đổi theo vận tốc nên cặp (z, p) CHỈ phụ thuộc K, không phụ thuộc
-v. Đây là lý do một khâu lead chung đủ cho mọi vận tốc.
+4.6. Thiết kế khâu bù lead-lag (z, p, z1, p1) cho mỗi cặp (g_min, K) (design_leadlag.m, sweep_leadlag.m). (i) Lưới hai giai đoạn thô-mịn: z 5-500 rad/s, p/z 1.2-300 với p <= 3142 rad/s (tần
+số Nyquist của bước 1 ms), z1 8-120 rad/s, p1/z1 0.1-0.9 với p1 >= 3 rad/s (Tự chọn(4), (5)). (ii) Giữ bộ đạt PM >= 45 độ tại mọi giao cắt độ lợi và GM >= 2 ở mọi điểm làm việc và mọi k (mục
+4.3) VÀ độ lợi của lag tại 2 Hz không nhỏ hơn g_min. (iii) Chọn bộ có độ lợi tần số cao (hf gain) K * (p/z) * (p1/z1) NHỎ NHẤT; hòa thì chọn PM lớn hơn. Vì sao tiêu chí này: hf gain là mức
+khâu bù khuếch đại nhiễu cảm biến thành nhiễu lệnh; nhiễu T_a ước lượng = độ lệch chuẩn đầu ra của k*H*G_m khi nhiễu trắng T_s (độ lệch chuẩn 0.0104 N.m, phổ phẳng tới tần số Nyquist) đi
+qua. (iv) g_min là lối vào thứ hai của thiết kế (cách B): không có nó, hf gain nhỏ nhất kéo p1 về cận lưới và vòng chậm tùy ý; PM, GM và nhiễu tuyến tính không đo được độ bám trong dải lái.
+Kết quả ở K = 6.0 (đối tượng 60 km/h; 103 thiết kế đã giải, 1630706 khâu ứng viên đã kiểm; file Design/Map_design_leadlag.csv):
+g_min | z | p | z1 | p1 | PM [độ] | GM | hf gain | nhiễu T_a [N.m]
+1.00 | 55.3 | 1176 | - | - | 45.1 | 4.35 | 128 | 0.357
+0.90 | 43.0 | 865 | 31.0 | 19.21 | 45.1 | 4.96 | 75 | 0.239
+0.80 | 33.5 | 713 | 34.1 | 14.33 | 45.1 | 5.39 | 54 | 0.184
+0.70 | 33.5 | 600 | 28.1 | 10.69 | 45.3 | 5.67 | 41 | 0.149
+0.60 | 33.5 | 505 | 23.2 | 7.88 | 45.4 | 6.04 | 31 | 0.118
+0.50 | 28.8 | 435 | 25.5 | 6.64 | 45.1 | 6.50 | 24 | 0.094
+0.40 | 28.8 | 345 | 21.0 | 4.63 | 45.1 | 7.24 | 16 | 0.067
+0.30 | 31.9 | 286 | 14.3 | 3.14 | 45.2 | 7.59 | 12 | 0.052
+0.25 | 24.8 | 281 | 23.2 | 3.13 | 45.1 | 9.50 | 9 | 0.040
+Tính chất cần nhớ: (z, p, z1, p1) phụ thuộc K và g_min, KHÔNG phụ thuộc vận tốc v (ổn định của đối tượng gần như không đổi theo v), nên một khâu bù chung đủ cho mọi vận tốc. Giới hạn khả thi
+theo mức g_min (K lớn nhất còn có bộ đạt PM 45 độ trên lưới): g_min 1.0: 8, g_min 0.9: 10, g_min 0.8: 12, g_min 0.7: 14, g_min 0.6: 16. Số "K_stab = 9.5" của bản lead đơn cũ KHÔNG còn đúng:
+lưới cũ cho p = 6415 rad/s, vượt tần số Nyquist 3142 rad/s của bước 1 ms; với p <= 3142 lead đơn khả thi tới K = 8. Giới hạn này chỉ là của phân tích tuyến tính và là cận lưới quét, không
+phải cổng (mục 5.1).
 4.7. KIỂM ĐỘC LẬP (khung 1, 2026-10-09; phần này là việc của người kiểm, không thay thế số của khung SMC). Tính lại bằng MATLAB từ params.json (hàm truyền cột lái + motor đã gồm trong G, trễ
+[Ghi chú 2026-10-12: phần này phân tích bản LEAD ĐƠN tại K = 6.75 (thiết kế cũ). Vật lý và phương pháp vẫn đúng; số K >= 8.5 và p lớn hơn tần số Nyquist không còn dùng.]
 1 ms chính xác, hai mặt đường k_r = 30 và 0, bốn độ dốc 0.25-1 * K): PM nhỏ nhất của các cặp (z, p) trong Bảng trên là 44.9 / 46.0 / 45.0 / 45.3 / 45.2 / 45.4 / 45.1 độ cho K = 1 / 3 / 5 / 6
 / 6.75 / 7 / 9.5, khác số của khung SMC dưới 0.4 độ. PM nhỏ nhất xảy ra tại k = K_max; ở K = 6.75 PM lần lượt 51.3 / 49.2 / 47.6 / 45.2 (k = 0.25, 0.5, 0.75, 1 * K, đường khô), bão hòa 50.5
 / 49.0 / 47.6 / 45.3. Tìm lại lead rẻ nhất đạt PM >= 45 ở K = 6.75 cho cùng hf gain 188 (p/z = 27.8), chỉ khác z đôi chút do lưới. Số của khung SMC được xác nhận. (Ghi chú trung thực: lần
 tính đầu tôi vô ý đếm khâu motor hai lần và ra PM 31.5 độ; lỗi nằm ở phép tính của tôi, đã sửa; hàm pi_plant_lin đã gồm khâu motor.)
 4.8. TẠI SAO KHÔNG LẤY PM LỚN HƠN 45 ĐỘ (để chịu trễ lớn hơn). Quét K = 6.75, lưới mở rộng (z 8-800, p/z 1.5-1000), lead rẻ nhất cho mỗi mục tiêu PM:
+[Ghi chú 2026-10-12: phần này phân tích bản LEAD ĐƠN tại K = 6.75 (thiết kế cũ). Vật lý và phương pháp vẫn đúng; số K >= 8.5 và p lớn hơn tần số Nyquist không còn dùng.]
 PM đạt | z | p/z | hf gain | nhiễu T_a [N.m] | w_c [rad/s] | dự trữ trễ = PM/w_c [ms]
 30 | 71.2 | 6.2 | 42 | 0.17 | 140 | 3.8
 40 | 60.9 | 14.4 | 97 | 0.31 | 157 | 4.5
@@ -136,73 +145,175 @@ cảm biến bị khuếch đại nhiều hơn (dễ vi phạm cổng bang-bang,
 1)/(p/z + 1)), tại tần số sqrt(z*p): với p/z = 27.8 là 68.5 độ (tại tần số cắt 161 rad/s lead cho 64.1 độ). Ghi chú về [1]: [1] viết một lead tối đa khoảng 55 độ, trùng với p/z = 10
 (asin(9/11) = 54.9 độ); lead của Map ta dùng p/z = 27.8 nên vượt con số 55; [1] dùng nhiều lead và một lag để đi xa hơn (suy luận của khung 1).
 4.9. Dự trữ trễ - ý nghĩa. Trễ thuần thêm tau làm sóng sin tần số w chậm đi, trễ pha thêm w*tau rad (tại 161 rad/s, 1 ms = 9.2 độ). Dự trữ trễ = PM(rad)/w_c = 0.789/161 = 4.9 ms. Mô phỏng
+[Ghi chú 2026-10-12: phần này phân tích bản LEAD ĐƠN tại K = 6.75 (thiết kế cũ). Vật lý và phương pháp vẫn đúng; số K >= 8.5 và p lớn hơn tần số Nyquist không còn dùng.]
 thêm trễ vào mô hình có lead: PM = 45.2 (0 ms thêm), 36.0 (1), 26.8 (2), 17.6 (3), 8.4 (4), 3.8 (4.5), -0.8 (5), -10.0 (6), -28.4 (8) độ; cực chậm nhất của hệ kín -142 +- j129 (0 ms), -13 (4
 ms), +1.0 (5 ms, mất ổn định, dao động ~25 Hz), +23 (8 ms). Không lead (K = 6.75): PM = -0.9 độ ngay cả khi trễ về 0 ms, nên thiếu dự trữ ÂM (không thể bù bằng phần cứng nhanh hơn). Lead mua
 được khoảng 6-7 ms tương đương thời gian.
 ==============================================================================================================================================================================================
-PHẦN 5 - CHỌN K_MAX
+PHẦN 5 - CHỌN K_MAX VÀ g_min (QUY CHUẨN V5)
 ==============================================================================================================================================================================================
-5.1. Miền K cho phép và cổng không bang-bang. Mọi bộ điều khiển phải qua điều kiện chung: nhiễu cảm biến không được làm lệnh nhảy liên tục tới giới hạn T_a,max(v) của motor (bang-bang, không
-EPS thật nào chấp nhận). Đo trên ca TK, chạy hai lần (cảm biến lý tưởng và có nhiễu, seed 00000), tỉ lệ mẫu từ giây thứ hai mà |lệnh| >= 99.9 % giới hạn; loại nếu tỉ lệ có nhiễu trừ tỉ lệ lý
-tưởng > 1 % (Tự chọn(8)). Kết quả theo K: tăng do nhiễu 0.62 % (6.75), 0.93 % (7.0), 1.28 % (7.25), 2.4 % (8.0), 4.7 % (8.75), 9.3 % (9.5): cổng chỉ cho K <= 7.00 (độ nhạy: ngưỡng 0.5 % cho
-K <= 6.5; 2 % cho K <= 7.75; 5 % cho K <= 8.75). Miền cho phép: K_acc(v) <= K_max <= min(K_stab = 9.5, 7.00) = 7.00. XUNG ĐỘT: ở 30 và 35 km/h K_acc = 8.00 và 7.25 lớn hơn 7.00. Người dùng
-chọn ưu tiên không bang-bang (2026-10-08), nên cổng độ chính xác chỉ áp từ 40 km/h; hậu quả (20-35 km/h sai số lớn, 25 km/h tới 65.7 %) được tính vào kết quả.
-5.2. Quy tắc chọn K (quy tắc chung mọi bộ điều khiển, QuyChuan.txt mục 6.2): trong các K qua mọi cổng cứng, giữ các K có R <= 1.05 * R nhỏ nhất của chính bản đồ (5 % là ngưỡng hòa), rồi chọn
-K có S nhỏ nhất. Bám e_T là ưu tiên một vì mục tiêu đề tài là khắc phục trợ lực thừa; êm là ưu tiên hai. R, S đo bằng mô phỏng vòng kín trên ca TK (3 khối 28 s ở 30, 60, 100 km/h; bỏ 2 s
-đầu), có nhiễu, một seed 00000; bản đồ chấm bằng cả ba khối (căn của trung bình bình phương). Kết quả: R = 1.164, S = 0.504 tại K = 6.75 (R = 1.134, S = 0.532 tại 7.0, cách nhau dưới 5 % về
-R nên chọn S nhỏ hơn): K_max = 6.75.
-5.3. Vì sao chỉ giữ MỘT bậc (người dùng chốt 2026-10-09). Bản hai bậc Map_2K cho K_thấp = K_cao = 6.75, R = 1.164, S = 0.502: trùng bản một bậc (R đổi 0.00 %, S đổi 0.00 %), sai số e_rel tại
-cửa sổ 0.35 g y hệt (55.8 / 17.4 / 16.9 % ở 30 / 60 / 100 km/h), hai khâu lead trùng nhau (z = 59.82, p = 1665.96, PM 45.2) nên phần trộn w(v) không làm gì. Lý do: cổng bang-bang chặn K <=
-7.00 và cổng độ chính xác đòi K >= 6.75 ở 40-55 km/h, nên miền cho phép chỉ còn 2-6 giá trị và cả hai bậc rơi vào cùng một giá trị. Cổng "đáng giá" (R giảm >= 5 % mà S không tăng) KHÔNG đạt:
-là kết quả âm cần nói thẳng, với các cổng chung hiện nay không có lý do dùng hai bậc. Hệ quả: Map chỉ có một K_max và một lead (data/map.json trường design); mô hình Map.mdl/Model_Map.mdl,
-thư mục Model/Controllers/Map và Result/Controllers/Map thay cho tên Map_2K cũ. Bản sao lưu trước khi đổi tên: C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-09_truoc_doi_ten.
+5.1. Cổng (QuyChuan v5, 2026-10-11). Thứ tự ưu tiên: (1) ổn định có độ dư đo bằng mô phỏng (mục 4.3); (2) sai số xác lập e_rel <= 5 % trên chín cửa sổ static (mục 3.4). Bang-bang (tỉ lệ mẫu
+lệnh chạm T_a,max tăng do nhiễu) và trợ lực ngược chiều CHỈ BÁO CÁO. Cổng bang-bang cũ (tăng do nhiễu <= 1 %, cho K <= 7.00) đã bỏ ngày 2026-10-11 sau khi khung Linear đo độ phân tán giữa
+các seed; cổng trợ lực ngược (<= 1 %) bỏ cùng ngày. Hệ quả cho Map: K nhỏ nhất bị chặn bởi e_rel (K >= 5.80), còn cận trên không do cổng nào đặt: lưới được mở rộng tới khi R phẳng (mục 5.4).
+5.2. Quy tắc chọn (QuyChuan 6.2 phiên bản 5; mọi bộ điều khiển dùng chung): trong các điểm qua cổng cứng VÀ ràng buộc dải lái, chọn J = R x S nhỏ nhất (pick_by_balance.m, a = 1; độ nhạy a =
+0.5 và 2; báo kèm điểm của quy tắc cũ "R trong 5 % của R nhỏ nhất rồi S nhỏ nhất"). R: RMS của e_T theo % giá trị đặt trên các cửa sổ CALIB (độ bám); S: RMS của T_a sau lọc cao 5 Hz (độ ồn);
+J đổi 1 % êm lấy 1 % bám, không đơn vị, không ngưỡng tự chọn. Ràng buộc dải lái (người dùng chốt 2026-10-11): mọi khâu lọc hay làm chậm trong bộ điều khiển giữ độ lợi >= 0.707 (-3 dB) tại 2
+Hz, vì người lái đánh lái ở 0.2-2.0 Hz (không quá 5 Hz) theo Nguyen 2025 tr. 19 (trích Yong 2019), còn -3 dB là định nghĩa thông thường của băng thông; với Map ràng buộc áp cho lag (lead là
+khâu sớm pha, không tính). LÝ DO CÓ RÀNG BUỘC: J một mình làm Map chậm đi. J nhỏ nhất theo từng mức g_min:
+g_min | 1.00 | 0.90 | 0.80 | 0.75 | 0.70 | 0.65 | 0.60 | 0.50 | 0.40 | 0.30 | 0.25
+J nhỏ nhất | 10.60 | 8.26 | 7.30 | 7.79 | 6.74 | 6.98 | 6.31 | 5.98 | 5.67 | 5.51 | 5.11
+K tại J nhỏ nhất | 6.00 | 6.00 | 6.00 | 8.00 | 6.00 | 8.00 | 6.00 | 6.00 | 6.00 | 5.80 | 5.80
+độ lợi lag 2 Hz | 1.000 | 0.903 | 0.801 | 0.761 | 0.710 | 0.653 | 0.604 | 0.521 | 0.403 | 0.323 | 0.275
+J giảm gần đơn điệu (nhấp nhô nhỏ do lưới rời rạc) khi lag sâu hơn, vì làm chậm hạ S nhanh hơn làm R tăng: không có cực tiểu bên trong, tối ưu nằm ở cận lưới p1 = 3 rad/s (hằng số thời gian
+0.32 s). Điểm J không ràng buộc (g_min 0.25, K 5.80) có R = 37.7 % (lead đơn K 6.0: R = 25.9 %), S = 0.135 N.m và trợ lực thừa trên vũng nước tới -122 % (so với -87 %). J thưởng đúng sự chậm
+trái mục tiêu bám; vì vậy ràng buộc dải lái bảo vệ ưu tiên bám (bám là ưu tiên một vì mục tiêu đề tài là khắc phục trợ lực thừa, tức bám T_d,ref).
+Kết quả: g_min = 0.70, K_max = 6.0 (lead z 33.5, p 600.1; lag z1 28.13, p1 10.69; độ lợi lag tại 2 Hz 0.710). Trên CALIB: R = 27.05 %, S = 0.2492 N.m, TV = 92.5 N.m/s, J = 6.743, e_rel =
+3.17 %, trợ lực ngược 0.21 % (báo cáo); bang-bang tăng do nhiễu 0.0000 (hai seed, báo cáo); dự trữ độ lợi x2: R = 0.78 lần danh định, trễ +1 ms: 1.00 lần; qua calib_margin. Độ nhạy: a = 0.5
+và a = 2 cùng cho (0.70, 6.0); quy tắc cũ cho (0.70, 8.5) với R = 25.6 %, S = 0.290 N.m; lead đơn (nhánh đối chứng, cùng quy tắc) cho K 6.0 với R = 25.9 %, S = 0.410 N.m. Điểm cũ (0.70, 8.5)
+có R thấp hơn 1.5 % nhưng S cao hơn -0.040 N.m: chọn J có ràng buộc là chọn êm hơn đổi lấy bám kém hơn một chút.
+5.3. Số công sức thiết kế (QuyChuan 6.7, báo RIÊNG hai số). Số giá trị K đã mô phỏng: 18 (từ 5.00 tới 40). Số cặp (g_min, K) đã mô phỏng: 73 (61 cặp thiết kế, 12 cặp vượt giới hạn tuyến
+tính), mỗi cặp 4 mô phỏng CALIB (nhiễu seed 00000, lý tưởng, độ lợi x2, trễ +1 ms) nên 292 mô phỏng. Số thiết kế tuyến tính đã giải: 103 (1630706 khâu ứng viên kiểm trên mô hình tuyến tính).
+Tham số thật sự chỉnh bằng mô phỏng: hai (K và g_min); z, p, z1, p1 tính ngoại tuyến từ (K, g_min).
+5.4. Vượt giới hạn tuyến tính (QuyChuan 9.5: mở rộng lưới tới khi một cổng chặn hoặc R phẳng). Giữ khâu bù ở khâu thiết kế lớn nhất khả thi (lead đơn: khâu của K = 8; g_min 0.70: K = 14;
+g_min 0.60: K = 16) và tăng độ dốc của bảng tới 40: KHÔNG cặp nào mất ổn định, R phẳng (lead đơn 24.4-24.8 %, g_min 0.70: 25.4 %), S tăng (lead đơn 0.66 tới 0.91 N.m), lead đơn rớt bang-bang
+từ K = 10 (báo cáo). Điểm chọn không đổi.
+5.5. Vì sao chỉ giữ MỘT bậc (người dùng chốt 2026-10-09). Bản hai bậc Map_2K cho K_thấp = K_cao = 6.75 và hai khâu lead trùng nhau (z = 59.82, p = 1665.96), R, S đổi 0.00 %; cổng "đáng giá"
+(R giảm >= 5 % mà S không tăng) KHÔNG đạt: kết quả âm cần nói thẳng. Lý do khi đó: cổng bang-bang chặn K <= 7.00 và cổng độ chính xác đòi K >= 6.75 ở 40-55 km/h nên cả hai bậc rơi vào cùng
+một giá trị. Hai cổng đó đã đổi (mục 5.1) và kết luận CHƯA được thử lại với v5; quyết định giữ một bậc vẫn là quyết định của người dùng. Thư mục Model/Controllers/Map và
+Result/Controllers/Map thay cho tên Map_2K cũ; bản sao lưu trước khi đổi tên: C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-09_truoc_doi_ten.
+5.6. Lịch sử đổi quy tắc sau khi thấy kết quả (phải nói thẳng khi bảo vệ). Quy tắc chọn của Map đã đổi nhiều lần: e_rel 3 -> 5 %, bỏ cổng trợ lực ngược, bỏ cổng bang-bang, rồi thêm ràng buộc
+dải lái sau khi thấy J suy biến trên Map (lần thứ tư, 2026-10-11). Mọi lần đều ghi ở nhật ký thay đổi của QuyChuan kèm lý do. Báo cáo luôn kèm điểm chọn khi không có ràng buộc (g_min 0.25, K
+5.8) và theo quy tắc 5 % cũ (g_min 0.70, K 8.5) để người đọc tự đánh giá.
 ==============================================================================================================================================================================================
-PHẦN 6 - KIỂM CHỨNG TRÊN SÁU CA THỬ VÀ ĐIỂM YẾU CHỦ Ý
+PHẦN 6 - KIỂM CHỨNG TRÊN NĂM CA (DREWS) VÀ ĐIỂM YẾU CHỦ Ý
 ==============================================================================================================================================================================================
-6.1. Kết quả (cảm biến lý tưởng, RMS e_T [N.m]): TC1 0.645, TC2 0.837, TC3 0.484, TC4 0.866, TC5 1.706, TC6 0.015. Có nhiễu RMS e_T gần như không đổi (dưới 0.1 %) vì phần giật tần số cao của
-T_a bị trụ lái lọc, nhưng TV (tổng biến thiên của T_a mỗi giây) tăng từ 0.02-3.4 lên 83-686 N.m/s: đặc tính cố hữu của Map (nhiễu T_s qua độ dốc bản đồ và hf gain 188 của lead). Trên đường
-khô (TC1) sai số tại các cửa sổ xác lập không quá 2.7 %, đúng cổng.
-6.2. Điểm yếu cố hữu (đúng cái chuẩn so sánh phải có): khi mu giảm Map vẫn cấp trợ lực như đường khô nên tay lái nhẹ đi: -14.1 % ở TC3 sau khi mu giảm đột ngột, -83.5 % ở TC4 khi xe qua vũng
-nước. Cua gắt trên 0.3 g trên đường khô: tay lái nặng hơn mong muốn vì độ dốc bị chặn (cửa sổ trước khi mu giảm của TC3: 17.5 %). Sai số lớn nhất cả ca TC1 là 3.55 N.m, xảy ra ở chuyển tiếp
-giữa các bậc gia tốc ngang (quán tính trụ lái), dù sai số ở các cửa sổ xác lập chỉ 0.06 N.m.
+6.1. Kết quả năm ca (DRY, RAMP, SLIP, WEAVE, EDGE; cảm biến có nhiễu seed 00000; điểm g_min 0.70, K 6.0; Result/Controllers/Map/Cases/Map_metrics_s00000.csv). RMS e_T [N.m]: DRY 0.689, RAMP
+0.835, SLIP 0.538, WEAVE 1.327, EDGE 1.535. S [N.m]: 0.150, 0.170, 0.161, 0.160, 0.129. TV [N.m/s]: 78.3, 115.4, 95.1, 47.2, 22.3. Trợ lực ngược [%]: 0.142, 0.006, 0.043, 0.046, 0.021. Đỉnh
+|T_a| [% T_a,max]: 71.6, 73.7, 69.3, 64.7, 88.1.
+6.2. Điểm yếu cố hữu (đúng cái chuẩn so sánh phải có): khi mu giảm Map vẫn cấp trợ lực như đường khô nên tay lái nhẹ đi: -86.8 % ở vũng nước của SLIP (pud_in, âm = trợ lực thừa). Trên đường
+khô, DRY: sai số có dấu tại các cửa sổ không quá 3.6 % trừ cửa sổ v40a0p3r (13.0 %).
+6.3. Phát hiện DRY ở 40 km/h (2026-10-11). Cổng e_rel (9 cửa sổ ở 20, 60, 100 km/h) báo 3.17 % nhưng DRY v40a0p3r là 13.0 % (điểm cũ K = 8: +0.5 %): ở 40 km/h độ dốc tự nhiên (khoảng 10) lớn
+hơn K_max = 6.0 nên bản đồ bị chặn thấp hơn điểm hiệu chỉnh (K_acc(40 km/h) = 6.25 ở dung sai 5 %, mục 3.4). Người dùng đã bác việc thêm cửa sổ ở 40 km/h vào CALIB; số này được báo cáo như
+hiện có, và là chỗ khung COMMON có thể xét lại nếu muốn thay đổi CALIB (khi đó mọi bộ phải chạy lại).
+6.4. RAMP (đổi tốc độ khi đang cua; chỉ báo cáo): giảm tốc sai số dương tới 46.7 % (tay lái nặng hơn mong muốn), tăng tốc sai số âm -20.2 tới -5.9 %; nguyên nhân (theo phân tích của khung
+COMMON, Lượt 29): ma sát khô T_f = 2 N.m cộng việc Map không có tích phân, T_s bị ép lên biên dốc khi giảm tốc.
+6.5. EDGE (0.35-0.4 g, chỉ báo cáo): sai số ở 0.4 g là 99.7, 56.8, 52.5 % ở 40, 60, 100 km/h (điểm cũ K = 8: 61.9, 45.4, 38.4 %): K thấp hơn nên vùng cực kém hơn; vượt dải đã hiệu chỉnh, độ
+dốc bị chặn: giới hạn của bản đồ.
 ==============================================================================================================================================================================================
 PHẦN 7 - NGUỒN VÀ CÁC LỰA CHỌN CỦA TÁC GIẢ
 ==============================================================================================================================================================================================
-Từ nguồn: cấu trúc bản đồ + lead đặt sau bản đồ, phương trình (15)-(16), vùng chết, mô hình motor G_m = w_m/(s + w_m), w_m = 2*pi*100, ngưỡng PM > 45 độ ([1] Lee et al. 2018 mục III.A,
-III.D; đã kiểm trong PDF ngày 2026-10-09); trợ lực thừa khi mu giảm ([4] Li et al. 2023, theo tài liệu map.txt, khung 1 chưa mở lại PDF); bảng mô-men vô-lăng lý tưởng và cách xác định trợ
-lực cần cấp ([5] Li và Xia, Bảng 4 và Bảng 5, theo map.txt).
-Lựa chọn của tác giả (không có nguồn): (1) vùng chết T_s0 = 0.3 N.m; (2) cổng sai số xác lập <= 3 % trong 0.1-0.3 g từ 40 km/h; (3) bỏ ma sát Coulomb khi tuyến tính hóa; (4) trễ tương đương
-1 ms; (5) PM >= 45 độ ở mọi k và mọi điểm làm việc (ngưỡng từ [1], phạm vi áp là lựa chọn); GM >= 2; (6) lưới lead 36x40 và tiêu chí hf gain nhỏ nhất; (7) ngưỡng hòa 5 % và seed 00000; (8)
-ngưỡng bang-bang 1 %; (9) định nghĩa sai số xác lập của Map trên dải 0.1-0.3 g thay vì cửa sổ 0.35 g của ca TK.
-Điểm khác với [1] cần nói thẳng khi bảo vệ: [1] chọn lead-lag nhiều khâu và tối ưu hóa a*GM + b*PM bằng Optimization Toolbox, thiết kế ở trạng thái đỗ xe v = 0 (độ dốc lớn nhất); Map ở đây
-chỉ dùng lead, chọn hf gain nhỏ nhất trong các cặp đạt cổng, dải vận tốc 20-100 km/h (không có v = 0). Lý do: Map chỉ làm CHUẨN so sánh nên chọn tiêu chí đơn giản, tái lập được và công bằng
-với PI/PID (cùng cổng, cùng quy tắc chọn).
+Từ nguồn: cấu trúc bản đồ + khâu bù lead-lag đặt sau bản đồ, phương trình (15)-(16), vùng chết, mô hình motor G_m = w_m/(s + w_m), w_m = 2*pi*100, ngưỡng PM > 45 độ ([1] Lee et al. 2018 mục
+III.A, III.D; đã kiểm trong PDF ngày 2026-10-09); trợ lực thừa khi mu giảm ([4] Li et al. 2023, theo tài liệu map.txt, khung Map chưa mở lại PDF); bảng mô-men vô-lăng lý tưởng và cách xác
+định trợ lực cần cấp ([5] Li và Xia, Bảng 4 và Bảng 5, theo map.txt); dải đánh lái của người 0.2-2.0 Hz, không quá 5 Hz (Nguyen 2025 tr. 19, trích Yong 2019, References [13], [14]).
+Lựa chọn của tác giả (không có nguồn): (1) vùng chết T_s0 = 0.3 N.m; (2) bỏ ma sát Coulomb khi tuyến tính hóa; (3) trễ tương đương 1 ms; (4) lưới khâu bù, tiêu chí hf gain nhỏ nhất, PM >= 45
+độ ở mọi k và mọi điểm làm việc (ngưỡng từ [1], phạm vi áp là lựa chọn) và GM >= 2; (5) các mức g_min và cận p1 >= 3 rad/s; (6) một seed địa phương 00000. Các số chung của mọi bộ điều khiển
+(e_rel <= 5 %, 2 Hz và -3 dB, J = R x S, độ dư độ lợi x2 và trễ +1 ms) do QuyChuan quy định.
+Điểm khác với [1] cần nói thẳng khi bảo vệ: [1] tối ưu hóa nhiều khâu lead-lag bằng a*GM + b*PM (Optimization Toolbox), thiết kế ở trạng thái đỗ xe v = 0 (độ dốc lớn nhất); Map ở đây là MỘT
+lead nhân MỘT lag, chọn hf gain nhỏ nhất trong các bộ đạt cổng và ràng buộc g_min, dải vận tốc 20-100 km/h (không có v = 0). Lý do: Map chỉ làm CHUẨN so sánh nên chọn tiêu chí đơn giản, tái
+lập được và công bằng với PI/PID (cùng cổng, cùng quy tắc chọn).
 ==============================================================================================================================================================================================
 PHẦN 8 - HỎI ĐÁP NHANH (CHUẨN BỊ CHO BẢO VỆ)
 ==============================================================================================================================================================================================
-H1. Tại sao cần lead? Vì độ dốc K của bản đồ là độ lợi vòng; để bám đúng giá trị đặt cần K từ 5.75 trở lên, trong khi không có bù pha thì vòng chỉ chịu được K <= 0.51 (cộng hưởng trụ lái ở
-khoảng 6 Hz, hệ số tắt dần 0.155, pha đối tượng sát -180 độ ở tần số cắt). Lead cộng +64 độ tại tần số cắt (mục 4.4).
-H2. Công thức lead ở đâu ra? H(s) = (s/z + 1)/(s/p + 1) là phương trình (16) của [1], đặt sau bản đồ như [1] mục III.A.
-H3. Thiết kế lead thế nào? Với mỗi K, quét lưới 1440 cặp (z, p), giữ cặp đạt PM >= 45 độ và GM >= 2 trên mọi điểm làm việc, chọn cặp có hf gain nhỏ nhất (mục 4.6). Là phân tích tuyến tính,
-không mô phỏng; K_max mới chọn bằng mô phỏng.
-H4. Chạy calib thế nào? Hai tầng: (z, p) từ phân tích tuyến tính (hàm của K); K_max từ mô phỏng ca TK có nhiễu, quy tắc "R trong 5 % của R nhỏ nhất, rồi S nhỏ nhất", qua cổng bang-bang (mục
-5.2). Số tham số thật sự chỉnh: hai K_max.
-H5. Tại sao PM 45 độ mà không phải 60 hay 30? 45 độ là quy ước của [1]. PM 30 độ khuếch đại 1/(2*sin(15 độ)) = 1.9 lần ở tần số cắt, PM 45 độ là 1.3 lần, PM 60 độ là 1.0 lần; nhưng PM cao
-tốn nhiều nhiễu và dự trữ trễ không tăng (mục 4.8).
-H6. Dự trữ trễ 4.9 ms nghĩa là gì? Thực tế được chậm hơn mô hình tối đa 4.9 ms mà vòng vẫn ổn định; quá mức đó dao động ~25 Hz lớn dần (mục 4.9). Muốn dự trữ lớn hơn phải giảm K, không phải
-tăng PM.
-H7. Sao Map chỉ một bậc? Bản hai bậc không khác bản một bậc: cổng bang-bang (K <= 7) và cổng độ chính xác (K >= 6.75 ở 40-55 km/h) khóa K vào 6.75 ở cả hai bậc nên bản hai bậc suy biến thành
-một (mục 5.3).
-H8. Sao Map sai 17-56 % ở cua 0.35 g? Trên 0.3 g độ dốc cần có lên hàng chục tới hàng trăm, vượt mức ổn định được (K <= 0.51 không lead, <= 9.5 có lead); Map chọn cổng ở 0.1-0.3 g (Tự
-chọn(9)), nên sai số ở 0.35 g là giới hạn của bản đồ, được báo cáo chứ không che.
-H9. Sao lead có thể khuếch đại nhiễu nhiều thế (188 lần)? Vì lead có độ lợi p/z tại tần số cao; nhiễu T_s std 0.0104 N.m qua k*H*G_m cho nhiễu T_a 0.44 N.m (sau motor); hf gain là cái giá
-của dự trữ pha, và cổng bang-bang chính là chặn cái giá đó (K <= 7).
+H1. Tại sao cần lead? Vì độ dốc K của bản đồ là độ lợi vòng; để bám đúng giá trị đặt cần K từ 5.80 trở lên, trong khi không có bù pha thì vòng chỉ chịu được K <= 0.51 (cộng hưởng trụ lái,
+pha đối tượng sát -180 độ ở tần số cắt). Lead cộng +64 độ tại tần số cắt (mục 4.4).
+H2. Công thức khâu bù ở đâu ra? H(s) = (s/z + 1)/(s/p + 1) là phương trình (16) của [1], đặt sau bản đồ như [1] mục III.A; Map dùng một lead nhân một lag.
+H3. Tại sao thêm lag? Lead nhân nhiễu nhanh lên p/z lần (hf gain 128 ở g_min 1.00, K = 6.0); lag hạ hf gain xuống 41 (g_min 0.70) mà vẫn giữ pha tại tần số cắt, nhiễu lệnh tuyến tính giảm từ
+0.357 xuống 0.149 N.m.
+H4. Tại sao không để lag sâu hơn nữa (J nhỏ hơn)? Vì J thưởng sự chậm: lag sâu làm S giảm nhanh hơn R tăng (J 10.60 ở g_min 1.00, 6.74 ở 0.70, 5.11 ở 0.25) nhưng vòng chậm đi, R tăng tới
+37.7 % và trợ lực thừa trên vũng nước nặng thêm (-122 % so với -87 %). Ràng buộc: lag giữ độ lợi >= 0.707 tại 2 Hz, cận trên của dải lái (mục 5.2).
+H5. Tại sao 2 Hz và -3 dB? 2 Hz là cận trên của dải đánh lái 0.2-2.0 Hz (Nguyen 2025 tr. 19, trích Yong 2019); -3 dB (độ lợi 0.707) là định nghĩa thông thường của băng thông. Không phải số
+tự chọn nhưng được thêm SAU khi thấy J suy biến: lần thứ tư đổi quy tắc, nói thẳng.
+H6. Tại sao K = 6.0 mà không lớn hơn? K nhỏ nhất qua cổng e_rel là 5.80; tăng K vượt giới hạn tuyến tính (mục 5.4) không đổi R (phẳng) nhưng S tăng nên J không cải thiện; K = 6 là điểm J nhỏ
+nhất qua cổng.
+H7. Sao Map chỉ một bậc? Bản hai bậc suy biến thành một bậc với các cổng cũ (mục 5.5); kết luận chưa thử lại với v5, quyết định giữ một bậc là của người dùng.
+H8. Sao Map sai tới 100 % ở 0.4 g và 13.0 % ở DRY 40 km/h 0.3 g? Trên 0.3 g độ dốc cần có lên hàng chục, vượt mức K_max; ở 40 km/h độ dốc tự nhiên khoảng 10 > K_max = 6.0. CALIB chỉ có cửa
+sổ static ở 20, 60, 100 km/h nên cổng không thấy; số được báo cáo, không che (mục 6.3).
+H9. Sao lead có thể khuếch đại nhiễu nhiều thế? Vì lead có độ lợi p/z tại tần số cao; nhiễu T_s (độ lệch chuẩn 0.0104 N.m) qua k*H*G_m ra nhiễu T_a; hf gain là cái giá của dự trữ pha. Lag
+giảm hf gain (H3). Bang-bang chỉ còn là số báo cáo.
+H10. Dự trữ trễ 4.9 ms (bản lead đơn K = 6.75) nghĩa là gì? Thực tế được chậm hơn mô hình tối đa 4.9 ms mà vòng vẫn ổn định; quá mức đó dao động ~25 Hz lớn dần (mục 4.9). Quy chuẩn v5 đo dự
+trữ bằng mô phỏng (độ lợi x2, trễ +1 ms) thay vì số lý thuyết này.
 ==============================================================================================================================================================================================
-PHẦN 9 - VIỆC CÒN LẠI THEO QUY CHUẨN V1 (chưa làm; khung Map sở hữu Map)
+PHẦN 9 - VIỆC CÒN LẠI (CẬP NHẬT 2026-10-12; khung Map sở hữu Map)
 ==============================================================================================================================================================================================
-- Chọn lại K_max sau khi ca TK đổi (4 đoạn giữ cua 0.1-0.4 g thay đoạn 0.35 g, nếu người dùng chốt) và định nghĩa sai số xác lập chuẩn QuyChuan 4.4; khả năng cao K_max vẫn rơi vào 6.75-7.0
-  vì cận bang-bang K <= 7 chi phối (dự đoán, chưa chạy).
-- Cổng bang-bang: thống nhất hàm đo (tk_bangbang.m dùng 0.999*T_a,max; khối Gates dùng |T_a_cmd| > |T_a_lim|); đo lại ngưỡng sau khi thống nhất.
-- Chuyển PM/GM tuyến tính thành kiểm tra phụ; cổng chính là dự trữ đo bằng mô phỏng (độ lợi Actuator tăng dần và trễ thuần >= 2 ms) theo QuyChuan 5.2; Map đạt dự trữ trễ lý thuyết 4.9 ms.
-- (Đã chốt 2026-10-09) Map một bậc; bản hai bậc Map_2K đã bỏ (mục 5.3).
-- Làm hình Bode vòng hở có và không lead (đánh dấu tần số cắt và PM) để trả lời H1 bằng một hình.
+- ĐÃ LÀM (2026-10-11 và 2026-10-12): Map lead-lag theo QuyChuan v5 (mục 5); map.json (design có lag, ghi chú x_design_note); map.txt sinh lại bằng tools/build_map_txt.py; hai file dàn ý docx
+  sinh lại bằng tools/build_outline_docx.py; các script lead đơn cũ đã xóa (bản sao ở Desktop/Adaptive-EPS_backup_2026-10-12_Map_lam_lai_tai_lieu).
+- CHƯA LÀM: (a) so sánh với PI, PID, SMC bằng seed chung 99999 (chờ các khung kia chốt điểm; Result/Compare/Map_vs_* còn là của Map cũ); (b) khung PI, PID, SMC kiểm ràng buộc dải lái trên
+  điểm đã chọn (PID: Tf của khâu D; SMC: lớp biên); (c) tùy khung COMMON: thêm cửa sổ static ở 40 hoặc 80 km/h vào CALIB (người dùng đã bác 2026-10-11), khi đó Map chạy lại sweep; (d) thử
+  lại bản hai bậc theo v5 nếu người dùng muốn; (e) hình Bode vòng hở có và không lead cho trả lời H1 bằng một hình.
+==============================================================================================================================================================================================
+PHẦN 10 - KHÂU BÙ LEAD-LAG: LÝ THUYẾT RÚT GỌN, QUY TRÌNH LÀM VÀ CÁCH ĐƯA VÀO BÀI BÁO, LUẬN VĂN (2026-10-11)
+==============================================================================================================================================================================================
+10.0. Phạm vi và trạng thái. Người dùng đề nghị (2026-10-11) dùng khâu lead-lag làm Map chính, đúng nguồn [1] mục III.A phương trình (16) và III.D (lead tăng pha tối đa khoảng 55 độ, thêm
+một khâu lag để hạ độ lợi tần số cao). Các Phần 2 tới 9 đã cập nhật ngày 2026-10-12 cho lead-lag theo QuyChuan v5 (phần 4.4, 4.7-4.9 giữ làm minh họa bản lead đơn). Số trong phần này lấy từ
+hai nguồn: (a) tính ngày 2026-10-11 trên mô hình tuyến tính của Plant hiện tại tại 60 km/h, 0.2 g, đường khô, có motor 100 Hz và trễ 1 ms; (b) lần quét Map lead-lag cũ (Lượt 316-317, trên ca
+thiết kế TK cũ). Số loại (b) là số cũ; số đo lại trên CALIB mới ở Phần 5 và 6. Mọi số trong phần này đều là của mô hình tuyến tính, không có vùng chết, không giới hạn T_a,max, không nhiễu
+trừ chỗ ghi rõ.
+10.1. Công thức. Lead và lag cùng một dạng, chỉ khác thứ tự hai số z (điểm không, nơi độ lợi bắt đầu đổi) và p (cực, nơi độ lợi ngừng đổi):
+  (1)  H(s) = (s/z + 1) / (s/p + 1)         lead: p > z (độ lợi tần số cao = p/z > 1);   lag: p1 < z1 (độ lợi tần số cao = p1/z1 < 1)
+  [ H(s)=\frac{s/z+1}{s/p+1} ]
+  (2)  H_LL(s) = H_lead(s) * H_lag(s) = (s/z + 1)/(s/p + 1) * (s/z1 + 1)/(s/p1 + 1)
+  [ H_{LL}(s)=H_{lead}(s)\,H_{lag}(s) ]
+Độ lợi DC (độ lợi khi tín hiệu vào không đổi theo thời gian, tức s = 0) của cả hai khâu bằng 1, nên khâu bù KHÔNG đổi sai số xác lập: sai số xác lập chỉ do độ dốc K của bản đồ quyết định
+(mục 3.4). Khâu bù chỉ đổi cách vòng kín phản ứng với tín hiệu đổi theo thời gian. Ví dụ tham số: lead z = 38.3, p = 952 rad/s (hoặc bản chỉ lead z = 59.82, p = 1666), lag z1 = 25, p1 = 8.75
+rad/s.
+10.2. Đọc độ lợi, pha và tần số bằng sóng sin. Mọi tín hiệu (T_s, nhiễu) coi là tổng của nhiều sóng sin; khâu bù xử lý từng sóng riêng. Tần số w [rad/s] cho biết sóng đổi nhanh cỡ nào (f =
+w/(2 pi) [Hz]). Đưa vào sóng sin tần số w, đầu ra là sóng sin cùng tần số có biên độ nhân với ĐỘ LỢI |H(jw)| và bị DỜI trong thời gian một góc gọi là PHA (độ). Pha dương: đầu ra đi TRƯỚC đầu
+vào; pha âm: đi SAU. Đổi pha sang thời gian: dời [s] = pha[độ] / (360 f).
+  (3)  dời = pha / (360 f)
+  [ \Delta t=\frac{\varphi^\circ}{360\,f} ]
+Cách gọi tạm các dải tần trong bài toán này (không phải chuẩn): THẤP dưới khoảng 10 rad/s (người lái đánh lái chậm, 0.5 Hz = 3 rad/s); TRUNG từ khoảng 10 tới 300 rad/s (cộng hưởng cột lái
+khoảng 39 rad/s, tần số cắt của vòng hở khoảng 160 rad/s); CAO trên khoảng 300 rad/s (nhiễu cảm biến, motor 628 rad/s, tần số Nyquist của bước 1 ms là 3142 rad/s).
+10.3. Độ lợi và pha của từng khâu (tính từ công thức (1), kiểm bằng MATLAB và Python):
+  w [rad/s]            lead (59.82, 1666)         lag (25, 8.75)            lead (38.3, 952)         lead x lag (cả hai)
+  3 (0.5 Hz)           1.00, +2.8 độ, sớm 16 ms   0.95, -12.1 độ, trễ 70 ms  1.00, +4.3 độ, sớm 25 ms  0.96, -7.8 độ, trễ 45 ms
+  40 (cộng hưởng)      1.20, +32 độ, sớm 14 ms    0.40, -20 độ, trễ 9 ms     1.44, +44 độ, sớm 19 ms   0.58, +24 độ, sớm 10 ms
+  160 (tần số cắt)     2.84, +64 độ, sớm 7 ms     0.35, -5.8 độ, trễ 0.6 ms  4.24, +67 độ, sớm 7 ms    1.50, +61 độ, sớm 7 ms
+  1000 (nhiễu)         14.4, +56 độ, sớm 1 ms     0.35, -0.9 độ, trễ 0.02 ms 18.0, +41 độ, sớm 0.7 ms  6.31, +41 do
+Đọc bảng: (i) LEAD cho pha dương ở dải trung và nhân tín hiệu nhanh lên nhiều lần (độ lợi tới p/z). Với tín hiệu chậm nó "dự đoán" trước 1/z giây: T_a ~ T_a,map + (1/z) d(T_a,map)/dt (mục
+4.5). Pha dương ở tần số cắt bù trễ 1 ms của lấy mẫu và trễ motor nên vòng kín ổn định; với K = 6.75 không lead PM = -6.5 độ (mất ổn định), có lead PM = 45.2 độ. Cái giá: nhiễu nhanh bị
+khuếch đại, độ lợi tần số cao K p/z = 188 (K = 6.75). (ii) LAG hạ độ lợi dải trung và cao xuống còn p1/z1 = 0.35, mất pha chủ yếu ở dải 10-30 rad/s (-29 độ tại 15 rad/s), nhưng chỉ -6 độ tại
+tần số cắt. (iii) HAI KHÂU NẰM Ở HAI DẢI TẦN KHÁC NHAU nên không "huề" hoàn toàn: lag rút lại phần ĐỘ LỢI mà lead làm phình ở tần số cao, nhưng KHÔNG rút lại pha dương tại tần số cắt. Kết
+quả: độ lợi tần số cao còn K * (p/z) * (p1/z1) = 10 * 24.9 * 0.35 = 87 (so với 188), nhiễu T_s (độ lệch chuẩn 0.0104 N.m) ra lệnh T_a giảm từ 1.46 xuống 0.75 N.m (mô phỏng tuyến tính, không
+giới hạn T_a,max), và vẫn đạt PM 45.4 độ, GM 4.85 ở cả bốn điểm làm việc của map_op_points với K = 10.
+10.4. Khâu lead-lag chưa "bỏ" nhiễu, chỉ thu nhỏ. Độ lợi lead x lag vẫn lớn hơn 1 ở dải cao (6.3 tại 1000 rad/s, 8.3 tại 3000 rad/s). Muốn bỏ hẳn nhiễu cần bộ lọc thông thấp, nhưng bộ lọc đó
+làm chậm pha ngay tại tần số cắt: lần thử cũ thêm một cực lọc đứng riêng, cực từ 2000 rad/s trở xuống không còn đạt PM 45 độ, cực 4000 rad/s cho nhiễu lệnh 1.54 N.m (tệ hơn 1.38 khi không
+lọc, K = 7). Ta không tách được "thay đổi vừa phải" khỏi "nhiễu" ở 6-25 Hz vì nhiễu cũng có mặt ở đó. Phần nhiễu còn lại do motor (trễ 100 Hz) lọc thêm và do chọn K nhỏ vừa đủ.
+10.5. Cái giá của lag: chậm với tín hiệu chậm. Lead-lag làm lệnh trợ lực TRỄ khoảng 45 ms với sóng 0.5 Hz của tay lái (lead sớm 25 ms, lag trễ 70 ms) và trong 20 ms đầu sau một bước đánh lái
+T_s lên cao hơn lead-only (0.32 so với 0.22 N.m trong ví dụ 10.6), vì độ lợi trung tần thấp hơn lúc đầu. Rủi ro: ca đổi mu đột ngột và lái nhanh có thể kém đi; chỉ biết khi chạy CALIB và ba
+ca chấm. Lead-lag (K = 10) cũ đo trên CALIB cũ cho R -18.7 %, S -32.7 %, TV -58 % so với lead-only K = 6.75; số này cần đo lại.
+10.6. Ví dụ theo thời gian (mô hình tuyến tính, 60 km/h, 0.2 g, đường khô; người lái quay vô-lăng trong 200 ms sao cho nếu không trợ lực thì T_s cuối cùng bằng 1.000 N.m; T_a,max khoảng 9
+N.m ở 60 km/h):
+  t [ms]                      20      50     100     200     210     300    1500
+  T_s, không trợ lực        1.053   1.759   0.948   1.880   1.388   0.971   1.000
+  T_s, lead K = 6.75        0.219   0.114   0.156   0.223  -0.127   0.132   0.140
+  T_s, lead-lag K = 10      0.320   0.083   0.135   0.185  -0.219   0.096   0.099
+  T_a, lead K = 6.75       -0.152   0.871   1.122   1.566  -2.800   0.886   0.943
+  T_a, lead-lag K = 10      0.727   0.797   1.150   1.610  -2.910   0.924   0.988
+Đọc: không trợ lực T_s dao động quanh 1.0 (đỉnh 1.88) do cộng hưởng cột lái 6 Hz; có Map còn 10-22 %. Giá trị cuối 0.140 = 1/(1 + 6.75 * 0.912) và 0.099 = 1/(1 + 10 * 0.912) (0.912 là độ lợi
+DC của cột lái tại điểm này). Lúc người lái ngừng quay (200 tới 210 ms) thành phần "đạo hàm" của lead đẩy T_a xuống -2.8 và -2.9 N.m trong vài ms: đây là cơ chế của trợ lực ngược (mục 5.1),
+lead-lag chưa loại bỏ. Đỉnh lệnh |T_cmd| là 7.1 (lead) và 5.7 N.m (lead-lag).
+10.7. QUY TRÌNH LÀM LEAD-LAG (từng bước; ĐÃ LÀM xong ngày 2026-10-11 theo QuyChuan v5, tên hàm là hàm hiện có trong Model/Controllers/Map/script/).
+Bước A. Lưới: lead z 5-500 rad/s, p/z 1.2-300, p <= 3142 rad/s; lag z1 8-120 rad/s, p1/z1 0.1-0.9, p1 >= 3 rad/s; hai giai đoạn thô-mịn; các mức g_min 1.0, 0.9, 0.8, 0.75, 0.7, 0.65, 0.6,
+    0.5, 0.4, 0.3, 0.25 (cơ sở ở DieuKhien_Map.txt). Lưới nào có điểm chọn ở biên thì mở rộng (đã làm cho p1 và g_min).
+Bước B. Thiết kế khâu bù cho từng cặp (g_min, K) (design_leadlag.m, sweep_leadlag.m): vòng hở L(jw) = -k * H_lead * H_lag * G_motor * exp(-jw * 1 ms) * G_cotlai(jw) tại bốn điểm làm việc của
+    map_op_points và các độ dốc k = 0.25-1 * K; PM >= 45 độ ở mọi giao cắt độ lợi, GM >= 2 (map_margins.m, map_margins_batch.m), độ lợi lag tại 2 Hz >= g_min; ghi
+    Design/Map_design_leadlag.csv.
+Bước C. Chọn trong các bộ (z, p, z1, p1) đạt: độ lợi tần số cao nhỏ nhất K * (p/z) * (p1/z1) (hòa thì PM lớn hơn); nhiễu lệnh tuyến tính từ map_noise_gain.m. K lớn nhất khả thi theo mức
+    g_min: 8, 10, 12, 14, 16 cho g_min 1.0, 0.9, 0.8, 0.7, 0.6 (cận lưới quét, không phải cổng).
+  Bước D. Dựng model: map_variables.m (Map_H_num, Map_H_den thành bậc hai), build_map.m (khối Discrete Transfer Fcn bậc hai trong Cal T_a), test_map.m (so với phép tính độc lập). Rời rạc hóa
+    Tustin 1 ms: s = 2000 (1 - q)/(1 + q); từng khâu y[k] = b0 x[k] + b1 x[k-1] - a1 y[k-1] với b0 = (a/z + 1)/(a/p + 1), b1 = (1 - a/z)/(a/p + 1), a1 = (1 - a/p)/(a/p + 1), a = 2000; hai
+    khâu nhân đa thức. Với lead (38.3, 952) nhân lag (25, 8.75): y[k] = 6.0556 x[k] - 11.7341 x[k-1] + 5.6841 x[k-2] + 1.3463 y[k-1] - 0.3519 y[k-2]. Với lead (59.82, 1666) một mình: y[k] =
+    15.648 x[k] - 14.739 x[k-1] + 0.0911 y[k-1].
+Bước E. Quét trên ca CALIB và chọn điểm: run_calib_sweep.m (bốn mô phỏng mỗi cặp: nhiễu seed 00000, lý tưởng, độ lợi x2, trễ +1 ms; ghi csv chạy tiếp được), rồi select_map.m: cổng dự trữ ổn
+    định (calib_margin), e_rel <= 5 %, ràng buộc dải lái (độ lợi lag 2 Hz >= 0.707), chọn J = R x S nhỏ nhất, báo cáo bang-bang hai seed, ghi data/map.json (trường design).
+Bước F. Chạy năm ca DREWS với seed local (run_cases('Map', 0); đã làm, Result/Controllers/Map/Cases). Các so sánh seed 99999 (make_pair_comparisons) CHƯA làm: chờ PI, PID, SMC chốt điểm
+    chọn.
+Bước G. Tài liệu (đã làm 2026-10-12): data/map.json (design và x_design_note), LyThuyet_Map.txt, map.txt (tools/build_map_txt.py), hai dàn ý docx (tools/build_outline_docx.py), QuyChuan mục
+    2, 6.2, 6.7 và 9.5.
+10.8. Cách đưa vào BÀI BÁO (đầy đủ) và LUẬN VĂN (rút gọn). Bài báo, mục "Khâu bù": công thức (1) và (2); định nghĩa độ lợi, pha bằng sóng sin kèm công thức (3); hình Bode của lead, lag và
+tích (độ lợi và pha); một câu cho mỗi ý: lead cho pha ở tần số cắt (PM -6.5 -> 45.2 độ), lag rút độ lợi cao tần (188 -> 87, nhiễu lệnh 1.46 -> 0.75 N.m), hai khâu ở hai dải tần khác nhau nên
+pha giữ được; cái giá của lag (trễ 45 ms với tín hiệu chậm); quy trình thiết kế (lưới, tiêu chí, cổng); ví dụ miền thời gian (bảng 10.6). Luận văn: công thức (1), một hình Bode ghép, một
+bảng số (PM, GM, độ lợi tần số cao, nhiễu lệnh), hai câu lý do (cần lead, cần lag), phần ví dụ thời gian và quy trình từng bước để ở phụ lục. Không dùng cách nói "huề"; nói "lag rút độ lợi
+tần số cao, giữ pha tại tần số cắt".
+10.9. Giới hạn của các số trong phần này. (i) Mô hình tuyến tính tại một điểm làm việc; bản đồ thật có vùng chết và giới hạn độ dốc, T_a bị chặn bởi T_a,max, có nhiễu. (ii) Phép tính độ lợi,
+pha và dời thời gian là chính xác theo công thức; các số mô phỏng thời gian chỉ minh họa. (iii) Đáp ứng thật của bản lead-lag trên CALIB và năm ca DREWS đã đo ngày 2026-10-11 (Phần 5 và 6).

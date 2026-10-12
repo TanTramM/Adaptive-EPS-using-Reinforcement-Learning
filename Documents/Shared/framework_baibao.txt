@@ -1,6 +1,7 @@
 ==============================================================================================================================================================================================
 FRAMEWORK BÀI BÁO - Map so với bộ điều khiển tuyến tính (PI, PID) trong Adaptive C-EPS (BẢN NHÁP ĐỂ BÀN, 2026-10-09)
 ==============================================================================================================================================================================================
+GHI CHÚ 2026-10-10: tên ca trong file này (TK, TC1-TC6) là tên CŨ; từ 2026-10-10 dùng CALIB, DRY, SLIP, WEAVE (bảng đổi tên ở Tracking/CLAUDE.md, mục 5 phần Làm một bộ điều khiển). Số liệu giữ nguyên như lúc viết.
 File làm việc, KHÔNG phải bản thảo bài báo. Mục đích: đặt khung (câu hỏi, đóng góp, dàn ý, bằng chứng, điều kiện trước khi viết, rủi ro) để người dùng và Claude bàn sâu từng mục rồi mới
 viết. Mọi con số lấy từ nhật ký và ghi chép đã có (DieuKhien_PI.txt, historychat_map và historychat_linear); số nào chưa chạy theo quy chuẩn v1 được đánh dấu [CHƯA CHÍNH THỨC]. Chỗ nào là đề
 xuất chưa chốt đánh dấu [BÀN]. Phân vai hiện tại: ba khung Map, Linear (PI, PID) và SMC (sắp mở); bài báo cần Map và Linear.

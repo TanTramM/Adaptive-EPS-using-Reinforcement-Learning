@@ -1,5 +1,5 @@
 function T = run_pi_sweep(runSim, kiStepMode)
-%RUN_PI_SWEEP Step P4 of the PI plan: simulate calibration case TK on the coarse grid.
+%RUN_PI_SWEEP Step P4 of the PI plan: simulate calibration case CALIB on the coarse grid.
 %
 %   T = run_pi_sweep()                  simulate coarse grid candidates (resumable)
 %   T = run_pi_sweep(runSim, kiStepMode)
@@ -8,6 +8,8 @@ function T = run_pi_sweep(runSim, kiStepMode)
 %     runSim     logical, true to run simulations (default true)
 %     kiStepMode 'coarse_1' (default, Ki in [0.5, 1, 2, ..., 8] -> 103 points inside boundary)
 %                'coarse_0p5' (Ki in 0.5:0.5:8.0 -> 181 points inside boundary)
+%                'fine' (5x5 grid, relative steps x0.8 0.9 1 1.1 1.2 in Kp and Ki around the design stored in data/pi.json,
+%                        inside the same stability boundary; rows go into the SAME sweep table so select_pi sees them, 2026-10-11)
 %
 %   Boundary:
 %     Linear stability boundary under stress (Actuator gain x2, delay +1 ms)
@@ -16,7 +18,7 @@ function T = run_pi_sweep(runSim, kiStepMode)
 %     are simulated, guaranteeing that points outside the feasible boundary
 %     (which are guaranteed to violate gate 5.2) are not run.
 %
-%   Case TK:
+%   Case CALIB:
 %     117 s case with 3 speed blocks (20, 60, 100 km/h), 19 windows,
 %     sensor noise with local seed 10000.
 %     Metrics: R (average of 4 groups: static, dyn, small, mu), S, Scmd,
@@ -24,8 +26,8 @@ function T = run_pi_sweep(runSim, kiStepMode)
 %
 %   Outputs:
 %     T table of all simulated candidates written to
-%     Result/Controllers/PI/Sweep/PI_candidates_TK.csv (resumable).
-%     Pareto figure saved to Result/Controllers/PI/Sweep/PI_pareto_coarse.png.
+%     Result/Controllers/PI/Calib/PI_CALIB_sweep_s10000.csv (resumable).
+%     Pareto figure saved to Result/Controllers/PI/Calib/PI_CALIB_pareto_s10000.png.
 
 if nargin < 1 || isempty(runSim), runSim = true; end
 if nargin < 2 || isempty(kiStepMode), kiStepMode = 'coarse_1'; end
@@ -36,8 +38,8 @@ addpath(modelDir); setup_paths;
 
 SEED = 10000;
 blocks = [20 60 100];
-outDir = result_dir('PI', 'Sweep');
-candFile = fullfile(outDir, 'PI_candidates_TK.csv');
+outDir = result_dir('PI', 'Calib');
+candFile = fullfile(outDir, 'PI_CALIB_sweep_s10000.csv');
 
 % Load stability boundary from P3
 boundFile = fullfile(result_dir('PI', 'Design'), 'PI_stability_boundary.csv');
@@ -56,6 +58,25 @@ end
 
 % Build candidate list inside linear stability boundary
 C = [];
+if strcmp(kiStepMode, 'wide')      % QuyChuan v5: wide grid, NO linear stability pre-filter (gates are measured by simulation)
+    for kp = 0.5:0.1:2.0
+        for ki = [2 3 4 5 6 7 8 10 12 16 20 25 30]
+            C = [C; round(kp, 4), ki, ki / kp]; %#ok<AGROW>
+        end
+    end
+    kpGrid = [];
+elseif strcmp(kiStepMode, 'fine')
+    Jd = jsondecode(fileread(fullfile(modelDir, 'data', 'pi.json'))); d = Jd.design;
+    fr = [0.8 0.9 1.0 1.1 1.2];
+    kpGrid = round(d.Kp * fr, 4);
+    for kp = kpGrid
+        maxKi = interp1(boundTable.Kp, boundTable.max_Ki_under_stress, kp, 'linear', 'extrap');
+        for ki = round(d.Ki * fr, 4)
+            C = [C; kp, ki, ki / kp]; %#ok<AGROW>   % no boundary filter (QuyChuan v5)
+        end
+    end
+    kpGrid = [];     % skip the coarse loop below
+end
 for kp = kpGrid
     maxKi = interp1(boundTable.Kp, boundTable.max_Ki_under_stress, kp, 'linear', 'extrap');
     validKi = kiGrid(kiGrid <= (maxKi + 1e-4));
@@ -79,7 +100,7 @@ if runSim
     evalin('base', sprintf('run(''%s'')', strrep(fullfile(modelDir, 'Controllers', 'PI', 'load_pi.m'), '\', '/')));
     mdl = 'Model_PI';
     if ~bdIsLoaded(mdl), load_system(mdl); end
-    TKcase = test_cases('TK');
+    TKcase = make_cases('CALIB');
 
     for i = 1:numCand
         kp = C(i, 1);
@@ -94,8 +115,8 @@ if runSim
         tStart = tic;
         vars = struct('PI_Kp', kp, 'PI_Ki', ki, 'PI_Kaw', kaw);
         try
-            [L, m] = tk_run(mdl, SEED, vars);
-            sc = tk_block_scores(L, TKcase, blocks);
+            [L, m] = calib_run(mdl, SEED, vars);
+            sc = calib_block_scores(L, TKcase, blocks);
             elTime = toc(tStart);
 
             row = table(kp, ki, kaw, ...
@@ -129,7 +150,7 @@ end
 
 % Plot preliminary Pareto front
 if ~isempty(T)
-    plotParetoCoarse(T, fullfile(outDir, 'PI_pareto_coarse.png'));
+    plotParetoCoarse(T, fullfile(outDir, 'PI_CALIB_pareto_s10000.png'));
 end
 
 end
@@ -164,7 +185,7 @@ end
 
 xlabel('R: Total Response Error [%]', 'FontSize', 11);
 ylabel('S: High-Pass RMS of T_a [N.m]', 'FontSize', 11);
-title('PI Coarse Sweep (Case TK, 117s, seed 10000)', 'FontSize', 12, 'FontWeight', 'bold');
+title('PI Coarse Sweep (Case CALIB, 117s, seed 10000)', 'FontSize', 12, 'FontWeight', 'bold');
 legend('Location', 'northeast', 'FontSize', 9);
 
 % Annotate best R and best S among gate-passing points

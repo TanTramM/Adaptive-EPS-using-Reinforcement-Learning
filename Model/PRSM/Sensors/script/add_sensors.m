@@ -14,7 +14,7 @@ function sensorsPath = add_sensors(sys, signals, x, y)
 %   Quantizer: interval sens_delta_<s> (resolution of the sensor). ZOH: sample time sens_Tupd_<s> (update period of the signal as
 %   the ECU sees it: 1 ms for sensors wired to the EPS ECU, 10 ms for ESC signals over CAN). Noise is added BEFORE quantization
 %   (analog noise), the hold comes last (CAN frame / ADC register keeps the last value until the next update).
-%   All parameters are base-workspace variables (load_sensors.m defines them; run_test_cases.m overrides them per run).
+%   All parameters are base-workspace variables (load_sensors.m defines them; run_cases.m overrides them per run).
 %   Only signals that a sensor measures go through here: beta, mu and T_r have no sensor, T_a is the controller's own command.
 %   Documents/Sim/ThucTeHoa.txt Mục 0 and 1.
 

@@ -1,7 +1,7 @@
 function A = map_k_accuracy(tolPct, Ts0)
 %MAP_K_ACCURACY Smallest slope limit K (grid 0.25) where dry-road steady error
 %   stays within tolPct (default 3 %) of T_d,ref over a_y in [0.1, 0.3] g for every speed.
-%   Writes Result/Controllers/Map/Design/Map_K_for_accuracy.csv.
+%   Writes Result/Controllers/Map/Design/Map_K_for_accuracy_<tolPct>pct.csv.
 if nargin < 1, tolPct = 3; end
 if nargin < 2, Ts0 = 0.3; end
 scriptDir = fileparts(mfilename('fullpath'));
@@ -40,7 +40,7 @@ end
 T = table(A.v_kmh, A.Kmin, A.err_at_Kmin, A.natural_max, ...
     'VariableNames', {'v_kmh', 'Kmin_for_accuracy', 'max_err_pct_at_Kmin', 'natural_slope_max_0p1_0p3g'});
 outDir = result_dir('Map', 'Design');
-csvPath = fullfile(outDir, 'Map_K_for_accuracy.csv');
+csvPath = fullfile(outDir, sprintf('Map_K_for_accuracy_%gpct.csv', tolPct));
 writetable(T, csvPath);
 fprintf('map_k_accuracy: written %s\n', csvPath);
 end

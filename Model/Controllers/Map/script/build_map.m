@@ -3,12 +3,12 @@ function modelName = build_map(overwrite)
 %
 %   Reads ONLY T_s and v (measured), no mu, no e_T, no integral:
 %     T_a,map = sgn(T_s) * M(v, |T_s|)                  M: 2-D table, linear interpolation, constant beyond the last point
-%     T_a     = H(z) * T_a,map                          H: lead (s/z+1)/(s/p+1) in Tustin form at Ts_ctrl
+%     T_a     = H(z) * T_a,map                          H: lead (s/z+1)/(s/p+1) times lag (s/z1+1)/(s/p1+1), Tustin at Ts_ctrl (one 1st or 2nd order block)
 %
 %   Map
 %     In : T_s, v                         Out: T_a
 %     +-- Cal T_a_map   In : T_s, v       Out: T_a_map     (hold at Ts_ctrl, |T_s|, sign, 2-D lookup M)
-%     +-- Cal T_a       In : T_a_map      Out: T_a         (lead)
+%     +-- Cal T_a       In : T_a_map      Out: T_a         (lead-lag)
 %
 %   Parameters (Map_Ts_ctrl, Map_v_bp, Map_Ts_bp, Map_table, Map_H_num/den): run load_map.m first.
 %   Usage: >> build_map            % or build_map(true) to overwrite an existing Map.mdl (false: save as Map_1, ...)

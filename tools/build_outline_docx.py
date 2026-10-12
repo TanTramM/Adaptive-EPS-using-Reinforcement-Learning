@@ -167,25 +167,26 @@ def thesis():
     D.todo('Sơ đồ khối vòng kín Plant, Sensors, bộ điều khiển, Actuator (Figures/, vẽ tay).')
 
     D.h2('Chương 3. Khung đánh giá')
-    D.b('Ca thiết kế TK (117 s, 19 cửa sổ, đường khô mu 0.8, khối 20/60/100 km/h, có bước mu); chỉ tiêu R (RMS e_T), S (độ ồn T_a sau lọc cao qua 5 Hz), TV, e_rel, trợ lực ngược.')
-    D.b('Ca thử chuẩn TC1-TC6 (TestCases.txt). Seed local mỗi bộ; seed chung 99999 khi so sánh.')
-    D.b('Quy chuẩn đặt cổng trước khi chạy: ổn định, dự trữ pha PM >= 45 độ, GM >= 2, không bang-bang, sai số xác lập e_rel <= 3 %. Chọn điểm: R trong 5 % của R nhỏ nhất, rồi S nhỏ nhất. So cả mặt Pareto.')
-    D.b('Đã có: QuyChuan.txt phiên bản 2, TestCases.txt.')
+    D.b('Ca thiết kế CALIB (đường khô mu 0.8, khối 20/60/100 km/h; cửa sổ static 0.1-0.3 g vào R và cổng e_rel, cửa sổ ext 0.4 g chỉ báo cáo); chỉ tiêu R (độ bám), S (độ ồn T_a sau lọc cao qua 5 Hz), TV, e_rel, trợ lực ngược.')
+    D.b('Năm ca chấm DREWS: DRY, RAMP, SLIP, EDGE, WEAVE (QuyChuan 3.2). Seed local mỗi bộ; seed chung 99999 khi so sánh.')
+    D.b('Quy chuẩn phiên bản 5 (đặt trước khi chạy): cổng ổn định có độ dư đo bằng mô phỏng, rồi e_rel <= 5 %; bang-bang và trợ lực ngược chỉ báo cáo. Chọn điểm: J = R x S nhỏ nhất kèm ràng buộc dải lái (khâu lọc hoặc làm chậm giữ độ lợi >= 0.707 tại 2 Hz). So cả mặt Pareto.')
+    D.b('Đã có: QuyChuan.txt phiên bản 5, cases.txt.')
 
     D.h2('Chương 4. Map (bộ đối chứng)')
-    D.b('Cấu trúc: bản đồ T_a = sgn(T_s) M(v, |T_s|), vùng chết 0.3 N.m, giới hạn độ dốc K_max, rồi khâu lead.')
+    D.b('Cấu trúc: bản đồ T_a = sgn(T_s) M(v, |T_s|), vùng chết 0.3 N.m, giới hạn độ dốc K_max, rồi khâu bù lead-lag (một lead nhân một lag, độ lợi một chiều bằng 1).')
     D.b('Hiệu chỉnh trên đường khô (mu 0.8): 979 điểm, T_s + T_a = T_r khớp tính độc lập đến 1e-14 N.m; mọi điểm nằm dưới T_a,max.')
     D.fig('Hiệu chỉnh: T_a theo T_s', 'Result/Controllers/Map/Design/Map_calibration_Ta_vs_Ts.png', 13)
-    D.b('Cần khâu lead mới đạt dự trữ pha PM >= 45 độ: z = %s rad/s, p = %s rad/s, PM = %s độ; giới hạn ổn định K_stab = %s.'
-        % (num(M['lead']['z'], 4), num(M['lead']['p'], 5), num(M['lead']['PM_deg'], 3), M['Kstab']))
-    D.fig('Đáp ứng tần số vòng hở với lead', 'Result/Controllers/Map/Design/Map_step3_loop_bode.png', 13)
-    D.b('Độ chính xác cần K >= K_acc = %s; cổng không bang-bang cho K <= 7.5; quy tắc chọn cho K_max = %s.' % (M['Kacc'], M['Kmax']))
-    D.fig('Mặt Pareto (R, S) quét K', 'Result/Controllers/Map/Design/Map_step5_pareto_TK.png', 13)
-    D.table('Điểm chọn của Map trên ca TK (seed local 00000)', ['Chỉ tiêu', 'Giá trị'],
-            [['K_max', M['Kmax']], ['R (%)', num(M['TK_R_pct'], 4)], ['S (N.m)', num(M['TK_S_Nm'], 3)], ['TV (N.m/s)', num(M['TK_TV_Nm_per_s'], 4)],
-             ['e_rel (%)', num(M['TK_erel_pct'], 3)], ['Trợ lực ngược (%)', num(M['TK_rev_pct'], 3)]])
-    D.p('Lưu ý trung thực: e_rel của điểm chọn là %s %%, vượt xa ngưỡng 3 %% của cổng độ chính xác; K_max nằm đúng ngưỡng K_acc. '
-        'Cần xem lại trước khi dùng Map làm bộ đối chứng.' % num(M['TK_erel_pct'], 3))
+    D.b('Khâu bù: lead z = %s, p = %s rad/s; lag z1 = %s, p1 = %s rad/s (độ lợi của lag tại 2 Hz = %s, ràng buộc dải lái >= 0.707); dự trữ pha tuyến tính %s độ (chỉ báo cáo).'
+        % (num(M['lead']['z'], 4), num(M['lead']['p'], 5), num(M['lag']['z1'], 4), num(M['lag']['p1'], 4), num(M['lag_gain_2Hz'], 3), num(M['PM_deg'], 3)))
+    D.fig('Đáp ứng tần số của khâu bù lead-lag', 'Result/Controllers/Map/Design/Map_bode.png', 13)
+    D.b('Chọn điểm: g_min = %s, K_max = %s, theo J = R x S nhỏ nhất trong các điểm qua cổng ổn định có độ dư, e_rel <= 5 %% và ràng buộc dải lái (73 cặp (g_min, K) mô phỏng, 36 cặp qua cổng).' % (M['g_min'], M['Kmax']))
+    D.fig('J nhỏ nhất theo mức g_min: J giảm khi lag sâu hơn, ràng buộc dải lái chặn', 'Result/Controllers/Map/Calib/Map_CALIB_pick_s00000.png', 13)
+    D.fig('Mặt (R, S) của các cặp (g_min, K)', 'Result/Controllers/Map/Calib/Map_CALIB_pareto_s00000.png', 13)
+    D.table('Điểm chọn của Map trên ca CALIB (seed local 00000)', ['Chỉ tiêu', 'Giá trị'],
+            [['K_max', M['Kmax']], ['g_min', M['g_min']], ['R (%)', num(M['CALIB_R_pct'], 4)], ['S (N.m)', num(M['CALIB_S_Nm'], 3)], ['J = R x S', num(M['CALIB_J'], 4)], ['TV (N.m/s)', num(M['CALIB_TV_Nm_per_s'], 4)],
+             ['e_rel (%)', num(M['CALIB_erel_pct'], 3)], ['Trợ lực ngược (%)', num(M['CALIB_rev_pct'], 3)]])
+    D.p('Lưu ý trung thực: ràng buộc dải lái được thêm SAU khi thấy J suy biến trên Map (lần thứ tư đổi quy tắc sau khi thấy kết quả); không có ràng buộc J chọn g_min 0.25, K 5.8 (R 37.7 %). '
+        'Cửa sổ static của CALIB chỉ ở 20, 60, 100 km/h nên cổng e_rel không thấy sai số ở 40 km/h: ca DRY cho +13.0 % tại cửa sổ v40a0p3r.')
 
     D.h2('Chương 5. Bộ tuyến tính PI, PID')
     r0 = res[0]
@@ -195,8 +196,8 @@ def thesis():
     D.fig('Biên ổn định của PI (Kp, Ki)', 'Result/Controllers/PI/Design/PI_stability_boundary.png', 12)
     D.fig('Mặt Pareto sơ bộ của PI (quét thô 103 điểm)', 'Result/Controllers/PI/Sweep/PI_pareto_coarse.png', 12)
     D.table('Điểm chọn của PI trên ca TK (seed local 10000)', ['Chỉ tiêu', 'Giá trị'],
-            [['Kp', PI['Kp']], ['Ki (1/s)', PI['Ki']], ['R (%)', num(PI['TK_R_pct'], 4)], ['S (N.m)', num(PI['TK_S_Nm'], 3)],
-             ['TV (N.m/s)', num(PI['TK_TV_Nm_per_s'], 4)], ['e_rel (%)', num(PI['TK_erel_pct'], 3)], ['Trợ lực ngược (%)', num(PI['TK_rev_pct'], 3)]])
+            [['Kp', PI['Kp']], ['Ki (1/s)', PI['Ki']], ['R (%)', num(PI['CALIB_R_pct'], 4)], ['S (N.m)', num(PI['CALIB_S_Nm'], 3)],
+             ['TV (N.m/s)', num(PI['CALIB_TV_Nm_per_s'], 4)], ['e_rel (%)', num(PI['CALIB_erel_pct'], 3)], ['Trợ lực ngược (%)', num(PI['CALIB_rev_pct'], 3)]])
     D.p('Lưu ý: lưới mịn chưa đủ độ phân giải (fine_grid_resolution_sufficient = false); e_rel 3.25 % hơi vượt ngưỡng 3 %, chọn theo quy tắc điểm vi phạm ít nhất.')
     D.todo('PID: chưa có kết quả theo quy chuẩn mới (khung Linear đang làm).')
 
@@ -207,17 +208,8 @@ def thesis():
     D.todo('Quét lưới và chọn lại theo quy chuẩn, kiểm cổng không bang-bang (khung SMC).')
 
     D.h2('Chương 7. So sánh và kết luận')
-    D.b('Map với PI, SMC, ISMC trên TC1-TC6, seed chung 99999 (bản so sánh Map-PID chờ khung Linear).')
-    compare_table(D, ['Map', 'PI', 'SMC', 'ISMC'], ['Map_vs_PI', 'Map_vs_SMC', 'Map_vs_ISMC'], 'mean_RMS_eT_Nm', 'RMS e_T cả ca (N.m)')
-    compare_table(D, ['Map', 'PI', 'SMC', 'ISMC'], ['Map_vs_PI', 'Map_vs_SMC', 'Map_vs_ISMC'], 'mean_RMS_Ta_Nm', 'RMS T_a cả ca (N.m)')
-    compare_table(D, ['Map', 'PI', 'SMC', 'ISMC'], ['Map_vs_PI', 'Map_vs_SMC', 'Map_vs_ISMC'], 'mean_TV_Ta_Nm_per_s', 'TV của T_a cả ca (N.m/s)')
-    D.fig('Map với PI: RMS e_T và TV theo ca', 'Result/Compare/Map_vs_PI/Map_vs_PI_whole_case.png', 14)
-    D.fig('Map với SMC', 'Result/Compare/Map_vs_SMC/Map_vs_SMC_whole_case.png', 14)
-    D.fig('Map với ISMC', 'Result/Compare/Map_vs_ISMC/Map_vs_ISMC_whole_case.png', 14)
-    D.fig('TC3 (mu giảm trong cua gắt): T_s, e_T, T_a của Map và PI', 'Result/Compare/Map_vs_PI/Map_vs_PI_TC3_mu_drop_hard_corner_Ts_eT_Ta.png', 14)
-    D.fig('TC4 (vũng ướt, đổi làn): T_s, e_T, T_a của Map và PI', 'Result/Compare/Map_vs_PI/Map_vs_PI_TC4_wet_patch_lane_change_Ts_eT_Ta.png', 14)
-    D.p('Nhận xét hiện có: PI bám tốt hơn và êm hơn Map ở 5 trên 6 ca (Map hơn ở TC6); SMC và ISMC bám tốt hơn Map nhưng lệnh T_a gần bang-bang. '
-        'Chưa là kết luận cuối vì chưa so mặt Pareto và chưa có PID.')
+    D.b('Map với PI, PID, SMC, ISMC trên năm ca DREWS, seed chung 99999.')
+    D.todo('So sánh seed 99999 chưa chạy lại sau khi Map đổi sang lead-lag (v5): các bảng và hình Result/Compare/Map_vs_* cũ thuộc Map lead đơn cũ nên không đưa vào; chạy lại khi PI, PID, SMC chốt điểm chọn.')
     D.b('Hạn chế: mô phỏng thuần, nhiễu cảm biến tự chọn, chưa có bản PID và bản SMC chọn theo quy chuẩn.')
     D.b('Phụ lục: kết quả âm (PI hai bậc, Map hai bậc), chi tiết quét lưới.')
     D.save('dan_y_luan_van.docx')
@@ -243,9 +235,10 @@ def paper():
     D.fig('Bảng giá trị đặt T_d,ref', 'Result/PRSM/Reference/Reference_Tdref_table4_vs_ay_by_speed.png', 12)
     D.todo('Sơ đồ khối vòng kín (vẽ tay).')
     D.h1('III. Quy chuẩn đánh giá')
-    D.b('Ca TK và TC1-TC6; chỉ tiêu R, S, TV, e_rel, trợ lực thừa; cổng đặt trước (ổn định, PM >= 45, GM >= 2, không bang-bang, e_rel <= 3 %); quy tắc chọn (R trong 5 % rồi S nhỏ nhất); seed local và seed chung 99999.')
+    D.b('Ca CALIB và năm ca DREWS; chỉ tiêu R, S, TV, e_rel, trợ lực thừa; cổng đặt trước (ổn định có độ dư đo bằng mô phỏng, e_rel <= 5 %); quy tắc chọn J = R x S kèm ràng buộc dải lái (độ lợi >= 0.707 tại 2 Hz); seed local và seed chung 99999.')
     D.h1('IV. Các bộ điều khiển')
-    D.b('Map: bản đồ M(v, |T_s|) + lead (z = %s, p = %s rad/s), K_max = %s, một tham số chỉnh.' % (num(M['lead']['z'], 4), num(M['lead']['p'], 5), M['Kmax']))
+    D.b('Map: bản đồ M(v, |T_s|) + lead (z = %s, p = %s rad/s) nhân lag (z1 = %s, p1 = %s rad/s), K_max = %s, hai tham số chỉnh bằng mô phỏng (K và g_min).'
+        % (num(M['lead']['z'], 4), num(M['lead']['p'], 5), num(M['lag']['z1'], 4), num(M['lag']['p1'], 4), M['Kmax']))
     D.b('PI: Kp = %s, Ki = %s 1/s (hai tham số chỉnh).' % (PI['Kp'], PI['Ki']))
     D.todo('PID (Kp, Ki, Kd, Tf): chờ khung Linear.')
     D.h1('V. Kết quả')
@@ -253,19 +246,8 @@ def paper():
         % (num(r0['omega_n_rad_s'], 3), num(float(r0['omega_n_rad_s']) / 6.283185, 3), num(r0['zeta_column'], 3)))
     D.fig('Biên ổn định của PI', 'Result/Controllers/PI/Design/PI_stability_boundary.png', 12)
     D.fig('Mặt Pareto sơ bộ của PI', 'Result/Controllers/PI/Sweep/PI_pareto_coarse.png', 12)
-    D.fig('Mặt Pareto của Map (quét K)', 'Result/Controllers/Map/Design/Map_step5_pareto_TK.png', 12)
-    D.todo('Pareto chung Map, PI, PID cùng trục (cần PID và chọn lại theo cùng ca TK).')
-    compare_table(D, ['Map', 'PI'], ['Map_vs_PI'], 'mean_RMS_eT_Nm', 'RMS e_T cả ca (N.m), seed 99999')
-    compare_table(D, ['Map', 'PI'], ['Map_vs_PI'], 'mean_TV_Ta_Nm_per_s', 'TV của T_a cả ca (N.m/s), seed 99999')
-    D.fig('Map với PI: RMS e_T và TV theo ca', 'Result/Compare/Map_vs_PI/Map_vs_PI_whole_case.png', 14)
-    D.fig('TC3 (mu giảm trong cua gắt): T_s, e_T, T_a', 'Result/Compare/Map_vs_PI/Map_vs_PI_TC3_mu_drop_hard_corner_Ts_eT_Ta.png', 14)
-    D.fig('TC4 (vũng ướt, đổi làn): T_s, e_T, T_a', 'Result/Compare/Map_vs_PI/Map_vs_PI_TC4_wet_patch_lane_change_Ts_eT_Ta.png', 14)
-    overassist_table(D, [('Map_vs_PI', 'Map'), ('Map_vs_PI', 'PI')], 'TC3_mu_drop_hard_corner',
-                     'TC3: sai số trung bình e_T theo % của T_d,ref theo cửa sổ (âm = trợ lực thừa)')
-    overassist_table(D, [('Map_vs_PI', 'Map'), ('Map_vs_PI', 'PI')], 'TC4_wet_patch_lane_change',
-                     'TC4: sai số trung bình e_T theo % của T_d,ref trong vũng nước (âm = trợ lực thừa)', only=['during_puddle'])
-    D.p('Nhận xét hiện có: PI bám tốt hơn và êm hơn Map ở 5 trên 6 ca. Chưa là kết luận cuối: chưa so mặt Pareto chung, chưa có PID, '
-        'e_rel của Map trên ca TK là %s %% (vượt ngưỡng 3 %%).' % num(M['TK_erel_pct'], 3))
+    D.fig('Mặt (R, S) của Map (73 cặp g_min, K)', 'Result/Controllers/Map/Calib/Map_CALIB_pareto_s00000.png', 12)
+    D.todo('Pareto chung Map, PI, PID cùng trục và so sánh seed 99999: chưa chạy lại sau khi Map đổi sang lead-lag; số liệu Result/Compare/Map_vs_* cũ không dùng.')
     D.h1('VI. Thảo luận và hạn chế')
     D.b('Giới hạn Actuator ở TC1 (đỉnh |e_T| là do T_a chạm T_a,max, không phải lỗi bộ điều khiển); mô phỏng thuần; nhiễu tự chọn; chưa có động học vòng dòng motor.')
     D.h1('VII. Kết luận')

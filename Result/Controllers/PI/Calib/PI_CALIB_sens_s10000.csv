@@ -1,0 +1,8 @@
+Condition,R_pct,S_Nm,TV_Nm_per_s
+Nominal (seed 10000),17.9950399986287,0.292829272476968,13.7141885740244
+Second seed (seed 10001),18.0180688314643,0.293616705573474,13.5720092176382
+Seed difference,0.0230288328355819,0.000787433096506696,-0.142179356386201
+Max fine grid delta R [%],58.0105202402737,0,0
+Max fine grid delta S [%],27.3916702513713,0,0
+Resolution sufficient (< 5%),0,0,0
+Chosen point is the no-rev-gate choice,0,0,0

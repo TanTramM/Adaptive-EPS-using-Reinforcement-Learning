@@ -95,8 +95,8 @@ end
 %% 4. Test map_k_accuracy and minimal property of K_acc
 fprintf('[test_step2] Testing map_k_accuracy and minimality of K_acc...\n');
 A = map_k_accuracy(3, Ts0);
-csvPath = fullfile(result_dir('Map', 'Design'), 'Map_K_for_accuracy.csv');
-assert(exist(csvPath, 'file') == 2, 'Map_K_for_accuracy.csv must exist');
+csvPath = fullfile(result_dir('Map', 'Design'), 'Map_K_for_accuracy_3pct.csv');
+assert(exist(csvPath, 'file') == 2, 'Map_K_for_accuracy_3pct.csv must exist');
 
 for iv = 1:n
     Kmin = A.Kmin(iv);

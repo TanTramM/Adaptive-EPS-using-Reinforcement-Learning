@@ -122,7 +122,7 @@ MỤC 2.6. HIỆN THỰC HÓA MODEL/ (SIMULINK)   [ĐÃ CÓ]
     Model/PID/, Model/SMC/         - PID_s.mdl, SMC_s.mdl; script/build_pid.m, build_smc.m, test_pid(_s).m, test_smc(_s).m
     Model/Model_PID_s.mdl, Model_SMC_s.mdl - model vòng kín chạy được (nguồn kịch bản sc_theta1, sc_v, sc_mu; ghi log_T_s, log_e_T...)
                                      sinh bởi PID/script/build_model_pid.m, SMC/script/build_model_smc.m; test: test_model_pid(_s).m, test_model_smc(_s).m
-    Model/Sim/script/              - test_cases.m, run_test_cases.m (ca thử chung), compare_controllers.m (so sánh nhiều bộ điều khiển); find_ultimate_gain.m, scan_kcu_grid.m nằm ở Model/PID/script/
+    Model/Sim/script/              - make_cases.m, run_cases.m (ca thử chung), compare_controllers.m (so sánh nhiều bộ điều khiển); find_ultimate_gain.m, scan_kcu_grid.m nằm ở Model/PID/script/
     Model/result_dir.m, save_run_results.m - đường dẫn và xuất kết quả; Model/Ref/script/export_reference_results.m
     Result/                        - kết quả xuất ra: Plant/, Reference/, PID/, SMC/ (từng đối tượng), Compare/PID_vs_SMC/ (so sánh); tên file <Đối tượng>_<nội dung>_<điều kiện>
 

@@ -3,18 +3,18 @@
   "Ts_ctrl": 0.001,
   "design": {
     "lambda": 80,
-    "Phi": 200,
+    "Phi": 400,
     "Tf": 0.005,
-    "TK_R_pct": 40.1864426366409,
-    "TK_S_Nm": 0.395775587577277,
-    "TK_TV_Nm_per_s": 66.8638842510843,
-    "TK_erel_pct": 68.4704390941108,
-    "TK_rev_pct": 7.78254102138242,
-    "f_sat_delta": 0.0027738889227050196,
-    "margin_ratio_gain": 0.57163612440926259,
-    "margin_ratio_delay": 1.0001142479596281,
+    "CALIB_R_pct": 61.8407623551325,
+    "CALIB_S_Nm": 0.247386163442224,
+    "CALIB_TV_Nm_per_s": 33.6502352971768,
+    "CALIB_erel_pct": 106.171967536579,
+    "CALIB_rev_pct": 6.58602968669838,
+    "f_sat_delta": 2.6086729680611486E-5,
+    "margin_ratio_gain": 0.62704454359836226,
+    "margin_ratio_delay": 1.0000724225396964,
     "tier": "fallback: least violation of rev (e_rel weighted 0.1)",
     "design_seed": 20000,
-    "date": "2026-10-10 10:28:24"
+    "date": "2026-10-11 03:17:26"
   }
 }

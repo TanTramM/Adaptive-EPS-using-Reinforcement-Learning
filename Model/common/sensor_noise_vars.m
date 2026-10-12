@@ -12,7 +12,7 @@ function V = sensor_noise_vars(runSeed)
 %     sens_Tupd_<signal>  update period of the signal seen by the ECU (zero-order hold)
 %   Noise std = sigma_noise of the signal if given, else one resolution step (data/sensors.json, Documents/Notes/PRSM/ThucTeHoa.txt).
 %   Seed ranges: Map 0-9999, PI 10000-19999, SMC 20000-29999; the scoring seed of the standard test cases is 99999 for every controller.
-%   Used by load_sensors.m (defaults) and by run_test_cases.m / tk_run.m (one value set per run, passed with
+%   Used by load_sensors.m (defaults) and by run_cases.m / calib_run.m (one value set per run, passed with
 %   Simulink.SimulationInput.setVariable, so every controller sees the same noise for the same seed).
 
 modelDir = fileparts(fileparts(mfilename('fullpath')));   % Model/
