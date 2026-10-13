@@ -1,0 +1,7 @@
+Hyp,Statement,MapPID_value,Reference,Holds
+H1,RAMP: every window |e_rel| < 1 %,0.157805024425077,1,1
+H2,EDGE |e_rel| < 1 % and DRY v40a0p3r |e_rel| < 3 %,0.121745339755633,0.319688049639166,1
+H3,S on DRY <= S of PID,0.205801110991918,0.25608384593567,1
+H4,reverse assist on WEAVE < PID,26.30802867748,25.6944797545804,0
+H5,pud_in and down_post RMS e_T <= 1.05 x PID,0.762906881455385,1.05,1
+H6,whole-case RMS e_T <= 1.05 x PID on all five cases,1.07241902189039,1.05,0

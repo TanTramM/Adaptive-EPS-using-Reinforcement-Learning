@@ -18,6 +18,7 @@
   + **Linear: PI & PID** (Lượt 151): Đã chọn lại theo QuyChuan v5 (PI: Kp 1.08, Ki 14.4; PID: Kp 1.5, Ki 32, Kd 0.025, Tf 2.5 ms). Đã chạy xong trọn vẹn bộ 5 ca DREWS seed local `s10000`. PID khử ma sát khô xuất sắc ở RAMP (sai số trung bình có dấu chỉ -0.22 % đến +0.29 %).
   + **SMC & ISMC** (Lượt 22-23): SMC-sat (lambda 80, Phi 400, Tf 5 ms) và ISMC (lambda 5, Phi 50, Tf 10 ms) đã quét trên CALIB v4 và chạy 4 ca cũ (DRY, SLIP, WEAVE, EDGE seed local `s20000`). Chưa chạy ca RAMP mới thêm; chưa quét lại theo tiêu chí J = R x S của v5.
 - CẬP NHẬT 2026-10-12 (Lượt 31-35 của phiên viết bài): paper.txt đã có đủ Abstract, mục 1-7 (mục 4 viết lại theo cách xây dựng bộ, mục 5 quy trình, mục 6 kết quả với Hình 6-17 và Bảng 7-11, mục 7 thảo luận); docx 27 trang xuất lúc 02:24; CÒN mục 8 kết luận, [R1] [R2] ở Abstract, tóm tắt C3, metadata tham khảo [1] [3] [5] [10]. DREWS seed 99999 đã chạy cho Map, PI, PID (file Result/Controllers/<Ctrl>/Cases/*_s99999); Result/Compare/*_s99999 CHƯA tạo lại. Gói resource/ (104 file mã và mô hình, kết quả Cases, Calib, Design của ba bộ) và README.md ở gốc repo đã có. Thầy hỏi yêu cầu tạp chí và góp ý nên thêm SMC hoặc bộ lạ hơn; CHƯA CHỐT hướng: A thêm SMC, ISMC (tích phân là then chốt), B thêm ADRC, C Map biết sẵn hệ số bám (oracle), D LQI dùng hết cảm biến, E Map tiếp dẫn cộng PID (MapPID); gợi ý của COMMON: A hoặc E, kèm C.
+- CẬP NHẬT 2026-10-13 (Lượt 37): người dùng tự làm phần model Simulink từ nay (đã hủy refactor Plant, restore git); 17 file sinh model (build_*, add_sensors, pick_model_name) đã xóa, sao lưu Desktop, chưa commit; chạy CALIB chỉ truyền tham số, không sinh lại model. Hướng thầy góp ý: người dùng sẽ mở khung MapSMC riêng (Map + super-twisting hoặc ISMC, so Pareto với MapPID); COMMON khuyên luận văn chứa mọi bộ bài báo công bố, chỉ đưa super-twisting vào bài nếu mặt Pareto ngang hoặc dưới MapPID.
 - Bài báo (`Documents/Paper/paper.txt`): Đang viết dần theo phong cách hoàn chỉnh từng phần: đã xong Abstract, Mục 1 (Introduction), Mục 2 (Plant model), Mục 3 (Problem formulation), Mục 4.1-4.3 (Map, PI, PID). Đang hướng tới chạy so sánh chung seed 99999 cho các bộ và viết Mục 5-7.
 
 ---
@@ -285,3 +286,182 @@ Bổ sung vì các lượt này chưa được ghi (người dùng hỏi 'nãy g
 
 ### Lượt 36 - Bảng 10 phương pháp; phân tích PID cộng DOB; hiệu quả trước tính mới (2026-10-12)
 (a) Bảng chấm 10 phương pháp, 5 tiêu chí thang 10 (C1 công, C2 hiệu quả so với PID, C3 rủi ro, C4 lợi ích cho bài, C5 tính mới): MapPID 37, Map oracle mu 34, SMC/ISMC 32, ADRC 31, PID+DOB 30, LQI 29, super-twisting 28, PID lập lịch/fuzzy 25, MPC 24, RL 22; nhân đôi C5 thì MapPID vẫn đầu, ADRC lên thứ 3. Chỉ SMC/ISMC và PI_2K có dữ liệu thật, còn lại là ước lượng. (b) PID+DOB: d_hat = Q(s)[T_s + T_a - (J_col s + C_col) theta2_dot], T_a = d_hat - T_d,ref + PID; khử T_a thấy DOB tương đương tích phân trên e_T (gain 1/tau) cộng phản hồi theta2, theta2_dot chia tau, phần mới thật chỉ là đo theta2_dot thay đạo hàm T_s; theta2_dot thô 4 deg/s nên nhiễu J/tau x 0.07 rad/s (0.77 N.m ở tau 10 ms, 0.15 ở 50 ms) cùng bậc khâu D của PID (0.25). (c) Người dùng: tính mới phải đi kèm hiệu quả. Lập luận thông tin: bộ chỉ dùng T_s (SMC, ISMC, super-twisting, fuzzy, MPC/RL cùng đầu vào) khó dời mặt Pareto của PID vì cùng nguồn nhiễu; chỉ thêm thông tin độc lập với nhiễu T_s (tiếp dẫn theo a_y, v; đo theta2_dot) mới có thể dời mặt. Đề xuất sàng lọc rẻ trước khi làm đầy đủ, dùng cổng 'đáng giá' sẵn có trong QuyChuan (R giảm >= 5 % mà S không tăng so với PID) làm tiêu chí đặt trước. Chưa làm gì, chờ người dùng.
+
+### Lượt 37 - [common_1] Refactor Plant bị hủy; xóa file sinh model; Map ghép SMC; tách khung MapSMC (2026-10-13)
+Bổ sung vì các lượt 37-40 cũ bị mất khi người dùng restore git (kể cả Lượt 38-39 của common_2 về quy tắc hai khung COMMON dùng chung bộ đếm: ghi Lượt TRƯỚC khi làm, nhãn [common_1|common_2], nối bằng cat >>). (a) Commit fcc3ae4 (726 file, chưa push) rồi người dùng yêu cầu đổi Plant thành 3 khối MATLAB Function (1 file mdl, 3 file .m cùng cấp), sau đó bỏ quy tắc Goto/From trong Plant, nối dây trực tiếp kèm test chỉ kiểm nối cổng vào-ra; tôi đã làm một phần nhưng người dùng HỦY HẾT ('coi như tôi chưa yêu cầu gì'), restore git, và NÓI SẼ TỰ LÀM PHẦN MODEL. Bài học: bảo 'chỉ đọc lịch sử và CLAUDE.md' thì chỉ đọc, không tiếp tục chạy tool sau khi bị ngắt. (b) Người dùng yêu cầu xóa mọi file sinh model Simulink, giữ file chức năng: đã xóa 17 file (build_sensors, build_reference, build_gates, build_assistlimit, build_actuator, build_{PI,ISMC,SMC,PID,Map}, build_closed_loop, build_cum1/2/3, build_plant, add_sensors, pick_model_name), sao lưu ở C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-13_build_scripts; CHƯA commit. Hệ quả: test_sensors.m dòng 104 gọi add_sensors nên hỏng; Tracking/CLAUDE.md còn mô tả build_*, build_closed_loop, build_gates, pick_model_name (chưa sửa); Documents/Archive/old không đụng. Xác nhận bằng grep: calib_*, run_cases, make_pair_comparisons, run_*/select_*/sweep_*/scan_* không gọi set_param/save_system/add_block/add_line/new_system, nên chạy lại CALIB chỉ nạp Model_<Ctrl>.mdl có sẵn và truyền tham số bằng setVariable (calib_run) cùng assignin sc_theta1/sc_v/sc_mu; phải chạy load_<ctrl>.m trước; đổi cấu trúc model nay phải sửa tay. (c) Câu hỏi 'PID ghép Map được thì SMC ghép được không': trả lời được, nhưng bậc tương đối của e_T = T_s - T_d,ref với T_a là 2 (T_a vào gia tốc theta2, qua hai tích phân) nên mặt trượt cần e_T' (cần theta1_dot, model chưa có, hoặc đạo hàm lọc); SMC với lớp biên chỉ là khâu P (còn sai số tĩnh), cần tích phân (ISMC, trong lớp biên = PID) hoặc super-twisting. Người dùng muốn bài báo = Map + SMC + super-twisting, luận văn = Map, PI, PID, MapPID, lo thầy hỏi vặn super-twisting; COMMON KHUYÊN KHÔNG tách như vậy (luận văn phải chứa mọi thứ bài báo công bố; phần Map/PI/PID của bài đã xong) và nêu 5 câu thầy sẽ hỏi (vì sao hơn PID, chứng minh hội tụ k1 k2 theo chặn nhiễu, cần theta1_dot, rung khi có trễ motor và cổng +1 ms, vì sao không ISMC). Xếp hạng biến thể Map + SMC theo khả năng ngang MapPID: 1 super-twisting với mặt trượt s = e_T + lambda*e_T' (e_T' lọc bậc 1; 4 tham số lambda, k1, k2, Tf), 2 ISMC dạng PID có lớp biên (gần như = PID đổi tên), 3 super-twisting s = e_T, 4 SMC cổ điển lớp biên, 5 SMC thích nghi/terminal; đây là DỰ ĐOÁN theo lập luận, CHƯA có số liệu. Rủi ro làm thua: trễ motor làm rung, thành phần |s|^(1/2) khuếch đại nhiễu cảm biến khi sai số nhỏ nên S tăng. Đề xuất kiểm nhanh: quét thô mục 1 và mục 2 trên CALIB, so mặt Pareto với MapPID; ngang hoặc dưới MapPID thì đưa vào bài, không thì ghi vào luận văn như kết quả. (d) Người dùng: sẽ TẠO KHUNG CHAT MỚI 'MapSMC' để làm sau; bảo cập nhật lịch sử. ĐÃ GHI Lượt này; khung MapSMC chưa có file nhật ký (historychat_mapsmc.md chưa tạo, và Tracking/CLAUDE.md chưa nhắc khung này). VIỆC TREO: hướng bài báo/luận văn (MapPID, Map + super-twisting) chưa chốt; commit việc xóa 17 file; sửa Tracking/CLAUDE.md và test_sensors.m; mục 8 bài báo.
+
+### Lượt 38 - [common_1] Thầy gửi lại bản bài báo đã sửa (v5-Huypt); so khác biệt và cập nhật paper.txt (2026-10-13)
+- Người dùng đưa `Documents/Paper/2026.10.13_Paper_Tan - v5-Huypt.pdf` và `.docx` (bản thầy Huy sửa, chưa vào git). Yêu cầu: (1) xem thầy sửa gì so với bản đã gửi (bản gửi = `Friction-Independent Torque Tracking ... Refer.docx`, 2026-10-12); (2) cập nhật phần làm lại.
+- Kế hoạch: tách chữ hai bản docx (kể cả tracked changes và comment nếu có), so theo đoạn, liệt kê thay đổi; sau đó đưa phần thầy sửa vào `paper.txt`. Kết quả ghi bổ sung ở cuối mục này.
+- Người dùng ngắt và chốt lại: KHÔNG viết lại gì, chỉ phân tích. `paper.txt` chưa bị sửa. Kết quả phân tích:
+  - Bản thầy không có tracked changes hay comment; thầy viết lại gần như toàn bài theo khuôn tạp chí (dãn dòng, "Page x of 24", có Acknowledgements và Conflict of Interest, bỏ dòng tác giả).
+  - Tên mới: "Lateral-Acceleration-Based Torque Tracking Control for Column Electric Power Steering under Varying Road Friction Conditions". Bố cục mới có 6 mục: 2 Mô hình và bài toán; 3 Chiến lược điều khiển (Map, giới hạn tĩnh, PI/PID); 4 Thiết lập mô phỏng (tham số, cảm biến, motor, T_a,max, rời rạc hóa, CALIB, các ca); 5 Kết quả và Thảo luận; 6 Kết luận.
+  - Phần bị bỏ:
+    - Hình 3 lực bánh và hình 4 brush model.
+    - Dạng không gian trạng thái.
+    - Bảng T_a,max, mục 3.6 Problem statement, quy trình 3 bước.
+    - Lưới tìm bù lead-lag và K_HF; các bước Ziegler-Nichols, K_cu và P_u.
+    - Lý do của các cổng (Seborg; JND [13]; ngưỡng xúc giác [14] và [15]).
+    - So sánh Pareto PI-PID và Map-PI; Bảng 11 (số chuyển vào lời văn).
+  - Hệ quả: các tài liệu [6] và [10] đến [15] còn trong danh mục nhưng không được trích trong bài.
+  - Đổi ký hiệu: T_d,ref thành T_ref; s thành s_m; T_f của khâu D thành tau_d (hết trùng với ma sát Coulomb); T thành T_c; F thành T_f.
+  - Số hình giảm từ 17 xuống 6, gộp dạng (a) Map, (b) PI, (c) PID. Thầy tô đỏ/vàng "(Vẽ lại)" ở các hình 1, 2, 3, 5, 6:
+    - Hình 1 là ảnh vẽ lại có lỗi nhãn.
+    - Hình 2 kiến trúc còn để khung trống.
+    - Hình 5: panel của Map bị đứt đoạn, panel PI dừng khoảng 52 s, kiểu chữ ba panel không đồng nhất.
+  - Thầy tô vàng thêm hai câu: định nghĩa reverse assist (đã kiểm: khớp `calib_run.m`, `gates_fcn.m`, tolRev 0.5) và câu EDGE +56.7/+99.7 % (đã kiểm: khớp `Map_vs_PI_vs_PID_vs_MapPID_keywin_s99999.csv`, 99.70).
+  - Phương trình trong bản thầy không có số. Lời văn tham chiếu Eq. (1), (3)-(7), (7), (9), (10), (14), (18). Đánh số khớp các tham chiếu đó: (1) cột lái và T_s, (2) góc trượt, (3) MF, (4) trail, (5) T_r, (6) thân xe, (7) cân bằng tĩnh, (8) T_ref, (9) e_T, (10) giới hạn T_a, (11) T_s,cal và T_a,cal, (12) lead-lag, (13) T_s+M=T_r, (14) ΔT_s, (15) PID, (16) G_m, (17) T_a,max, (18) rời rạc, (19) K_aw, (20) R và S, (21) e_rel, (22) J.
+- Việc treo: chờ người dùng quyết định có đưa bản thầy vào `paper.txt` không; vẽ lại 5 hình; sửa danh mục tài liệu; đánh số phương trình.
+
+### Lượt 39 - [common_1] Đánh giá phần thầy sửa; vẽ lại các hình thầy đánh dấu (2026-10-13)
+- Người dùng hỏi phần thầy làm có đúng không; nếu đúng thì vẽ lại các hình thầy kêu vẽ lại (1, 2, 3, 5, 6). Người dùng tự đánh số phương trình bằng tay.
+- Kế hoạch: kiểm tra kỹ thuật bản thầy (dấu khâu D, số liệu, định nghĩa); dùng lại script hình sẵn có trong `tools/` và `Figures/`, sinh hình gộp (a) Map (b) PI (c) PID, lưu ở `Figures/`. Kết quả ghi ở cuối mục.
+- Đánh giá: bản thầy đúng về kỹ thuật.
+  - Dấu khâu D: `PID.mdl` có Sum_Ta "+++", tức d cộng vào và d[k] = a·d + b·(T_s[k] − T_s[k−1]); khớp với lời văn.
+  - Các con số, định nghĩa reverse assist và EDGE 99.70 đều đã kiểm.
+  - Chỉ có lỗi hình thức: phương trình chưa đánh số; tài liệu [6], [10]-[15] không được trích; câu RAMP nằm ở 3.1; "I_z"; chú thích Hình 6 có cụm "original dynamic-result set".
+- Đã vẽ lại các hình. Script mới `tools/make_fig_v5.py` dùng lại `fig_blocks.py` và `make_fig_results.py`, không sửa script cũ. Kết quả nằm ở `Figures/v5_Huypt/`:
+  - `Figure_1_model.png`: (a) lấy ảnh draw.io gốc của người dùng, (b) vẽ lại sơ đồ khối với số phương trình Eq. (1), Eqs. (2)-(5), Eq. (6) theo cách đánh số đề xuất.
+  - `Figure_2_architecture.png` và `.drawio`: hai kiến trúc (a) Map và (b) PI/PID, có khâu giới hạn, motor, plant, cảm biến và anti-windup.
+  - `Figure_3_pareto.png`: chung trục.
+  - `Figure_4_dry.png`, `Figure_5_slip.png`: 3 hàng × 3 cột, chung trục theo hàng, tô cửa sổ chấm.
+  - `Figure_6_drews.png`: e_T của 5 ca.
+  - `scoring_windows.csv`: xuất từ `make_cases` bằng MATLAB.
+  - Hình 4 thầy không đánh dấu, nhưng vẽ lại cho đồng bộ.
+- Việc treo:
+  - Hình 1a vẫn ghi J_sw, C_sw trong khi Bảng 3 bản thầy đã bỏ; ảnh draw.io gốc độ phân giải thấp (462 px), cần người dùng xuất lại từ draw.io.
+  - Nếu người dùng đánh số phương trình khác cách đề xuất thì phải sửa số Eq. trong Hình 1b.
+
+### Lượt 40 - [common_1] Vẽ hình cột lái kiểu hình của thầy bằng Python, không dùng draw.io (2026-10-13)
+- Người dùng yêu cầu vẽ hình cơ cấu cột lái giống ảnh (a) Hình 1 của thầy, không dùng draw.io.
+- Kế hoạch: viết script matplotlib `tools/make_fig_column.py`, ghi `Figures/v5_Huypt/Figure_1a_column.png`. Sửa các nhãn sai của ảnh thầy: vô-lăng ghi T_d, θ1, θ̇1; J_col, C_col chỉ ở cột dưới; bỏ J_sw, C_sw. Sau đó `make_fig_v5.py` dùng hình này cho Hình 1(a). Kết quả ghi ở cuối mục.
+- Kết quả: đã viết `tools/make_fig_column.py` vẽ cơ cấu bằng matplotlib (không dùng draw.io), sinh `Figures/v5_Huypt/Figure_1a_column.png` ở 300 dpi.
+  - Hình vẽ theo kiểu ảnh của thầy: vô-lăng phối cảnh, ổ đỡ gạch chéo, thanh xoắn K, ô cảm biến T, motor trụ có hộp giảm tốc, các mũi tên quay T_a, T_r, T_f, bánh răng n_st, thanh răng, đòn lái, lốp.
+  - Nhãn đã sửa: vô-lăng ghi T_d, θ1, θ̇1; J_col, C_col chỉ ở cột dưới; không còn J_sw, C_sw.
+  - `make_fig_v5.py` nay dùng ảnh này cho Hình 1(a); phải chạy `make_fig_column.py` trước. Ảnh draw.io cũ không đổi.
+
+### Lượt 41 - [common_1] Giữ nguyên cấu trúc thầy; sửa trực tiếp file Word của thầy: đánh số phương trình, xóa chỗ dư, sửa tham chiếu (2026-10-13)
+- Người dùng bỏ ý tách mục 2.1 overview ("thôi để như thầy"). Yêu cầu: sửa trực tiếp trên file Word của thầy; bước 1 = đánh số các phương trình ở cuối hàng, xóa các chỗ dư, sửa các chỗ trỏ tới (Eq. n) cho đúng số. Việc chèn hình mới thay các hình "(Vẽ lại)" để sau.
+- Cách làm: KHÔNG ghi đè file gốc của thầy; sửa trên bản sao `2026.10.13_Paper_Tan - v5-Huypt_edited.docx` trong `Documents/Paper/`, sửa XML trực tiếp (OMML), giữ nguyên nội dung. Kết quả ghi ở cuối mục.
+- Kết quả: tạo `Documents/Paper/2026.10.13_Paper_Tan - v5-Huypt_edited.docx` (file gốc của thầy KHÔNG đổi). Script lưu ở `tools/number_eqs_docx.py` (sửa XML trực tiếp; kiểm bằng Word COM, xuất PDF, vẫn 24 trang).
+  - Đánh số 22 nhóm phương trình ở lề phải bằng kiểu số tự nhiên của Word (mảng phương trình với `#`), giữ nguyên kiểu hiển thị. Số đặt ở dòng cuối của nhóm: (1) cột lái + T_s; (2) góc trượt; (3) Magic Formula; (4) vòng tay đòn; (5) T_r; (6) thân xe; (7) cân bằng tĩnh; (8) T_ref; (9) e_T; (10) |T_a| ≤ T_a,max; (11) điểm hiệu chỉnh; (12) lead-lag; (13) T_s+M=T_r; (14) ΔT_s và s_m; (15) PID; (16) G_m; (17) T_a,max và a_y,lim; (18) rời rạc; (19) K_aw; (20) R, S; (21) e_rel; (22) J.
+  - Tham chiếu của thầy (Eq. (1), (3)–(7), (7), (9), (10), (14), (18)) đều KHỚP với cách đánh số này, nên không phải sửa chữ nào.
+  - Xóa 3 đoạn trống cuối bài (sau tài liệu [15]). F_zf và F_zr để không số (chỉ là định nghĩa, không được trích).
+  - Chưa làm: chèn hình mới thay các hình "(Vẽ lại)"; sửa "I_z" và "s_m" gõ thô; dọn danh mục tài liệu.
+
+### Lượt 42 - [common_1] Người dùng tự sửa Word; liệt kê toàn bộ phương trình, số và chỗ trỏ tới từ PDF gốc của thầy (2026-10-13)
+- Người dùng bỏ bản `_edited` ("để tôi tự làm") và yêu cầu liệt kê mọi phương trình kèm số, dùng hay không, và mọi chỗ trỏ tới, đọc từ PDF gốc. Chỉ đọc, không sửa file.
+- Kết quả: 22 nhóm số (đặt ở dòng cuối nhóm; F_zf và F_zr không số), trang 3-15. Bảy chỗ trỏ trong chữ: trang 6 Eq.(1) và Eqs.(3)-(7); trang 8 Eq.(7); trang 9 Eq.(14) và Eq.(9); trang 12 Eq.(10); trang 13 Eq.(18); cộng ba nhãn trong ảnh Hình 1(b) (Eqs.(1)-(2), (4)-(7), (8)) theo số cũ của bản gửi thầy, KHÔNG khớp cách nhóm này.
+- Số trỏ trong chữ khớp mọi chỗ với cách nhóm; hai dòng cần lưu ý: Hình 1(b) và câu "limit defined in Eq. (10)" (công thức tính nằm ở (17)).
+
+### Lượt 43 - [common_1] Danh sách việc cần sửa theo từng trang của PDF gốc thầy (2026-10-13)
+- Người dùng yêu cầu liệt kê, theo từng trang PDF gốc (24 trang), cần sửa gì dựa vào bảng số phương trình và các hình mới. Chỉ phân tích, không sửa file.
+- Việc theo trang (tóm tắt): đánh số phương trình ở trang 3-9, 12-15; thay hình ở trang 4 (Hình 1), 7 (Hình 2, đang khung trống), 16 (Hình 3), 17 (Hình 4), 18 (Hình 5), 19 (Hình 6); xóa 5 dấu "(Vẽ lại)"; trang 5 "e_p0and t₀", "I_z", "m"; trang 7-8 chỉ số dưới có ngoặc ở T_(a,max) và T_(a,cmd); trang 9 "s_m" gõ thô và RAMP nhắc trước khi định nghĩa (định nghĩa ở trang 15); trang 13 Bảng 4 gõ "Continuous − time model" kiểu toán; trang 11-12 Bảng 3 và trang 19-20 Bảng 7 bị cắt giữa hai trang; thứ tự trích Bảng (Bảng 3 ở trang 5 trước Bảng 1 ở trang 6); "Figure N" và "Fig. N" lẫn lộn ở trang 16-19; trang 2 [6] không được trích, trang 22-24 [6], [10]-[15] không được trích và các ghi chú "to be verified".
+
+### Lượt 44 - [common_1] Vẽ lại cụm bánh xe của Hình 1(a): thêm cung góc lái δ_f (2026-10-13)
+- Người dùng chỉ ra δ_f là góc quay của bánh xe nhưng hình đang chỉ có mũi tên ngang; cần cung tròn giữa đường thẳng tiến và trục bánh đã quay, như hình thầy.
+- Kế hoạch: sửa `tools/make_fig_column.py`: bánh xe quay một góc quanh trụ lái (khớp nối thanh răng dịch theo), đường nét đứt chỉ hướng thẳng tiến, cung có mũi tên và nhãn δ_f, mũi tên F_yf đặt ở bánh. Kết quả ghi bên dưới.
+- Kết quả: `tools/make_fig_column.py` vẽ lại cụm bánh xe: cả hai bánh quay góc δ_f = 14° quanh trụ lái, thanh răng dịch theo để thanh nối giữ đúng chiều dài; trên bánh trái có đường nét đứt (hướng thẳng tiến), đường chấm gạch (trục bánh đã quay) và cung có mũi tên nhãn δ_f; F_yf là mũi tên vào bánh trái; nhãn "Tire" chuyển xuống dưới bánh. `Figure_1_model.png` đã sinh lại.
+- Lưu ý: lỡ dùng heredoc cho chuỗi có `\n` làm hỏng hai dòng nhãn, đã sửa bằng Edit (đúng quy tắc: không dùng heredoc cho chuỗi có `\n`).
+
+### Lượt 45 - [common_1] Sửa Hình 1(a): bánh xe thẳng nhìn từ phía trước, cung δ_f ở khớp nối bánh trái như hình thầy (2026-10-13)
+- Người dùng phản hồi: bản bánh quay nhìn từ trên xuống là sai; muốn bánh thẳng (nhìn thẳng từ phía trước) và cung δ_f đặt ở vị trí như hình thầy (dưới khớp nối bánh trái, giữa đường nét đứt và thanh nối).
+- Làm: quay lại hình học bánh thẳng của bản trước, thêm đường nét đứt thẳng đứng và đường kéo dài thanh nối từ khớp dưới, cung và nhãn δ_f ở bên phải. Ghi kết quả bên dưới.
+- Kết quả: `tools/make_fig_column.py` quay lại bánh thẳng nhìn từ phía trước (như hình thầy); δ_f vẽ ở khớp dưới của bánh trái: đường nét đứt thẳng đứng, đường nét đứt kéo dài thanh nối, cung có mũi tên giữa hai đường, nhãn δ_f bên phải; F_yf là mũi tên vào khớp thanh răng trái. `Figure_1a_column.png` và `Figure_1_model.png` đã sinh lại.
+
+### Lượt 46 - [common_1] Hình 1(a): chuyển cung δ_f lên khớp quay trên (đầu thanh dài/thanh răng) (2026-10-13)
+- Người dùng chỉ lại: δ_f phải nằm ở khớp quay trên, trên thanh dài (đầu thanh răng), không phải khớp dưới của bánh. Làm: đặt cung δ_f ở khớp thanh răng bên trái, giữa đường nét đứt kéo dài trục thanh răng và thanh nối; bỏ phần δ_f ở khớp dưới. Kết quả ghi bên dưới.
+- Kết quả: δ_f nay ở khớp quay trên (đầu thanh răng bên trái): đường nét đứt kéo dài trục thanh răng sang trái, cung có mũi tên tới thanh nối, nhãn δ_f bên trái-dưới; F_yf là mũi tên nằm ngang phía trên khớp, chỉ vào khớp. Bỏ phần δ_f ở khớp dưới. `Figure_1a_column.png` và `Figure_1_model.png` đã sinh lại.
+
+### Lượt 47 - [common_1] Hình 1(a): vẽ δ_f đúng như hình thầy (đỉnh góc ở khớp trên, cung từ thanh nối tới đường nét đứt) và lốp nhìn từ phía trước (2026-10-13)
+- Người dùng gửi lại hình thầy (phóng to đọc kỹ): lốp nhìn thẳng từ phía trước có ba dải gai; trục ngang nối bánh với khớp dưới; thanh nối đi lên khớp trên ở đầu thanh dài; đường nét đứt đi từ khớp trên xuống; cung đi từ khớp dưới (cuối thanh nối) xuống đường nét đứt; mũi tên ← nhỏ chỉ vào đường nét đứt, nhãn δ_f ngay trên mũi tên; F_yf là mũi tên ngang vào khớp trên.
+- Làm: sửa `tools/make_fig_column.py` (lốp nhìn từ trước; khối δ_f theo hình thầy). Kết quả ghi bên dưới.
+- Kết quả: bánh nhìn từ trước (ba dải gai, rãnh giữa, gai hai bên); trục nối dừng ở mép lốp; đỉnh góc δ_f ở khớp trên, đường nét đứt đi xuống, cung từ khớp dưới tới đường nét đứt, mũi tên ← nhỏ chỉ vào đường nét đứt, nhãn δ_f trên mũi tên; F_yf là mũi tên ngang vào khớp trên. `Figure_1a_column.png` và `Figure_1_model.png` đã sinh lại.
+
+### Lượt 48 - [common_1] Rút luật format từ docx của thầy; viết lại paper.txt y như bản thầy; mỗi dòng phương trình một số; sinh docx + hình mới + PDF (2026-10-13)
+- Yêu cầu: (1) so luật format của docx thầy với docx của mình (txt2docx --paper); (2) cập nhật `paper.txt` y chang nội dung và cấu trúc bản thầy; (3) đánh số MỖI dòng phương trình (như ảnh: (1) cột lái, (2) T_s = K(θ1−θ2)), sửa mọi chỗ trỏ; (4) sinh docx theo format thầy, thay các hình "(Vẽ lại)" bằng hình mới ở `Figures/v5_Huypt/`; (5) xuất PDF để xem.
+- Kế hoạch: sao lưu paper.txt cũ (đã trong git, thêm bản Desktop); đánh số 38 dòng phương trình, tham chiếu mới: Eq.(1); Eqs.(7)-(15) thay (3)-(7); Eq.(15) thay (7); Eq.(25) thay (14); Eq.(18) thay (9); Eq.(19) thay (10); Eq.(32) thay (18); nhãn Hình 1(b): Eqs.(1)-(2), (3)-(11), (12)-(14). Kết quả ghi bên dưới.
+- Kết quả (2026-10-14):
+  - Luật format thầy khác bản mình:
+    - A4, lề 2.54 cm (mình 2 cm); có footer "Page X of Y".
+    - Times 12 pt (mình 11), giãn dòng 1.5 (mình 1.15), cách sau 8 pt; thụt đầu dòng 1.27 cm.
+    - Đoạn "where ..." sau phương trình không thụt (mình không thụt đoạn nào).
+    - Title đậm 16 pt, bỏ dòng tác giả. Heading 1 đậm 14 pt, giữ số (Abstract, 1., ..., Acknowledgements, Conflict of Interest, References). Heading 2 nghiêng 13 pt, giữ số (mình đậm).
+    - Keywords: nhãn đậm. Đóng góp là danh sách gạch đầu dòng (mình C1-C3).
+    - Phương trình: oMathPara căn giữa, số ở lề phải (mình bảng 2 cột).
+    - Chú thích "Fig. N." nghiêng nằm dưới hình (mình "Figure N:" nghiêng căn giữa). "Table N." đậm nằm trên bảng (mình nghiêng căn giữa).
+    - Bảng Table Grid căn giữa, hàng đầu đậm căn giữa. Tài liệu tham khảo không thụt, tên tạp chí/sách nghiêng.
+  - Đã làm:
+    - Viết `tools/paper2docx.py` cùng khuôn `tools/journal_template.docx`, là file thầy rút hết thân, giữ styles, đánh số và footer.
+    - Viết lại `Documents/Paper/paper.txt` y nội dung thầy, kể cả chữ "adopt" người dùng đã sửa trong Word. Bản cũ sao lưu ở `C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-14_paper_txt/`, bản cũ cũng còn trong git.
+    - 38 dòng phương trình, mỗi dòng một số (1)-(38).
+    - Sửa trỏ: Eq.(15) thay (7); Eqs.(7)-(15) thay (3)-(7); Eq.(25) thay (14); Eq.(18) thay (9); Eq.(19) thay (10); Eq.(32) thay (18). Hình 1(b) ghi Eqs.(1)-(2), (3)-(11), (12)-(14).
+    - Hình 1, 2, 3, 5, 6 thay bằng `Figures/v5_Huypt/`. Hình 4 giữ ảnh của thầy (`Figure_4_dry_huy.png`).
+    - Bỏ "(Vẽ lại)" và tô vàng.
+    - Đổi ký hiệu gõ thô sang dạng toán, không đổi chữ: θ₁, t₀, I_z, s_m, e_p0and; T_(a,max) thành T_{a,max}; cột "Continuous-time model" thành chữ thường.
+    - Sinh `Documents/Paper/paper.docx` và `paper.pdf` (26 trang, bảng giữ nguyên một trang).
+  - Lỗi đã gặp: sed làm mất dấu `\` trong `\mathrm`, đã sửa bằng Python.
+  - Cập nhật dòng Paper/ trong `Tracking/CLAUDE.md`.
+
+### Lượt 49 - [common_1] Hình 1: sơ đồ khối plant xếp dọc (cột lái → lốp → thân xe), đặt cạnh hình cột lái (2026-10-14)
+- Yêu cầu: vẽ lại Hình 1 thành hai ô nằm ngang: trái là hình cơ cấu cột lái (thu nhỏ một chút), phải là sơ đồ khối xếp dọc từ trên xuống (Steering column → Tires → Vehicle body). Làm trong `tools/make_fig_v5.py`, rồi sinh lại docx và PDF. Kết quả ghi bên dưới.
+- Kết quả Hình 1: hai ô nằm ngang, trái là hình cột lái (thu nhỏ 92 % theo chiều cao ô), phải là sơ đồ khối dọc (column → tires → body; T_r, β/γ hồi tiếp bên trái; μ, v vào từ bên phải, v rẽ xuống body; T_s, θ̇2 ra bên phải; a_y, γ ra dưới). `Figure_1_model.png` đã sinh lại.
+- Lần sinh docx bị lỗi "Permission denied" vì `paper.docx` đang mở trong Word.
+- Người dùng yêu cầu thêm: phương trình hiển thị và số của nó cỡ 10 pt như bản thầy. Đã kiểm: phương trình hiển thị của thầy dùng style HTML Code (10 pt), còn ký hiệu trong câu 12 pt. Sửa `tools/paper2docx.py`: mọi run trong phương trình hiển thị và số đặt sz 20.
+- Đã sinh lại `Documents/Paper/paper.docx`: phương trình hiển thị và số ở 10 pt; Hình 1 nằm ngang hai ô, nay vừa trang 4. Bản in thử 26 trang.
+- `paper.pdf` CHƯA chép đè được vì người dùng đang mở file đó. PDF mới nằm ở scratchpad (`paper_tmp.pdf`), chờ người dùng đóng trình xem PDF rồi chép.
+
+### Lượt 50 - [common_1] Sửa bản Word: bảng căn giữa số/ký hiệu, phương trình (29) và (35) sai, thiếu dấu nhân ở J = R·S, Hình 4 vẽ lại như Hình 5 (2026-10-14)
+- Người dùng xem bản docx và báo: (1) số và ký hiệu trong bảng phải căn giữa; (2) phương trình (29) (max có cận dưới) và (35) (tổng, ngoặc, thiếu dấu "}") hiển thị sai; (3) (38) thiếu dấu nhân, các chỗ "RS" khác cũng thiếu; (4) Hình 4 vẽ lại như Hình 5.
+- Nguyên nhân (35): bộ phân tích LaTeX của `tools/txt2docx.py` dừng ở `\}` (coi như dấu đóng nhóm) nên mất dấu "}" và cả phần sau; `\Big(` chỉ ra ký tự thường, không phải ngoặc co giãn. Sửa: thêm lệnh mới không ảnh hưởng tài liệu cũ: `\paren{}`, `\brack{}`, `\abs{}` (ngoặc co giãn), `\limlow{max}{cận}` (cận dưới như bản thầy), `\nsum{cận}` (tổng n-ary), `\lbrace`, `\rbrace`.
+- Kết quả ghi bên dưới.
+- Kết quả (2026-10-14): đã sửa `tools/txt2docx.py` (lệnh LaTeX mới `\paren`, `\brack`, `\abs`, `\limlow`, `\nsum`, `\lbrace`, `\rbrace`), `tools/paper2docx.py` (cột số/ký hiệu căn giữa, cột chữ giữ căn trái) và `paper.txt` (phương trình (29), (35), (38) và tiêu đề cột "J = R·S" của Bảng 6; Hình 4 dùng `Figure_4_dry.png`). Đã sinh lại `paper.docx` và `paper.pdf` (27 trang, Hình 4 chuyển sang trang 19 nên trang 18 còn khoảng trắng dưới).
+
+### Lượt 51 - [common_1] Hướng dẫn tác giả tạp chí JSTT (ĐH Công nghệ GTVT): cần chuẩn bị những gì; đối chiếu template trong References/ (2026-10-14)
+- Người dùng dán Guide for Authors của JSTT và cho biết đã tải template manuscript vào `References/`. Yêu cầu: dựa vào bài hiện tại, liệt kê cần chuẩn bị gì. Chỉ phân tích, không sửa file. Kết quả ghi bên dưới.
+- Kết quả (chỉ phân tích):
+  - Template `References/JSTT_Manuscript_template_EN.docx`: khổ A4; trang đầu 1 cột gồm tên bài, tác giả, địa chỉ, hộp "Article info", Abstract, Keywords; thân bài 2 cột, Arial 11 pt.
+  - Hướng dẫn (guide) lại yêu cầu bản nộp 1 cột, 12 pt, giãn dòng đôi, lề ≥ 2.5 cm, đánh số trang, không căn đều hai bên. Hai yêu cầu này mâu thuẫn, cần người dùng chọn (hoặc hỏi tòa soạn).
+  - Bài hiện tại:
+    - Abstract 197 từ (đạt 150-300), 6 keywords (đạt), khoảng 4980 từ.
+    - Thiếu: tác giả và địa chỉ, tác giả liên hệ (*), Declaration of Generative AI, Author contributions, chú thích viết tắt ở trang 1.
+    - Tài liệu tham khảo phải đổi sang kiểu "[1]. Tên. (Năm). Tựa. Tạp chí, vol(issue), trang."; bỏ hoặc trích [6], [10]-[15] (trong bài chỉ trích 1-5, 7-9) rồi đánh số lại.
+    - Bảng phải bỏ đường kẻ dọc. Thứ tự trích bảng: Bảng 3 được nhắc trước Bảng 1.
+    - Hình phải dùng font Arial/Times (đang DejaVu và Computer Modern), nộp file riêng EPS/PDF vector hoặc TIFF ≥ 1000 dpi (đang PNG 300 dpi).
+    - Đổi "Acknowledgements" thành "Acknowledgments" (kiểu Mỹ). Abstract dùng "EPS" mà không định nghĩa.
+    - Cần 3 người phản biện đề xuất.
+
+### Lượt 52 - [common_1] Ngoặc co giãn trong mọi phương trình; làm lại danh mục tài liệu, bỏ các chú thích "[to be verified]" (2026-10-14)
+- Người dùng gửi hai ảnh C_map(s): bản máy sinh ngoặc nhỏ không bao hết phân thức, bản tự sửa tay trong Word ngoặc co giãn bao trọn. Yêu cầu: (1) sửa TOÀN BỘ phương trình để ngoặc luôn bao hết nội dung; (2) làm lại danh mục tài liệu, hỏi sao còn nhiều chú thích ngoặc vuông; (3) thắc mắc tôi nói "không còn nguồn cảm biến" trong khi thấy vẫn có.
+- Nguyên nhân (1): `tools/txt2docx.py` chỉ sinh ký tự "(" ")" thường; `\Big(` cũng chỉ ra ký tự thường. Hướng sửa: công tắc AUTO_PAREN (chỉ bật trong `paper2docx.py`, tài liệu cũ không đổi): mọi cặp ngoặc tròn khớp nhau trong LaTeX thành ngoặc co giãn của Word (m:d), tự to theo nội dung.
+- Làm rõ (3): mục [10] CÒN trong danh sách tài liệu, nhưng KHÔNG được trích trong thân bài (Bảng 4 mất cột nguồn); hai điều này không mâu thuẫn.
+- Nguồn gốc (2): các ghi chú ngoặc vuông là do tôi để lại ở bản gửi thầy, thầy giữ nguyên. Cần kiểm tra thông tin thật rồi điền. Kết quả ghi bên dưới.
+- Kết quả (2026-10-14):
+  - Ngoặc: `txt2docx.py` thêm công tắc `AUTO_PAREN` (mặc định tắt, tài liệu cũ không đổi); `paper2docx.py` bật nó. Mọi cặp ngoặc tròn khớp nhau trong LaTeX thành ngoặc co giãn của Word, to theo nội dung. Đã bỏ 22 chỗ `\Big(`/`\big(` thủ công trong `paper.txt`. Kiểm bằng PDF: (7), (9), (23), (31), (35) ngoặc bao trọn.
+  - Danh mục tài liệu viết lại, không còn ghi chú ngoặc vuông. Thông tin tra từ web và Crossref: Lee TCST vol. 26 no. 2 pp. 748-755 (2018); Li và cs. WEVJ vol. 14 no. 2 article 33 (doi 10.3390/wevj14020033); Li và Xia ICCIA 2012 pp. 402-405 (doi 10.2991/iccia.2012.97); Nguyen AIME vol. 17 no. 9 (doi 10.1177/16878132251369152); Saifia JFI vol. 352 no. 2 pp. 562-576, năm 2015 (bản thầy ghi thiếu); Ragab, Givigi, Noureldin arXiv:2501.00242 "Automotive speed estimation: Sensor types and error characteristics from OBD-II to ADAS".
+  - Tách [10] cũ thành 4 mục (Valeo, Bosch LWS, Bosch MM5.10, Ragab) và trích chúng ở câu giới thiệu Bảng 4 (thêm chữ "with resolutions taken from the sensor data sheets [9]–[11]" và "[12]"). Bỏ các mục không được trích trong thân bài: Vyas (arXiv:2412.08133), Slotine, Seborg, Deborne, Heinrich, Buschardt. Đánh số lại theo thứ tự trích: Ren&Deng [7]→[6], Pacejka [8]→[7], Rajamani [9]→[8]. Script ở `tools/paper_refs_2026-10-14.py`.
+  - Còn lại: [3] không có mục tiêu đề hội nghị đầy đủ ghi thành (series) ; Valeo và Bosch chỉ có đường dẫn gốc (không có đường dẫn tải trực tiếp), cần người dùng mở kiểm; kiểu danh mục vẫn theo thầy (IEEE), chưa đổi sang kiểu JSTT.
+
+### Lượt 53 - [common_1] Làm bản thử theo Guide for Authors và template JSTT: hỏi người dùng thông tin còn thiếu trước khi làm (2026-10-14)
+- Người dùng yêu cầu làm lại toàn bộ bài theo hướng dẫn tác giả của JSTT thành một bản thử; thông tin thiếu thì hỏi hết một lần, người dùng trả lời xong rồi mới bắt đầu. Chưa làm gì ngoài việc hỏi.
+- Câu hỏi đã gửi: tác giả và địa chỉ, tác giả liên hệ, đóng góp từng người, khai dùng AI tạo sinh, tài trợ, người phản biện đề xuất, chọn bố cục (template 2 cột hay hướng dẫn 1 cột), kiểu tài liệu, màu hình, có chạy thêm nhiều seed nhiễu không. Chờ trả lời.
+
+### Lượt 54 - [common_1] Làm bản thử JSTT số 1 (số liệu hiện có), chạy lại MATLAB nhiều chuỗi nhiễu, rồi làm bản số 2 (2026-10-14)
+- Người dùng chốt: dùng các mặc định tôi đã nêu (A: tác giả/địa chỉ để trống, liên hệ = Tân, đóng góp, khai AI bằng Claude, tài trợ giữ câu hiện có, COI giữ; B: bố cục template, tài liệu kiểu JSTT, hình màu online nhưng phân biệt được khi in đen trắng, chữ thầy giữ nguyên chỉ thêm các mục bắt buộc). Bản 1: số liệu hiện có và KHÔNG nêu hạn chế về chuỗi nhiễu duy nhất (bỏ câu đó ở mục 5.5 của bản này). Sau đó chạy lại MATLAB nhiều chuỗi nhiễu (5 chuỗi 99999-99995, 3 bộ điều khiển) để làm bản 2: số liệu trung bình ± độ lệch chuẩn, lời văn đổi cho khớp (ví dụ PI/PID không còn "âm/dương" khi nằm trong nhiễu).
+- Kế hoạch: (1) khởi động MATLAB nền chạy các chuỗi 99998-99995 song song theo bộ điều khiển; (2) trong lúc đó dựng bản 1 trên khuôn template JSTT (thân 2 cột, mục rộng bằng khối 1 cột liên tục), hình Arial/Times, bảng không kẻ dọc, tài liệu kiểu JSTT, khai AI, đóng góp, chú thích viết tắt; (3) xuất docx + pdf; (4) khi MATLAB xong, tổng hợp thống kê và làm bản 2.
+- Kết quả (2026-10-14, bản 1):
+  - MATLAB: viết `Model/Sim/script/run_scoring_seeds.m` (resumable, `Simulink.sdi.clear` sau mỗi seed) và khởi động 3 cửa sổ nền (Map, PI, PID) chạy seed 99998-99995, TEMP trên ổ D. Cần khoảng 20 phút mỗi seed mỗi bộ điều khiển (PI seed 99998 xong sau khoảng 20 phút). RAM trống khoảng 4 GB, chú ý.
+  - Bản 1: `tools/paper_to_jstt_txt.py --v1` sinh `Documents/Paper/paper_jstt_v1.txt` từ `paper.txt`: đổi theo hướng dẫn tác giả (C-EPS trong Abstract; con trỏ Bảng 3 sớm đổi thành Section 4.1 để thứ tự trích bảng đúng; phân số trong câu thành a/b; Acknowledgments; bỏ cụm "based on the original dynamic-result set"; trích [3,6], [7,8], [9-11]; thêm Author contributions và Declaration of Generative AI; danh mục tài liệu kiểu JSTT; bỏ câu hạn chế "single noise realization" ở bản 1).
+  - `tools/paper2jstt.py` dựng docx trên khuôn `References/JSTT_Manuscript_template_EN.docx` (banner, khối tiêu đề, thân 2 cột, hình, bảng, phương trình dài ở khối 1 cột liên tục, bảng chỉ kẻ ngang, running head "JSTT vol X (2026), 1-page … Tran et al."). Sinh `Documents/Paper/paper_jstt_v1.docx` và `.pdf` (16 trang).
+  - Hình: font Arial (Times cho hình cột lái); bản nộp riêng ở `Figures/JSTT/Fig1..6.pdf` và `.tif` 1000 dpi LZW.
+  - Việc còn chờ: địa chỉ, email, ngày; người phản biện (nộp riêng); sau khi MATLAB xong thì thống kê và làm bản 2.
+
+### Lượt 55 - [common_1] Bản JSTT: phương trình phải vừa MỘT cột (ngắt dòng), Hình 3 xếp dọc vừa cột (2026-10-14)
+- Người dùng xem bản 1 và yêu cầu: (1) công thức không được để khối 1 cột rộng, phải vừa một cột; (2) Hình 3 ba ô ngang phải trải dọc cho vừa cột.
+- Làm: ngắt dòng các phương trình dài (7, 9, 23, 27, 29, 31, 35) bằng mảng phương trình nhiều dòng ở ranh giới cấp cao nhất, số đặt ở dòng cuối (chỉ trong bản JSTT; `paper.txt` giữ nguyên); `tools/paper_to_jstt_txt.py` thay các dòng LaTeX; `tools/paper2jstt.py` hỗ trợ dòng ngắt `\`, bỏ danh sách phương trình rộng. Hình 3 bản JSTT vẽ lại dạng ba ô xếp dọc (`Figure_3_pareto_col.png`, `Fig3.pdf/.tif`), vừa cột 8.4 cm; Hình 4-6 vẫn rộng cả trang (ma trận 3x3 và 5x3 ô).
+- Kết quả (2026-10-14, bản 2):
+  - `tools/make_seed_stats.py` tính trung bình và độ lệch chuẩn mẫu (ddof 1) trên 5 chuỗi nhiễu 99999-99995 cho cả ba bộ, ghi `Result/Compare/Map_vs_PI_vs_PID/Map_vs_PI_vs_PID_stats_s99995-s99999.csv`. Map gần như tất định (độ lệch chuẩn rất nhỏ); PI và PID có độ lệch đáng kể ở các sai số xác lập nhỏ.
+  - Phát hiện làm đổi lời văn: sai số sau khi μ giảm từ 0.8 xuống 0.3: Map −4.07 ± 0.01 %, PI −0.08 ± 0.07 %, PID −0.06 ± 0.08 % (đã sai về dấu "PI âm, PID dương" của một chuỗi: PI và PID đều gần 0 và không phân biệt được); sai số lớn nhất DRY: Map 12.99 ± 0.01 %, PI 2.24 ± 0.41 %, PID 1.77 ± 0.39 % (khác biệt PI-PID nằm trong độ lệch chuẩn); khôi phục độ bám: Map +1.01, PI −0.15, PID −0.14 %; puddle RMS: 2.30, 0.85, 0.35 N.m; WEAVE: RMS 1.327, 0.376, 0.215; S 0.160, 0.332, 0.407; reverse assist WEAVE: Map 0.05 %, PI 23.5 %, PID 25.5 %; EDGE PI −0.4/−0.5 %, PID −0.1/−0.2 %; RAMP và EDGE Map không đổi so với chuỗi 99999.
+  - `tools/paper_to_jstt_v2.py` sinh `Documents/Paper/paper_jstt_v2.txt` từ v1 và số liệu: đổi Abstract, mục 4.1 (5 chuỗi nhiễu), 5.2, 5.3, 5.4, Bảng 7 (dạng dọc, trung bình ± độ lệch chuẩn), chú thích Hình 4-6 (chuỗi 99999), câu hạn chế (hiệu chỉnh bằng một chuỗi; chấm điểm trung bình 5 chuỗi), Kết luận. Số của hiệu chỉnh (Bảng 6, Hình 3) không đổi (giao thức dùng một chuỗi).
+  - Sinh `paper_jstt_v1.docx/.pdf` và `paper_jstt_v2.docx/.pdf` (đều 17 trang). Sửa dấu cách ở tiêu đề chạy.
+  - Bài học công cụ: không dùng heredoc hay `python -c` có dấu `\1`, `\`; ghi mã bằng Write/Edit.

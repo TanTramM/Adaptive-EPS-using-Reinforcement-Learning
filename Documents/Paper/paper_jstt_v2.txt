@@ -1,0 +1,329 @@
+==============================================================================================================================================================================================
+Lateral-Acceleration-Based Torque Tracking Control for Column Electric Power Steering under Varying Road Friction Conditions
+==============================================================================================================================================================================================
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Abstract
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Conventional assist maps in column electric power steering (C-EPS) systems may produce excessive assistance when tire–road friction decreases during cornering. This study investigates a torque-tracking approach that uses vehicle speed and lateral acceleration to define the desired steering torque without explicitly estimating road friction. A steady-state analysis shows that the ability of conventional assist maps to attenuate friction-induced torque deviations is limited by their local slope, whereas integral torque feedback can eliminate persistent errors when actuator constraints are inactive. A nonlinear C-EPS–vehicle model incorporating tire saturation, pneumatic trail, motor dynamics, and sensor noise is used to compare an assist map with proportional–integral (PI) and proportional–integral–derivative (PID) controllers. Following a friction reduction from 0.8 to 0.3, the assist map produces a steady relative torque error of −4.07%, compared with −0.08% for PI and −0.06% for PID (means over five noise realizations). The PID controller reduces the calibration tracking metric from 27.05% to 11.59%, while increasing high-frequency assist-torque content from 0.249 to 0.312 N·m. In the continuous-steering scenario, reverse assistance occurs during 25.5% of the evaluated time for PID, compared with less than 0.1% for the assist map. The results show that improved torque tracking must be considered alongside reverse assistance when evaluating C-EPS controller performance.
+Keywords: Electric power steering; Lateral acceleration; Torque tracking; Road friction; Over-assist; PID control.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Introduction
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Electric power steering (EPS) systems are widely adopted in modern vehicles due to their energy efficiency and flexible steering assistance characteristics. In column-type EPS (C-EPS), conventional controllers generally employ nonlinear assist maps that determine motor assistance from measured steering torque and vehicle speed [1]. However, these maps are typically calibrated under high-friction road conditions. When tire–road friction decreases during cornering, the reduction in lateral tire force and pneumatic trail can decrease the steering reaction torque. Since the assist map does not explicitly account for this variation, the steering wheel may become lighter than desired, resulting in over-assist and reduced road feedback [2].
+To address this issue, previous studies have developed road-adaptive assistance strategies. Li et al. [2] proposed multiple assist maps considering axle loads and road adhesion, while Li and Xia [3] employed neural-network-based road identification to adjust assistance characteristics. Other studies have investigated adaptive neuro-fuzzy [4] and fuzzy control approaches [5] to improve EPS performance under disturbances and actuator constraints. These approaches adopt EPS assistance either by estimating road conditions or by modifying the feedback controller. Road-dependent maps require information about friction or axle load, which is not directly measured. An alternative is to use the vehicle's measured lateral response to define the steering torque that the controller should maintain.
+Previous research has shown that desirable steering-wheel torque can be characterized as a function of vehicle speed and lateral acceleration [3,6]. This provides an opportunity to formulate over-assist as a torque-tracking problem using signals available from onboard sensors, without explicitly estimating tire–road friction. Nevertheless, two issues require investigation: (i) why a conventional assist map cannot completely compensate for friction-induced steering torque deviations, even when appropriately calibrated; and (ii) whether direct torque-feedback control can improve tracking performance without unacceptable increases in assist-command noise or undesirable assistance during steering reversals.
+To address these issues, this study proposes a lateral-acceleration-based steering torque tracking framework for C-EPS under varying road-friction conditions. The desired steering torque is defined from measured vehicle speed and lateral acceleration, and the difference between this reference and the measured column torque is used as the control error. A conventional assist map with lead–lag compensation is compared against proportional–integral (PI) and proportional–integral–derivative (PID) torque-feedback controllers using a nonlinear steering–vehicle model incorporating tire-force saturation, steering reaction torque, noisy sensors, and motor dynamics.
+The main contributions of this study are as follows:
+- Formulating EPS over-assist as the difference between measured steering torque and a reference derived from vehicle speed and lateral acceleration, without estimating road friction.
+- Deriving the local steady-state sensitivity of an assist map to road-reaction torque changes and comparing this limitation with the zero-error condition of integral torque feedback.
+- Evaluating assist-map, PI, and PID controllers under common motor and sensor constraints, using calibration Pareto fronts and independent tests of dry-road cornering, friction changes, speed variation, and continuous steering. The evaluation includes high-frequency assist-torque content and reverse-assist behavior.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. System Modeling and Problem Formulation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2.1. Coupled C-EPS–Vehicle Model
+The C-EPS–vehicle model consists of a steering column, an assist motor, and a nonlinear single-track vehicle model, as illustrated in Fig. 1. The steering-wheel angle $\theta_1$ is prescribed as the driver input, while the motor applies assist torque $T_a$ to the lower steering column. The lower-column dynamics and measured torsion-bar torque are expressed as [1]
+  (1)  J_col*theta2_ddot = T_s + T_a - T_r - C_col*theta2_dot - T_f*tanh(c*theta2_dot)
+  [ J_{col}\ddot\theta_2=T_s+T_a-T_r-C_{col}\dot\theta_2-T_f\tanh(c\,\dot\theta_2) ]
+  (2)  T_s = K*(theta1 - theta2)
+  [ T_s=K(\theta_1-\theta_2) ]
+\noindent where $\theta_2$ is the lower-column angle; $J_{col}$, $C_{col}$, and $K$ denote column inertia, viscous damping, and torsion-bar stiffness, respectively; and $T_f$ and c characterize the smoothed Coulomb friction. The driver is represented by a prescribed steering-wheel angle $\theta_1(t)$. This choice allows the measured torsion-bar torque to change when road reaction or motor assistance changes. Prescribing driver torque instead would constrain the measured torque directly and would not isolate the over-assist mechanism investigated here. The model therefore describes the torque response to a fixed steering input, but not the driver's reaction to changes in steering effort.
+[Fig. 1. Coupled C-EPS–vehicle model showing steering-column dynamics, motor assistance, tire–road reaction torque, and vehicle lateral motion. | Figures/v5_Huypt/Figure_1_model.png]
+A nonlinear tire model is used to represent the effect of road friction on steering reaction torque. Under the small-angle approximation, the front and rear tire slip angles are
+  (3)  alpha_f = theta2/n_st - beta - l_f*gamma/v
+  [ \alpha_f=\dfrac{\theta_2}{n_{st}}-\beta-\dfrac{l_f\gamma}{v} ]
+  (4)  alpha_r = -beta + l_r*gamma/v
+  [ \alpha_r=-\beta+\dfrac{l_r\gamma}{v} ]
+\noindent where $n_{st}$ is the steering ratio, $\beta$ is the vehicle sideslip angle, $\gamma$ is the yaw rate, and $l_f$ and $l_r$ are the distances from the vehicle center of gravity to the front and rear axles. The front and rear axle loads are assumed constant and are calculated from the static weight distribution:
+  (5)  F_zf = m*g*l_r/(l_f + l_r)
+  [ F_{zf}=mg\dfrac{l_r}{l_f+l_r} ]
+  (6)  F_zr = m*g*l_f/(l_f + l_r)
+  [ F_{zr}=mg\dfrac{l_f}{l_f+l_r} ]
+\noindent Each axle is represented by one equivalent tire in the single-track model. The corresponding lateral tire forces are calculated using the Pacejka Magic Formula [7]:
+  (7)  F_y = D*sin(C*atan(B*alpha - E*(B*alpha - atan(B*alpha))))
+  [ F_y= \\ D\sin(C\,\mathrm{atan}(B\alpha-E(B\alpha-\mathrm{atan}(B\alpha)))) ]
+  (8)  D = mu*F_z,   B = C_alpha/(C*D)
+  [ D=\mu F_z,\quad B=\dfrac{C_\alpha}{C\,D} ]
+\noindent where $\mu$ is the tire–road friction coefficient, $F_z$ is the static vertical axle load, and $C_\alpha$ is the cornering stiffness. The tire-shape parameters are listed in Section 4.1.
+The effective steering moment arm combines geometric caster trail and slip-dependent pneumatic trail [2]:
+  (9)  e_p = e_c + max(0, t_0 - t_0*C_alpha_f*|tan(alpha_f)|/(3*mu*F_zf))
+  [ e_p=e_c+ \\ \max(0,\ t_0-\dfrac{t_0C_{\alpha f}|\tan(\alpha_f)|}{3\mu F_{zf}}) ]
+  (10)  e_c = e_p0 - t_0
+  [ e_c=e_{p0}-t_0 ]
+\noindent where $e_{p0}$ and $t_0$ are the effective moment arm and pneumatic trail at zero slip. The pneumatic trail decreases as the tire contact patch develops a larger sliding region. In the adopted approximation, the trail decreases linearly with the magnitude of $\tan(\alpha_f)$ and becomes zero when the modeled sliding threshold is reached. The geometric caster trail remains unchanged. This approximation captures the reduction in steering reaction torque as tire slip increases, but it does not reproduce the full nonlinear trail characteristic of the brush model. The resulting road reaction torque, referred to the steering column, is
+  (11)  T_r = (e_p/n_st)*F_yf
+  [ T_r=(\dfrac{e_p}{n_{st}})F_{yf} ]
+Vehicle lateral motion is represented by the nonlinear single-track equations [8]:
+  (12)  a_y = (F_yf + F_yr)/m
+  [ a_y=\dfrac{F_{yf}+F_{yr}}{m} ]
+  (13)  beta_dot = a_y/v - gamma
+  [ \dot\beta=\dfrac{a_y}{v}-\gamma ]
+  (14)  gamma_dot = (l_f*F_yf - l_r*F_yr)/I_z
+  [ \dot\gamma=\dfrac{l_fF_{yf}-l_rF_{yr}}{I_z} ]
+\noindent where $m$ and $I_z$ are the vehicle mass and yaw moment of inertia. The steering-column and vehicle-body subsystem has four states, including $\theta_2$, $\dot\theta_2$, $\beta$, and $\gamma$. Motor and controller states are included separately in the closed-loop simulations.
+At a stationary steering-column equilibrium, Eq. (1) reduces to:
+  (15)  T_s = T_r - T_a
+  [ T_s=T_r-T_a ]
+Equations (7)–(15) establish the link between road friction and steering effort. A reduction in $\mu$ changes lateral tire forces and pneumatic trail, thereby altering the reaction torque transmitted to the column. Unless motor assistance is adjusted, the measured steering torque may decrease below its desired value.
+2.2. Lateral-Acceleration-Based Torque Reference
+The desired steering torque is determined from vehicle speed and lateral acceleration using the steering-effort characteristics reported in [3]. The adopted reference data are summarized in Table 1.
+Table 1. Ideal steering-wheel torque reference (N·m), adopted from [3].
+Lateral acceleration | 20 km/h | 40 km/h | 60 km/h | 80 km/h | 100 km/h
+0.1 g | 1.0 | 1.7 | 2.1 | 2.3 | 2.6
+0.2 g | 1.5 | 2.0 | 2.4 | 2.8 | 3.0
+0.3 g | 1.6 | 2.3 | 2.8 | 3.1 | 3.3
+0.4 g | 1.8 | 2.4 | 2.9 | 3.3 | 3.4
+A zero-torque point at zero lateral acceleration is added to each speed-dependent reference curve. Monotone piecewise cubic Hermite interpolation is then applied along lateral acceleration and vehicle speed. The reference is extended to negative lateral acceleration by odd symmetry. At speeds outside 20–100 km/h or lateral-acceleration magnitudes above 0.4 g, the nearest boundary value is used. This construction keeps the reference continuous through zero lateral acceleration. The reference is defined as
+  (16)  T_ref(v, a_y) = sgn(a_y)*T_hat(v, |a_y|)
+  [ T_{ref}(v,a_y)=\mathrm{sgn}(a_y)\,T_{hat}(v,|a_y|) ]
+  (17)  T_hat(v, 0) = 0
+  [ T_{hat}(v,0)=0 ]
+\noindent where $T_{hat}$ is the interpolated characteristic.
+The reference requires vehicle speed and lateral acceleration, but no estimate of the road-friction coefficient. For the same steering-wheel angle, a lower-friction road may produce less lateral acceleration and therefore a lower desired torque. The controller acts on the remaining difference between measured torque and this reference.
+2.3. Torque-Tracking Objective
+The control objective is to regulate the measured steering torque toward the reference:
+  (18)  e_T = T_s - T_ref(v, a_y)
+  [ e_T=T_s-T_{ref}(v,a_y) ]
+For nonzero lateral acceleration, $\mathrm{sgn}(a_y)e_T<0$ indicates steering torque below the desired value in the reference direction. Steering reversals are evaluated separately because sign changes can complicate this interpretation.
+All controllers are subject to the same bounded motor assistance:
+  (19)  |T_a| <= T_a,max(v)
+  [ |T_a|\le T_{a,max}(v) ]
+The speed-dependent limit is determined from the modeled dry-road assistance requirement, as specified in Section 4.1. The control objective is to reduce torque-tracking error under varying road-friction conditions while maintaining closed-loop stability and acceptable assist-torque smoothness.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Control Strategy and Assist-Map Limitation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Three strategies are investigated: conventional assist-map control with lead–lag compensation, PI torque feedback, and PID torque feedback. Their architectures are illustrated in Fig. 2. All controllers share the nonlinear plant and actuator constraints, but the PI/PID architectures additionally use lateral acceleration.
+[Fig. 2. Conventional assist-map and lateral-acceleration-based torque-feedback control architectures, including the common assist motor and torque limitation. | Figures/v5_Huypt/Figure_2_architecture.png]
+3.1. Conventional Assist-Map Control
+The conventional controller follows the nonlinear torque-map structure of [1]. Under dry-road conditions ($\mu=0.8$), the required assistance at each calibration point is determined from Eq. (15):
+  (20)  T_s,cal = T_ref(v, a_y)
+  [ T_{s,cal}=T_{ref}(v,a_y) ]
+  (21)  T_a,cal = T_r(v, a_y, 0.8) - T_ref(v, a_y)
+  [ T_{a,cal}=T_r(v,a_y,0.8)-T_{ref}(v,a_y) ]
+The dry-road map is calibrated at 17 speeds between 20 and 100 km/h, spaced by 5 km/h. At each speed, feasible lateral accelerations are sampled at 0.005 g intervals. The required assist torque is calculated from the difference between road-reaction torque and reference torque. The resulting curve is constrained by a 0.3 N·m dead zone and a maximum local slope of 6. At each calibration breakpoint, the assist-torque value is limited by the preceding breakpoint value plus the maximum allowable torque increment, calculated from the local steering-torque interval and the selected slope limit. This construction preserves nonnegative assistance while restricting the increase between adjacent breakpoints. The constrained characteristic is tabulated over measured steering torque from 0 to 5 N·m in steps of 0.005 N·m, with linear interpolation in torque and speed. The same characteristic is extended to negative torque by odd symmetry.
+The map output is processed by a lead–lag compensator:
+  (22)  T_a,cmd(s) = C_map(s)*M(v, T_s)
+  [ T_{a,cmd}(s)=C_{map}(s)M(v,T_s) ]
+  (23)  C_map(s) = ((s/z + 1)/(s/p + 1))*((s/z1 + 1)/(s/p1 + 1))
+  [ C_{map}(s)= \\ (\dfrac{\frac{s}{z}+1}{\frac{s}{p}+1})(\dfrac{\frac{s}{z_1}+1}{\frac{s}{p_1}+1}) ]
+\noindent where $M$ is the nonlinear assist map. The lead stage improves the phase characteristics around the column resonance, while the lag stage attenuates high-frequency amplification. The selected parameters are listed in Table 2. The compensator is designed from 68 linearized plants covering representative operating points on dry and low-friction roads. Four local map slopes are checked for each plant. Candidate compensators must satisfy the Nyquist stability criterion, a phase margin of at least 45°, and a gain margin of at least 2. The selected lead–lag compensator has a minimum phase margin of 45.3° and a minimum gain margin of 5.7 over these linearized cases. The margins are used to constrain the map design; they are not presented as a global stability proof for the nonlinear system. The steady-state relationship assumes zero column angular velocity, for which the smoothed Coulomb-friction term vanishes. During continuous column motion, friction contributes an additional torque to the balance equation. The local slope analysis therefore does not account for the friction-related errors observed in RAMP.
+3.2. Steady-State Limitation of Assist-Map Control
+At a fixed vehicle speed and lateral acceleration, the steady-state relationship of the assist-map controller is
+  (24)  T_s + M(v, T_s) = T_r(v, a_y, mu)
+  [ T_s+M(v,T_s)=T_r(v,a_y,\mu) ]
+For a small change in road reaction torque, local linearization gives
+  (25)  Delta T_s = Delta T_r/(1 + s_m)
+  [ \Delta T_s=\dfrac{\Delta T_r}{1+s_m} ]
+  (26)  s_m = dM(v, T_s)/dT_s
+  [ s_m=\dfrac{\partial M(v,T_s)}{\partial T_s} ]
+\noindent where $s_m$ denotes the local slope of the assistance map.
+At fixed vehicle speed and lateral acceleration, a small change in road-reaction torque produces a change in measured steering torque scaled by $1/(1+s_m)$. The reference remains constant under these conditions, so the same expression describes the change in tracking error. Increasing the local map slope reduces this error, but also raises the loop gain and the transmission of sensor noise to the assist command. The attenuation factor is therefore a local steady-state result, not a general expression for the full transient response to changing road friction.
+At 100 km/h and 0.2 g, the model gives a road-reaction torque of 5.22 N·m at μ = 0.8 and 4.75 N·m at μ = 0.3. With a local map slope of 6, Eq. (25) predicts a steering-torque change of −0.067 N·m, equivalent to −2.2% of the 3.0 N·m reference. This estimate applies to the specified operating point and assumes that the local slope reaches the selected limit.
+3.3. PI and PID Torque-Feedback Control
+The PI and PID controllers directly regulate the torque-tracking error defined in Eq. (18). Their control laws are represented by
+  (27)  T_a,cmd(s) = (K_p + K_i/s)*e_T(s) + (K_d*s/(tau_d*s + 1))*T_s(s)
+  [ T_{a,cmd}(s)=(K_p+\dfrac{K_i}{s})e_T(s)+ \\ (\dfrac{K_ds}{\tau_ds+1})T_s(s) ]
+\noindent where $K_p$, $K_i$, and $K_d$ are the proportional, integral, and derivative gains, and $\tau_d$ is the derivative-filter time constant. The derivative term acts on measured steering torque rather than tracking error, avoiding derivative kick when the reference changes. In the implemented control law, the derivative contribution is added with a positive sign, consistent with the assist-torque convention adopted for the steering-column dynamics.
+Setting $K_d=0$ gives the PI controller. Integral feedback can eliminate persistent tracking error when the closed loop is stable, the reference is attainable, and actuator saturation does not prevent the required control action. Both controllers use back-calculation anti-windup, with the implementation described in Section 4.1. The PI and PID gain searches are bounded using a reduced linear model of the steering column. Two road-stiffness conditions are considered: small tire slip on a dry road and the saturated-tire limit. The corresponding resonance frequencies are approximately 6.3 and 5.7 Hz. These models are used to screen controller gains before nonlinear calibration. The gain ranges are further constrained by the specified doubled-motor-gain and additional-delay tests. Final parameters are selected from the admissible nonlinear simulation results using the common tracking and high-frequency assist-torque metrics.
+Table 2. Selected controller parameters.
+Controller | Parameter | Value
+Assist map | Maximum slope $K_{max}$ | 6
+Assist map | Torque dead zone | 0.3 N·m
+Assist map | Lead zero / pole | 33.5 rad/s; 600.1 rad/s
+Assist map | Lag zero / pole | 28.1 rad/s; 10.7 rad/s
+PI | $K_p$ | 1.08
+PI | $K_i$ | 14.4 $\mathrm{s}^{-1}$
+PI | $K_{aw}$ | 13.3 $\mathrm{s}^{-1}$
+PID | $K_p$ | 1.50
+PID | $K_i$ | 32.0 $\mathrm{s}^{-1}$
+PID | $K_d$ | 0.025 s
+PID | $\tau_d$ | 2.5 ms
+PID | $K_{aw}$ | 21.3 $\mathrm{s}^{-1}$
+The parameters are obtained using the common calibration and selection procedure in Section 4. Because the conventional map uses steering torque and vehicle speed, whereas PI/PID additionally use lateral acceleration, the comparison evaluates complete assistance architectures rather than isolating the control algorithms alone.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Simulation Setup and Evaluation Methodology
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4.1. Simulation Model and Implementation
+The three controllers are evaluated using the nonlinear C-EPS–vehicle model described in Section 2. The adopted steering, vehicle, and tire parameters are summarized in Table 3. Steering-column parameters are based on [1], whereas the tire and vehicle model formulations follow [7,8]. The steering ratio and trail dimensions are prescribed modeling parameters. The magnitude of the friction-induced steering-torque reduction depends on the assumed zero-slip pneumatic trail. For a friction decrease from μ = 0.8 to 0.3 under the fixed-lateral-acceleration condition considered in the sensitivity analysis, varying $t_0$ from 17 to 35 mm changes the predicted reduction in sensed torque from approximately 6% to 13% without motor assistance. The nominal parameter value gives a reduction of about 9–10%. The model therefore captures the expected direction of the effect, while its magnitude remains dependent on the assumed steering geometry.
+Table 3. Parameters of the nonlinear C-EPS–vehicle model.
+Parameter | Symbol | Value | Unit
+Torsion-bar stiffness | $K$ | 143.24 | N·m/rad
+Lower-column inertia | $J_{col}$ | 0.11 | kg·m²
+Column viscous damping | $C_{col}$ | 1.35 | N·m·s/rad
+Coulomb friction amplitude | $T_f$ | 2 | N·m
+Friction smoothing coefficient | $c$ | 100 | s/rad
+Vehicle mass | $m$ | 1573 | kg
+Yaw moment of inertia | $I_z$ | 2873 | kg·m²
+Front axle distance | $l_f$ | 1.10 | m
+Rear axle distance | $l_r$ | 1.58 | m
+Front/rear cornering stiffness | $C_{\alpha f}$, $C_{\alpha r}$ | 160000 | N/rad
+Magic Formula shape factor | $C$ | 1.3 | -
+Magic Formula curvature factor | $E$ | −1 | -
+Steering ratio | $n_{st}$ | 16 | -
+Initial effective moment arm | $e_{p0}$ | 0.048 | m
+Initial pneumatic trail | $t_0$ | 0.025 | m
+The model is evaluated between 20 and 100 km/h and friction coefficients from 0.2 to 0.8. Below 20 km/h, the inverse-speed terms in the vehicle equations and the quasi-static tire assumptions become less reliable. The feasible lateral-acceleration range is limited by tire friction and by the small-angle assumptions. At 20 km/h, the adopted model permits approximately 0.2 g, whereas the upper limit approaches the friction-dependent tire-force limit at higher speeds. Therefore, calibration and test points are restricted to feasible operating conditions rather than the full rectangular range of the reference table. Equal tire–road friction is assumed on the left and right sides of the vehicle, and the steering-wheel angle is prescribed independently of the driver's response to steering torque.
+The motor dynamics are approximated by a first-order transfer function [1]:
+  (28)  G_m(s) = omega_m/(s + omega_m),   omega_m = 2*pi*(100) rad/s
+  [ G_m(s)=\dfrac{\omega_m}{s+\omega_m},\quad \omega_m=2\pi(100)\ \mathrm{rad/s} ]
+\noindent The common motor model includes a 1 ms computation delay and the speed-dependent assist limit defined in Eq. (19). The latter is calculated from the maximum required dry-road assistance:
+  (29)  T_a,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_ref(v, a_y)] + T_f
+  [ T_{a,max}(v)=\limlow{max}{0\le a_y\le a_{y,lim}(v)} \\ \,\brack{T_r(v,a_y,0.8)-T_{ref}(v,a_y)}+T_f ]
+  (30)  a_y,lim(v) = min(a_y,max(v, 0.8), 0.4g)
+  [ a_{y,lim}(v)=\min(a_{y,max}(v,0.8),\ 0.4g) ]
+\noindent where $a_{y,max}(v,0.8)$ denotes the maximum attainable lateral acceleration under the adopted dry-road model. This limit is derived from the simulation model and does not represent a validated capacity of a production EPS motor.
+All controllers operate at a sampling period $T_c=1\ \mathrm{ms}$. The lead–lag compensator is discretized using the Tustin method, while the PI/PID integrator employs forward Euler integration with back-calculation anti-windup. The integral and filtered derivative states are updated as
+  (31)  u_I[k+1] = u_I[k] + T_c*(K_i*e_T[k] + K_aw*(T_a,lim[k] - T_a,cmd[k]))
+  [ u_I[k+1]=u_I[k]+ \\ T_c(K_ie_T[k]+K_{aw}(T_{a,lim}[k]-T_{a,cmd}[k])) ]
+  (32)  d[k] = a_d*d[k-1] + b_d*(T_s[k] - T_s[k-1])
+  [ d[k]=a_dd[k-1]+b_d(T_s[k]-T_s[k-1]) ]
+  (33)  a_d = tau_d/(tau_d + T_c),   b_d = K_d/(tau_d + T_c)
+  [ a_d=\dfrac{\tau_d}{\tau_d+T_c},\quad b_d=\dfrac{K_d}{\tau_d+T_c} ]
+\noindent where $T_{a,lim}$ denotes the assist-torque command after application of the common motor-block saturation limit. The difference between the limited and unlimited commands provides the back-calculation signal used to prevent integrator windup. The PI controller uses d[k] = 0, whereas PID uses the derivative state in Eq. (32). The anti-windup gain is:
+  (34)  K_aw = K_i/K_p
+  [ K_{aw}=\dfrac{K_i}{K_p} ]
+Sensor noise, quantization, and update periods are modeled according to Table 4, with resolutions taken from the sensor data sheets [9–11]. The noise standard deviation equals one resolution step for each sensor, except for vehicle speed, for which 0.38 km/h is adopted [12]. The 10 ms vehicle-signal update period is an implementation assumption.
+Table 4. Sensor and actuator settings.
+Signal or component | Resolution or setting | Update period
+Steering torque $T_s$ | 0.01 N·m | 1 ms
+Steering-wheel angle $\theta_1$ | 0.1° | 1 ms
+Column angular velocity $\dot\theta_2$ | 4°/s | 1 ms
+Vehicle speed $v$ | 1 km/h | 10 ms
+Yaw rate $\gamma$ | 0.1°/s | 10 ms
+Lateral acceleration $a_y$ | 0.01 g | 10 ms
+Controller sampling | 1 ms | 1 ms
+Motor bandwidth | 100 Hz | Continuous-time model
+Computation delay | 1 ms | -
+The same five noise realizations (random-number seeds 99999 to 99995) are used for all controllers. The scoring results are reported as the mean and the sample standard deviation over the five realizations; the time histories in Figs. 4–6 show the realization with seed 99999. The motor current loop and electrical power constraints are not modeled. The initial 2 s of each simulation are excluded from performance evaluation.
+4.2. Controller Calibration and Selection
+The 117 s CALIB scenario contains steady cornering, sinusoidal steering, small lateral-acceleration corrections, and friction transitions. Steady-cornering tests are performed at 20, 60, and 100 km/h. The targets are 0.1, 0.15, and 0.18 g at 20 km/h, and 0.1, 0.2, and 0.3 g at 60 and 100 km/h. Each steady target is approached over 1 s and then held for 3 s, with the final second used for evaluation.
+The calibration metric includes nine steady-cornering windows, three sinusoidal-steering windows at 0.5 Hz, three small-correction windows involving ±0.03 g target changes, and two friction-transition windows. At 60 km/h and a target of 0.3 g, road friction falls from 0.8 to 0.6 at 71 s and returns to 0.8 at 75 s. Two additional 0.4 g windows are retained for reporting but excluded from the calibration objective.
+Torque-tracking accuracy and high-frequency assist-torque content are quantified by
+  (35)  R = (100/4)*sum over q in {static, sine, small, mu} of RMS_q(e_T)/mean_q(|T_ref|)
+  [ R=\paren{\dfrac{100}{4}}\,\nsum{q\in\lbrace\mathrm{static,sine,small,mu}\rbrace} \\ \,\paren{\dfrac{RMS_q(e_T)}{mean_q(|T_{ref}|)}} ]
+  (36)  S = RMS(T_a - F_5(T_a))
+  [ S=RMS(T_a-F_5(T_a)) ]
+The metric R is the average normalized RMS tracking error across the four evaluation groups, expressed in percent. The metric S is computed as the RMS difference between the applied assist torque and its first-order low-pass-filtered counterpart, using a cutoff frequency of 5 Hz. It quantifies high-frequency assist-torque content, which may arise from both sensor-noise amplification and rapid control action. For steady-cornering windows, the signed relative error is calculated as:
+  (37)  e_rel = 100*sgn(T_ref)*mean(e_T)/mean(|T_ref|)
+  [ e_{rel}=100\dfrac{\mathrm{sgn}(T_{ref})\,mean(e_T)}{mean(|T_{ref}|)} ]
+\noindent RMS error is used for steering-reversal windows, where signed relative errors may be misleading.
+Candidate controllers must satisfy two admissibility requirements. The maximum absolute steady-state relative error across the nine calibration windows must not exceed 5%. Additionally, each configuration must remain stable under a doubled motor gain and an extra 1 ms computation delay, with the corresponding R value no greater than twice its nominal value. These are specified perturbation tests rather than a general guarantee of robust stability.
+The final configuration is selected by minimizing
+  (38)  J = R*S
+  [ J=R\cdot S ]
+\noindent among the admissible designs. To preserve the 0.2–2 Hz steering-response band, the lag stage of the assist-map compensator and the first-order derivative filter of PID are constrained to have a magnitude response no lower than −3 dB at 2 Hz. The PI controller has no corresponding filtering constraint.
+4.3. Independent Evaluation Scenarios
+After calibration, the controllers are tested on five independent scenarios. The conditions and principal evaluation measures are summarized in Table 5.
+Table 5. Calibration and independent evaluation scenarios.
+Scenario | Duration | Main operating conditions | Evaluation
+CALIB | 117 s | 20, 60, 100 km/h; steady corners, 0.5 Hz steering and ±0.03 g corrections; μ = 0.8 → 0.6 → 0.8 | Controller selection
+DRY | 129 s | Steady cornering at 20–100 km/h; μ = 0.8 | Maximum steady relative error
+SLIP | 63 s | Low-friction patch, friction recovery and μ = 0.8 → 0.3 during cornering | Steady and transient torque errors
+WEAVE | 61 s | Slalom and sinusoidal steering under dry and low-friction conditions | RMS error, noise, reverse assist
+RAMP | 308.6 s | Vehicle-speed changes during steady cornering; μ = 0.8 | Signed relative error
+EDGE | 87 s | High lateral acceleration of 0.35–0.4 g and sinusoidal steering | Tracking near operating limits
+\noindent DRY evaluates tracking accuracy at operating speeds not fully represented by the calibration windows. SLIP tests the response to changing tire–road friction, whereas WEAVE examines continuous steering and steering-direction reversals. RAMP and EDGE provide additional diagnostic assessments rather than contributing to the calibration score.
+Reverse-assist percentage is defined as the number of evaluated samples for which $T_aT_s$ is negative and $|T_s|$ is at least 0.5 N·m, divided by the total number of evaluated samples.
+All three controllers are evaluated using identical steering inputs, speed profiles, friction conditions, and sensor-noise sequences. Their comparative results are presented in Section 5.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Results and Discussion
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5.1. Calibration Performance and Tracking–Noise Trade-off
+The CALIB parameter search evaluated 61 assist-map configurations, 453 PI configurations, and 824 PID configurations. Of the evaluated configurations, 56 assist-map, 149 PI, and 435 PID designs passed the steady-state accuracy gate. The stability-perturbation and filtering constraints were then applied to determine the admissible configurations used in the Pareto comparison. Fig. 3 shows the tracking metric R against the high-frequency assist-torque metric S for the evaluated designs and their admissible Pareto fronts.
+[Fig. 3. Tracking–noise trade-offs under the CALIB scenario for (a) the conventional assist map, (b) PI control, and (c) PID control. The plots show evaluated configurations, admissible Pareto fronts, and selected operating points. | Figures/v5_Huypt/Figure_3_pareto_col.png]
+The evaluated assist-map and PID Pareto fronts share a high-frequency assist-torque range of approximately 0.21–0.62 N·m, allowing tracking errors to be compared at matched S values. At S = 0.25 N·m, the best admissible R values are 27.1% for the assist map and 20.5% for PID. At S = 0.30 N·m, these values are 25.5% and 13.0%, respectively. Thus, PID achieves lower tracking error at the two matched high-frequency assist-torque levels, while the assist map also provides admissible configurations at lower S values. Table 6 lists the selected designs. The tracking metric R decreases from 27.05% for the assist map to 18.00% for PI and 11.59% for PID. Over the same configurations, S increases from 0.249 to 0.293 and 0.312 N·m. All three designs satisfy the calibration accuracy gate and the specified gain- and delay-perturbation tests. The reported perturbation ratios describe changes in R and should not be interpreted as classical gain or phase margins.
+Table 6. Calibration performance of the selected controllers.
+Controller | R (%) | S (N·m) | J = R·S | Maximum steady error (%) | Gain ×2 ratio | Delay +1 ms ratio
+Assist map | 27.05 | 0.249 | 6.74 | 3.17 | 0.78 | 1.00
+PI | 18.00 | 0.293 | 5.27 | 3.78 | 0.58 | 1.02
+PID | 11.59 | 0.312 | 3.61 | 2.33 | 0.40 | 1.01
+The cost J is used solely to select a representative tracking–high-frequency-torque compromise within each controller family; it is not intended as a validated measure of steering feel.
+5.2. Steering Torque Tracking under Dry-Road Conditions
+The DRY scenario evaluates tracking performance under the calibration road condition across a wider set of steady-cornering operating points. Fig. 4 compares the steering torque response of the assist map, PI, and PID controllers.
+[Fig. 4. Steering torque tracking under dry-road conditions for (a) the conventional assist map, (b) PI control, and (c) PID control. Each panel shows measured and reference steering torque, tracking error, and applied assist torque. The noise realization with seed 99999 is shown. | Figures/v5_Huypt/Figure_4_dry.png]
+In the DRY scenario, the assist map reaches a maximum absolute steady-state error of 12.99% at 40 km/h and 0.3 g. At this point, measured steering torque exceeds the reference by approximately 0.30 N·m. In the 25–45 km/h and 0.25–0.3 g operating region, the unconstrained assist characteristic requires a local slope above the selected limit of 6. The slope-constrained map consequently provides less assistance than the ideal dry-road calibration characteristic, leaving the measured steering torque above its reference.
+Across the DRY evaluation windows, the maximum absolute steady-state errors are 2.24% for PI and 1.77% for PID (standard deviations 0.41% and 0.39%). The difference between the two feedback controllers is within these standard deviations. The feedback controllers therefore maintain smaller worst-case errors across the evaluated operating points.
+5.3. Torque Tracking under Varying Road Friction
+The main objective of the proposed framework is assessed using the SLIP scenario. Fig. 5 compares the responses of the three controllers during low-friction disturbances and friction transitions.
+[Fig. 5. Steering torque response under varying road-friction conditions for (a) the conventional assist map, (b) PI control, and (c) PID control. The plots show measured and reference steering torque, tracking error, and applied assist torque during the SLIP scenario. The noise realization with seed 99999 is shown. | Figures/v5_Huypt/Figure_5_slip.png]
+In the SLIP scenario, road friction decreases from μ = 0.8 to 0.3 during a cornering maneuver at 100 km/h with a target lateral acceleration of 0.3 g. After the transition, the assist map retains a steady relative tracking error of −4.07%, compared with −0.08% for PI and −0.06% for PID (standard deviation 0.07% and 0.08%). The two feedback controllers are therefore both close to zero and cannot be distinguished from each other. The negative map error indicates that the measured steering torque is below the reference.
+During the separate 0.4 s low-friction patch, the RMS tracking error is 2.30 N·m for the assist map, 0.85 N·m for PI, and 0.35 N·m for PID. In a friction-recovery event at 60 km/h and a target of 0.15 g, the corresponding steady relative errors are +1.01%, −0.15%, and −0.14%. Thus, the two integral-feedback controllers reduce the reported tracking errors for both friction reduction and recovery. These results apply to the simulated steering inputs and vehicle response; they do not isolate the map-slope effect from changes in lateral acceleration and reference torque during the transitions.
+5.4. Dynamic Steering Performance and Practical Limitations
+The remaining scenarios test continuous steering, changing vehicle speed, and operation at high lateral acceleration. Fig. 6 compares the tracking errors of the three controllers across DRY, RAMP, SLIP, WEAVE, and EDGE. Table 7 reports whole-case RMS tracking error, high-frequency assist-torque content, and reverse-assist percentage as mean ± standard deviation over the five noise realizations. Reverse assistance is defined here by the sign relationship between applied motor torque and measured steering torque. It does not, by itself, indicate closed-loop instability, actuator saturation, or a loss of steering control.
+PID has the lowest whole-case RMS tracking error in all five scenarios. In WEAVE, for example, the RMS error decreases from 1.327 N·m for the assist map to 0.376 N·m for PI and 0.215 N·m for PID. The corresponding S values increase from 0.160 to 0.332 and 0.407 N·m. The tracking improvement is therefore accompanied by greater high-frequency assist-torque activity during continuous steering.
+[Fig. 6. Dynamic steering performance and torque-response limitations for (a) the conventional assist map, (b) PI control, and (c) PID control. The plots highlight tracking behavior during continuous steering and additional operating conditions. The noise realization with seed 99999 is shown. | Figures/v5_Huypt/Figure_6_drews.png]
+Table 7. Whole-case performance of the investigated controllers (mean ± standard deviation over five noise realizations).
+Scenario | Controller | RMS tracking error (N·m) | S (N·m) | Reverse assist (%)
+DRY | Assist map | 0.689 ± 0.000 | 0.149 ± 0.000 | 0.14 ± 0.02
+DRY | PI | 0.244 ± 0.002 | 0.195 ± 0.002 | 6.04 ± 0.15
+DRY | PID | 0.154 ± 0.001 | 0.255 ± 0.002 | 5.83 ± 0.14
+SLIP | Assist map | 0.538 ± 0.000 | 0.163 ± 0.000 | 0.04 ± 0.01
+SLIP | PI | 0.216 ± 0.002 | 0.236 ± 0.004 | 3.37 ± 0.09
+SLIP | PID | 0.128 ± 0.004 | 0.304 ± 0.004 | 3.49 ± 0.07
+WEAVE | Assist map | 1.327 ± 0.000 | 0.160 ± 0.000 | 0.05 ± 0.01
+WEAVE | PI | 0.376 ± 0.004 | 0.332 ± 0.004 | 23.47 ± 0.05
+WEAVE | PID | 0.215 ± 0.003 | 0.407 ± 0.003 | 25.50 ± 0.17
+RAMP | Assist map | 0.835 ± 0.000 | 0.169 ± 0.001 | 0.00 ± 0.00
+RAMP | PI | 0.070 ± 0.001 | 0.088 ± 0.001 | 5.89 ± 0.04
+RAMP | PID | 0.046 ± 0.002 | 0.127 ± 0.001 | 5.84 ± 0.04
+EDGE | Assist map | 1.534 ± 0.000 | 0.130 ± 0.000 | 0.02 ± 0.00
+EDGE | PI | 0.300 ± 0.003 | 0.255 ± 0.004 | 6.97 ± 0.24
+EDGE | PID | 0.163 ± 0.002 | 0.321 ± 0.003 | 6.67 ± 0.09
+The whole-case RMS values in Table 7 describe the overall tracking performance of each scenario. To examine persistent errors at individual operating points, signed relative errors are evaluated separately over steady-state windows. These two measures are not directly interchangeable.
+The RAMP case reveals a limitation of the assist map that is less apparent from the whole-case RMS values. During decreasing-speed cornering, its signed steady relative error reaches +15.2%, +31.4%, and +46.7% at the three evaluated lateral-acceleration levels. During increasing-speed cornering, the corresponding errors are −20.2%, −7.4%, and −5.8%. PI and PID remain within approximately 0.5% in these windows.
+In EDGE, the largest assist-map steady relative errors occur at 40 km/h, reaching +56.7% at 0.35 g and +99.7% at 0.4 g. The corresponding PI errors are −0.4% and −0.5%, while the PID errors are −0.1% and −0.2%. At these high lateral accelerations, the reference torque increases only slightly while the road-reaction torque continues to rise. The resulting natural assistance characteristic requires a steep local slope. Limiting that slope to 6 prevents the assist map from delivering the calibrated torque, leaving the measured steering torque substantially above its reference. The EDGE results are treated as diagnostic tests near the limits of the adopted model. Their quantitative interpretation remains conditional on the validity of the small-angle assumptions at the evaluated operating points.
+The additional RAMP and EDGE cases also indicate that the assist map is more sensitive to speed variation and high lateral acceleration, whereas the PI/PID controllers remain closer to the desired torque reference within the simulated operating range.
+5.5. Discussion
+The assist-map errors arise from two mechanisms. The first is the local slope limit. A road-reaction torque disturbance is attenuated by $1/(1+s_m)$, so a finite slope leaves a residual error. The same constraint prevents the map from reaching its unconstrained calibration characteristic where the required slope is high, as observed in DRY and EDGE.
+The second mechanism is column Coulomb friction during continuous steering motion. In RAMP, the friction torque approaches ±2 N·m, with its sign determined by the direction of column motion. Its contribution to the steering-torque balance changes sign between decreasing- and increasing-speed maneuvers. The assist map only partially compensates for this disturbance, whereas integral feedback reduces the persistent torque error. These mechanisms explain why the map shows different error patterns in friction-transition, steady-cornering, and speed-ramp tests.
+The reverse-assist results limit the interpretation of the tracking improvements. A possible cause is the delayed reversal of the integral contribution relative to the measured steering torque, but the individual events have not been analyzed to confirm this mechanism. The comparison is also affected by the 0.3 N·m dead zone in the assist map, which is absent from PI and PID. Reverse-assist percentage alone does not establish whether the driver would perceive the response as undesirable; that question requires driver-in-the-loop testing.
+The comparison also reflects a difference in available feedback information: PI and PID use lateral acceleration to construct the torque reference, whereas the conventional assist map uses only measured steering torque and vehicle speed. The reported differences therefore characterize the complete controller architectures, not the isolated effect of PI or PID action.
+Several limitations remain. The steering–vehicle model has not been validated against measurements from a physical vehicle, and the predicted road-reaction torque depends on the assumed pneumatic-trail parameters. The driver is represented by a prescribed steering angle, while motor current-loop dynamics and power constraints are omitted. The desired torque is taken from one published reference characteristic. Each controller was calibrated with a single noise realization, whereas the scoring cases are averaged over five realizations. In addition, the three controller searches used different numbers of parameter candidates, and the assist map includes a torque dead zone that is absent from PI and PID. These differences should be considered when interpreting the tracking and reverse-assist comparisons.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. Conclusions
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+This study compared a conventional assist map with PI and PID steering-torque feedback for a column EPS system under changing tire–road friction. The torque reference was constructed from vehicle speed and lateral acceleration, without explicit friction estimation.
+The analysis identified a steady-state limitation of the assist map: changes in road-reaction torque are attenuated according to the local map slope, which is constrained by stability and noise requirements. In the nonlinear simulations, a friction reduction from μ = 0.8 to 0.3 produced a steady relative tracking error of −4.07% for the assist map, compared with −0.08% for PI and −0.06% for PID. The PID controller also reduced the calibration tracking metric from 27.05% to 11.59%.
+These improvements came with increased high-frequency assist-torque content and substantial reverse assistance during continuous steering. The results establish a tracking advantage for the investigated PI/PID configurations, but not an improvement in subjective steering feel. Further work should extend the parameter-sensitivity analysis beyond pneumatic trail, examine reverse-assist events in greater detail, and validate the controller responses experimentally.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Acknowledgments
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+The authors acknowledge Ho Chi Minh City University of Technology (HCMUT), Vietnam National University Ho Chi Minh City (VNU-HCM) for supporting this research.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Conflict of Interest
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+The authors have no conflict of interest to declare.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Author contributions
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Tran Minh Tan: modeling, simulation, data analysis, writing – original draft. Phung Thanh Huy: supervision, review and editing. All authors have approved the final article.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Declaration of Generative AI
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+During the preparation of this work, the author(s) used Claude (Anthropic) in order to assist with simulation code, figure generation, data checking, and language editing. After using this tool, the author(s) reviewed and edited the content as needed and take full responsibility for the content of the published article.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+References
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[1]. D. Lee, K.-S. Kim and S. Kim. (2018). Controller design of an electric power steering system. IEEE Transactions on Control Systems Technology, 26(2), 748–755. https://doi.org/10.1109/TCST.2017.2679062
+[2]. Y. Li, Z. Yang, D. Zhai, J. He and J. Fan. (2023). Study on control strategy of electric power steering for commercial vehicle based on multi-map. World Electric Vehicle Journal, 14(2), 33. https://doi.org/10.3390/wevj14020033
+[3]. Q. Li and C. Xia. (2012). Research of electric power steering system assistance characteristic based on the identification of the road. In Proceedings of the 2nd International Conference on Computer and Information Application (ICCIA 2012), Atlantis Press, pp 402-405. https://doi.org/10.2991/iccia.2012.97
+[4]. H.Q. Nguyen, V.T. Vu and O. Sename. (2025). Combining adaptive neural-fuzzy inference system with field-oriented control strategy for electric power steering system in cars. Advances in Mechanical Engineering, 17(9). https://doi.org/10.1177/16878132251369152
+[5]. D. Saifia, M. Chadli, H.R. Karimi and S. Labiod. (2015). Fuzzy control for electric power steering system with assist motor current input constraints. Journal of the Franklin Institute, 352(2), 562-576. https://doi.org/10.1016/j.jfranklin.2014.05.007
+[6]. X.A. Ren and Z.X. Deng. (2014). Research on ideal steering wheel effort characteristics of driver. China Mechanical Engineering, 25(16), 2261-2265.
+[7]. H.B. Pacejka. (2006). Tyre and vehicle dynamics (2nd ed.). Elsevier.
+[8]. R. Rajamani. (2012). Vehicle dynamics and control (2nd ed.). Springer.
+[9]. Valeo. Torque and/or angle sensors, product catalogue. https://www.valeo.com/en/catalogue/cda/torque-and-or-angle-sensors/
+[10]. Bosch Motorsport. (2026). Steering wheel angle sensor LWS, data sheet. https://www.bosch-motorsport.com
+[11]. Bosch Motorsport. (2020). Acceleration sensor MM5.10, data sheet. https://www.bosch-motorsport.com
+[12]. H. Ragab, S. Givigi and A. Noureldin. (2024). Automotive speed estimation: Sensor types and error characteristics from OBD-II to ADAS. arXiv:2501.00242.

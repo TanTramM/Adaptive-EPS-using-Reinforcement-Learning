@@ -88,7 +88,8 @@ class Fig:
                                                  shrinkA=0, shrinkB=0, zorder=1))
             elif k == 'dot':
                 ax.plot([it[1]], [it[2]], 'o', color='#222222', ms=6, zorder=5)
-        fig.savefig(path, dpi=100 * scale, facecolor='white')
+        kw = {'pil_kwargs': {'compression': 'tiff_lzw'}} if path.lower().endswith(('.tif', '.tiff')) else {}
+        fig.savefig(path, dpi=100 * scale, facecolor='white', **kw)
         plt.close(fig)
 
     # ---- draw.io file

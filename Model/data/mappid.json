@@ -1,0 +1,48 @@
+{
+  "x_note": "MapPID controller data (Documents/Notes/Controllers/DieuKhien_MapPID.txt). Ts_ctrl: controller period [s]. The Map branch (calibration points of the dry-road assist) is read from data/map.json, never copied here. design: written by Controllers/MapPID/script/select_mappid.m, fields Kmax (slope limit of the table), lead {z, p} and lag {z1, p1} [rad/s] (Map branch only), Kp, Ki [1/s], Kd [s], Tf [s] (PID branch), Kaw = Ki/(Kp+Kmax). Absent until the optimisation has chosen a point: load_mappid.m then loads the Map design of map.json with all PID gains 0, so MapPID equals Map (the check of build_mappid / test_mappid).",
+  "Ts_ctrl": 0.001,
+  "design": {
+    "Kmax": 3.58690958408001,
+    "Ts0": 0.3,
+    "lead": {
+      "z": 5.0112079655603,
+      "p": 6.0134495586723595
+    },
+    "lag": {
+      "z1": 35.1013071470242,
+      "p1": 14.477413271958762
+    },
+    "Kp": 0.593917488598889,
+    "Ki": 44.161741129045,
+    "Kd": 0.0452687641362878,
+    "Tf": 0.0024754079423587,
+    "Kaw": 10.562919814989622,
+    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), QuyChuan 6.1 exception",
+    "CALIB_R_pct": 9.790349894,
+    "CALIB_S_Nm": 0.3137387765,
+    "CALIB_TV_Nm_per_s": 73.32918703,
+    "CALIB_erel_pct": 2.139078024,
+    "CALIB_rev_pct": 11.5164216,
+    "CALIB_J": 3.0716123972504645,
+    "seed_30001_R_pct": 9.76298342,
+    "seed_30001_S_Nm": 0.3147926403,
+    "seed_30001_erel_pct": 1.981197222,
+    "PM_deg": 38.01874845549375,
+    "GM": 6.7208055633686632,
+    "HF_gain": 20.656603226099158,
+    "lag_gain_2Hz": 0.80212750072604488,
+    "margin_ratio_gain": 0.29725943614402689,
+    "margin_ratio_delay": 1.0059338486299525,
+    "bangbang": {
+      "f_ideal": 0.038573577621064163,
+      "f_noisy": 0.040069216789419222,
+      "delta": 0.0014217267675933273,
+      "spread": 0.00014782480152346344
+    },
+    "n_evaluations": 930,
+    "n_simulations": 855,
+    "design_seed": 30000,
+    "map_source_date": "2026-10-11 20:55:26",
+    "date": "2026-10-13 16:19:10"
+  }
+}

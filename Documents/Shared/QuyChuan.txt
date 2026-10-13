@@ -42,6 +42,9 @@ T_a, không mô hình motor và không giữ bản sao riêng của bảng T_a,m
 - Map: bảng trợ lực tra theo T_s và v, vùng chết, giới hạn độ dốc K_max, rồi khâu bù lead-lag gồm khâu lead (sớm pha) nối tiếp khâu lag (hạ độ lợi tần số cao); độ lợi DC của cả hai bằng 1
   nên không đổi sai số xác lập (nguồn [1] mục III.A phương trình (16) và III.D; thêm khâu lag ngày 2026-10-11).
 - PI, PID: khâu tỷ lệ, tích phân, vi phân có bộ lọc bậc 1 hằng số Tf (vi phân lấy trên T_s đo), chống bão hòa tích phân tính ngược, tối đa lập lịch theo v.
+- MapPID (bộ thứ năm, người dùng chốt 2026-10-13): HỢP của lõi Map và lõi PID, hai nhánh song song cùng đọc tín hiệu đo, lệnh T_a = u_map + u_PID; khâu lead-lag chỉ nằm trên nhánh Map (áp lên PID
+  là phần ngoài lõi); chống bão hòa tính ngược trên TỔNG lệnh với Kaw = Ki / (Kp + K) (trùng luật Ki / Kp của PID khi K = 0, xác định cả khi Kp = 0); mỗi nhánh giữ đúng giới hạn lõi của bộ gốc,
+  không thêm phần nào khác.
 - SMC: mặt trượt, luật chuyển, khâu tích phân, đạo hàm T_s đo qua lọc bậc 1 (giống PID, người dùng chốt 2026-10-09, lý do ở DieuKhien_SMC.txt mục A3).
 - RL: lịch sử quan sát (số bước n_hist), chuẩn hóa quan sát, co giãn và làm mượt hành động. Hàm thưởng chỉ dùng khi huấn luyện; khi chấm điểm agent chạy tất định (không nhiễu khám phá).
 2.5. Cấm cho mọi bộ: lọc đo T_s đặt trước bộ điều khiển, bộ lọc chặn (notch), feedforward theo góc hoặc tốc độ vô-lăng, đọc mu hoặc mô hình plant để bù. (Người dùng chốt 2026-10-08: quá phức
@@ -76,7 +79,7 @@ e_rel có dấu từng cửa sổ, RMS e_T, S, TV như EDGE. Lý do thêm: CALIB
 6 lệch +13 % ở DRY v40a0p3r); sửa riêng CALIB cho vùng đó bị coi là chỉnh cho riêng Map, và nếu sửa thì phải quét đều mỗi bước 10 km/h, nên người dùng chốt giữ CALIB, ghi đây là hạn chế đã
 biết, và để RAMP lộ hiện tượng này như một ca chấm báo cáo áp cho mọi bộ như nhau. Mọi bộ đều chọn tham số trên CALIB theo cùng quy tắc nên RAMP không thiên vị bộ nào. Tên gọi tắt cả bộ ca:
 DREWS = DRY, RAMP, SLIP, EDGE, WEAVE.
-3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, RL dải huấn luyện riêng chưa gán); chạy DRY, SLIP, WEAVE (và EDGE) riêng
+3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, MapPID 30000, RL dải huấn luyện riêng chưa gán); chạy DRY, SLIP, WEAVE (và EDGE) riêng
 lẻ bằng cảm biến lý tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các file *_s99999.* do lệnh so sánh sinh ra trong thư mục Cases của từng
 bộ. RL: tập kịch bản huấn luyện phải tách rời khỏi CALIB và DRY, SLIP, WEAVE (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của mục 6.2 chạy thêm
 MỘT seed thứ hai cùng dải của bộ đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
@@ -139,6 +142,11 @@ PHẦN 6 - QUY TẮC CHỌN THAM SỐ
 6.1. Quét một lưới tham số (hoặc, với RL, một tập ứng viên). Lưới phải ghi cơ sở của từng cận min max và độ phân giải, cận lưới ưu tiên lấy từ biên khả thi tuyến tính hoặc vật lý chứ không
 đặt tay; điểm chọn nằm ở biên lưới thì phải mở rộng lưới một bước (quy tắc hai giai đoạn đặt trước: thô rồi mịn quanh điểm tốt nhất) và kiểm độ phân giải bằng cách giảm nửa bước quanh điểm
 chọn: R và S đổi dưới 5 % thì lưới đủ mịn.
+Ngoại lệ có ghi (người dùng chốt 2026-10-13): MapPID có chín tham số nên được chọn bằng TỐI ƯU ĐỒNG THỜI thay cho lưới (systune lấy điểm xuất phát, surrogateopt tìm toàn cục, patternsearch
+  tinh chỉnh; mục tiêu J = R x S; ràng buộc khai báo riêng: ổn định tuyến tính trên 68 mô hình: khi tìm chỉ cần PM > 0 và GM từ 1, điểm cuối PM từ 30 độ và GM từ 2 (người dùng chốt 2026-10-13
+  sau lần chọn đầu dùng 15 độ, 1.5; 30 độ là đầu dưới khoảng Seborg 14.7; cổng thật vẫn là mô phỏng), dải lái, e_rel; ngân sách khoảng 800 lần CALIB, ngang PID 824 lần). Kiểm chứng thay cho
+  kiểm nửa bước của lưới: ít nhất ba điểm xuất phát hội tụ cùng vùng (J chênh dưới 3 %), không điểm khả thi lân cận nào có J nhỏ hơn, J đổi dưới 5 % ở seed thứ hai; báo vùng tối ưu (mọi điểm
+  có J trong 5 %), không chỉ một điểm. Map, PI, PID giữ điểm đã chọn bằng lưới; cả bốn bộ được chấm trên cùng CALIB, DRY, RAMP, SLIP, EDGE, WEAVE, cùng seed.
 6.2. Chọn điểm chạy DRY, SLIP, WEAVE (phiên bản 5, sửa ngày 2026-10-11): trong các điểm qua cổng cứng (ổn định có độ dư 5.2, độ chính xác tĩnh 5.3) VÀ qua ràng buộc dải lái dưới đây, chọn
 điểm có J = R x S nhỏ nhất (hàm pick_by_balance.m, a = 1; báo độ nhạy a = 0.5 và 2, và điểm mà quy tắc cũ 'R trong 5 % của R nhỏ nhất, rồi S nhỏ nhất' sẽ chọn, hàm pick_by_tolerance.m). J
 đổi 1 % êm lấy 1 % bám, không đơn vị, không phụ thuộc một điểm cực trị nên không nhảy khi lưới đổi. KHÔNG dùng ngưỡng S_max chung và KHÔNG dùng quy tắc khuỷu để chọn (khuỷu chỉ để vẽ mặt
@@ -250,6 +258,9 @@ quả.
 ==============================================================================================================================================================================================
 NHẬT KÝ THAY ĐỔI QUY CHUẨN
 ==============================================================================================================================================================================================
+- 2026-10-13 (MapPID, người dùng chốt): thêm bộ MapPID (Map cộng PID) vào quy chuẩn: lõi ở 2.4, dải seed 30000-39999 ở 3.3, phương pháp chọn bằng tối ưu đồng thời ở 6.1 (ngoại lệ có ghi). Cổng
+  "đáng giá" chỉ BÁO CÁO, không là cổng (người dùng chốt). MapPID chỉ vào bài báo, không vào luận văn. Ảnh hưởng: không bộ nào khác phải chạy lại (Map, PI, PID giữ điểm); MapPID có lợi thế phương
+  pháp (tối ưu đồng thời), người dùng quyết định không nêu riêng; kế hoạch ở DieuKhien_MapPID.txt.
 - 2026-10-11 (cùng ngày, lần bốn): thêm ca RAMP (mục 3.2) vào make_cases() (năm ca: DRY, RAMP, SLIP, WEAVE, EDGE), CHỈ BÁO CÁO; CALIB giữ nguyên. Người dùng bác phương án thêm cửa sổ static ở
   40 km/h vào CALIB vì giống chỉnh riêng cho Map (nếu sửa thì phải quét mỗi bước 10 km/h). Ảnh hưởng: MỌI bộ chạy thêm RAMP khi chạy run_cases (308.6 s mô phỏng); không cổng, không điểm chọn
   nào đổi; run_cases.m và make_pair_comparisons.m lấy ca từ make_cases() nên tự thêm RAMP.

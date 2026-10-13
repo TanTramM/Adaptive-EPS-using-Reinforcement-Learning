@@ -68,124 +68,117 @@ B5. Các giả thuyết đặt trước (ghi trước khi chạy; kết quả â
     chỉ trim.
   H6 (tổng thể): RMS e_T toàn ca của MapPID không lớn hơn PID quá 5 % ở cả năm ca DREWS. Đây là điều kiện tối thiểu để còn nói MapPID giữ được ưu điểm bám của PID.
 ==============================================================================================================================================================================================
-PHẦN C - KẾ HOẠCH ĐẶT TRƯỚC (QuyChuan 1.1; làm tới đâu thêm tới đó, mỗi bước chờ người dùng bảo)
+PHẦN C - KẾ HOẠCH ĐẶT TRƯỚC: TỐI ƯU ĐỒNG THỜI (người dùng chốt 2026-10-13: làm tối ưu nhất có thể; Map và PID giữ điểm đã chọn)
 ==============================================================================================================================================================================================
-C1. Nơi đặt và tên (theo mục "Làm một bộ điều khiển" của Tracking/CLAUDE.md; token bộ điều khiển là MapPID, không chứa dấu gạch dưới). Mã: Model/Controllers/MapPID/ gồm load_mappid.m (script nạp
-biến, tiền tố MapPID_, gọi load_map và đọc pid.json không sao chép), MapPID.mdl (subsystem gốc MapPID, cổng vào theo tên T_s, v, a_y, T_a_lim; cổng ra T_a), Model_MapPID.mdl (vòng kín do
-build_closed_loop sinh) và script/ (build_mappid, test_mappid, scan_mappid_stability, run_mappid_sweep, select_mappid). Dữ liệu: Model/data/mappid.json CHỈ chứa phần của MapPID (Ts_ctrl, design:
-Kp, Ki, Kd, Tf, Kaw, các chỉ tiêu CALIB, seed, ngày); bảng và khâu bù của nhánh Map đọc thẳng từ map.json, nhánh PID không có bản sao tham số (nguồn duy nhất). Hệ quả: nếu Map hoặc PID chọn lại
-thì kết quả MapPID thành cũ, phải chạy lại; mappid.json ghi ngày của map.json mà lần chọn dựa vào. Kết quả: Result/Controllers/MapPID/{Design, Calib, Cases}, so sánh
-Result/Compare/Map_vs_PID_vs_MapPID (luôn s99999); tên file theo quy tắc chung (ví dụ MapPID_CALIB_sweep_s30000.csv, MapPID_RAMP_resp_s30000.png).
-C2. Tham số và lưới. Giai đoạn A (đề xuất làm trước): đóng băng nhánh Map bằng điểm đã chọn (K 6, g_min 0.7, lead 33.5/600.1, lag 28.1/10.7), nên MapPID KHÔNG có tham số Map nào mới; chỉnh bằng mô
-phỏng chỉ có Kp, Ki, Kd, Tf, đúng bốn tham số như PID (Kaw = Ki / Kp cố định). Cận lưới theo QuyChuan 6.1 lấy từ vùng khả thi tuyến tính của vòng gộp L(jw) = [k H(jw) + C(jw)] G(jw) trên cùng 68
-mô hình tuyến tính (17 tốc độ x 4 điểm làm việc) mà Map dùng, với độ dốc k = K x {0.25, 0.5, 0.75, 1}: ổn định (Nyquist), PM từ 45 độ và GM từ 2 là công cụ thiết kế (như PID,
-scan_pid_stability.m), không phải cổng. Lưới thô khoảng 5 đến 8 giá trị mỗi tham số cách đều thang log (Kd có thêm giá trị 0; Tf trong 2.5-10 ms, mọi giá trị đã thỏa ràng buộc dải lái Tf nhỏ hơn
-hoặc bằng 79.6 ms), cùng độ phân giải với lưới của PID (giá trị cụ thể và ngân sách ở M3, M4), báo kèm số mô phỏng của PID (824) và Map (292). Giai đoạn mịn: quanh điểm tốt nhất, cộng và trừ một
-bước thô, 9 giá trị mỗi tham số; kiểm độ mịn bằng nửa bước (R và S đổi dưới 5 %). Điểm chọn nằm ở biên lưới thì mở rộng một bước.
-  Giai đoạn B (CHỈ làm nếu giai đoạn A cho thấy nhánh Map đóng băng làm hỏng dự trữ ổn định hoặc độ ồn, ví dụ mọi điểm khả thi đều có độ lợi cao tần cộng dồn quá lớn) [CẦN CHỐT]: bỏ đóng băng,
-    thêm tham số K của nhánh Map với K trong {3, 4.5, 6}; mỗi K dùng lại design_leadlag.m để tính lead-lag của nhánh Map riêng (cùng ràng buộc g_min, dải lái), rồi quét PID như giai đoạn A. Lý do
-    cho phép giảm K: sai số xác lập đã do tích phân lo, nên cổng K_acc (K nhỏ nhất cho e_rel 5 %) của Map riêng không còn bắt buộc. Báo riêng số K đã mô phỏng (QuyChuan 6.7).
-C3. Cổng và quy tắc chọn: đúng QuyChuan v5, không đổi. Cổng cứng theo thứ tự: (1) ổn định có độ dư đo bằng mô phỏng (calib_margin: độ lợi motor nhân 2 và trễ thêm 1 ms, R không tăng quá 2 lần);
-(2) e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa sổ static (không gồm hai cửa sổ ext 0.4 g). Ràng buộc dải lái (độ lợi tại 2 Hz từ 0.707): khâu lag trong nhánh Map (đã thỏa ở điểm đóng băng) và bộ lọc
-Tf của khâu D. Chọn điểm có J = R x S nhỏ nhất (Model/common/pick_by_balance.m, a = 1); báo độ nhạy a = 0.5 và 2, quy tắc cũ R trong 5 % (pick_by_tolerance.m), e_rel 3 % và 10 %. Bang-bang và trợ
-lực ngược CHỈ BÁO CÁO (calib_bangbang.m, cột Rev_pct), đo cho điểm đã chọn. Không có cổng riêng nào cho MapPID.
-C4. Cổng "đáng giá" [CẦN CHỐT, theo tinh thần QuyChuan 6.5 cho bộ nhiều bậc]: bộ ghép chỉ được đưa vào so sánh chính nếu bù lại được độ phức tạp thêm. Cụ thể, trên CALIB (seed local, điểm đã chọn
-của mỗi bộ): J_MapPID nhỏ hơn hoặc bằng 0.95 x min(J_Map, J_PID) = 0.95 x min(6.74; 3.61) = 3.43, và kết luận Pareto (QuyChuan 6.3) là mặt của MapPID không nằm trên mặt của PID; ngoài ra H6 (RMS
-e_T không xấu hơn PID quá 5 %) phải đúng ở năm ca DREWS. Con số 5 % là ngưỡng hòa sẵn có (QuyChuan 6.4), không thêm số mới. Nếu không đạt, ghi là kết quả âm, không chỉnh thêm để vượt cổng. Chú ý:
-J của PID dùng số đã có (R 11.59 %, S 0.3115) do seed khác, nên khi so phải báo độ phân tán giữa các seed (ngưỡng hòa lấy lớn hơn của 5 % và độ phân tán).
-C5. Seed và ca. Chọn tham số trên CALIB, một seed local; QuyChuan 3.3 chia dải seed: Map 00000-09999, PI/PID 10000-19999, SMC 20000-29999, RL chưa gán; đề xuất MapPID dùng dải 30000-39999, seed
-local 30000 [CẦN CHỐT; nếu chốt thì thêm vào QuyChuan 3.3 và Tracking/CLAUDE.md]. Chấm điểm trên năm ca DREWS ở seed local 30000 (một bộ riêng lẻ), và ở seed chung 99999 khi so nhiều bộ. DRY,
-SLIP, WEAVE, EDGE, RAMP không dùng để chỉnh (QuyChuan 1.3).
-C6. Cách đánh giá để trả lời "có đáng ghép không". (a) Hai điểm tham chiếu có sẵn, không chạy lại: Map (map.json) và PID (pid.json) ở cùng seed chung; (b) lát cắt Kd = 0 của chính lưới MapPI cho
-biết Kd còn cần không (một phép đo, không thêm lưới); (c) so sánh mặt Pareto (R, S) của ba bộ trên cùng trục (mặt Map có 61 điểm, 56 qua e_rel 5 %; mặt PID 824 điểm, 435 qua), theo QuyChuan 6.3;
-(d) bảng sáu giả thuyết H1-H6 với số đo thật, kể cả khi sai; (e) bảng khác biệt cấu trúc (QuyChuan 7.2): Map đọc T_s và v, PID đọc thêm a_y, MapPID đọc cả hai; Map có bảng hiệu chỉnh offline từ mô
-hình plant, PI/PID không có, MapPID có. Không thêm phần ngoài lõi (QuyChuan 2.4, 2.5): không lọc đo T_s, không notch, không feedforward theo góc hay tốc độ vô-lăng; lõi của MapPID là hợp của lõi
-Map và lõi PID, không hơn.
-C7. Các bước làm chi tiết. Quy ước chung cho mọi bước: chỉ bắt đầu một bước khi người dùng bảo; xong bước nào ghi một mục F<số> ở Phần F (số đo, file, lỗi gặp); MATLAB gọi nền bằng đường dẫn tuyệt
-đối với -softwareopengl (Tracking/CLAUDE.md mục 6); không đặt biến tạm trùng biến base workspace của Plant (m, C, c, S, t); sao lưu ra Desktop trước khi ghi đè hay xóa; KHÔNG sửa PRSM, Map.mdl,
-PID.mdl, map.json, pid.json (thuộc khung khác). Thứ tự và hai điểm dừng: M1 -> M2 -> M3 -> [điểm dừng 1] -> M4 -> M5 -> [điểm dừng 2] -> M6 -> M7 -> M8.
-M0. Văn bản này [XONG 2026-10-12]. Chờ người dùng chốt Phần D (ít nhất D1, D2, D4, D7) trước khi sang M1.
-M1. Dữ liệu, khối MapPID và kiểm thử khối (chưa chạy vòng kín).
-  - Model/data/mappid.json: x_note, Ts_ctrl = 0.001, CHƯA có trường design (khi đó load_mappid đặt mọi hệ số PID bằng 0 nên MapPID trùng Map, dùng làm phép kiểm), trường map_source ghi ngày và
-    tham số design của map.json lúc dựng (K 6, lead 33.50/600.11, lag 28.13/10.69).
-  - Model/Controllers/MapPID/load_mappid.m (script): chạy load_map.m (nạp PRSM và các biến Map_*), đọc mappid.json, đặt MapPID_Kp, MapPID_Ki, MapPID_Kd, MapPID_Tf, MapPID_Kaw = Ki/Kp; so design
-    hiện tại của map.json với map_source, khác thì dừng với lỗi rõ ràng (kết quả MapPID đã cũ, phải chạy lại).
-  - script/build_mappid.m, dạng name = build_mappid(overwrite): subsystem gốc MapPID, cổng vào T_s, v, a_y, T_a_lim, cổng ra T_a. Bên trong chép NGUYÊN hai khối gốc bằng add_block: Map (từ
-    Map.mdl, giữ biến Map_*) và PID (từ PID.mdl, đổi Value của các Constant PID_* thành MapPID_* để không đụng biến của bộ PID đang dùng). Khối Sum_Ta cộng u_map và u_PID. Chống bão hòa trên TỔNG
-    lệnh mà không sửa ruột khối PID: cổng T_a_lim của nhánh PID nhận T_a_lim - u_map (khối Sum_lim); vì PID.mdl tính Kaw (T_a_lim - T_a) với T_a là đầu ra của chính nó, nên số hạng thành (T_a_lim
-    - u_map) - u_PID = T_a_lim - T_a,cmd, đúng phương trình (3). Tag Goto/From u_map, u_PID (local), các quy tắc dựng model khác như Tracking/CLAUDE.md.
-  - script/test_mappid.m, tự chứa, đáp án tính độc lập: đọc thẳng map.json (điểm hiệu chỉnh, design), ref.json (T_d,ref) và tham số PID thử đặt trong file; bảng M dựng như hàm referenceAssist của
-    test_map, lead-lag đệ quy Tustin, PID rời rạc như test_pid, chống bão hòa trên tổng. Harness 6 s với T_s, v, a_y dạng bậc và sin, T_a_lim chặn trong một đoạn để kích chống bão hòa; cổng tìm
-    theo tên. Ba trường hợp: (a) hệ số PID bằng 0: ra đúng Map; (b) bảng Map bằng 0 (setVariable Map_table): ra đúng PID; (c) đủ hai nhánh với điểm thử Kp 0.5, Ki 20, Kd 0.01, Tf 5 ms, có đoạn bị
-    chặn. Sai số cho phép 1e-9 N.m; in [MapPID] TEST PASS.
-  - Xong khi: test_mappid PASS; test_map và test_pid vẫn PASS. Đầu ra: bốn file mã và mappid.json, chưa có kết quả.
-M2. Vòng kín, kiểm đường đo đầu-cuối, đo thời gian chạy.
-  - build_closed_loop('MapPID') sinh Model_MapPID.mdl (không sửa build_closed_loop: nó nối cổng theo tên).
-  - Thêm màu 'MapPID' vào plot_compare_cases.m và make_pair_comparisons.m (hai file dùng chung, hiện PID màu cam #eb6834): ghi vào nhật ký và báo các khung kia.
-  - Kiểm đầu-cuối: calib_run('Model_MapPID', 30000, vars) với mọi hệ số PID bằng 0 phải cho R, S, e_rel trùng calib_run('Model_Map', 30000) tới sai số làm tròn (cùng seed nên cùng nhiễu); khác là
-    lỗi ghép khối hay cổng. Thêm một điểm tùy ý (không dùng để chọn) để thấy tích phân làm e_rel về gần 0.
-  - Đo thời gian một lần CALIB 117 s; lấy số đó lập ngân sách M4.
-M3. Vùng khả thi tuyến tính của vòng gộp (không mô phỏng vòng kín), cho cận lưới theo QuyChuan 6.1.
-  - script/scan_mappid_stability.m: dùng lại 68 mô hình tuyến tính của Map (map_plant_lin trên map_op_points, 17 tốc độ x 4 điểm làm việc) và một hàm theo khuôn map_margins_batch.m thêm số hạng
-    PID: L(jw) = -[k H(jw) + C(e^{jw Ts})] Gm(jw) exp(-jw Td) G(jw), với C là PID rời rạc 1 ms (cùng dạng scan_pid_stability.m). Độ dốc nhánh Map k = K x {0, 0.25, 0.5, 0.75, 1}; k = 0 là lúc T_s
-    nằm trong vùng chết hoặc ở đoạn bảng phẳng, chỉ còn PID.
-  - Hai mức: danh định (Td = 1 ms; báo PM, GM, tần số cắt) và ứng suất của QuyChuan 5.2 (độ lợi x2 và trễ thêm 1 ms) để lấy biên khả thi dùng làm cận lưới.
-  - Lưới tuyến tính rộng (rẻ, không mô phỏng): Kp {0.25 0.5 0.75 1 1.5 2 2.5 3}, Ki {4 8 16 32 64 100 150 200} 1/s, Kd {0 0.005 0.01 0.025 0.05} s, Tf {2.5 5 10} ms.
-  - Kiểm hai đầu để bắt lỗi dấu và lỗi ghép: C = 0 phải lại ra PM 45.3 độ, GM 5.7 của Map đã chọn; k = 0 phải cho kết luận ổn định khớp scan_pid_stability ở các điểm chung (mô hình tuyến tính khác
-    nhau nên chỉ so kết luận; lệch thì ghi lại).
-  - Đầu ra: Result/Controllers/MapPID/Design/MapPID_stability.csv và .png (Ki lớn nhất theo Kp cho từng Kd, Tf), cột độ lợi cao tần K (p/z)(p1/z1) + Kp + Kd/Tf cho mọi điểm.
-  - ĐIỂM DỪNG 1: nếu nhánh Map đóng băng gần như không chừa chỗ cho PID (ví dụ chỉ khả thi khi Kp và Ki rất nhỏ, tích phân chậm hơn 1 s theo (4)), báo người dùng và hỏi có làm giai đoạn B (C2)
-    không, không tự làm.
-M4. Quét CALIB với seed 30000, csv chạy tiếp được.
-  - script/run_mappid_sweep.m (stage), theo khuôn run_pid_sweep.m: ghi Result/Controllers/MapPID/Calib/MapPID_CALIB_sweep_s30000.csv cùng cột với PID (Kp, Ki_1_per_s, Kd_s, Tf_s, R_pct, các R
-    nhóm, S_Nm, S_cmd_Nm, TV_Nm_per_s, max_Ta_Nm, erel_pct, rev_pct); điểm đã có thì bỏ qua để chạy tiếp được khi MATLAB sập.
-  - Stage 'coarse': trong biên ứng suất của M3, cùng độ phân giải với lưới 'wide' của PID: Kp 5 giá trị, Ki 6 giá trị, Kd {0, 0.01, 0.025}, Tf {2.5, 5} ms (Kd = 0 chỉ một Tf), tức khoảng 5 x 6 x 5
-    = 150 điểm. Giá trị cụ thể của Kp, Ki chốt sau M3 và ghi vào F3 TRƯỚC khi chạy.
-  - Stage 'edge': điểm J nhỏ nhất nằm ở biên lưới thì mở thêm một bước theo chiều đó (QuyChuan 6.1).
-  - Stage 'fine': 3^4 = 81 điểm quanh điểm tốt nhất với bước tương đối như 'fine' của PID (Kp x0.85 và x1.15, Ki x0.75 và x1.25, Kd x0.75 và x1.25, Tf x0.7 và x1.4; nếu Kd = 0 thì Kd {0, 0.005,
-    0.01}); kiểm nửa bước: R và S đổi dưới 5 % thì đủ mịn.
-  - Ngân sách: khoảng 150 + 81 + vài chục điểm mở biên, tức 250-350 lần CALIB; thời gian = số lần x thời gian đo ở M2. PID có 824 điểm nhưng phần lớn do lưới đầu bị chặn oan bởi biên của PI
-    (Linear Lượt 129); MapPID dùng cùng độ phân giải nên chỉ báo số điểm theo QuyChuan 6.7, không thêm điểm chỉ để bằng số.
-M5. Chọn điểm: script/select_mappid.m theo khuôn select_pid.m.
-  - Lọc e_rel <= 5 % trên 9 cửa sổ static và ràng buộc dải lái (Tf <= 79.6 ms; khâu lag của nhánh Map đóng băng đã qua).
-  - Xếp tăng theo J = R x S (pick_by_balance, a = 1); chạy calib_margin (độ lợi x2, trễ +1 ms, R không tăng quá 2 lần) lần lượt trên các ứng viên đầu tới khi một điểm qua: đó là điểm chọn. Không
-    điểm nào qua thì theo QuyChuan 5.6 và ghi "không đạt".
-  - Báo cáo cho điểm chọn: seed thứ hai 30001 (R, S, e_rel), calib_bangbang (f lý tưởng, f có nhiễu, Delta, độ phân tán), rev; selection_sensitivity (a = 0.5 và 2; e_rel 3 % và 10 %; quy tắc cũ R
-    trong 5 %); file MapPID_CALIB_pick_s30000.csv, MapPID_CALIB_senspick_s30000.csv, hình MapPID_CALIB_pareto_s30000.png.
-  - Ghi design vào mappid.json (kèm map_source và ngày).
-  - ĐIỂM DỪNG 2, cổng "đáng giá" C4: J nhỏ hơn hoặc bằng 3.43 và mặt Pareto không nằm trên mặt của PID. Không đạt thì dừng, báo kết quả âm, chờ người dùng; không chỉnh thêm để vượt cổng.
-M6. DREWS seed local 30000.
-  - run_cases('MapPID', 30000): năm ca, MapPID_metrics_s30000.csv, năm hình resp và năm bảng sig trong Result/Controllers/MapPID/Cases/.
-  - Điền sơ bộ bảng H1-H6 (mốc của A2 là seed 99999 nên kết luận chính để M7).
-  - Xem riêng ba điểm lạ đã biết của nền: T_a vượt T_a,max (PI, PID tới 108 %, do giới hạn theo v đo), trợ lực ngược ở WEAVE, cửa sổ pud_in.
-M7. So sánh seed 99999.
-  - run_cases('MapPID', 99999), make_pair_comparisons với Map, PI, PID; thư mục Result/Compare/Map_vs_PID_vs_MapPID.
-  - Pareto chung bốn bộ trên cùng trục (S thang log, chỉ điểm qua e_rel 5 %); kết luận theo QuyChuan 6.3.
-  - Bảng H1-H6 chính thức, ngưỡng hòa 5 % (hoặc độ phân tán seed nếu lớn hơn); lát Kd = 0 (MapPI) so với điểm chọn, lấy từ csv đã có.
-M8. Tài liệu.
-  - Phần F của tập này; QuyChuan 2.4 và 3.3 cùng nhật ký thay đổi (chỉ sau khi D1, D4 đã chốt); Tracking/CLAUDE.md (token MapPID, dải seed); chương Documents/Thesis/mappid.txt (số sinh từ csv bằng
-    tools/build_mappid_txt.py, không gõ tay); mục bài báo nếu D5 chốt.
+C1. Nơi đặt và tên (theo mục "Làm một bộ điều khiển" của Tracking/CLAUDE.md; token bộ điều khiển là MapPID). Mã: Model/Controllers/MapPID/ gồm load_mappid.m, MapPID.mdl, Model_MapPID.mdl và
+script/ (build_mappid, test_mappid, mappid_margins, mappid_eval, tune_mappid_linear, optimize_mappid, refine_mappid, verify_mappid, select_mappid). Dữ liệu: Model/data/mappid.json chỉ chứa phần
+của MapPID (Ts_ctrl, design: K, z, p, z1, p1, Kp, Ki, Kd, Tf, Kaw, chỉ tiêu CALIB, seed, ngày, cấu hình tối ưu); điểm hiệu chỉnh đường khô của bảng đọc từ map.json (calibrate_map_cached), không
+sao chép; bảng M cho mỗi K dựng lại bằng map_table như Map. Kết quả: Result/Controllers/MapPID/{Design, Calib, Cases}, so sánh Result/Compare/Map_vs_PID_vs_MapPID (luôn s99999).
+C2. Cấu trúc và chín tham số, cùng lúc. T_a,cmd = H(s) sgn(T_s) M_K(v, |T_s|) + u_PID, H = lead x lag CHỈ trên nhánh Map (lead-lag là lõi của Map, áp lên PID là phần ngoài lõi). Tham số và cận
+(biến tối ưu lấy theo thang log trừ những biến có giá trị 0):
+  K       0 - 16       độ dốc chặn của bảng (người dùng chốt 2026-10-13: cận dưới 0; K = 0 tắt nhánh Map, bộ thành PID; 16 là K lớn nhất có lead-lag khả thi khi Map đứng một mình, g_min 0.6)
+  z, p    z 5-500 rad/s, p/z 1.2-300, p <= 3142 rad/s (Nyquist của 1 ms)       khâu lead, cùng cận với design_leadlag.m
+  z1, p1  z1 8-120 rad/s, p1/z1 0.1-0.9, p1 >= 3 rad/s                             khâu lag, cùng cận
+  Kp      0 - 3        (0 = nhánh Map làm trọn khâu tỷ lệ)
+  Ki      0 - 200 1/s  (0 = không tích phân; khi đó MapPID chỉ là Map có thêm PD)
+  Kd      0 - 0.05 s   (0 = không khâu D, vì lead của Map đã sớm pha)
+  Tf      1 - 20 ms    (mọi giá trị thỏa ràng buộc dải lái Tf <= 79.6 ms)
+Chống bão hòa tính ngược Kaw = Ki / (Kp + K): tổng quát hóa của luật Ki / Kp của PID theo độ lợi tỷ lệ thật của cả bộ, giữ hằng số bám Tt = Ti, trùng PID khi K = 0, và xác định cả khi Kp = 0 [CẦN
+CHỐT, D2]. Hai đầu của không gian chứa hai bộ đã có (Kp = Ki = Kd = 0 là Map; K = 0 là PID) nhưng chúng KHÔNG được dùng làm điểm xuất phát (người dùng chốt 2026-10-13: MapPID thiết kế lại từ đầu,
+không phụ thuộc Map đơn và PID đơn); chỉ dùng để kiểm mã (check_mappid_loop) và để báo cáo so sánh. Vùng chết Ts0 = 0.3 N.m giữ cố định như Map (lõi Map, lựa chọn của tác giả), không phải biến tối
+ưu.
+C3. Mục tiêu và ràng buộc (khai báo riêng từng ràng buộc, không gộp thành hàm phạt vì J không trơn). Mục tiêu: cực tiểu J = R x S trên CALIB, seed 30000. Ràng buộc tuyến tính (tính trước mỗi lần
+chạy, dưới 1 s; không đạt thì trả về ngay, không mô phỏng): trên 68 mô hình tuyến tính (17 tốc độ x 4 điểm làm việc) và độ dốc k = K x {0, 0.25, 0.5, 0.75, 1}, vòng L(jw) = -[k H(jw) + C_PID(jw)]
+Gm(jw) exp(-jw 1 ms) G(jw) phải ổn định, PM > 0 và GM từ 1 TRONG LÚC TÌM KIẾM (PM* = 0, GM* = 1 do O2b, phương án C người dùng chốt 2026-10-13); ĐIỂM CUỐI phải có PM từ 15 độ và GM từ 1.5 trên cả
+68 mô hình x 5 độ dốc (kiểm ở O6; hai số 15 và 1.5 là phán đoán, O2b không cho dữ liệu vì mọi thiết kế đều qua cổng mô phỏng, báo độ nhạy ở 10 độ và 30 độ). Ghi chú cũ về mức PM: PID đã chọn chỉ
+có PM 38 độ và GM 11.6 trên cùng 68 mô hình, nên 45 độ sẽ ép MapPID bảo thủ hơn PID; 30 độ giữ MapPID không mong manh hơn PID; cổng thật vẫn là mô phỏng). Ràng buộc dải lái: độ lợi khâu lag tại 2
+Hz từ 0.707. Ràng buộc mô phỏng: e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa sổ static. Cổng dự trữ bằng mô phỏng (calib_margin, R không tăng quá 2 lần khi độ lợi motor x2 và khi trễ thêm 1 ms) chỉ
+chạy cho các điểm cuối (C7, O6) vì tốn hai mô phỏng mỗi điểm. Bang-bang và trợ lực ngược chỉ báo cáo.
+C4. Ngân sách mô phỏng và thời gian: tối đa khoảng 800 lần CALIB tính cả kiểm chứng, ngang PID (824 lần) để công sức không chênh; báo số này và số đánh giá tuyến tính theo QuyChuan 6.7. Một lần
+CALIB khoảng 22 s (số đo của Map), nên khoảng 5 giờ nếu chạy tuần tự; chạy song song bằng Parallel Computing Toolbox thì chia cho số worker (đo thật ở O1).
+C5. Chỉ tiêu "đáng giá" (người dùng chốt 2026-10-13: CHỈ BÁO CÁO, không là cổng; MapPID luôn vào so sánh): báo MapPID có đáng ghép không theo ba điều kiện J (trung bình hai seed 30000 và 30001)
+nhỏ hơn hoặc bằng 0.95 x J của PID = 3.43, mặt Pareto (lấy từ mọi điểm khả thi đã đánh giá, không tốn thêm mô phỏng) không nằm trên mặt PID, và H6 đúng ở năm ca DREWS. Không đạt thì ghi kết quả âm
+trung thực, không tối ưu thêm để vượt.
+C6. Seed và ca: chọn tham số trên CALIB, seed local 30000 (dải 30000-39999, D3), kiểm seed 30001; DRY, RAMP, SLIP, EDGE, WEAVE chỉ để chấm (seed 30000 khi chạy riêng, 99999 khi so nhiều bộ), không
+bao giờ dùng để chỉnh hay để chọn giữa các điểm (QuyChuan 1.3). Không thêm phần ngoài lõi (QuyChuan 2.4, 2.5).
+C7. Các bước. Quy ước chung: chỉ bắt đầu một bước khi người dùng bảo; xong bước nào ghi một mục F ở Phần F; MATLAB chạy nền bằng đường dẫn tuyệt đối; mọi lần đánh giá ghi từng dòng ra csv để chạy
+tiếp được khi MATLAB sập; không đặt biến tạm trùng biến base workspace (m, C, c, S, t); không sửa PRSM, Map.mdl, PID.mdl, map.json, pid.json.
+O0. [XONG 2026-10-13] Chốt Phần D (người dùng trả lời); ghi vào QuyChuan.txt (2.4 lõi MapPID, 3.3 dải seed 30000-39999, 6.1 ngoại lệ tối ưu đồng thời, nhật ký thay đổi) và Tracking/CLAUDE.md
+(token MapPID, dải seed); bản QuyChuan trước ở scratchpad QuyChuan_before_mappid.txt.
+O1. Khối, vòng kín và hàm đánh giá.
+  - load_mappid.m, build_mappid.m: subsystem MapPID; nhánh Map chép từ Map.mdl nhưng đọc biến riêng MapPID_table, MapPID_H_num, MapPID_H_den (để tối ưu đổi được K và lead-lag mà không đụng biến
+    Map_*); nhánh PID chép từ PID.mdl, Constant PID_* đổi thành MapPID_*; Sum_Ta cộng hai nhánh; cổng T_a_lim của nhánh PID nhận T_a_lim - u_map nên chống bão hòa tính trên tổng lệnh; Kaw theo C2.
+  - test_mappid.m (đáp án tính độc lập từ map.json, ref.json): (a) PID bằng 0 ra đúng Map; (b) bảng bằng 0 ra đúng PID; (c) đủ hai nhánh, có đoạn T_a_lim chặn; sai số 1e-9 N.m; in [MapPID] TEST PASS.
+  - build_closed_loop('MapPID'); thêm màu 'MapPID' vào plot_compare_cases.m và make_pair_comparisons.m (file dùng chung: ghi nhật ký, báo các khung).
+  - mappid_eval.m(x, seed): x là 9 tham số; dựng bảng M_K (map_table), hệ số Tustin của lead-lag, đặt mọi biến bằng setVariable, kiểm ràng buộc tuyến tính trước, rồi calib_run; trả J, R, S, e_rel,
+    PM, GM, lag 2 Hz và ghi một dòng csv.
+  - Kiểm đầu-cuối: mappid_eval tại điểm Map (Kp = Ki = Kd = 0, tham số Map) phải trùng calib_run('Model_Map', 30000); tại K = 0 và tham số PID phải trùng calib_run('Model_PID', 30000) (Kaw khớp vì
+    K = 0). Đo thời gian một lần và thử chạy song song 4 lần cùng lúc.
+O2. Công cụ tuyến tính mappid_margins.m: mở rộng map_margins_batch.m thêm số hạng C_PID. Kiểm: C = 0 ra lại PM 45.3 độ, GM 5.7 của Map đã chọn; K = 0 cho kết luận ổn định khớp scan_pid_stability ở
+các điểm chung. Thêm bước kiểm mô hình: vài điểm, so đáp ứng bậc thang tuyến tính với mô phỏng phi tuyến (sai lệch lớn thì báo trước khi tin ràng buộc tuyến tính).
+O2b. Kiểm độ tin của sàng lọc tuyến tính (đặt trước, người dùng chốt 2026-10-13), vì mô hình tuyến tính bảo thủ (F6: PI đã chọn chỉ có PM 4.2 độ mà vẫn qua cổng mô phỏng) nên ngưỡng PM, GM có thể
+loại oan vùng tốt. Script scan_mappid_screen.m, kết quả Result/Controllers/MapPID/Design/MapPID_screen_s30000.csv và .png, chạy tiếp được.
+  - Mẫu: 20 thiết kế ngẫu nhiên (rng cố định 20261013) trong cận của C2 (K đều 0-16; z, p/z, z1, Ki, Tf theo thang log; p1/z1 đều 0.1-0.9; Kp đều 0-3; Kd bằng 0 hoặc đều 0.002-0.05), CHỈ giữ thiết
+    kế qua điều kiện cấu trúc (p nhỏ hơn hoặc bằng 3142, p1 từ 3, độ lợi lag tại 2 Hz từ 0.707) và ổn định tuyến tính danh định; phân tầng theo PM tuyến tính: 4 thiết kế mỗi khoảng [0,10),
+    [10,20), [20,30), [30,40), từ 40 trở lên. Hai điểm đối chứng thêm vào (không tính vào 20): bộ Map đơn và bộ PID đơn dưới dạng điểm của không gian, đã biết là qua cổng.
+  - Phép đo: mỗi thiết kế chạy calib_margin thật (danh định, độ lợi motor x2, trễ thêm 1 ms; seed 30000; 3 mô phỏng, khoảng 75 s), ghi PM, GM tuyến tính, R danh định, tỉ số R hai điều kiện, qua
+    hay không (cổng QuyChuan 5.2: cả hai tỉ số nhỏ hơn hoặc bằng 2). Tổng khoảng 22 mô phỏng x 3 = 66 lần CALIB, khoảng 30 phút.
+  - Quy tắc chốt ngưỡng (đặt trước khi chạy): PM* = khoảng biên nhỏ nhất b trong {0, 10, 20, 30, 40} độ sao cho MỌI thiết kế có PM tuyến tính từ b trở lên đều qua cổng mô phỏng và có ít nhất 3
+    thiết kế như vậy; không có b nào thỏa thì giữ PM* = 30 độ và ghi rõ sàng lọc không đáng tin. Sau đó GM* = giá trị nhỏ nhất trong {1, 1.5, 2, 3} sao cho mọi thiết kế có PM từ PM* và GM từ GM*
+    đều qua cổng; không thỏa thì GM* = 2. Báo thêm tỉ lệ thiết kế dưới ngưỡng mà vẫn qua cổng mô phỏng (mức loại oan) và tỉ lệ thiết kế trên ngưỡng mà trượt cổng (mức lọt lưới; phải bằng 0 theo
+    cách chọn).
+  - Giới hạn: mẫu 20 điểm chỉ cho biết ngưỡng gần đúng, không chứng minh; cổng thật vẫn là calib_margin cho các điểm cuối (O6), nên sai ngưỡng chỉ làm lãng phí hoặc bỏ sót ứng viên, không làm chọn
+    nhầm điểm mất ổn định.
+O3. Điểm xuất phát bằng systune (tuyến tính, vài phút): bộ có cấu trúc cố định (K, z, p, z1, p1 là realp; PID rời rạc 1 ms có lọc), mảng mô hình 68 x 5 độ dốc; mục tiêu TuningGoal.Margins (PM 15
+độ, GM 1.5 cho điểm xuất phát), TuningGoal.Sensitivity (sai số nhỏ trong 0.2-2 Hz, đại diện R), TuningGoal.Gain từ nhiễu T_s tới T_a trên 5 Hz (đại diện S); chạy với 5 tỉ lệ trọng số bám/êm, mỗi
+tỉ lệ 10 điểm khởi tạo ngẫu nhiên (RandomStart). Kết quả: 5 thiết kế dọc mặt Pareto tuyến tính, mô phỏng CALIB cả 5 (5 lần) để xem tuyến tính đoán đúng thứ hạng không.
+O4. Tìm kiếm toàn cục trên J mô phỏng: surrogateopt (hàm mục tiêu và ràng buộc riêng), cận ở C2, điểm khởi đầu gồm 5 thiết kế systune và 50 điểm ngẫu nhiên khả thi (lấy mẫu trong cận, qua sàng lọc
+tuyến tính; KHÔNG đưa điểm Map đơn và PID đơn vào), ngân sách 550 lần đánh giá có mô phỏng (điểm rớt ràng buộc tuyến tính không tính vì không mô phỏng), chạy song song.
+O5. Tinh chỉnh cục bộ: patternsearch từ 3 điểm tốt nhất thuộc 3 vùng khác nhau của O4 (cách nhau hơn 20 % theo ít nhất một tham số), mỗi lần tối đa 50 lần mô phỏng, bước lưới tương đối dừng ở 2 %.
+O6. Kiểm chứng và chọn (verify_mappid, select_mappid):
+  - Vùng tối ưu: mọi điểm khả thi có J trong 5 % của J nhỏ nhất; báo cả vùng (khoảng của từng tham số), không chỉ một điểm.
+  - Hội tụ: ít nhất 3 điểm xuất phát rơi vào cùng vùng (J chênh dưới 3 %); không thì báo các vùng riêng.
+  - Lân cận: quanh điểm tốt nhất, cộng trừ nửa bước cuối của patternsearch theo từng tham số (18 lần chạy); không điểm KHẢ THI nào có J nhỏ hơn (hướng đi ra ngoài ràng buộc thì bỏ qua, ghi rõ ràng
+    buộc nào đang chặn).
+  - Chống học thuộc seed: 10 điểm tốt nhất của vùng tối ưu chạy thêm seed 30001; chọn theo J trung bình hai seed; J một điểm đổi quá 5 % giữa hai seed thì ghi cảnh báo.
+  - Theo thứ tự J trung bình, chạy calib_margin tới khi một điểm qua: đó là điểm chọn; báo bang-bang (calib_bangbang), trợ lực ngược, PM, GM tuyến tính, độ nhạy e_rel 3 % và 10 % (tính lại từ csv,
+    không chạy thêm).
+  - Ràng buộc đang chặn: báo ràng buộc nào ở biên tại điểm chọn (dải lái, e_rel, PM) vì điểm tối ưu do các ngưỡng tự chọn đó quyết định.
+  - Mặt Pareto (R, S) của MapPID lấy từ mọi điểm khả thi đã đánh giá; báo các điều kiện "đáng giá" C5. Không còn điểm dừng cứng: không đạt thì báo kết quả âm và vẫn đi tiếp O8-O9 (chỉ báo cáo).
+  - Ghi design vào mappid.json.
+O7. Độ bền (chỉ báo cáo, tuyến tính): sai lệch tham số plant +-20 % (K thanh xoắn, J_col, C_col, C_alpha) với PM, GM; thiết kế sát biên PM 45 độ nên đây là chỗ dễ hỏng nhất.
+O8. DREWS seed local 30000 (run_cases('MapPID', 30000)); bảng H1-H6 sơ bộ; xem riêng T_a vượt T_a,max, trợ lực ngược ở WEAVE, pud_in.
+O9. So sánh seed 99999 với Map, PI, PID (make_pair_comparisons), Pareto chung bốn bộ, bảng H1-H6 chính thức, ngưỡng hòa 5 % (hoặc độ phân tán seed nếu lớn hơn).
+O10. Tài liệu: Phần F; QuyChuan và Tracking/CLAUDE.md (đã ghi ở O0); mục bài báo (MapPID CHỈ vào bài báo, không viết chương luận văn mappid.txt: người dùng chốt D5 2026-10-13).
 ==============================================================================================================================================================================================
-PHẦN D - CÁC ĐIỀU CẦN NGƯỜI DÙNG CHỐT TRƯỚC KHI LÀM (đề xuất của khung này, chưa cài vào đâu)
+PHẦN D - CÁC ĐIỀU CẦN NGƯỜI DÙNG CHỐT TRƯỚC O1
 ==============================================================================================================================================================================================
-D1. Có thêm MapPID làm bộ điều khiển thứ năm với lõi = hợp của lõi Map và lõi PID hay không. Nếu có, QuyChuan 2.4 cần thêm một dòng: "MapPID: nhánh Map (bảng, vùng chết, độ dốc chặn, khâu
-lead-lag) cộng nhánh PID (tỷ lệ, tích phân, vi phân lọc bậc 1, chống bão hòa tính ngược); mỗi nhánh giữ đúng giới hạn lõi của bộ gốc" và QuyChuan 1.5 không đổi (không thêm phần ngoài lõi).
-D2. Giai đoạn A (đóng băng nhánh Map, chỉ chỉnh PID) làm trước, giai đoạn B chỉ khi cần (C2); hay muốn làm cả hai ngay.
-D3. Cổng "đáng giá" C4 (J nhỏ hơn hoặc bằng 0.95 lần J tốt nhất của hai bộ đơn, cộng H6) có giữ nguyên không, hoặc chỉ báo cáo mà không đặt cổng.
-D4. Seed local 30000 và dải 30000-39999 cho MapPID (RL sẽ lùi sang 40000 nếu làm).
-D5. Mục tiêu công bố: MapPID chỉ để luận văn (cùng SMC, ISMC) hay đưa vào bài báo hiện có Map, PI, PID (khi đó thêm mục 4.4 và cập nhật mục 5-8, Abstract); và có song song làm SMC, ISMC (phương án
-A của COMMON) hay không. Khung này không tự mở rộng sang đó.
-D6. Cho phép lát cắt Kd = 0 (MapPI) nằm trong lưới như một giá trị Kd (đề xuất: có, vì lead của Map đã sớm pha).
-D7. Kp = 0 (nhánh Map làm trọn khâu tỷ lệ, PID chỉ thêm tích phân và vi phân) KHÔNG có trong lưới vì Kaw = Ki / Kp không xác định. Muốn thử thì phải chốt một luật Kaw khác, ví dụ Ki / (Kp +
-K_max), tức một quy tắc mới khác PID; đề xuất: giữ Kp từ 0.25 trở lên và Kaw = Ki / Kp như PID để hai bộ cùng luật.
-D8. Ngân sách thời gian: M4 khoảng 250-350 lần CALIB (thời gian thật đo ở M2); M3 chỉ là tính tuyến tính. Người dùng có chấp nhận chạy nền qua đêm nếu cần không.
+D1. [ĐÃ CHỐT 2026-10-13: đúng] Thêm MapPID làm bộ điều khiển thứ năm, lõi = hợp của lõi Map và lõi PID, lead-lag chỉ trên nhánh Map.
+D2. [ĐÃ CHỐT: đúng] Luật chống bão hòa Kaw = Ki / (Kp + K), cho phép Kp = 0.
+D3. [ĐÃ CHỐT: đúng] Seed local 30000, dải 30000-39999.
+D4. [ĐÃ CHỐT: chỉ báo cáo] Chỉ tiêu "đáng giá" C5 không là cổng.
+D5. [ĐÃ CHỐT: chỉ cho bài báo] MapPID chỉ vào bài báo, không viết chương luận văn.
+D6. [ĐÃ CHỐT: không cần nêu riêng] Lợi thế phương pháp (tối ưu đồng thời so với lưới) không cần nêu; điều kiện là chạy test cùng điều kiện (cùng CALIB, cùng DREWS, cùng seed). Vẫn ghi sự thật này
+ở QuyChuan 6.1 và nhật ký.
+D7. [ĐÃ CHỐT: lấy cận như C2] Cận tham số.
+D8. [ĐÃ CHỐT: đúng] Chạy nền nhiều giờ, song song nhiều worker.
+D9. [ĐÃ CHỐT 2026-10-13] Không đưa điểm Map đơn và PID đơn vào điểm xuất phát; MapPID thiết kế lại từ đầu.
+D10. [ĐÃ CHỐT 2026-10-13] Cận K từ 0 (K = 0 tắt nhánh Map).
+D11. [ĐÃ CHỐT 2026-10-13] Vùng chết 0.3 N.m cố định, không phải biến tối ưu.
+D12. [ĐÃ CHỐT 2026-10-13] Làm O2b (kiểm sàng lọc tuyến tính) trước O3.
+D13. [ĐÃ CHỐT 2026-10-13, phương án C] Tìm kiếm với sàng lọc tuyến tính nhẹ (PM > 0, GM từ 1, như O2b); điểm cuối phải có PM từ 15 độ và GM từ 1.5 trên 68 mô hình (O6).
+D14. [ĐÃ CHỐT 2026-10-13, SAU khi đã thấy kết quả lần chọn đầu] Yêu cầu tuyến tính cho điểm cuối đổi từ PM 15 độ, GM 1.5 (phương án C) thành PM từ 30 độ và GM từ 2 trên 68 mô hình, ngưỡng chung
+cho cả bốn bộ. Lý do: người dùng hỏi lại ngưỡng PM 45 độ ban đầu; 30 độ là đầu dưới của khoảng 30-45 độ Seborg mục 14.7 khuyến nghị; với 15 độ MapPID được nới hơn PID (38 độ) và Map (45 độ), so
+sánh dễ bị cho là không công bằng. Ảnh hưởng đã biết trước khi chạy lại (tính từ bảng có sẵn, seed 30000): điểm tốt nhất có PM từ 30 độ có J 3.072, cao hơn J* 0.3 %, PM thật 38 độ. Map (45.3 độ),
+PID (38.05 độ) đã đạt, không chạy lại; PI tính PM bằng robust_mappid. Phần chạy lại: O6 (select_mappid lọc PM từ 30, GM từ 2 trước khi lấy 10 điểm tốt nhất), O7, O8, O9; dữ liệu O4, O5 giữ nguyên.
+Kết quả lần chọn đầu sao lưu ở Desktop/Adaptive-EPS_backup_2026-10-13_MapPID_PM15_before_PM30.
 ==============================================================================================================================================================================================
 PHẦN E - RỦI RO VÀ ĐIỂM CẦN NÓI TRUNG THỰC
 ==============================================================================================================================================================================================
 E1. Có thể chỉ ngang PID. PID đã thắng Map về bám ở cả năm ca (A2). Nếu MapPID chỉ ngang PID thì kết luận là "khi đã có tích phân, nhánh Map không thêm giá trị đo được", cũng là kết quả đáng báo
 (tách vai trò của bảng hiệu chỉnh và của phản hồi), nhưng không thỏa yêu cầu của thầy là "bộ lạ dễ đăng hơn". Khung này sẽ không chỉnh quy chuẩn hay ca để MapPID thắng.
 E2. Dự trữ ổn định có thể không đủ. Độ lợi hai nhánh cộng dồn (B3, B4): Map chọn PM 45.3 độ ở độ dốc K = 6 khi đứng một mình; thêm Kp, Ki, Kd làm vòng hở tăng, mô phỏng calib_margin có thể loại
-nhiều điểm. Đo trước ở M3, M4 chứ không đoán.
+nhiều điểm. Ràng buộc tuyến tính ở C3 và kiểm calib_margin ở O6 đo điều này, không đoán.
 E3. Tích phân chậm. Ví dụ B3 cho thấy hằng số thời gian tích phân tăng theo (1 + s + Kp): nếu Ki bị cận ổn định kẹp thì MapPID đạt đỉnh sai số nhỏ nhưng về 0 chậm, thua PID ở ca đổi mu kéo dài
 ngắn (SLIP up, pud). Cần xem H5.
 E4. Công bằng. MapPID dùng bảng hiệu chỉnh offline từ mô hình plant (nhánh Map), còn PI, PID không có; đây là thông tin thêm, không phải "phần ngoài lõi" (bảng là lõi của Map), nhưng phải ghi rõ
@@ -198,5 +191,115 @@ là ca chấm không được dùng để chỉnh; MapPID có tích phân nên v
 PHẦN F - NHẬT KÝ KẾT QUẢ (điền khi chạy xong từng bước; đến nay chưa có kết quả nào)
 ==============================================================================================================================================================================================
 F0. 2026-10-12: đọc nhật ký bốn khung, viết văn bản này; chưa tạo mã, chưa chạy, chưa sửa quy chuẩn; chờ người dùng chốt Phần D.
-
-F1. 2026-10-12: viết lại C7 thành kế hoạch chi tiết M0-M8 (file, cách dựng, kiểm thử, lưới, ngân sách, hai điểm dừng), thêm D7, D8; vẫn chưa có mã hay kết quả.
+F1. 2026-10-12: viết lại C7 thành kế hoạch chi tiết M0-M8, thêm D7, D8 (nay đã được thay bởi F2).
+F2. 2026-10-13: người dùng chốt làm tối ưu nhất có thể (Map, PID giữ điểm đã chọn); thay Phần C, D bằng kế hoạch tối ưu đồng thời chín tham số (systune, surrogateopt, patternsearch, kiểm chứng
+O6), ngân sách khoảng 800 lần CALIB; chưa có mã.
+F3. 2026-10-13: người dùng trả lời Phần D (D1-D8 chốt như trên). O0 xong (QuyChuan 2.4, 3.3, 6.1 và nhật ký; Tracking/CLAUDE.md). Làm tiếp O1, O2.
+F4. 2026-10-13: O1 và O2 XONG. (1) Mã mới trong Model/Controllers/MapPID/: load_mappid.m, MapPID.mdl, Model_MapPID.mdl, script/{mappid_variables, mappid_design_variables, build_mappid,
+test_mappid, check_mappid_loop, mappid_plants, mappid_margins, test_mappid_margins}.m và Model/data/mappid.json (chưa có design). test_mappid PASS: ba trường hợp (Map một mình, PID một mình, đủ
+hai nhánh có T_a_lim chặn) sai lệch với đệ quy độc lập tối đa 3.2e-12 N.m; bảng của mappid_variables trùng bảng độc lập (sai số 0); Kaw = Ki / (Kp + K).
+F5. check_mappid_loop (seed 30000, CALIB 117 s): với PID = 0, MapPID cho R 27.0222 %, S 0.248906, TV 91.90, e_rel 3.121 %, rev 0.0022 so với Model_Map 27.0223, 0.248912, 91.90, 3.121, 0.0022 (lệch
+tương đối 4e-6, do bộ giải bước biến đổi); với K = 0 và PID của pid.json, MapPID cho R 11.5824, S 0.313328, TV 46.597, e_rel 1.762, rev 0.108 trùng Model_PID đến 6 chữ số. Thời gian một lần
+calib_run: 24 s khi đã biên dịch (lần đầu khoảng 67 s); một lần MATLAB sập (heap corruption 0xc0000374) giữa chừng, chạy lại thì qua.
+F6. O2 (mappid_margins, 68 mô hình x 5 độ dốc): Map một mình tái tạo đúng PM 45.292 độ, GM 5.674 của map.json; PID của pid.json (Kmax = 0) có PM 38.1 độ, GM 11.6, độ lợi cao tần 11.5; độ lợi cao
+tần tính tay khớp. PHÁT HIỆN: (a) PI đã chọn (Kp 1.08, Ki 14.4) chỉ có PM 4.2 độ, GM 1.3 trên mô hình này (mô hình tuyến tính không có ma sát khô, bảo thủ hơn mô phỏng; cộng hưởng 6.2 Hz), nên
+ràng buộc tuyến tính chỉ là sàng lọc thô, cổng thật là mô phỏng; (b) vòng có tích phân là ổn định có điều kiện (GM nhỏ hơn 1 mà vẫn ổn định, độ lợi x2 có thể làm ổn định lại), nên không dùng được
+so khớp với biên của scan_pid_stability.m (chỉ in thông tin: 8 trên 17 điểm trùng); (c) với nhánh Map đóng băng (K 6, lead-lag của map.json) thêm PID gần như không còn chỗ cho tích phân: Kd = 0
+thì Ki từ 16 trở lên mất ổn định (Ki = 8 còn PM 45.0 nhưng GM 1.62), Kd 0.01 thì Ki tới 16 còn PM 44-46 độ với Kp nhỏ hơn 0.5, Ki 32 làm PM tụt còn 1-13 độ; tức hằng số thời gian tích phân (1 + K
++ Kp)/Ki khoảng 0.5-0.9 s, đúng rủi ro E3. Đây là lý do cần tối ưu đồng thời (K, lead-lag, PID cùng lúc) thay vì đóng băng nhánh Map.
+F7. Việc xảy ra ngoài kế hoạch: nhiều file build_*.m (build_map, build_pi, build_pid, build_smc, build_ismc, các build_ của PRSM, build_closed_loop, build_gates, pick_model_name) đang ở trạng thái
+đã xóa chưa commit trong cây làm việc (git status), không do khung này làm; chúng còn trong git HEAD. build_closed_loop.m cần cho build_closed_loop(MapPID) nên đã khôi phục ĐÚNG file đó từ HEAD
+(git checkout HEAD -- Model/Sim/script/build_closed_loop.m); pick_model_name.m lấy bản HEAD đặt trong scratchpad để chạy build_mappid, chưa khôi phục vào cây. Cần người dùng quyết định các file
+build_ còn lại.
+F8. 2026-10-13: hàm đánh giá mappid_eval.m(x, seed, csvFile) XONG (nốt phần còn lại của O1): x = [K, z, p/z, z1, p1/z1, Kp, Ki, Kd, Tf]; sàng lọc tuyến tính trước (PM từ 30 độ, GM từ 2, độ lợi lag
+tại 2 Hz từ 0.707, p nhỏ hơn hoặc bằng 3142, p1 từ 3), chỉ khi qua mới mô phỏng CALIB; vector ràng buộc c (khả thi khi mọi phần tử nhỏ hơn hoặc bằng 0); ghi từng dòng ra csv và trả lại từ csv nếu
+đã có (chạy tiếp được). Kiểm ở seed 30000: điểm Map (PID = 0) J = R x S = 6.726 (R 27.02 %, S 0.2489, e_rel 3.12 %); điểm PID (K = 0) J = 3.629 (R 11.58 %, S 0.3133, e_rel 1.76 %, PM 38.1 độ);
+điểm Kp = 20 bị loại ở bước tuyến tính (PM -11.5 độ, không mô phỏng, 2.7 s). Số này là mốc của C5: J của PID ở seed 30000 là 3.629 (không phải 3.61 của seed 10000), nên ngưỡng J tham khảo 0.95 x
+3.629 = 3.45.
+F9. Việc tiếp theo: O3 (systune), O4 (surrogateopt, 550 lần), O5 (patternsearch), O6 (kiểm chứng và chọn); chờ người dùng bảo.
+F10. 2026-10-13: người dùng chốt bốn điều chỉnh (D9-D12). Kế hoạch đã sửa: C2 (K từ 0, vùng chết cố định, không dùng Map đơn, PID đơn làm điểm xuất phát), C3 (ngưỡng PM*, GM* do O2b), O2b mới với
+quy tắc chốt ngưỡng đặt trước, O3, O4 (điểm xuất phát). Chưa chạy O2b ở thời điểm ghi mục này.
+F11. 2026-10-13: O2b CHẠY XONG (scan_mappid_screen.m, 431 ứng viên rút ra, 4 thiết kế mỗi khoảng PM, 20 thiết kế + 2 đối chứng, mỗi thiết kế calib_margin ở seed 30000). KẾT QUẢ: CẢ 22 THIẾT KẾ ĐỀU
+QUA cổng mô phỏng, kể cả PM tuyến tính 0.14 độ (K 9.8, Kp 2.0, Ki 3.8), 1.5 độ (độ lợi cao tần 152) và GM 1.00. Tỉ số R khi độ lợi motor x2 chỉ 0.19-0.54 (R GIẢM khi nhân đôi độ lợi), tỉ số khi
+trễ thêm 1 ms 1.00-1.03. Theo quy tắc đặt trước, PM* = 0 độ và GM* = 1 (chỉ cần ổn định tuyến tính), mức loại oan 1 trên 1 thiết kế dưới ngưỡng, mức lọt lưới 0. ĐỌC KẾT QUẢ: quy tắc cho ngưỡng suy
+biến vì KHÔNG có thiết kế nào trượt cổng, nên mẫu không định vị được biên thật; điều đo được là cổng mô phỏng calib_margin quá yếu để phân biệt thiết kế (trùng nhận xét ở khung Linear Lượt 152:
+cổng gần như không loại điểm nào) vì CALIB gần như toàn đường khô (mu 0.8, một bậc mu 0.6) và bộ chấp hành bão hòa giữ biên độ dao động hữu hạn, trong khi mô hình tuyến tính xét cả đường trơn mu
+0.2 và tính nghiêm hơn. Hệ quả: nếu bỏ sàng lọc tuyến tính thì MapPID chỉ được bảo vệ bởi một cổng yếu, và tối ưu có thể chọn thiết kế mỏng về dự trữ chỉ vì R, S đo trên CALIB khô; các ca WEAVE
+(ice mu 0.2) và SLIP mới lộ ra. Chờ người dùng chốt ngưỡng (xem câu trả lời của khung MapPID ngày 2026-10-13); chưa chạy O3.
+F12. 2026-10-13: người dùng chốt phương án C cho sàng lọc (D13). mappid_eval.m đổi ngưỡng tìm kiếm thành PM > 0 và GM từ 1; ngưỡng điểm cuối (PM 15 độ, GM 1.5) đưa vào verify_mappid ở O6.
+F13. 2026-10-13, khoảng 02:40 (người dùng đi ngủ, giao khung MapPID tự làm tiếp hết kế hoạch; các quyết định tự chọn từ đây ghi rõ "TỰ CHỌN" kèm lý do). O3 (tune_mappid_linear.m, systune trên 20
+mô hình x 3 độ dốc, 6 mức nhiễu 2-64, mỗi mức 10 điểm khởi tạo ngẫu nhiên, khoảng 12 phút) cho kết quả SUY BIẾN: mọi thiết kế gần như tắt hẳn (độ lợi cao tần 0.4-0.5, K gần 0 hoặc 0.76, Kp
+0.02-0.13, Ki 0 đến 4.4), mục tiêu mềm dừng ở 2.5 ở mọi mức, và độ lợi lag tại 2 Hz chỉ 0.24-0.48 (vi phạm ràng buộc dải lái). Nguyên nhân (đánh giá): trọng số độ nhạy tuyến tính không đại diện
+cho R đo trên CALIB, nên bài toán tuyến tính chỉ đẩy về bộ yếu nhất qua được ràng buộc nhiễu; kết quả lưu Result/Controllers/MapPID/Design/MapPID_systune.csv. TỰ CHỌN: KHÔNG dùng thiết kế systune
+làm điểm xuất phát (chúng vi phạm dải lái và không có ích); O4 dùng thiết kế thí nghiệm ngẫu nhiên của chính surrogateopt (30 điểm đầu mỗi lần chạy). Không sửa thêm O3 vì tốn thời gian mà O4 không
+cần nó.
+F14. O4 bắt đầu khoảng 02:50: TỰ CHỌN chạy BA lần surrogateopt độc lập song song (optimize_mappid.m, runId 1, 2, 3, rng 1001-1003, mỗi lần 250 lần đánh giá, mỗi lần một MATLAB riêng, máy 24 nhân,
+bộ nhớ trống khoảng 9 GB); ba lần độc lập cũng là phép kiểm hội tụ của O6. Biến chuẩn hóa u trong [0,1]^9 qua mappid_u2x.m (cận C2; p/z được co sao cho p không vượt 3142 rad/s và p1/z1 sao cho p1
+từ 3 rad/s, nên mọi u đều thực hiện được). Mục tiêu log(J); thiết kế bị sàng lọc tuyến tính loại nhận log(30) và không mô phỏng. Thử 4 điểm trước khi chạy: điểm giữa hộp (K 8, z 50, p/z 8.7, z1
+31, p1/z1 0.5, Kp 1.5, Ki 10, Kd 0.025, Tf 4.5 ms) cho J 4.60 (R 13.0 %, S 0.353, e_rel 1.29 %, PM tuyến tính 27.9 độ), so với PID đơn J 3.63 cùng seed.
+F15. Lỗi gặp ở O4 và cách sửa: thiết kế thí nghiệm mặc định của surrogateopt là TẤT ĐỊNH (dãy giả ngẫu nhiên giống hệt nhau, không phụ thuộc rng), nên ba lần chạy đầu cho đúng cùng các điểm (kiểm
+bằng csv: 5 dòng đầu trùng nhau). Đã dừng lần 2 và 3 sau khoảng 14 lần đánh giá, xóa csv và checkpoint của chúng, sửa optimize_mappid.m: lần 2, 3 lấy 30 điểm đầu ngẫu nhiên đều riêng (rng 1002,
+1003, tùy chọn InitialPoints), lần 1 giữ thiết kế mặc định; kiểm lại: điểm đầu của ba lần khác nhau. MATLAB thỉnh thoảng sập (heap corruption 0xc0000374); vỏ chạy tự khởi động lại và surrogateopt
+tiếp tục từ checkpoint, các lần mô phỏng đã có lấy lại từ csv.
+F16. Script cho các bước sau đã viết trước khi có kết quả (để quy trình không chỉnh theo số): refine_mappid.m (O5: patternsearch từ điểm khả thi tốt nhất của mỗi lần O4, lưới đầu 0.05, dừng dưới
+0.02, tối đa 60 lần), select_mappid.m (O6: vùng tối ưu J trong 5 %, hội tụ ba lần chạy trong 3 %, lân cận cộng trừ 0.01 trên 9 biến chuẩn hóa, seed 30001 cho 10 thiết kế tốt nhất và xếp theo J
+trung bình hai seed, rồi yêu cầu tuyến tính PM từ 15 độ, GM từ 1.5 và cổng calib_margin; báo bang-bang, trợ lực ngược, độ nhạy e_rel 3 % và 10 %, ràng buộc đang chặn), robust_mappid.m (O7: PM, GM
+tuyến tính của MapPID, Map, PID khi K, J_col, C_col, C_alpha_f lệch cộng trừ 20 %), compare_mappid.m (O9: bảng và hình so sánh bốn bộ chỉ ĐỌC file kết quả có sẵn của Map, PI, PID ở seed 99999,
+không chạy lại bộ nào; bảng giả thuyết H1-H6), plot_mappid_pareto.m (mặt Pareto CALIB bốn bộ). TỰ CHỌN: không dùng make_pair_comparisons.m và plot_compare_cases.m (dùng chung với khung khác, sẽ
+chạy lại và ghi đè file của Map, PI, PID) nên KHÔNG sửa hai file đó như dự kiến ở O1.
+F17. SỰ CỐ đêm 2026-10-13 (khoảng 03:45-03:48): máy hết bộ nhớ, treo, người dùng phải khởi động lại. Nguyên nhân (lỗi của khung MapPID): chạy ba MATLAB song song (mỗi cái khoảng 2.3 GB) khi máy
+chỉ còn khoảng 9 GB trống (đo lúc 02:55: còn 4.4 GB), rồi lúc 03:32 khi lần 1 xong lại khởi động thêm MATLAB thứ tư cho O5 trong khi lần 2, 3 vẫn chạy; các vỏ chạy tự khởi động lại MATLAB ngay sau
+mỗi lần sập (heap corruption, mà rất có thể chính là do thiếu bộ nhớ) nên tải không giảm. Log O5 ghi "Out of memory" lúc 03:45. Khung MapPID cũng không xử lý thông báo vỏ chạy lần 3 hết lượt thử
+lại. BÀI HỌC: chỉ chạy MỘT MATLAB mỗi lúc trên máy này (hoặc kiểm bộ nhớ trống trước khi khởi động thêm), vỏ chạy phải kiểm bộ nhớ trước mỗi lần khởi động lại.
+F18. Dữ liệu còn nguyên (csv và checkpoint ghi sau mỗi lần đánh giá): lần 1 xong 250 lần đánh giá (148 dòng csv, 77 mô phỏng, J tốt nhất 3.136); lần 2 dừng ở 106 dòng (92 mô phỏng, J tốt nhất
+3.088); lần 3 ở 124 dòng (102 mô phỏng, J tốt nhất 3.150); O5 lần 1 được 19 dòng (J 3.117). Ba lần độc lập đã cùng về một vùng: K 2.8-4.2, Kp khoảng 0.5, Ki 41-44, R 9.7-10.0 %, S 0.314-0.322, PM
+tuyến tính 23-37 độ, GM 5-9.5; J tốt nhất ba lần chênh 2.0 % (dưới ngưỡng 3 % của O6). So với PID đơn J 3.629 cùng seed 30000: thấp hơn khoảng 15 % (số sơ bộ, chưa qua O6).
+F19. SỬA F17: NGUYÊN NHÂN THẬT của sự cố (tìm ra 2026-10-13 sáng, sau lần sập thứ hai). Chạy song song KHÔNG phải nguyên nhân chính. Simulation Data Inspector (SDI, công cụ xem tín hiệu của
+Simulink) giữ lại dữ liệu của MỌI lần mô phỏng trong file tạm *.dmr ở thư mục Temp (khoảng 190 MB mỗi lần mô phỏng CALIB, đo bằng dmr_test.m: 193, 382, 566, 761 MB sau 1-4 lần). Mỗi MATLAB sau
+khoảng 100 lần đánh giá có file 13 GB, được nạp vào RAM nên một MATLAB lên tới 22 GB; ba MATLAB cùng vọt lên lúc 10:24 và bộ canh RAM phải dừng cả ba. File của các lần MATLAB sập không bao giờ bị
+xóa: 168 file, 139 GB tích từ 2026-10-07, ổ C hết sạch dung lượng (0 GB trống). Cách sửa: gọi Simulink.sdi.clear sau mỗi lần mô phỏng trong mappid_eval.m và select_mappid.m (file dùng chung
+calib_run.m không sửa); đo lại: Simulink.sdi.clear đưa file từ 761 MB về 4 MB, các lần chạy sau sửa giữ file dưới 130 MB, ba MATLAB ổn định ở 7 GB. Đã xóa 139 GB file dmr và 5.8 GB file tạm cũ;
+các MATLAB mở từ nay dùng D:/MatlabTemp làm thư mục tạm (biến TEMP, TMP đặt trong lib.sh, không đổi biến hệ thống). Mọi kết quả O4 trước đó (ba lần chạy đêm 2026-10-13) có cùng nguyên nhân và đã
+bị xóa làm lại (F20).
+F20. Làm lại từ O3 (người dùng bảo 2026-10-13): sao lưu dữ liệu cũ ra Desktop/Adaptive-EPS_backup_2026-10-13_MapPID_O4_before_redo rồi xóa khỏi Result. Công cụ mới: guard_ram.ps1 (ghi RAM trống
+mỗi 20 giây, dưới 3 GB thì dừng MATLAB mới nhất), lib.sh (chỉ mở MATLAB khi RAM trống từ 8 GB, thử lại tối đa 6 lần), chain.sh (O3, O4, O5 nối nhau cho mỗi lần chạy); ba chuỗi chạy song song, cách
+nhau 90-120 giây. O3 chạy lại cho kết quả giống lần trước (suy biến, không dùng). O4 ba lần, mỗi lần 250 lần đánh giá, 63-71 phút: J tốt nhất 3.097, 3.077, 3.097; O5 patternsearch 60 lần mỗi
+chuỗi: 3.067, 3.070, 3.085 (chênh 0.6 %, dưới ngưỡng 3 %). Ba lần cùng vùng: K 3.5-3.8, Kp 0.53-0.64, Ki 44-45, Kd 0.035-0.037; z và z1 khác nhau nên mặt J phẳng theo hai tham số lead-lag đó. Các
+số này gần với ba lần bị hủy (3.136, 3.088, 3.150), tức quy trình tái lập được.
+F21. O6 (select_mappid, 2026-10-13): vùng tối ưu (J trong 5 % J*) có 577 thiết kế; cả ba lần trong 3 % J*; lân cận cộng trừ 0.01: 9 trong 17 điểm khả thi có J nhỏ hơn J* (điều kiện "không điểm lân
+cận nào nhỏ hơn" của QuyChuan 6.1 KHÔNG đạt hoàn toàn, nhưng khác biệt nhỏ, xem J ở seed 30001 bên dưới; báo trung thực); seed 30001 cho 10 thiết kế tốt nhất đổi J từ 0.2 đến 0.5 %. Thiết kế chọn
+(ứng viên 1 theo xếp hạng seed, ghi vào Model/data/mappid.json): K 3.587, z 5.011, p/z 1.2, z1 35.10, p1/z1 0.412, Kp 0.594, Ki 44.16, Kd 0.0353, Tf 0.00248; J 3.067 (seed 30000), 3.073 (seed
+30001); R 9.85 %, S 0.3114 (PID: R 11.59 %, S 0.3115, cùng độ ồn, R thấp hơn 15 %); PM tuyến tính 28.5 độ, GM 7.79; calib_margin PASS (độ lợi nhân 2: R x0.30; trễ cộng 1 ms: R x1.01); e_rel 2.14
+%; độ lợi lag tại 2 Hz 0.80; bang-bang: f 0.038 lý tưởng, 0.040 có nhiễu, chênh 0.0015; trợ lực ngược trên CALIB 11.47 % (PID 11.01 %); ràng buộc chặn: cận của z và p/z (cận dưới z 5 và p/z 1.2,
+tức khâu lead được giữ ở mức yếu nhất cho phép). Ghi chú: p/z = 1.2 nằm đúng cận dưới, nghĩa là tối ưu muốn khâu lead yếu nhất có thể; phần bù chủ yếu do khâu lag và PID.
+F22. O7 (độ nhạy cộng trừ 20 % của K, J_col, C_col, C_alpha_f, robust_mappid.m): MapPID ổn định ở cả 9 điều kiện; PM thấp nhất 23.3 độ (J_col +20 %), GM thấp nhất 6.35 (J_col -20 %); so Map PM
+43.7-46.8, GM 4.59-7.11; PID PM 33.3-42.8, GM 9.36-14.50. Tức MapPID có dự trữ pha thấp hơn cả hai bộ đơn nhưng vẫn trên 15 độ; dự trữ độ lợi nằm giữa Map và PID. Số liệu:
+Result/Controllers/MapPID/Design/MapPID_robust.csv.
+F23. O8 và O9 (2026-10-13; lần đầu lỗi do thiếu load_mappid trước run_cases, vỏ chạy thử lại 38 lần vô ích, đã sửa lệnh và giới hạn thử lại 6 lần). Seed 99999, cùng điều kiện cho cả bốn bộ
+(compare_mappid.m, chỉ đọc file có sẵn của Map, PI, PID). RMS e_T tính cả ca (N.m), Map / PI / PID / MapPID: DRY 0.689 / 0.243 / 0.155 / 0.141; RAMP 0.835 / 0.070 / 0.047 / 0.051; SLIP 0.538 /
+0.215 / 0.130 / 0.137; WEAVE 1.327 / 0.378 / 0.218 / 0.217; EDGE 1.534 / 0.304 / 0.166 / 0.142. S (độ ồn, N.m): DRY 0.149 / 0.193 / 0.256 / 0.207; RAMP 0.168 / 0.087 / 0.125 / 0.111; SLIP 0.162 /
+0.232 / 0.305 / 0.239; WEAVE 0.160 / 0.334 / 0.410 / 0.310; EDGE 0.130 / 0.260 / 0.325 / 0.250. So với PID: S thấp hơn 11-24 % ở cả năm ca, RMS e_T thấp hơn ở DRY (-9 %), EDGE (-14 %), ngang ở
+WEAVE (-0.3 %), cao hơn ở RAMP (+9 %) và SLIP (+6 %); tổng biến thiên TV cao hơn PID khoảng 13 % ở DRY (59.6 so với 52.7). Sai số xác lập |e_rel|: DRY 1.40 % (PID 1.71 %), RAMP 0.16 % (0.29 %),
+EDGE 0.12 % (0.23 %). Mặt Pareto CALIB (hình Map_vs_PI_vs_PID_vs_MapPID_CALIB_pareto_s00000-s30000.png): mặt của MapPID nằm dưới mặt của PID trong dải S 0.25-0.4 và trùng ngoài dải đó; điểm chọn
+của MapPID có R 9.85 % so với PID 11.59 % ở cùng S 0.311.
+F24. Giả thuyết H1-H6 (viết trước khi chạy, mục B5), kết quả theo compare_mappid ở seed 99999: H1 (RAMP mọi cửa sổ |e_rel| < 1 %) ĐÚNG, lớn nhất 0.16 %; H2 (EDGE |e_rel| < 1 % và DRY v40a0p3r
+|e_rel| < 3 %) ĐÚNG, 0.12 % và 0.32 %; H3 (S trên DRY không lớn hơn PID) ĐÚNG, 0.207 so với 0.256; H4 (trợ lực ngược trên WEAVE nhỏ hơn PID) SAI, 26.3 % so với 25.7 % (ngang nhau, chênh 2 %, trong
+độ phân tán seed); H5 (RMS e_T của pud_in và down_post không quá 1.05 lần PID) ĐÚNG, lớn nhất 0.77 lần (tốt hơn PID); H6 (RMS e_T cả ca không quá 1.05 lần PID ở cả năm ca) SAI, lớn nhất 1.09 lần ở
+RAMP (SLIP 1.06 lần). Chưa đạt: MapPID không tốt hơn PID ở RAMP và SLIP về RMS e_T cả ca, chênh 6-9 %; thắng ở DRY và EDGE. KẾT LUẬN trung thực (theo D6, chỉ cần chạy cùng điều kiện): trên CALIB,
+MapPID đạt J 3.067 so với PID 3.629 (thấp hơn 15 %); trên ba ca chấm cộng RAMP và EDGE, MapPID có độ ồn S thấp hơn PID 11-24 % ở cả năm ca với sai số bám ngang PID (-14 % đến +9 %); không thắng rõ
+về sai số bám ở RAMP và SLIP; không chứng tỏ giảm trợ lực ngược. So với Map đơn: RMS e_T nhỏ hơn 4-16 lần, S lớn hơn 1.4-1.9 lần ở DRY, SLIP, WEAVE, EDGE (nhỏ hơn 0.66 lần ở RAMP); hai bộ nằm ở
+hai đầu mặt Pareto. Cổng "đáng giá" (D4) chỉ báo cáo: so với PID, MapPID giảm S nhưng không giảm R trên mọi ca, nên hơn PID chủ yếu ở độ êm.
+F25. Việc còn lại: (1) người dùng xem F24 và quyết định cách trình bày trong bài báo (D5: chỉ bài báo; chưa viết vào Documents/Paper/paper.txt vì file đó của khung COMMON); (2) QuyChuan.txt 6.1 đã
+sửa câu PM (PM từ 15 độ, GM từ 1.5 ở điểm cuối, khi tìm PM > 0 và GM từ 1) cho khớp phương án C; ngân sách thực tế 3 x 250 + 3 x 60 lần đánh giá (khoảng 930, lớn hơn con số 800 ghi trong
+QuyChuan), nên báo; (3) các file build_*.m đã xóa trong cây làm việc (không phải do khung MapPID) cần người dùng quyết định.
+F26. Chạy lại O6-O9 theo D14 (PM từ 30 độ, GM từ 2; 2026-10-13). O6: thiết kế chọn có J 3.0716 (seed 30000) / 3.0733 (seed 30001), cao hơn lần chọn PM 15 độ 0.15 %; PM tuyến tính 38.0 độ, GM 6.72;
+calib_margin PASS (0.30 / 1.01); e_rel 2.14 %; độ lợi lag 2 Hz 0.80; bang-bang f 0.039 / 0.040; trợ lực ngược CALIB 11.52 %; tham số K, Kp, Ki gần như giữ nguyên, ràng buộc chặn vẫn là cận z và
+p/z. O7: PM thấp nhất 33.9 độ (J_col +20 %; PID 33.3 độ), tức nay MapPID chắc ngang PID. O9 (seed 99999), RMS e_T MapPID mới / cũ (PM 15) / PID: DRY 0.137 / 0.141 / 0.155; RAMP 0.049 / 0.051 /
+0.047; SLIP 0.140 / 0.137 / 0.130; WEAVE 0.213 / 0.217 / 0.218; EDGE 0.140 / 0.142 / 0.166. S mới / cũ / PID: DRY 0.206 / 0.207 / 0.256; RAMP 0.119 / 0.111 / 0.125; SLIP 0.246 / 0.239 / 0.305;
+WEAVE 0.312 / 0.310 / 0.410; EDGE 0.253 / 0.250 / 0.325. Tỉ số RMS e_T so với PID: 0.88, 1.04, 1.07, 0.98, 0.85 (cũ 0.91, 1.09, 1.06, 1.00, 0.86). TV tăng khoảng 23 % so với lần chọn cũ (DRY 73.3
+so với 59.6; PID 52.7). Giả thuyết: H1, H2, H3, H5 đúng; H4 sai (26.3 % so với 25.7 %); H6 sai, lớn nhất 1.07 lần ở SLIP (cũ 1.09 ở RAMP). Kết luận: đổi sang PM 30 độ không làm xấu kết quả: bám
+tốt hơn chút ở bốn ca, kém chút ở SLIP, S gần như không đổi; MapPID nay chắc ngang PID. Kết luận so sánh của F24 giữ nguyên.
+F27. PHÁT HIỆN khi tính PM của PI bằng cùng cách (robust_mappid, 68 mô hình, chặn cổng tích phân liên tục): PI đã chọn (Kp 1.08, Ki 14.4) có PM tuyến tính 4.2 độ, GM 1.30 danh định; khi C_col -20
+% thì PM -1.0 độ, GM 0.94 (mất ổn định tuyến tính). Trong khi đó PI qua cổng mô phỏng calib_margin (độ lợi nhân 2: R x0.58). Mâu thuẫn chưa giải thích: có thể mô hình tuyến tính 68 điểm (gồm độ
+dốc ma sát) khắt khe hơn hệ phi tuyến, hoặc cách tính khác với pi_margins.m của khung Linear (tính trên hai mặt đường k_r 30 và 0). KHÔNG sửa gì của PI (khung Linear); chờ người dùng quyết định.
+Nếu áp PM từ 30 độ cho cả bốn bộ như D14 thì PI hiện KHÔNG đạt.

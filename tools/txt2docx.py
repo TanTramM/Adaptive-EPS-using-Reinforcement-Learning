@@ -59,6 +59,7 @@ SPACES = {'quad': ' ', 'qquad': '  ', ';': ' ', ',': ' ', ':': ' ',
           '!': '', ' ': ' '}
 DELIMS = {'left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'bigl', 'bigr', 'Bigl', 'Bigr'}
 MATHCAL = {'F': 'ℱ', 'L': 'ℒ', 'H': 'ℋ'}
+AUTO_PAREN = False        # paper2docx.py sets True: every matched "(...)" becomes a stretchy Word bracket
 
 
 def tokenize(s):
@@ -145,6 +146,19 @@ class Parser:
         if kind == '{':
             seq = self.parse_seq(); self.take()
             box = m('box'); e = msub(box, 'e'); e.extend(seq); return box
+        if kind == 'chr' and val == '(' and AUTO_PAREN:             # matched round brackets become Word stretchy brackets that cover their whole content
+            inner = []
+            while self.peek()[0] is not None and self.peek() != ('chr', ')') and self.peek()[0] != '}':
+                atom = self.parse_atom()
+                if atom is not None:
+                    inner.append(self.parse_scripts(atom))
+            closed = self.peek() == ('chr', ')')
+            if closed:
+                self.take()
+            d = m('d'); pr = msub(d, 'dPr')
+            msub(pr, 'begChr').set('{%s}val' % M_NS, '(')
+            msub(pr, 'endChr').set('{%s}val' % M_NS, ')' if closed else '')
+            e = msub(d, 'e'); e.extend(inner); return d
         if kind == 'chr':
             return run(val, upright=not val.isalpha())
         if kind == '&':
@@ -183,6 +197,25 @@ class Parser:
             k, v = self.take()
             ch = v if k == 'chr' else {'{': '{', '}': '}', '|': '‖'}.get(v, v)
             return run('' if ch == '.' else ch, upright=True)
+        if val in ('paren', 'brack', 'abs'):                      # stretchy delimiters around one group (new commands, safe for old documents)
+            arg = self.group_or_atom()
+            d = m('d'); pr = msub(d, 'dPr')
+            b0, b1 = {'paren': ('(', ')'), 'brack': ('[', ']'), 'abs': ('|', '|')}[val]
+            msub(pr, 'begChr').set('{%s}val' % M_NS, b0); msub(pr, 'endChr').set('{%s}val' % M_NS, b1)
+            e = msub(d, 'e'); e.extend(arg); return d
+        if val == 'limlow':                                        # \limlow{max}{limit text}: the limit sits under the operator
+            base = self.group_or_atom(); lim = self.group_or_atom()
+            ll = m('limLow'); e = msub(ll, 'e'); e.extend(base); l = msub(ll, 'lim'); l.extend(lim); return ll
+        if val == 'nsum':                                          # \nsum{limit}: summation sign with the limit under it
+            sub = self.group_or_atom()
+            nr = m('nary'); pr = msub(nr, 'naryPr')
+            msub(pr, 'chr').set('{%s}val' % M_NS, '∑'); msub(pr, 'limLoc').set('{%s}val' % M_NS, 'undOvr')
+            msub(pr, 'supHide').set('{%s}val' % M_NS, '1')
+            s1 = msub(nr, 'sub'); s1.extend(sub); msub(nr, 'sup'); msub(nr, 'e'); return nr
+        if val == 'lbrace':
+            return run('{', upright=True)
+        if val == 'rbrace':
+            return run('}', upright=True)
         if val in GREEK:
             return run(GREEK[val])
         if val in SYMBOLS:
