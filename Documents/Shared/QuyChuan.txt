@@ -79,10 +79,10 @@ e_rel có dấu từng cửa sổ, RMS e_T, S, TV như EDGE. Lý do thêm: CALIB
 6 lệch +13 % ở DRY v40a0p3r); sửa riêng CALIB cho vùng đó bị coi là chỉnh cho riêng Map, và nếu sửa thì phải quét đều mỗi bước 10 km/h, nên người dùng chốt giữ CALIB, ghi đây là hạn chế đã
 biết, và để RAMP lộ hiện tượng này như một ca chấm báo cáo áp cho mọi bộ như nhau. Mọi bộ đều chọn tham số trên CALIB theo cùng quy tắc nên RAMP không thiên vị bộ nào. Tên gọi tắt cả bộ ca:
 DREWS = DRY, RAMP, SLIP, EDGE, WEAVE.
-3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, MapPID 30000, RL dải huấn luyện riêng chưa gán); chạy DRY, SLIP, WEAVE (và EDGE) riêng
-lẻ bằng cảm biến lý tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các file *_s99999.* do lệnh so sánh sinh ra trong thư mục Cases của từng
-bộ. RL: tập kịch bản huấn luyện phải tách rời khỏi CALIB và DRY, SLIP, WEAVE (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của mục 6.2 chạy thêm
-MỘT seed thứ hai cùng dải của bộ đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
+3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, MapPID 30000, MapPIDLag 50000, RL dải huấn luyện riêng chưa gán); chạy DRY,
+SLIP, WEAVE (và EDGE) riêng lẻ bằng cảm biến lý tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các file *_s99999.* do lệnh so sánh sinh ra trong
+thư mục Cases của từng bộ. RL: tập kịch bản huấn luyện phải tách rời khỏi CALIB và DRY, SLIP, WEAVE (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của
+mục 6.2 chạy thêm MỘT seed thứ hai cùng dải của bộ đó để ước độ lệch giữa seed; nếu chênh lệch R giữa hai seed lớn hơn 5 % thì nó thay ngưỡng hòa 5 % của mục 6.4.
 ==============================================================================================================================================================================================
 PHẦN 4 - CHỈ TIÊU (mỗi chỉ tiêu một hàm; mô tả thủ tục đo)
 ==============================================================================================================================================================================================
@@ -258,6 +258,10 @@ quả.
 ==============================================================================================================================================================================================
 NHẬT KÝ THAY ĐỔI QUY CHUẨN
 ==============================================================================================================================================================================================
+- 2026-10-16 (MapPIDLag, người dùng chốt): thêm bộ MapPIDLag (Map cộng PID, rồi TỔNG lệnh qua một khâu lag, bỏ lead; bảy tham số) vào quy chuẩn: token MapPIDLag, dải seed 50000-59999 (3.3),
+  chọn bằng tối ưu đồng thời như MapPID (ngoại lệ 6.1: surrogateopt x3 rồi patternsearch x3, điểm cuối PM từ 30 độ, GM từ 2, dải lái, e_rel, calib_margin; p1/z1 tới 1 để tối ưu tự tắt được lag).
+  Chống bão hòa tích phân tính trên lệnh SAU khâu lag. Đối chứng PID có lag (PIDLag) và PID tối ưu lại (PIDOpt) do khung Linear làm cùng phương pháp. Không bộ nào khác phải chạy lại. Đề xuất sau
+  khi đã thấy khâu lead của MapPID nằm ở cận dưới (z 5, p/z 1.2). Kế hoạch ở DieuKhien_MapPIDLag.txt.
 - 2026-10-13 (MapPID, người dùng chốt): thêm bộ MapPID (Map cộng PID) vào quy chuẩn: lõi ở 2.4, dải seed 30000-39999 ở 3.3, phương pháp chọn bằng tối ưu đồng thời ở 6.1 (ngoại lệ có ghi). Cổng
   "đáng giá" chỉ BÁO CÁO, không là cổng (người dùng chốt). MapPID chỉ vào bài báo, không vào luận văn. Ảnh hưởng: không bộ nào khác phải chạy lại (Map, PI, PID giữ điểm); MapPID có lợi thế phương
   pháp (tối ưu đồng thời), người dùng quyết định không nêu riêng; kế hoạch ở DieuKhien_MapPID.txt.

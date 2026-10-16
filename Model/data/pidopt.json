@@ -1,0 +1,37 @@
+{
+  "x_note": "PIDOpt controller data: PID re-optimised with the MapPID method (simultaneous surrogateopt + patternsearch on J = R*S), no lag (DieuKhien_Linear.txt). Ts_ctrl [s]. design: written by Controllers/PIDLag/script/select_pidlag.m (Kp, Ki [1/s], Kd [s], Tf [s], Kaw = Ki/Kp). Absent: all gains 0 (open loop).",
+  "Ts_ctrl": 0.001,
+  "design": {
+    "Kp": 1.32035335179945,
+    "Ki": 51.9969425821222,
+    "Kd": 0.0365236870954531,
+    "Tf": 0.00294417659956381,
+    "Kaw": 39.38108121682572,
+    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), the MapPID method; PM >= 30, GM >= 2, calib_margin",
+    "CALIB_R_pct": 10.37799113,
+    "CALIB_S_Nm": 0.3295290499,
+    "CALIB_TV_Nm_per_s": 54.51466007,
+    "CALIB_erel_pct": 1.225640697,
+    "CALIB_rev_pct": 11.8407666,
+    "CALIB_J": 3.4198495569395271,
+    "seed_10001_R_pct": 10.429969877730514,
+    "seed_10001_S_Nm": 0.332284359732149,
+    "seed_10001_erel_pct": 2.2319190635729029,
+    "PM_deg": 46.481869681613517,
+    "GM": 8.6375994258247282,
+    "HF_gain": 13.72575291270358,
+    "lag_gain_2Hz": 1,
+    "margin_ratio_gain": 0.35007034911160978,
+    "margin_ratio_delay": 1.0163154635295013,
+    "bangbang": {
+      "f_ideal": 0.03629533656229076,
+      "f_noisy": 0.037712715541603985,
+      "delta": 0.0014304223441535327,
+      "spread": 2.6086729680616094E-5
+    },
+    "n_evaluations": 826,
+    "n_simulations": 768,
+    "design_seed": 10000,
+    "date": "2026-10-16 03:13:41"
+  }
+}

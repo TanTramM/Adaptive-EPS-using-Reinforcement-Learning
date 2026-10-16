@@ -1,0 +1,202 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH VÀ NHẬT KÝ MAPPIDLAG (MAP CỘNG PID, KHÂU LAG ĐẶT SAU TỔNG LỆNH) - khung MapPID, bắt đầu 2026-10-16
+==============================================================================================================================================================================================
+Văn bản này ghi kế hoạch làm bộ điều khiển MapPIDLag: nhánh bản đồ trợ lực Map cộng nhánh PID (tỷ lệ - tích phân - vi phân), rồi TỔNG lệnh đi qua một khâu lag (khâu làm chậm pha, giảm độ lợi ở tần
+cao), bỏ hẳn khâu lead (khâu sớm pha). Người dùng chốt ngày 2026-10-16: làm bộ này như MỘT BỘ MỚI, bộ MapPID đã chọn (Model/data/mappid.json, DieuKhien_MapPID.txt) GIỮ NGUYÊN, không sửa mã, dữ
+liệu hay kết quả của nó. Kèm theo là bộ đối chứng PID cộng lag (PID+Lag) do khung Linear làm (Phần D), vì thiếu đối chứng này thì không kết luận được gì về vai trò của nhánh Map.
+TRẠNG THÁI (2026-10-16, 05:45): P0-P6 và P8 XONG (tối ưu 3 chuỗi, chọn, DREWS một seed 50000); P7 (độ bền) và P9 (so sánh nhiều bộ, nhiều seed) CHƯA làm, chờ người dùng; kết quả ở G6-G8. Đã sửa
+QuyChuan.txt (3.3 và nhật ký thay đổi) và Tracking/CLAUDE.md (token, dải seed). Chỗ còn ghi [CẦN CHỐT] ở Phần B, C là đề xuất lúc đầu; các điểm đã được chốt hay đổi nằm ở Phần E và G, nếu mâu
+thuẫn thì Phần E và G ưu tiên. Mục đích: ghi trước (QuyChuan 1.1) cấu trúc, giả thuyết, cận, cổng, phương pháp tìm và quy tắc chọn, để kết quả không bị chỉnh theo số.
+==============================================================================================================================================================================================
+PHẦN A - CƠ SỞ: VÌ SAO LÀM BỘ NÀY (số lấy từ mappid.json và DieuKhien_MapPID.txt F20-F26; không phải kết quả của MapPIDLag)
+==============================================================================================================================================================================================
+A1. Thiết kế MapPID đã chọn (PM từ 30 độ, GM từ 2, D14 của MapPID): K 3.587, lead z 5.011 và p 6.013 rad/s (p/z 1.2), lag z1 35.10 và p1 14.48 rad/s (p1/z1 0.412), Kp 0.594, Ki 44.16, Kd 0.0453,
+Tf 2.48 ms, Kaw 10.56. CALIB seed 30000: R 9.79 %, S 0.3137 N.m, J = R x S 3.072, e_rel 2.14 %, TV 73.3, trợ lực ngược 11.5 %; PM tuyến tính 38.0 độ, GM 6.72; độ lợi cao tần 20.66; 930 lần đánh
+giá, 855 mô phỏng. Giải thích chỉ tiêu: R = sai số bám tương đối gộp trên ca CALIB; S = RMS của T_a sau lọc cao qua 5 Hz (độ ồn); TV = tổng biến thiên của T_a mỗi giây; PM, GM = dự trữ pha và dự
+trữ độ lợi trên 68 mô hình tuyến tính x 5 độ dốc.
+A2. Khâu lead của MapPID gần như không hoạt động. z = 5 và p/z = 1.2 nằm ĐÚNG cận dưới của cả hai biến (F21, F26): bù pha lớn nhất chỉ asin((1.2 - 1)/(1.2 + 1)) = 5.2 độ, ở sqrt(z p) = 5.5 rad/s
+(0.9 Hz); trên khoảng 1 Hz nó chỉ là hệ số khuếch đại 1.2. Tối ưu muốn đi xa hơn cận dưới, tức không cần sớm pha trên nhánh Map; phần sớm pha cho đáp ứng nhanh do khâu D của PID đảm nhận (người
+dùng nêu 2026-10-16).
+A3. Độ ồn của MapPID đến từ khâu D, không phải từ nhánh Map. Độ lợi cao tần (độ lợi ở tần số xa trên dải lái, quyết định nhiễu cảm biến bị khuếch đại lên lệnh) của MapPID là 20.66, gồm nhánh Map K
+(p/z) (p1/z1) = 3.587 x 1.2 x 0.412 = 1.77 và nhánh PID Kp + Kd/Tf = 0.594 + 0.0453/0.00248 = 18.88 (91 %). Khâu lag hiện chỉ lọc phần 1.77. Đặt lag sau tổng thì cả phần 18.88 cũng bị nhân với
+p1/z1, nên có cơ hội giảm S rõ rệt.
+A4. Kết quả MapPID so với PID ở seed chung 99999 (F26): RMS e_T MapPID / PID: DRY 0.137 / 0.155; RAMP 0.049 / 0.047; SLIP 0.140 / 0.130; WEAVE 0.213 / 0.218; EDGE 0.140 / 0.166 N.m. S: DRY 0.206 /
+0.256; RAMP 0.119 / 0.125; SLIP 0.246 / 0.305; WEAVE 0.312 / 0.410; EDGE 0.253 / 0.325 N.m. Trợ lực ngược ở WEAVE 26.3 / 25.7 %. TV ở DRY 73.3 / 52.7. Tức MapPID êm hơn PID 5-24 %, bám ngang,
+không giảm trợ lực ngược, TV cao hơn khoảng 40 %. Đây là mốc mà MapPIDLag phải so.
+==============================================================================================================================================================================================
+PHẦN B - CẤU TRÚC VÀ GIẢ THUYẾT ĐẶT TRƯỚC
+==============================================================================================================================================================================================
+B1. Cấu trúc (người dùng chốt hướng "Map -> PID -> lag" ngày 2026-10-16; cách hiểu: hai nhánh cộng lại rồi qua lag; [CẦN CHỐT E1] nếu ý khác). Nhánh Map giữ bảng M_K(v, |T_s|) có vùng chết T_s0 =
+0.3 N.m và độ dốc chặn K như MapPID nhưng KHÔNG có khâu lead-lag riêng; nhánh PID giữ dạng của MapPID (vi phân lấy trên T_s đo qua lọc bậc 1 hằng số Tf, tích phân có chống bão hòa tính ngược);
+khâu lag Tustin 1 ms, độ lợi DC bằng 1, đặt sau Sum_Ta. Tín hiệu đọc giống MapPID: T_s, v, a_y, T_a_lim.
+  (1) T_a,cmd = H_lag(s) [ u_map + u_PID ],   H_lag(s) = (s/z1 + 1) / (s/p1 + 1),   p1 < z1
+[ T_{a,cmd} = H_{lag}(s)\,\big[u_{map} + u_{PID}\big], \quad H_{lag}(s) = \frac{s/z_1 + 1}{s/p_1 + 1}, \quad p_1 < z_1 ]
+  (2) u_map = sgn(T_s) M_K(v, |T_s|)
+[ u_{map} = \mathrm{sgn}(T_s)\,M_K(v,|T_s|) ]
+  (3) e_T = T_s - T_d,ref(v, a_y);   u_PID = Kp e_T + u_I + Kd d_f;   du_I/dt = Ki e_T + Kaw (sat(u_map + u_PID) - (u_map + u_PID)),   Kaw = Ki / (Kp + K)
+[ e_T = T_s - T_{d,ref}(v,a_y), \quad u_{PID} = K_p e_T + u_I + K_d d_f, \quad \dot u_I = K_i e_T + K_{aw}\big(\mathrm{sat}(u_{map}+u_{PID}) - (u_{map}+u_{PID})\big), \quad K_{aw} = \frac{K_i}{K_p + K} ]
+B2. Chống bão hòa (đề xuất, [CẦN CHỐT E4]): tính trên tổng TRƯỚC khâu lag, so với T_a_lim, đúng như MapPID (khối PID nhận T_a_lim - u_map). Lý do: dùng lại nguyên khối PID; khâu lag có độ lợi DC
+bằng 1 nên ở xác lập tổng trước và sau lag bằng nhau, giới hạn đúng; không đưa động học lag vào vòng chống bão hòa. Cách khác (so lệnh sau lag) chính xác hơn khi quá độ nhưng phải sửa khối PID;
+báo nếu kết quả cho thấy tích phân bị tràn.
+B3. Tương đương tuyến tính và vấn đề công bằng. Khâu lag tuyến tính nên (1) bằng H_lag u_map + H_lag u_PID: về toán, đặt lag sau tổng = thêm khâu lag vào nhánh PID. Kế hoạch MapPID (C2) và
+QuyChuan 2.4, 2.5 coi lead-lag là lõi của Map, còn áp lên PID là phần ngoài lõi; quy tắc chung là "thứ gì bộ này làm được thì bộ kia cũng được làm". Vì thế nếu MapPIDLag êm hơn PID thì không biết
+là nhờ nhánh Map hay chỉ nhờ khâu lag. Bắt buộc có đối chứng PID+Lag (Phần D) thiết kế cùng phương pháp, cùng ngân sách, cùng cổng; phép so chính của bộ này là MapPIDLag với PID+Lag, không phải
+với PID.
+B4. Độ lợi cao tần: (p1/z1) (K + Kp + Kd/Tf). Ví dụ minh họa (KHÔNG phải dự báo): giữ nguyên tham số MapPID và p1/z1 0.412 thì độ lợi cao tần từ 20.66 xuống 0.412 x (3.587 + 0.594 + 18.29) = 9.26.
+Đổi lại khâu lag làm trễ pha quanh tần số cắt, nên khâu D phải bù nhiều hơn (Kd lớn hơn hoặc Tf nhỏ hơn), tức hai phần triệt nhau một phần; không đoán trước được J tốt hơn hay xấu hơn.
+B5. Ràng buộc dải lái (QuyChuan 6.2): độ lợi khâu lag tại 2 Hz từ 0.707 (nay khâu lag áp lên toàn bộ lệnh, ngưỡng giữ nguyên) và Tf của khâu D nhỏ hơn hoặc bằng 79.6 ms như PID.
+B6. Giả thuyết đặt trước (ghi trước khi chạy; kết quả âm cũng báo, QuyChuan 7). Mốc số: A4 (seed 99999) và CALIB của MapPID.
+  L1 (độ ồn): S ở DRY của MapPIDLag nhỏ hơn MapPID (0.206 N.m) ít nhất 5 %. Lý do: lag lọc cả khâu D (A3).
+  L2 (bám): RMS e_T cả ca không lớn hơn MapPID quá 5 % ở cả năm ca DREWS (DRY, RAMP, SLIP, EDGE, WEAVE).
+  L3 (vai trò nhánh Map, giả thuyết CHÍNH): J trên CALIB (trung bình hai seed) của MapPIDLag nhỏ hơn hoặc bằng 0.95 lần J của PID+Lag. Sai thì kết luận "khi PID đã có lag, nhánh Map không thêm giá
+    trị đo được".
+  L4 (trợ lực ngược): ở WEAVE nhỏ hơn PID (25.7 %). KỲ VỌNG: có thể sai như H4 của MapPID.
+  L5 (sai số xác lập): RAMP mọi cửa sổ và EDGE |e_rel| dưới 1 % (giữ được H1, H2 của MapPID nhờ tích phân).
+  L6 (TV): TV ở DRY nhỏ hơn MapPID (73.3). Lý do như L1.
+==============================================================================================================================================================================================
+PHẦN C - KẾ HOẠCH (cùng quy trình đã dùng cho MapPID, để công sức ngang nhau)
+==============================================================================================================================================================================================
+C1. Nơi đặt và tên [CẦN CHỐT E1, E2]: token MapPIDLag (viết liền, không dấu gạch dưới); mã Model/Controllers/MapPIDLag/ (load_mappidlag.m, MapPIDLag.mdl, Model_MapPIDLag.mdl, script/), dữ liệu
+Model/data/mappidlag.json, kết quả Result/Controllers/MapPIDLag/{Design, Calib, Cases}, so sánh Result/Compare/Map_vs_PID_vs_MapPID_vs_MapPIDLag/ (luôn s99999). Không sửa bất kỳ file nào của
+MapPID (mã, mappid.json, kết quả, DieuKhien_MapPID.txt ngoài một dòng trỏ sang văn bản này).
+C2. Bảy tham số, cùng cận với C2 của MapPID (bỏ z, p/z của lead):
+  K       0 - 16         độ dốc chặn của bảng (K = 0 tắt nhánh Map, bộ thành PID+Lag)
+  z1, p1  z1 8-120 rad/s, p1/z1 0.1-1 (ĐỔI 2026-10-16 từ 0.1-0.9: p1/z1 = 1 là không lag, để tối ưu tự tắt được lag như PIDLag của khung Linear), p1 từ 3 rad/s      khâu lag, nay đặt sau tổng
+  Kp      0 - 3
+  Ki      0 - 200 1/s
+  Kd      0 - 0.05 s
+  Tf      1 - 20 ms
+Vùng chết 0.3 N.m cố định; Kaw = Ki / (Kp + K) (D2 của MapPID); bảng M_K dựng bằng map_table từ điểm hiệu chỉnh đường khô của map.json như MapPID.
+C3. Mục tiêu và ràng buộc (như MapPID sau D13, D14): cực tiểu J = R x S trên CALIB. Sàng lọc tuyến tính khi tìm: ổn định, PM > 0, GM từ 1 trên 68 mô hình x 5 độ dốc k = K x {0, 0.25, 0.5, 0.75,
+1}, với vòng L(jw) = -H_lag(jw) [k + C_PID(jw)] Gm(jw) exp(-jw 1 ms) G(jw); điểm cuối: PM từ 30 độ, GM từ 2. Ràng buộc dải lái B5; e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa sổ static; cổng
+calib_margin (R không tăng quá 2 lần khi độ lợi motor x2 và khi trễ thêm 1 ms) cho điểm cuối. Bang-bang và trợ lực ngược chỉ báo cáo.
+C4. Seed [CẦN CHỐT E2]: dải riêng 50000-59999, seed chọn 50000, seed kiểm 50001 (dải 40000-49999 đã được khung MapSMC đề xuất, chưa chốt; Map 00000, PI/PID 10000, SMC 20000, MapPID 30000). So sánh
+nhiều bộ luôn seed 99999.
+C5. Ngân sách: như MapPID thực tế, 3 lần surrogateopt x 250 + 3 lần patternsearch x 60 = 930 lần đánh giá (mô phỏng ít hơn vì điểm rớt sàng lọc tuyến tính không mô phỏng). 7 biến thay vì 9 nên
+ngân sách này rộng hơn tương đối; KHÔNG giảm, để cùng công sức với MapPID và PID+Lag.
+C6. Kinh nghiệm phải giữ (F15, F17, F19 của MapPID): Simulink.sdi.clear sau MỖI lần mô phỏng (file *.dmr của Simulation Data Inspector từng làm đầy ổ C 139 GB và treo máy); TEMP, TMP của MATLAB
+đặt ở D:/MatlabTemp; chỉ mở MATLAB mới khi RAM trống từ 8 GB, thử lại tối đa 6 lần; lần surrogateopt 2 và 3 phải tự lấy 30 điểm đầu ngẫu nhiên riêng (thiết kế thí nghiệm mặc định là tất định); gọi
+load_<ctrl> trước run_cases; mọi lần đánh giá ghi một dòng csv để chạy tiếp được.
+C7. Các bước (chỉ bắt đầu khi người dùng bảo; xong bước nào ghi một mục G):
+P0. Chốt Phần E; ghi token và dải seed vào QuyChuan.txt (2.4 lõi, 3.3 seed, 6.1 ngoại lệ tối ưu đồng thời) và Tracking/CLAUDE.md.
+P1. Model và kiểm thử. MapPIDLag.mdl: từ MapPID.mdl bỏ khối lead-lag của nhánh Map, đặt khối lag (Tustin 1 ms, biến MapPIDLag_H_num, MapPIDLag_H_den) sau Sum_Ta; biến tiền tố MapPIDLag_. [CẦN CHỐT
+E3: người dùng tự dựng model (từ 2026-10-13 người dùng tự làm phần Simulink) hay khung MapPID sửa bản sao bằng API.] test_mappidlag.m, đáp án tính độc lập: (a) K = 0 ra đúng PID+Lag tính bằng đệ
+quy; (b) PID = 0 ra đúng Map không lead qua lag; (c) đủ hai nhánh có đoạn T_a_lim chặn; sai số 1e-9 N.m, in [MapPIDLag] TEST PASS. build_closed_loop('MapPIDLag').
+P2. mappidlag_margins.m (mở rộng mappid_margins.m: lag nhân cả tổng), test_mappidlag_margins.m: với z1 = p1 (lag bằng 1) phải ra lại PM, GM của mappid_margins cho cùng K, PID và lead bằng 1.
+P3. mappidlag_eval.m(x, seed, csvFile), x = [K, z1, p1/z1, Kp, Ki, Kd, Tf]; mappidlag_u2x.m, mappidlag_x2u.m (u trong [0,1]^7). Kiểm đầu-cuối: K = 0, lag bằng 1, PID của pid.json phải trùng
+calib_run('Model_PID', 50000) tới khoảng 6 chữ số; đo thời gian một lần.
+P4. surrogateopt 3 lần độc lập song song (rng 1001-1003, mỗi lần 250 lần đánh giá, mục tiêu log(J), điểm rớt sàng lọc nhận log(30)). Bỏ systune (O3 của MapPID suy biến và không dùng, F13); ghi rõ
+là bỏ.
+P5. patternsearch từ điểm khả thi tốt nhất của mỗi lần P4, lưới đầu 0.05, dừng dưới 0.02, tối đa 60 lần.
+P6. Chọn (select_mappidlag.m, chép quy tắc của select_mappid.m): vùng J trong 5 % J*, hội tụ ba lần trong 3 %, lân cận cộng trừ 0.01 trên 7 biến chuẩn hóa, seed 50001 cho 10 thiết kế tốt nhất đạt
+PM từ 30, GM từ 2, xếp theo J trung bình hai seed, rồi calib_margin; báo bang-bang, trợ lực ngược, ràng buộc đang chặn (nhất là cận của p1/z1 và z1: nếu lag bị đẩy về yếu nhất (p1/z1 0.9) thì đó
+là kết quả "lag sau tổng không có ích", báo như kết quả âm). Ghi design vào mappidlag.json.
+P7. Độ bền (chỉ báo cáo, tuyến tính): K, J_col, C_col, C_alpha_f lệch cộng trừ 20 %, so với MapPID, PID, PID+Lag.
+P8. DREWS seed local 50000 (load_mappidlag; run_cases('MapPIDLag', 50000)); bảng L1-L6 sơ bộ.
+P9. So sánh seed 99999 với Map, PID, MapPID và PID+Lag (KHÔNG có PI, người dùng chốt 2026-10-16 cho phần so sánh MapPID); chỉ ĐỌC file kết quả có sẵn của các bộ khác, không chạy lại bộ nào; mặt
+Pareto CALIB năm bộ; bảng L1-L6 chính thức; ngưỡng hòa 5 %.
+P10. Tài liệu: Phần G; một đoạn cho bài báo (chỉ khi người dùng quyết định đưa vào, như D5 của MapPID).
+C8. Thời gian ước tính (theo số đo MapPID): P1-P3 khoảng nửa ngày làm mã; P4 + P5 ba chuỗi song song khoảng 70 phút + 30 phút mỗi chuỗi; P6-P9 khoảng 1 giờ.
+==============================================================================================================================================================================================
+PHẦN D - ĐỐI CHỨNG PID+LAG (VIỆC CỦA KHUNG LINEAR; khung MapPID không sửa file của PID)
+==============================================================================================================================================================================================
+D0. CẬP NHẬT 2026-10-16: phần D do khung Linear làm thật, dưới tên PIDLag (6 biến) và PIDOpt (PID không lag tối ưu lại bằng cùng phương pháp, 4 biến), xem E5; các chi tiết D2-D5 dưới đây là đề
+xuất ban đầu của khung MapPID, khung Linear có thể khác (đặt tên, cận p1/z1 tới 1, seed 10000).
+D1. Vì sao cần (B3): MapPIDLag = PID có lag cộng nhánh Map. Muốn biết nhánh Map có đóng góp gì thì phải so với cùng bộ khi K = 0, thiết kế độc lập bằng cùng phương pháp. So MapPIDLag với PID
+(không lag) là so không công bằng: bộ có lag được thêm một khâu lọc mà PID không có.
+D2. Cấu trúc: T_a,cmd = H_lag(s) u_PID, H_lag như (1), PID như (3) với K = 0 (Kaw = Ki / Kp như PID). Theo quy tắc "biến thể của một bộ không đổi tên bộ" (Tracking/CLAUDE.md), đề xuất [CẦN CHỐT
+E5] đây là biến thể của PID: dữ liệu Model/data/pid_lag.json, kết quả Result/Controllers/PID/Lag/{Design, Calib, Cases}, seed local của PID (10000, kiểm 10001), tên file như PID trong thư mục con
+Lag. Chống bão hòa trước lag như B2.
+D3. Sáu tham số, cùng cận với C2: Kp 0-3, Ki 0-200, Kd 0-0.05, Tf 1-20 ms, z1 8-120 rad/s, p1/z1 0.1-0.9 (p1 từ 3 rad/s).
+D4. Cùng phương pháp và ngân sách với MapPIDLag và MapPID (QuyChuan 6.7): surrogateopt 3 x 250 (rng 1001-1003; lần 2, 3 lấy 30 điểm đầu ngẫu nhiên riêng) rồi patternsearch 3 x 60; mục tiêu log(J)
+trên CALIB; sàng lọc tuyến tính PM > 0, GM từ 1 khi tìm (68 mô hình x độ dốc 0, vì K = 0), điểm cuối PM từ 30 độ, GM từ 2; ràng buộc dải lái (lag 2 Hz từ 0.707, Tf nhỏ hơn hoặc bằng 79.6 ms);
+e_rel nhỏ hơn hoặc bằng 5 %; chọn theo J trung bình hai seed rồi calib_margin; báo bang-bang, trợ lực ngược.
+D5. Hai cách làm (khung Linear chọn, báo người dùng): (a) tự viết model PID+Lag (PID.mdl thêm khối lag ở cổng ra) và hàm đánh giá riêng, theo mẫu Model/Controllers/MapPID/script/ (mappid_eval.m,
+optimize_mappid.m, refine_mappid.m, select_mappid.m, mappid_margins.m); (b) đợi P3 rồi gọi hàm đánh giá của MapPIDLag với K cố định 0 (mã chung, bảo đảm cùng phương pháp tuyệt đối, nhưng phụ thuộc
+tiến độ khung MapPID). Dù chọn cách nào, phải kiểm chéo: cùng một bộ tham số, PID+Lag phải trùng MapPIDLag tại K = 0 tới khoảng 6 chữ số (như F5 của MapPID).
+D6. Đầu ra khung MapPID cần đọc ở P9: pid_lag.json (design, chỉ tiêu CALIB, PM, GM, số lần đánh giá), csv mọi lần đánh giá trên CALIB (để vẽ mặt Pareto), metrics của năm ca DREWS ở seed 99999
+(cùng định dạng file *_metrics_s99999.csv của run_cases).
+D7. Giả thuyết riêng của đối chứng (đặt trước): PID+Lag có S ở DRY thấp hơn PID (0.256 N.m) ít nhất 5 % với RMS e_T không lớn hơn PID quá 5 % ở cả năm ca. Nếu đúng thì một phần lợi thế độ êm của
+MapPID so với PID có thể làm được chỉ bằng lag; báo trung thực trong so sánh MapPID.
+==============================================================================================================================================================================================
+PHẦN E - CÁC ĐIỀU CẦN NGƯỜI DÙNG CHỐT TRƯỚC P0
+==============================================================================================================================================================================================
+E1. [ĐÃ CHỐT 2026-10-16: đúng] Cấu trúc như B1 (Map cộng PID rồi lag sau tổng, bỏ lead) và token MapPIDLag.
+E2. [ĐÃ CHỐT 2026-10-16: đúng] Dải seed 50000-59999 (seed 50000, kiểm 50001).
+E3. [ĐÃ CHỐT 2026-10-16] Khung MapPID dựng, LÀM LẠI TỪ ĐẦU: viết script build_mappidlag.m sinh MapPIDLag.mdl như các bộ trước, chỉ lấy khung vòng kín từ PRSM (build_closed_loop và khối Reference);
+KHÔNG chép MapPID.mdl.
+E4. [ĐÃ CHỐT 2026-10-16, theo khuyến nghị của khung MapPID] Chống bão hòa tính SAU khâu lag (đổi so với đề xuất B2): u_I[k+1] = u_I[k] + Ts (Ki e + Kaw (T_a_lim - T_a)), T_a = lệnh sau lag. Lý do:
+chỉ xả tích phân khi lệnh gửi đi thật sự bị chặn; tính trước lag thì gai nhiễu của khâu D (độ lợi cao tần khoảng 18 trên tổng khoảng 21 ở MapPID) làm tổng trước lag chạm T_a_lim giả, xả tích phân
+sai ở vùng gần giới hạn (EDGE 0.35-0.4 g); vòng chống bão hòa vẫn ổn định với mọi Kaw > 0 vì đáp ứng xung của lag không âm và có tổng bằng 1 (đầu ra là trung bình có trọng số của đầu vào); tích
+phân dùng Euler tiến nên không có vòng đại số. Kaw giữ Ki / (Kp + K). Khung Linear cũng chọn tính sau lag cho PIDLag.
+E5. [ĐÃ CHỐT 2026-10-16: "bạn làm luôn"; THỰC TẾ KHUNG LINEAR LÀM] Người dùng đã giao khung Linear từ trước; khung Linear bắt đầu 01:04 làm PIDOpt (PID tối ưu lại bằng cùng phương pháp, 4 biến) và
+PIDLag (PID cộng lag, 6 biến, p1/z1 tới 1), seed 10000/10001, thư mục Model/Controllers/{PIDLag,PIDOpt} (nhật ký Linear Lượt 154, 155). Vì vậy khung MapPID KHÔNG chạy PID+Lag của riêng mình (tránh
+chạy trùng, máy chỉ đủ RAM cho khoảng 3 MATLAB cùng lúc); biến thể "PIDLag" có sẵn trong mã MapPIDLag (K = 0) không dùng. So sánh MapPIDLag với PIDLag của khung Linear ở seed chung 99999 làm sau
+(E7). Lưu ý: PIDLag của Linear tối ưu trên seed 10000, MapPIDLag trên seed 50000; J trên CALIB của hai bộ lệch nhau cỡ độ phân tán seed, nên so sánh chính thức ở seed chung 99999.
+E6. [ĐÃ CHỐT 2026-10-16: "ngân sách không quan trọng"] Giữ 930 lần đánh giá (3 x 250 + 3 x 60) như MapPID để cùng công sức với MapPID, PIDOpt, PIDLag.
+E7. [ĐÃ CHỐT 2026-10-16: "so sánh tính sau"] Chưa làm P9. Người dùng muốn trước mắt kết quả DREWS MỘT seed local (50000) của MapPIDLag; so sánh nhiều bộ (nhiều seed để lấy độ lệch chuẩn) làm sau.
+==============================================================================================================================================================================================
+PHẦN F - RỦI RO VÀ ĐIỂM CẦN NÓI TRUNG THỰC
+==============================================================================================================================================================================================
+F1. Lag có thể bị đẩy về yếu nhất. Như lead của MapPID (A2), tối ưu có thể đưa p1/z1 lên 0.9 hoặc z1 lên 120 rad/s vì trễ pha của lag làm giảm PM và tăng R; khi đó MapPIDLag gần bằng MapPID không
+lead, và kết luận là "lag sau tổng không đáng". Báo như kết quả âm, không nới cận để lag "có tác dụng".
+F2. Nhánh Map có thể bị tắt. Nếu tối ưu đưa K về gần 0 thì MapPIDLag trùng PID+Lag; L3 sai; báo thẳng.
+F3. Công bằng: phép so chính là MapPIDLag với PID+Lag (B3, D1). Nếu PID+Lag chưa xong thì KHÔNG được kết luận MapPIDLag hơn PID nhờ nhánh Map.
+F4. Đổi sau khi đã thấy kết quả: bộ này được đề xuất sau khi đã có kết quả MapPID (thấy lead ở cận dưới); ghi rõ thời điểm 2026-10-16 và lý do (A2, A3) trong bài nếu dùng. MapPID giữ nguyên làm
+kết quả chính đã có.
+F5. Ngân sách thực tế 930 lần đánh giá lớn hơn con số 800 trong QuyChuan 6.7 (đã báo ở MapPID F25); áp như nhau cho ba bộ tối ưu đồng thời.
+F6. Một seed nhiễu cho mỗi ca chấm (99999): chênh dưới khoảng 5 % là ngang nhau.
+==============================================================================================================================================================================================
+PHẦN G - NHẬT KÝ KẾT QUẢ (điền khi chạy xong từng bước)
+==============================================================================================================================================================================================
+G0. 2026-10-16: người dùng hỏi bỏ lead vì lead ở cận dưới; khung MapPID trình bày ba phương án (A: bỏ lead, lag vẫn trên nhánh Map; B: lag sau tổng; giữ nguyên). Người dùng chọn B, làm như MỘT BỘ
+MỚI, MapPID giữ nguyên; bảo lên kế hoạch trước, chưa làm, ghi nhật ký chi tiết để khung Linear đọc và làm đối chứng PID+Lag. Viết văn bản này; chưa mã, chưa chạy; chờ người dùng chốt Phần E.
+G1. 2026-10-16, 00:40-01:15, P0-P3 XONG. (1) Người dùng chốt E1-E7 (Phần E). (2) Mã mới trong Model/Controllers/MapPIDLag/: load_mappidlag.m; script/{build_mappidlag, test_mappidlag,
+mappidlag_variables, mappidlag_design_variables, mappidlag_plants, mappidlag_margins, test_mappidlag_margins, mappidlag_u2x, mappidlag_x2u, mappidlag_eval, optimize_mappidlag, refine_mappidlag,
+select_mappidlag, run_mappidlag_cases, check_mappidlag_loop}.m; dữ liệu Model/data/mappidlag.json (Ts_ctrl; design ghi bởi select_mappidlag). Dùng lại hàm chung: map_variables,
+calibrate_map_cached, map_table, map_params, map_op_points, map_plant_lin (khung Map), calib_run, calib_margin, calib_bangbang, run_cases, build_closed_loop (khung chung). Không đụng file nào của
+MapPID. build_mappidlag tự đặt tên model (pick_model_name.m không còn trong Model/common).
+G2. Kiểm thử P1-P3. test_mappidlag PASS: ba trường hợp (bảng Map qua lag, PID qua lag, cả hai nhánh với T_a_lim chặn) lệch với đệ quy độc lập tối đa 2.7e-13 N.m (Simulink so với đệ quy viết tay
+trong file test, đọc map.json và ref.json). test_mappidlag_margins PASS: lag bằng 1 cho cùng PM, GM, độ lợi cao tần với mappid_margins (lead bằng 1) sai số dưới 1e-9; PID có lag khớp vòng tính độc
+lập ở PM 23.6978 và GM 22.8449 trên hai mô hình. check_mappidlag_loop (đóng vòng, CALIB, seed 50000): với PID = 0 và lag bằng 1, MapPIDLag trùng Map (bảng không lead-lag) tới 6 chữ số (R 26.2221,
+S 0.358925, TV 20.6384); với K = 0 và PID của pid.json, trùng PID tới 1e-4 trên R, S (R 11.6341 so với 11.633; TV lệch 7e-4 tương đối do bộ giải bước biến đổi và nhiễu, MapPID lệch 0); ngưỡng kiểm
+đóng vòng đặt 1e-3. Bộ nhớ đệm 68 mô hình tuyến tính tự tính lại một lần (khoảng 5 phút).
+G3. Điểm thử trước khi chạy (seed 50000, không dùng để chọn): lấy tham số MapPID đổi sang cấu trúc mới x = [K 3.5, z1 35, p1/z1 0.4, Kp 0.6, Ki 44, Kd 0.045, Tf 2.5 ms] cho J 3.392 (R 11.08 %, S
+0.3061, e_rel 1.88 %, PM tuyến tính 15.5 độ, GM 11.5, độ lợi cao tần 8.84); PID cũ qua lag (K = 0, Kp 1.5, Ki 32, Kd 0.025) cho J 4.18 (R 14.09 %, S 0.2969); một điểm hung hăng bị loại ở sàng
+tuyến tính (PM -10.7 độ). Chỉ để kiểm hàm đánh giá hoạt động.
+G4. Sự cố và bài học khi chạy (2026-10-16 01:00-01:10). (a) Khung Linear chạy song song 3-4 MATLAB (optimize_pidlag) cùng máy: RAM trống chỉ 3 GB, bộ nhớ cam kết 48.6 trên 55.1 GB, nên cổng RAM
+của khung MapPID đổi từ "RAM trống từ 8 GB" sang "khoảng trống = nhỏ hơn của (RAM trống, hạn mức cam kết trừ đã cam kết) từ 7 GB" và các chuỗi của khung MapPID chờ tới khi khung Linear xong lượt.
+(b) LỖI CỦA KHUNG MapPID: lệnh "dừng mọi MATLAB trừ MATLAB của trình soạn thảo" lúc 01:03 đã tắt các MATLAB của khung Linear (3-4 job optimize_pidlag; ban đầu tôi tưởng là MATLAB treo sau khi xong
+do các tiến trình bắt đầu 00:50-00:57 trông như tiến trình ma của các lần thử của tôi) cùng một lần nữa lúc 01:03:30; các vỏ chạy của khung Linear tự thử lại (bắt đầu lại 01:04), checkpoint và csv
+giữ tiến độ nên mất không quá vài phút mỗi job; từ đó khung MapPID chỉ dừng tiến trình có tên mappidlag. (c) Bộ canh RAM guard_ram.ps1 (dừng MATLAB mới nhất khi RAM trống dưới 3 GB) đang chạy
+chung cho cả hai khung và đã dừng job thứ tư của khung Linear vài lần; chỉ chạy được khoảng 3 MATLAB cùng lúc. (d) MATLAB thoát bằng heap corruption có thể để tiến trình treo 2 GB; vỏ chạy mới tự
+dừng tiến trình cùng job sau khi MATLAB trả về.
+G5. Đường ống chạy (scratchpad lag_master.sh): ba chuỗi MapPIDLag (surrogateopt 250 lần rồi patternsearch 60 lần mỗi chuỗi, seed 50000), tự khởi động khi đủ bộ nhớ; rồi select_mappidlag(true,
+MapPIDLag) (ghi design vào mappidlag.json), rồi run_mappidlag_cases (DRY, RAMP, SLIP, EDGE, WEAVE một seed 50000, kết quả Result/Controllers/MapPIDLag/Cases). Chưa có kết quả ở thời điểm ghi mục
+này.
+G6. P4-P6 XONG (2026-10-16 01:05-05:44; các chuỗi chờ bộ nhớ vì khung Linear chạy 3-4 MATLAB cùng lúc). Ba chuỗi surrogateopt 250 lần + patternsearch 60 lần (929 lần đánh giá, 816 mô phỏng, 781
+điểm khả thi), seed 50000. J tốt nhất mỗi chuỗi 3.016, 3.021, 3.093 (cả ba trong 3 % của J* = 3.016; chênh nhau 2.5 %). Vùng tối ưu (J trong 5 % của J*) có 534 thiết kế: K 2.3-7.1, z1 10-120,
+p1/z1 0.43-1, Kp 0.16-1.4, Ki 39-89, Kd 0.029-0.05 (cận trên), Tf 1-6 ms. ĐIỂM CHỌN (sau điều kiện PM từ 30 độ, GM từ 2 và calib_margin; ghi vào Model/data/mappidlag.json): K 3.252, z1 35.49, p1
+33.56 (p1/z1 = 0.946, TỨC LAG GẦN NHƯ TẮT: độ lợi tại 2 Hz 0.993), Kp 0.471, Ki 63.2, Kd 0.0471, Tf 2.23 ms, Kaw 16.98; CALIB seed 50000: R 9.19 %, S 0.3318, J 3.048 (cao hơn J* 1.1 %; điểm tốt
+nhất J* có PM 26 độ nên bị loại bởi PM từ 30), seed 50001 J 3.063; e_rel 1.44 %; PM tuyến tính 31.6 độ, GM 6.05, độ lợi cao tần 23.47 (MapPID 20.66); calib_margin PASS (độ lợi x2: R x0.27; trễ +1
+ms: R x1.01); bang-bang f 0.038 lý tưởng, 0.040 có nhiễu, chênh 0.002; trợ lực ngược CALIB 11.85 %; ràng buộc chặn: PM gần 30 độ. Lân cận cộng trừ 0.01: 6 trong 14 điểm khả thi có J nhỏ hơn (chênh
+nhỏ). Seed 50001: J của 10 thiết kế tốt nhất đổi từ -1 đến +2.7 %. SO VỚI MapPID trên CALIB (seed khác nhau, J lệch nhau cỡ độ phân tán seed 1-2 %): J 3.048 so với 3.072, tức ngang nhau.
+G7. P8: DREWS MỘT seed local 50000 (run_mappidlag_cases, Result/Controllers/MapPIDLag/Cases/MapPIDLag_metrics_s50000.csv). RMS e_T cả ca (N.m), S (N.m), TV (N.m/s), trợ lực ngược (%) của
+MapPIDLag: DRY 0.139, 0.248, 79.8, 6.9; RAMP 0.056, 0.149, 84.4, 6.0; SLIP 0.171, 0.310, 81.8, 4.2; WEAVE 0.217, 0.375, 79.3, 26.9; EDGE 0.169, 0.327, 79.2, 7.1. Sai số xác lập lớn nhất trên cửa
+sổ: DRY 1.63 %, RAMP 0.20 %, EDGE 0.25 %. Đỉnh |T_a| so với T_a,max: DRY 108 %, RAMP 108 %, EDGE 100 % (MapPID cùng mức). ĐỐI CHIẾU THÔ (KHÔNG PHẢI SO SÁNH CHÍNH THỨC: seed khác, một seed mỗi ca),
+MapPID ở seed 99999 / seed 30000 của nó: RMS e_T DRY 0.137 / 0.134, RAMP 0.049 / 0.042, SLIP 0.140 / 0.137, WEAVE 0.213 / 0.215, EDGE 0.140 / 0.144; S DRY 0.206 / 0.201, RAMP 0.119 / 0.115, SLIP
+0.246 / 0.240, WEAVE 0.312 / 0.315, EDGE 0.253 / 0.255; TV DRY 73.3. PID (seed 99999): RMS e_T 0.155, 0.047, 0.130, 0.218, 0.166; S 0.256, 0.125, 0.305, 0.410, 0.325; TV DRY 52.7. Đọc: MapPIDLag
+bám ngang MapPID ở DRY và WEAVE, kém ở SLIP (0.171 so với 0.137) và EDGE (0.169 so với 0.144), và ỒN HƠN MapPID 20-30 % (S DRY 0.248 so với 0.206) nhưng vẫn ít ồn hơn PID ở DRY, WEAVE, EDGE.
+G8. Giả thuyết L1-L6 (B6) với số một seed (chênh dưới khoảng 5 % coi là ngang nhau; seed khác nên chỉ là chỉ dẫn): L1 (S DRY thấp hơn MapPID ít nhất 5 %) SAI, 0.248 so với 0.206 (cao hơn 20 %); L2
+(RMS e_T không quá 1.05 lần MapPID ở cả năm ca) SAI, SLIP 1.25 lần, EDGE 1.2 lần, RAMP 1.14 lần; L3 (J CALIB nhỏ hơn hoặc bằng 0.95 lần PID+Lag) CHƯA KIỂM, chờ PIDLag của khung Linear (cùng seed
+99999, nhiều seed); L4 (trợ lực ngược WEAVE nhỏ hơn PID 25.7 %) SAI, 26.9 %; L5 (e_rel RAMP, EDGE dưới 1 %) ĐÚNG, 0.20 và 0.25 %; L6 (TV DRY nhỏ hơn MapPID 73.3) SAI, 79.8. KẾT LUẬN TRUNG THỰC:
+đặt khâu lag sau tổng KHÔNG cho kết quả tốt hơn MapPID. Khi cho phép p1/z1 tới 1, tối ưu tự tắt gần hết lag (p1/z1 0.946 ở điểm chọn; trong vùng J trong 5 % có cả p1/z1 = 1), nên MapPIDLag gần như
+MapPID không lead và không lag; nó đạt J CALIB ngang MapPID nhưng trên DREWS ồn hơn 20-30 % và bám kém ở SLIP, EDGE (chỉ một seed, chưa có độ lệch chuẩn). Điểm đáng chú ý: khâu lead và lag của
+MapPID đều bị tối ưu đẩy về yếu nhất, tức hai khâu đó gần như không đóng góp; thông tin này nên báo trong bài. Điểm chọn có độ lợi cao tần 23.5 so với 20.7 của MapPID (Kd chạm cận trên 0.05 trong
+vùng tối ưu) nên ồn hơn là hợp lý. Việc còn lại: P7 (độ bền) và P9 (so sánh Map, PID, MapPID, PIDOpt, PIDLag, MapPIDLag ở seed 99999 và nhiều seed) khi người dùng bảo.
+G9. 2026-10-16 (người dùng bảo tổng kết so với Map, PID, MapPID): MapPIDLag chạy thêm ở seed chung 99999 (một seed, Result/Controllers/MapPIDLag/Cases/*_s99999.*), cùng seed với Map, PID, MapPID.
+RMS e_T Map / PID / MapPID / MapPIDLag (N.m): DRY 0.689 / 0.155 / 0.137 / 0.151; RAMP 0.835 / 0.047 / 0.049 / 0.064; SLIP 0.538 / 0.130 / 0.140 / 0.159; WEAVE 1.327 / 0.218 / 0.213 / 0.213; EDGE
+1.534 / 0.166 / 0.140 / 0.151. S: DRY 0.149 / 0.256 / 0.206 / 0.263; RAMP 0.168 / 0.125 / 0.119 / 0.149; SLIP 0.162 / 0.305 / 0.246 / 0.312; WEAVE 0.160 / 0.410 / 0.312 / 0.359; EDGE 0.130 / 0.325
+/ 0.253 / 0.311. TV ở DRY 78.2 / 52.7 / 73.3 / 80.1; trợ lực ngược WEAVE 0.05 / 25.7 / 26.3 / 26.9 %; |e_rel| lớn nhất RAMP 46.7 / 0.29 / 0.16 / 0.16 %, EDGE 99.7 / 0.44 / 0.18 / 0.12 %. Tỉ số
+MapPIDLag / MapPID: RMS e_T 1.11, 1.31, 1.14, 1.00, 1.08 và S 1.28, 1.25, 1.27, 1.15, 1.23 (DRY, RAMP, SLIP, WEAVE, EDGE): MapPIDLag kém MapPID ở cả bám lẫn ồn. So với PID: bám 0.98, 1.36, 1.22,
+0.98, 0.91 lần; ồn 1.03, 1.19, 1.02, 0.88, 0.96 lần: ngang PID, không vượt. Một seed mỗi ca: chênh dưới khoảng 5 % là ngang nhau.

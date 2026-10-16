@@ -1,0 +1,44 @@
+{
+  "Ts_ctrl": 0.001,
+  "note": "MapPIDLag: Map branch + PID branch summed, then one lag (s/z1+1)/(s/p1+1). design = MapPIDLag (K free), pidlag.design = PID + lag reference (K = 0). Written by select_mappidlag.m. See Documents/Notes/Controllers/DieuKhien_MapPIDLag.txt.",
+  "design": {
+    "Kmax": 3.25166822859037,
+    "Ts0": 0.3,
+    "lag": {
+      "z1": 35.4884226419459,
+      "p1": 33.5608575980371
+    },
+    "Kp": 0.471298570385371,
+    "Ki": 63.2229997443272,
+    "Kd": 0.0470579921283795,
+    "Tf": 0.00223071445974278,
+    "Kaw": 16.981886532461434,
+    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), same method and constraints as MapPID",
+    "CALIB_R_pct": 9.186852477,
+    "CALIB_S_Nm": 0.3317997713,
+    "CALIB_TV_Nm_per_s": 81.29116053,
+    "CALIB_erel_pct": 1.438769232,
+    "CALIB_rev_pct": 11.85467952,
+    "CALIB_J": 3.0481955508354384,
+    "seed_50001_R_pct": 9.14309864185119,
+    "seed_50001_S_Nm": 0.33504269719846685,
+    "seed_50001_erel_pct": 1.8036590958322003,
+    "PM_deg": 31.589493303943641,
+    "GM": 6.04522911065073,
+    "HF_gain": 23.470424850369582,
+    "lag_gain_2Hz": 0.9934813972106642,
+    "margin_ratio_gain": 0.26590092958542166,
+    "margin_ratio_delay": 1.0070193868875614,
+    "bangbang": {
+      "f_ideal": 0.0377388022712846,
+      "f_noisy": 0.039669220267649845,
+      "delta": 0.0020782427978887109,
+      "spread": 0.00029564960304693383
+    },
+    "n_evaluations": 929,
+    "n_simulations": 816,
+    "design_seed": 50000,
+    "map_source_date": "2026-10-11 20:55:26",
+    "date": "2026-10-16 05:39:59"
+  }
+}

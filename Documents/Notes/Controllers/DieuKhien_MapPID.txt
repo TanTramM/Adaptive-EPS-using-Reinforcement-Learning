@@ -303,3 +303,5 @@ F27. PHÁT HIỆN khi tính PM của PI bằng cùng cách (robust_mappid, 68 m�
 % thì PM -1.0 độ, GM 0.94 (mất ổn định tuyến tính). Trong khi đó PI qua cổng mô phỏng calib_margin (độ lợi nhân 2: R x0.58). Mâu thuẫn chưa giải thích: có thể mô hình tuyến tính 68 điểm (gồm độ
 dốc ma sát) khắt khe hơn hệ phi tuyến, hoặc cách tính khác với pi_margins.m của khung Linear (tính trên hai mặt đường k_r 30 và 0). KHÔNG sửa gì của PI (khung Linear); chờ người dùng quyết định.
 Nếu áp PM từ 30 độ cho cả bốn bộ như D14 thì PI hiện KHÔNG đạt.
+F28. 2026-10-16: người dùng hỏi bỏ khâu lead (nằm ở cận dưới z 5, p/z 1.2, bù pha tối đa 5.2 độ) và chọn hướng "Map cộng PID rồi lag sau tổng" làm MỘT BỘ MỚI tên MapPIDLag; MapPID GIỮ NGUYÊN (mã,
+mappid.json, kết quả, văn bản này không đổi ngoài mục này). Kế hoạch bộ mới và đối chứng PID+Lag (khung Linear) ở Documents/Notes/Controllers/DieuKhien_MapPIDLag.txt; chưa mã, chưa chạy.
