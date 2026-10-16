@@ -1,0 +1,42 @@
+{
+  "x_note": "MapOpt controller data: the Map assist table with lead and lag, designed by simultaneous optimisation of J = R*S (the MapPID method), a new controller separate from Map. Ts_ctrl [s]. The dry-road calibration points are read from data/map.json (data, not design). design: written by Controllers/MapOpt/script/select_mapopt.m: Kmax, Ts0, lead {z, p}, lag {z1, p1} [rad/s]. Absent: load_mapopt.m loads the Map design of map.json (the check of build_mapopt / test_mapopt).",
+  "Ts_ctrl": 0.001,
+  "design": {
+    "Kmax": 7.07342810621007,
+    "Ts0": 0.3,
+    "lead": {
+      "z": 39.6782446040261,
+      "p": 427.64797646190959
+    },
+    "lag": {
+      "z1": 41.1941419171607,
+      "p1": 11.543724202057776
+    },
+    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), the MapPID method; PM >= 30, GM >= 2, calib_margin",
+    "CALIB_R_pct": 26.3533069,
+    "CALIB_S_Nm": 0.2177622666,
+    "CALIB_TV_Nm_per_s": 48.88442587,
+    "CALIB_erel_pct": 1.669518088,
+    "CALIB_rev_pct": 0.1234771872,
+    "CALIB_J": 5.73875584294942,
+    "seed_00001_R_pct": 26.305126974572016,
+    "seed_00001_S_Nm": 0.21739636675698229,
+    "seed_00001_erel_pct": 1.7059237708643027,
+    "PM_deg": 33.117624471674588,
+    "GM": 6.2825747855649281,
+    "HF_gain": 21.363597945859379,
+    "lag_gain_2Hz": 0.70728280468187987,
+    "margin_ratio_gain": 0.81913976554820467,
+    "margin_ratio_delay": 1.0011217414305684,
+    "bangbang": {
+      "f_ideal": 8.6955765602038248E-6,
+      "f_noisy": 8.6955765602038248E-6,
+      "delta": 0,
+      "spread": 0
+    },
+    "n_evaluations": 928,
+    "n_simulations": 809,
+    "design_seed": 0,
+    "date": "2026-10-16 17:13:50"
+  }
+}

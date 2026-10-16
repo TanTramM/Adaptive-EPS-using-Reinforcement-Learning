@@ -305,3 +305,81 @@ dốc ma sát) khắt khe hơn hệ phi tuyến, hoặc cách tính khác với 
 Nếu áp PM từ 30 độ cho cả bốn bộ như D14 thì PI hiện KHÔNG đạt.
 F28. 2026-10-16: người dùng hỏi bỏ khâu lead (nằm ở cận dưới z 5, p/z 1.2, bù pha tối đa 5.2 độ) và chọn hướng "Map cộng PID rồi lag sau tổng" làm MỘT BỘ MỚI tên MapPIDLag; MapPID GIỮ NGUYÊN (mã,
 mappid.json, kết quả, văn bản này không đổi ngoài mục này). Kế hoạch bộ mới và đối chứng PID+Lag (khung Linear) ở Documents/Notes/Controllers/DieuKhien_MapPIDLag.txt; chưa mã, chưa chạy.
+F29. 2026-10-16: người dùng chốt phương pháp chọn mới cho MỌI bộ (Documents/Shared/KeHoach_ChonNhieuSeed.txt: tìm trên seed x0000, nhóm top 20, chọn trên 5 seed x0001-x0005, chấm DREWS trên 5 seed
+99999-99995), mọi bản chạy lại mang hậu tố Opt, gác MapPIDLag và PIDLag, và chốt NỚI CẬN khâu lead và lag về 1 (p/z từ 1, p1/z1 tới 1). MapPID làm trước theo cách này dưới tên MapPIDOpt; kế hoạch
+chi tiết ở Phần G. Kết quả MapPID hiện có (F20-F27, một seed) GIỮ NGUYÊN làm bản cũ.
+==============================================================================================================================================================================================
+PHẦN G - KẾ HOẠCH MAPPIDOPT: CHẠY LẠI MAPPID VỚI CẬN LEAD, LAG NỚI VỀ 1 VÀ CHỌN TRÊN NHIỀU SEED (viết 2026-10-16, CHƯA LÀM)
+==============================================================================================================================================================================================
+G1. Mục đích. (a) Kiểm xem MapPID có thật cần khâu lead và khâu lag không: ở lần chạy cũ khâu lead kẹt ở cận dưới (z 5.01 rad/s, p/z 1.2) tức tối ưu muốn lead yếu hơn nữa, nên cận được nới về 1 để
+tối ưu tự tắt được; (b) chọn điểm theo phương pháp chung mới (1 seed tìm, 5 seed chọn, 5 seed chấm) để so được với MapOpt và PIDOpt cùng cách. MapPID làm trước để thử quy trình và hàm dùng chung,
+rồi các khung khác làm theo.
+G2. Quyết định đã chốt áp cho MapPIDOpt (người dùng 2026-10-16): seed tìm 30000; seed chọn 30001, 30002, 30003, 30004, 30005 (tỉ lệ 1 : 5); seed 30000 không tính vào trung bình chọn; nhóm top 20
+điểm khác nhau; cổng e_rel nhỏ hơn hoặc bằng 5 % ở MỌI một trong 5 seed chọn; hòa khi J trung bình chênh nhỏ hơn độ lệch chuẩn giữa seed thì chọn PM tuyến tính lớn hơn; chấm DREWS trên 99999,
+99998, 99997, 99996, 99995; tên bộ MapPIDOpt (hậu tố Opt cho mọi bản chạy lại). Mọi cổng khác giữ như D13, D14: khi tìm PM lớn hơn 0 và GM từ 1, điểm cuối PM từ 30 độ và GM từ 2 trên 68 mô hình x
+5 độ dốc, độ lợi lag 2 Hz từ 0.707, Tf nhỏ hơn hoặc bằng 79.6 ms, calib_margin cho điểm chọn, vùng chết 0.3 N.m cố định, Kaw = Ki / (Kp + K).
+G3. Cấu trúc và chín biến: giữ nguyên MapPID (T_a = H sgn(T_s) M_K(v, |T_s|) + u_PID, H = lead x lag CHỈ trên nhánh Map, model MapPID.mdl không đổi). Cận (bốn dòng đổi so với C2: p/z, p1/z1, Kd,
+Tf; người dùng chốt 2026-10-16; cơ sở các cận xem G11):
+  K       0 - 16                                             (giữ)
+  z       5 - 500 rad/s                                      (giữ)
+  p/z     1 - min(300, 3142/z)        ĐỔI: cận dưới 1.2 -> 1 (p/z = 1: khâu lead bằng 1, không còn lead)
+  z1      8 - 120 rad/s                                      (giữ)
+  p1/z1   max(0.1, 3/z1) - 1          ĐỔI: cận trên 0.9 -> 1 (p1/z1 = 1: khâu lag bằng 1, không còn lag)
+  Kp      0 - 3;  Ki 0.5 - 200 1/s                          (giữ)
+  Kd      0 - 0.5 s                  ĐỔI: cận trên 0.05 -> 0.5 (người dùng chốt); THANG: xem G10 (đề xuất log, chờ xác nhận)
+  Tf      1 ms - 79.6 ms             ĐỔI: cận trên 20 ms -> 79.6 ms = trần của ràng buộc dải lái (độ lợi bộ lọc tại 2 Hz từ 0.707); thang log; đáy 1 ms = chu kỳ điều khiển, không nới được
+G4. Suy biến (người dùng nêu 2026-10-16): khi p/z tiến về 1 thì H chỉ còn khâu lag (lag đơn); khi p1/z1 tiến về 1 thì H chỉ còn khâu lead (lead đơn); cả hai về 1 thì nhánh Map chỉ còn bảng M_K,
+không khâu bù. Lúc đó z (hoặc z1) không còn tác dụng, là hướng phẳng của J, nên giá trị z (z1) của điểm chọn không có nghĩa và không báo như một tham số thiết kế. Quy ước báo (đặt trước): coi là
+KHÔNG CÒN LEAD khi p/z nhỏ hơn 1.02 (bù pha tối đa dưới 0.6 độ, độ lợi cao tần dưới 1.02); KHÔNG CÒN LAG khi p1/z1 lớn hơn 0.98. Kết quả nào cũng chấp nhận, không nới thêm cận để lead hay lag "có
+tác dụng".
+G5. Dự đoán ghi trước khi chạy (để không đọc kết quả theo ý muốn): (a) lead về gần 1 (vì lần cũ kẹt ở 1.2, và MapPIDLag không lead cho J ngang); (b) lag vẫn hoạt động, p1/z1 khoảng 0.4 như lần cũ
+(vì nó lọc nhánh Map); (c) J trung bình trên 5 seed lệch không quá 2 % so với J cũ 3.072 (seed 30000). Sai dự đoán nào cũng báo.
+G6. Thay đổi mã (chỉ trong Model/Controllers/MapPID/script, không đổi model, không đổi kết quả cũ):
+  - mappid_u2x.m, mappid_x2u.m: thêm tham số cấu hình cận (bộ cận cũ C2 mặc định, bộ cận Opt theo G3) để kết quả cũ vẫn tái lập được.
+  - mappid_eval.m: điều kiện cấu trúc đổi thành p nhỏ hơn z hoặc p1 lớn hơn z1 là sai (cho phép bằng, tức khâu bằng 1); thêm tham số thư mục và tên kết quả.
+  - optimize_mappid.m, refine_mappid.m: tham số tên bộ (MapPID hoặc MapPIDOpt) và cấu hình cận; file Result/Controllers/MapPIDOpt/Calib/MapPIDOpt_CALIB_opt<k>_s30000.csv, ref<k>.
+  - load_mappid.m: biến base MapPID_source chọn file thiết kế (mặc định mappid.json, hoặc mappidopt.json); Model/data/mappidopt.json mới (Ts_ctrl, design ghi bởi bước chọn).
+  - Model/common/select_multiseed.m (hàm chọn nhiều seed DÙNG CHUNG cho mọi bộ, KeHoach_ChonNhieuSeed.txt 6.1): giai đoạn 2-4; MapPIDOpt là bộ đầu tiên dùng.
+  - run_mappidopt_cases.m: chạy DREWS 5 seed bằng run_scoring_seeds trên Model_MapPID với biến của mappidopt.json, rồi chuyển file sang Result/Controllers/MapPIDOpt/Cases/ với tên
+    MapPIDOpt_<CA>_..._s<seed> (cùng cách đã kiểm ở run_mappidlag_cases: cất file MapPID cũ, chạy, chuyển, trả lại); tiêu đề trong hình vẫn ghi MapPID, ghi chú điều này.
+  - Kiểm trước khi chạy: (a) test_mappid PASS (model không đổi); (b) mappid_eval với bộ cận cũ cho lại đúng J của 3 dòng bất kỳ trong csv cũ ở seed 30000 (tái lập tới 1e-4); (c) lead bằng 1 (p =
+    z): mappid_margins cho cùng PM, GM như khi bỏ lead (đã kiểm ở test_mappidlag_margins, chạy lại một lần); (d) select_multiseed chạy thử trên dữ liệu MapPID cũ (giai đoạn 2-3 với 2 điểm x 2
+    seed) để kiểm cột và tên file.
+G7. Các bước (chỉ bắt đầu khi người dùng bảo; xong bước nào ghi một mục F):
+  N0. Người dùng duyệt Phần G (và điều còn mở G9).
+  N1. Sửa mã và kiểm theo G6 (khoảng 1-2 giờ làm, vài phút máy).
+  N2. Giai đoạn 1 - tìm: ba chuỗi độc lập (rng 1001, 1002, 1003; chuỗi 2, 3 tự cấp 30 điểm đầu ngẫu nhiên riêng) surrogateopt 250 lần rồi patternsearch 60 lần, seed 30000, cận Opt. KHÔNG gộp các
+    lần đánh giá cũ của MapPID vào (giữ mọi bộ cùng một ngân sách và cùng cách; dữ liệu cũ chỉ để đối chiếu). Khoảng 2-2.5 giờ nếu máy rảnh (3 MATLAB song song).
+  N3. Giai đoạn 2 - nhóm top: gộp ba chuỗi; giữ điểm có mô phỏng, e_rel nhỏ hơn hoặc bằng 5 %, PM từ 30 độ, GM từ 2, lag 2 Hz từ 0.707; xếp theo J ở 30000; lấy 20 điểm khác nhau (cách nhau ít nhất
+    0.02 theo một biến chuẩn hóa); kiểm hội tụ: J tốt nhất của ba chuỗi chênh dưới 3 %. File MapPIDOpt_CALIB_top_s30000.csv.
+  N4. Giai đoạn 3 - chọn: 20 điểm x 5 seed (30001-30005) = 100 lần CALIB (khoảng 40 phút một MATLAB, hoặc khoảng 15 phút chia ba MATLAB theo seed); J_k, J trung bình, độ lệch chuẩn mẫu; cổng e_rel
+    ở mọi seed; chọn J trung bình nhỏ nhất, quy tắc hòa theo PM. File MapPIDOpt_CALIB_best_s30001-s30005.csv.
+  N5. Giai đoạn 4 - kiểm điểm chọn: calib_margin seed 30001 (không qua thì lấy điểm kế), calib_bangbang, trợ lực ngược, PM, GM, độ lợi cao tần, ràng buộc đang chặn (biên hộp, PM, dải lái), lead và
+    lag còn hay suy biến (G4), hạng của điểm chọn ở seed 30000, tương quan hạng giữa J ở 30000 và J trung bình trên 20 điểm, vùng tối ưu (các điểm top có J trung bình trong 5 %). Ghi design vào
+    mappidopt.json; file MapPIDOpt_CALIB_pick_ms.csv.
+  N6. Giai đoạn 5 - DREWS trên 5 seed 99999-99995 (khoảng 30 phút), Result/Controllers/MapPIDOpt/Cases/MapPIDOpt_metrics_s<seed>.csv; bảng trung bình và độ lệch chuẩn từng ca.
+  N7. Đọc kết quả: so với MapPID cũ trên cùng 5 seed chấm (chạy thêm MapPID cũ ở 99998-99995, khoảng 25 phút, để so theo cặp); trả lời G1 (cần lead, lag không) và G5. So với MapOpt, PIDOpt để sau,
+    khi các bộ đó xong (giai đoạn 6 chung).
+  N8. Tài liệu: mục F cho từng bước, nhật ký Tracking/historychat_mappid.md; báo khung Linear và Map rằng select_multiseed.m dùng được.
+G8. Thời gian máy: N2 khoảng 2-2.5 giờ (máy rảnh) hoặc lâu hơn nếu các khung khác cùng chạy (đêm 2026-10-16: 5 giờ), N4 15-40 phút, N5 vài phút, N6 khoảng 30 phút, N7 khoảng 25 phút: tổng khoảng
+một đêm. Tuân thủ Phần 7 của KeHoach_ChonNhieuSeed.txt (xếp hàng bộ nhớ, Simulink.sdi.clear, TEMP ở ổ D, không dừng MATLAB của khung khác).
+G9. Còn mở: (a) K, Kp, Ki, z, z1 giữ cận cũ (vùng tối ưu cũ còn cách xa biên, G11). QUY TẮC MỞ RỘNG đặt trước (cùng tinh thần quy tắc lưới của QuyChuan 6.1: điểm chọn ở biên thì mở rộng): sau khi
+chạy giai đoạn 1, nếu hơn 5 % số thiết kế trong vùng tối ưu (J trong 5 % của nhỏ nhất) nằm trong 5 % phía biên của một biến (đo theo thang của biến) thì nới biến đó gấp đôi và chạy lại các chuỗi,
+tối đa MỘT lần; ngoại lệ không nới được: đáy Tf = 1 ms (chu kỳ điều khiển), p nhỏ hơn hoặc bằng 3142 rad/s (Nyquist), p1 từ 3 rad/s, đỉnh Tf = 79.6 ms (ràng buộc dải lái) và p/z từ 1, p1/z1 tới 1
+(khâu bằng 1 là suy biến). (b) Việc chạy lại giai đoạn 1 cho PIDOpt và MapOpt với cùng quy ước cận là việc của khung Linear và Map, ghi ở KeHoach_ChonNhieuSeed.txt khi người dùng chốt.
+G10. Thang của Kd và mở rộng ngân sách khi chưa hội tụ (ĐỀ XUẤT của khung MapPID sau khi người dùng chốt Kd tới 0.5; chờ xác nhận):
+  (a) Kd trên THANG LOG, không tuyến tính. Vùng tối ưu cũ ở Kd 0.025-0.05; nếu giữ thang tuyến tính 0-0.5 thì vùng đó chỉ chiếm 5-10 % hộp, và lưới đầu 0.05 của patternsearch (tương đối theo hộp)
+    thành bước 0.025 cho Kd, thô gần bằng cả vùng. Đề xuất ánh xạ: u dưới 0.01 thì Kd = 0 (giữ khả năng bộ không có khâu D, thành PI nhánh PID), ngược lại Kd = 10^(log10(1e-3) + t (log10(0.5) -
+    log10(1e-3))) với t = (u - 0.01)/0.99 (Kd từ 1 mN.m.s tới 0.5 s, 2.7 thập phân). Cùng ánh xạ cho MapOpt (không dùng Kd) và PIDOpt khi nới cận.
+  (b) Cận lớn không làm thuật toán nguy hiểm: độ lợi cao tần Kd / Tf lớn (tới 500 với Tf = 1 ms) bị phạt qua S trong J, thiết kế mất ổn định bị sàng tuyến tính loại không tốn mô phỏng; nhưng hộp
+    rộng làm tìm chậm hội tụ hơn, nên điều kiện hội tụ (ba chuỗi có J tốt nhất chênh dưới 3 %) có thể không đạt ở 250 + 60 lần. QUY TẮC ĐẶT TRƯỚC: nếu không đạt thì mỗi chuỗi chạy tiếp thêm 150
+    lần surrogateopt (chạy tiếp được từ checkpoint) rồi 60 lần patternsearch, tối đa MỘT lần; sau đó báo kết quả dù hội tụ hay không. Ngân sách tối đa khoảng 1500 lần đánh giá, cùng cho mọi bộ
+    Opt.
+  (c) CÙNG HỘP cho mọi bộ Opt (MapOpt, PIDOpt, MapPIDOpt): các cận và thang trong G3, G10(a) áp cho cả ba để so được. PIDOpt (khung Linear) đã tìm với Kd tới 0.05 nên phải chạy lại giai đoạn 1 với
+    hộp mới khi khung Linear làm; MapOpt chưa chạy nên dùng ngay hộp mới. Ghi vào KeHoach_ChonNhieuSeed.txt (Phần 5) khi người dùng bảo.
+G11. Cơ sở các cận (tra 2026-10-16, vùng tối ưu = thiết kế có J trong 5 % của nhỏ nhất ở seed 30000 và 50000). K 0-16: K lớn nhất mà Map đứng một mình còn thiết kế được lead-lag khả thi (g_min
+0.6, DieuKhien_Map.txt), không phải trần của MapPID; vùng tối ưu 1.7-7.1, không chạm. Kp 0-3: phán đoán dựa trên PI cũ (ổn định tới Kp 0.5) và lưới PID cũ (tới 2, chọn 1.5); vùng 0.04-1.4. Ki
+0.5-200: PI cũ tối đa 8, lưới PID cũ tới 48 (nhiều điểm tốt dính biên 48), PID chọn 32; vùng 31-89. Kd 0-0.05: gấp đôi PID cũ (0.025), lưới PID cũ tới 0.08; MapPIDLag CHẠM (203 trên 534 thiết kế
+trong 5 % phía trên của hộp, điểm chọn 0.047), MapPID tiến sát (tối đa 0.0472). Tf 1-20 ms: đáy 1 ms là chu kỳ điều khiển (vật lý), đỉnh 20 ms là phán đoán, trần thật là 79.6 ms của ràng buộc dải
+lái; vùng 1.0-9.2 ms, chạm đáy ở MapPIDLag. z 5-500, z1 8-120: lấy cùng cận design_leadlag.m (phán đoán: dưới 5 rad/s lead tác động ngay trong dải lái 0.2-2 Hz); khi lead bằng 1 thì z vô nghĩa nên
+vùng z rộng (5-399) là bình thường.

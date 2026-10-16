@@ -1,0 +1,161 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH CHỌN THAM SỐ NHIỀU SEED CHO MỌI BỘ ĐIỀU KHIỂN (TÌM TRÊN 1 SEED, CHỌN TRÊN 5 SEED, CHẤM TRÊN 5 SEED) - bản 1, 2026-10-16
+==============================================================================================================================================================================================
+Văn bản DÙNG CHUNG cho mọi khung chat (Map, Linear, MapPID, SMC, MapSMC, COMMON): ghi đầy đủ phương pháp mới người dùng chốt ngày 2026-10-16 để các khung đọc và làm theo, mỗi khung phần của mình
+(Phần 5). Viết bởi khung MapPID theo lời người dùng; người dùng đã trả lời 8 câu hỏi, các câu trả lời nằm ở Phần 2. Nếu mâu thuẫn với QuyChuan.txt thì sau khi QuyChuan được cập nhật (Phần 9)
+QuyChuan ưu tiên; hiện QuyChuan CHƯA sửa, văn bản này là nguồn duy nhất của phương pháp mới.
+TRẠNG THÁI: mới có kế hoạch. Chưa sửa QuyChuan.txt, Tracking/CLAUDE.md, chưa viết hàm chung, chưa chạy gì. Chỗ ghi [CẦN CHỐT] là điều còn để mở (Phần 11). Mọi khung chỉ bắt đầu phần của mình khi
+người dùng bảo.
+==============================================================================================================================================================================================
+PHẦN 1 - VÌ SAO LÀM VÀ ĐIỀU PHẢI GHI TRUNG THỰC
+==============================================================================================================================================================================================
+1.1. Hiện trạng. Map, PI, PID trong bài báo được chọn bằng QUÉT LƯỚI trên ca CALIB với MỘT seed nhiễu (61, 453, 824 cấu hình); MapPID, MapPIDLag, PIDOpt, PIDLag được chọn bằng TỐI ƯU ĐỒNG THỜI
+(surrogateopt rồi patternsearch) cũng trên MỘT seed local, cộng một seed thứ hai cho 10 điểm cuối. Hai vấn đề: (a) phương pháp chọn khác nhau giữa các bộ nên khi MapPID hơn PID không biết do cấu
+trúc hay do được tối ưu kỹ hơn; (b) chọn trên một seed nhiễu: J của 10 thiết kế tốt nhất đổi từ -1 % đến +2.7 % khi đổi sang seed thứ hai (MapPIDLag), tức xếp hạng các điểm cách nhau dưới khoảng 3
+% không đáng tin.
+1.2. Giải pháp người dùng chốt: MỌI bộ dùng CÙNG MỘT quy trình ba giai đoạn: tìm bằng tối ưu trên seed x0000 để lấy nhóm top, chọn điểm tốt nhất bằng trung bình J trên 5 seed x0001-x0005 (tỉ lệ 1
+: 5), rồi chấm các ca DREWS trên 5 seed chấm và báo trung bình cộng độ lệch chuẩn. Làm lại từ Map thuần, PID, MapPID và dùng cho mọi bộ sau này. Còn khoảng 2 tháng tới ngày bảo vệ luận văn nên quy
+trình được ĐÓNG BĂNG sau lần này.
+1.3. ĐÂY LÀ LẦN ĐỔI PHƯƠNG PHÁP SAU KHI ĐÃ THẤY KẾT QUẢ. Báo cáo, bài báo và luận văn phải nêu: lý do (đồng bộ phương pháp giữa các bộ; giảm nhiễu chọn trên một seed; có độ lệch chuẩn), thời điểm
+(2026-10-16), và rằng kết quả cũ (lưới, một seed) được giữ như bản cũ để đối chiếu. Không đổi cổng, ngưỡng hay quy tắc nào khác sau lần này mà không ghi lý do và thời điểm.
+==============================================================================================================================================================================================
+PHẦN 2 - CÁC QUYẾT ĐỊNH ĐÃ CHỐT (người dùng trả lời ngày 2026-10-16)
+==============================================================================================================================================================================================
+Q1-Q2. Tỉ lệ 1 : 5. Seed x0000 dùng để TÌM và lấy nhóm top; seed x0001, x0002, x0003, x0004, x0005 dùng để CHỌN điểm tốt nhất (x là chữ số đầu của dải seed của bộ đó). Thay cho đề xuất ban đầu 1 : 4.
+Q3. Seed x0000 KHÔNG tính vào trung bình khi chọn (nhóm top được lọc ra vì may trên x0000; tính vào sẽ thiên vị). J ở x0000 chỉ được báo cáo. Người dùng xác nhận.
+Q4. Hòa: hai điểm có J trung bình chênh nhỏ hơn độ lệch chuẩn giữa các seed thì coi là ngang nhau, chọn điểm có PM tuyến tính lớn hơn. Người dùng xác nhận.
+Q5. Map thuần: phương án A, tối ưu cả năm tham số (K, z, p/z, z1, p1/z1) trên J như các bộ khác, thay cho thiết kế khâu bù ngoại tuyến trên 68 mô hình rồi chỉ chọn K.
+Q6. BỎ PI khỏi so sánh, bài báo và luận văn. Mã và kết quả PI giữ trong git như lịch sử.
+Q7. Làm lại luôn PID, đồng bộ với các bộ khác (PIDOpt của khung Linear là PID tối ưu bằng cùng phương pháp, thay PID quét lưới).
+Q8. Chấm các ca DREWS trên 5 seed chấm (99999, 99998, 99997, 99996, 99995), báo trung bình và độ lệch chuẩn; so các bộ theo cặp trên cùng seed.
+Các quyết định chung đã có từ trước và GIỮ NGUYÊN: ca CALIB (117 s), ba ca chấm DRY, SLIP, WEAVE cộng RAMP, EDGE chỉ báo cáo; chỉ tiêu R, S, J = R x S; cổng e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa
+sổ static; cổng ổn định bằng mô phỏng calib_margin (độ lợi x2 và trễ +1 ms, R không tăng quá 2 lần); ràng buộc dải lái (độ lợi khâu lọc hoặc làm chậm tại 2 Hz từ 0.707, PID: Tf nhỏ hơn hoặc bằng
+79.6 ms); PM từ 30 độ và GM từ 2 trên 68 mô hình tuyến tính cho điểm cuối (MapPID D14); bang-bang và trợ lực ngược chỉ báo cáo; vùng chết Ts0 0.3 N.m cố định; không thêm phần ngoài lõi cho bộ nào.
+==============================================================================================================================================================================================
+PHẦN 3 - QUY TRÌNH (giống nhau cho mọi bộ)
+==============================================================================================================================================================================================
+3.1. Giai đoạn 1 - TÌM trên seed x0000. Tối ưu đồng thời như đã làm cho MapPID: ba chuỗi độc lập, mỗi chuỗi surrogateopt 250 lần đánh giá rồi patternsearch 60 lần (khoảng 930 lần cả ba, mục tiêu
+log J, J = R x S trên CALIB seed x0000); chuỗi 2, 3 tự cấp 30 điểm đầu ngẫu nhiên riêng (thiết kế mặc định của surrogateopt là tất định); sàng lọc tuyến tính trước mỗi lần mô phỏng (ổn định, PM
+lớn hơn 0, GM từ 1, độ lợi lag 2 Hz từ 0.707; không đạt thì không mô phỏng, nhận log 30); ràng buộc e_rel nhỏ hơn hoặc bằng 5 % khai báo riêng. Mỗi lần đánh giá ghi một dòng csv để chạy tiếp được.
+Không dùng systune (suy biến, F13 của MapPID). Bộ đã có kết quả giai đoạn 1 ở seed x0000 thì KHÔNG chạy lại (Phần 5).
+3.2. Giai đoạn 2 - NHÓM TOP. Gộp mọi lần đánh giá của ba chuỗi (cả surrogateopt và patternsearch). Giữ điểm khả thi ở seed x0000: có mô phỏng, e_rel nhỏ hơn hoặc bằng 5 %, PM tuyến tính từ 30 độ
+và GM từ 2, qua dải lái. Xếp theo J ở x0000. "Khác nhau" nghĩa là cách nhau ít nhất 0.02 theo ít nhất một biến chuẩn hóa u trong [0,1] (tránh 20 điểm gần như trùng nhau). Nhóm top = 20 điểm khác
+nhau có J nhỏ nhất. Ghi nhóm top ra csv (cột biến, J, R, S, e_rel, PM, GM, hạng ở x0000).
+3.3. Giai đoạn 3 - CHỌN TỐT NHẤT trên 5 seed x0001-x0005. Mỗi điểm của nhóm top chạy CALIB trên cả 5 seed (20 điểm x 5 seed = 100 lần mô phỏng, khoảng 40 phút một MATLAB). Với mỗi điểm: J_k = R_k
+x S_k theo từng seed k; trung bình J_bar, độ lệch chuẩn mẫu sigma_J (chia n - 1); cũng R_bar, S_bar, TV, rev, e_rel lớn nhất. Cổng: e_rel nhỏ hơn hoặc bằng 5 % ở MỌI một trong 5 seed. Điểm tốt
+nhất = J_bar nhỏ nhất trong các điểm qua cổng. Hòa theo Q4: điểm nào có J_bar chênh J_bar nhỏ nhất ít hơn sigma_J của điểm đó thì coi ngang nhau; trong nhóm ngang nhau chọn PM tuyến tính lớn nhất.
+3.4. Giai đoạn 4 - KIỂM điểm chọn. calib_margin (độ lợi x2 và trễ +1 ms) trên seed x0001; không qua thì lấy điểm kế theo thứ tự xếp. Báo: J_bar cộng trừ sigma_J, R_bar, S_bar, e_rel, PM, GM, độ
+lợi cao tần, bang-bang (calib_bangbang), trợ lực ngược, ràng buộc đang chặn (biên hộp, dải lái, PM), hạng của điểm chọn ở x0000 và hệ số tương quan hạng giữa J ở x0000 và J_bar trên 20 điểm (cho
+biết chọn trên một seed thiên vị đến đâu), vùng tối ưu (các điểm trong nhóm top có J_bar trong 5 % của nhỏ nhất). Lưu design vào Model/data/<ctrl>.json (xem Phần 6).
+3.5. Giai đoạn 5 - CHẤM DREWS trên 5 seed chấm 99999, 99998, 99997, 99996, 99995 (không bao giờ dùng để chọn). Dùng Model/Sim/script/run_scoring_seeds.m có sẵn (gọi run_cases từng seed, bỏ qua
+seed đã có file, Simulink.sdi.clear sau mỗi seed). Mỗi bộ ra Result/Controllers/<Ctrl>/Cases/<Ctrl>_metrics_s<seed>.csv cho 5 seed. Báo trung bình và độ lệch chuẩn của RMS e_T, S, TV, trợ lực
+ngược, e_rel lớn nhất của từng ca.
+3.6. Giai đoạn 6 - SO SÁNH các bộ. So THEO CẶP trên cùng seed: với hai bộ A, B và mỗi chỉ tiêu, hiệu A - B ở từng seed, rồi trung bình và độ lệch chuẩn của hiệu, kèm số seed A tốt hơn B. Ngang
+nhau nếu chênh trung bình nhỏ hơn 5 % hoặc nhỏ hơn độ lệch chuẩn của hiệu, lấy số lớn hơn (QuyChuan 6.4). Mặt Pareto (R, S) trên CALIB vẽ từ mọi điểm khả thi đã đánh giá ở x0000 (thưa hơn lưới,
+ghi chú trong hình); KHÔNG so Pareto giữa lưới cũ và tối ưu.
+==============================================================================================================================================================================================
+PHẦN 4 - SEED
+==============================================================================================================================================================================================
+4.1. Mỗi bộ dùng dải riêng; trong dải, x0000 để tìm, x0001-x0005 để chọn: Map 00000 và 00001-00005; họ PID (PIDOpt, PIDLag) 10000 và 10001-10005; SMC 20000 và 20001-20005; MapPID 30000 và
+30001-30005; MapSMC (đề xuất, chưa chốt) 40000 và 40001-40005; MapPIDLag 50000 và 50001-50005. Seed 10001 trước đây là seed thứ hai của PID/PIDOpt/PIDLag, nay là seed chọn đầu tiên.
+4.2. Seed chấm DREWS dùng chung cho mọi bộ: 99999, 99998, 99997, 99996, 99995. Các seed này không bao giờ dùng để tìm hay chọn. Đếm lùi nếu cần thêm: 99994, ...
+4.3. QUY TẮC CŨ "mỗi bộ chỉ MỘT seed local" và "ca chấm chỉ một seed" bị thay bởi mục này khi QuyChuan 3.3 và Tracking/CLAUDE.md được cập nhật (Phần 9). Quy tắc "chạy một bộ riêng lẻ dùng seed
+local, so nhiều bộ dùng seed chung" đổi thành: chấm DREWS luôn dùng 5 seed chấm chung (không còn chạy DREWS ở seed local).
+==============================================================================================================================================================================================
+PHẦN 5 - VIỆC CỦA TỪNG BỘ VÀ TỪNG KHUNG
+==============================================================================================================================================================================================
+Các biến tối ưu và cận chung cho phép so sánh (lấy từ MapPID C2): K 0-16 (Map thuần: 1-16, vì K = 0 là bộ không trợ lực); lead z 5-500 rad/s, p/z từ 1.2 [CẦN CHỐT: hạ cận xuống 1 để tối ưu tắt
+được lead, xem 11.1] đến min(300, 3142/z); lag z1 8-120 rad/s, p1/z1 từ max(0.1, 3/z1) đến 1; Kp 0-3; Ki 0.5-200 1/s; Kd 0-0.05 s; Tf 1-20 ms. Biến chuẩn hóa u trong [0,1] qua hàm u2x của từng bộ.
+  Bộ                  Biến tối ưu                       Giai đoạn 1 (tìm, x0000)                          Việc phải làm                                             Khung phụ trách
+  Map thuần           K, z, p/z, z1, p1/z1 (5)          CHƯA: phải viết hàm đánh giá, tối ưu, chạy        Giai đoạn 1 đủ (khoảng 1 đêm), rồi 2-6                    Map
+  PID (PIDOpt)        Kp, Ki, Kd, Tf (4)                XONG ở seed 10000 (3 x 250 + 3 x 60)              Giai đoạn 2-6 trên dữ liệu có sẵn                          Linear
+  MapPID              9 biến (Phần trên)                XONG ở seed 30000 (cận p/z 1.2: xem 11.1)         Giai đoạn 2-6; nếu 11.1 đổi cận thì chạy lại giai đoạn 1   MapPID
+  PIDLag              Kp, Ki, Kd, Tf, z1, p1/z1 (6)     XONG ở seed 10000 (nếu đã xong)                  Giai đoạn 2-6 (tùy chọn, xem 11.2)                         Linear
+  MapPIDLag           K, z1, p1/z1, Kp, Ki, Kd, Tf (7)  XONG ở seed 50000                                 Giai đoạn 2-6 (tùy chọn, xem 11.2)                         MapPID
+  PI                  Kp, Ki                            BỎ (Q6)                                           Không làm; giữ lịch sử trong git                            -
+  SMC, ISMC, MapSMC   tùy bộ                            CHƯA                                              Cùng quy trình khi khung đó chọn lại theo QuyChuan v5-v6   SMC, MapSMC
+  Bộ tương lai (RL...) tùy bộ                           CHƯA                                              Cùng quy trình; RL: ba seed huấn luyện thay giai đoạn 1    khung đó
+5.1. Khung Map: Map thuần theo phương án A. Viết map_eval theo mẫu mappid_eval (bảng M_K, khâu lead-lag Tustin, Kp = Ki = Kd = 0, sàng lọc tuyến tính bằng map_margins_batch, calib_run),
+optimize/refine theo mẫu optimize_mappid, refine_mappid (ngân sách như các bộ khác). Ràng buộc: PM từ 30 độ, GM từ 2 (thay PM 45.3 độ cũ, ghi lý do: ngưỡng chung D14 của MapPID), dải lái, e_rel;
+Map không có tích phân nên e_rel nhỏ hơn hoặc bằng 5 % buộc K lớn. Kết quả thiết kế Map cũ (g_min 0.7, K 6, 61 cặp) giữ làm bản cũ để đối chiếu và để báo mức cải thiện nhờ tối ưu đồng thời.
+5.2. Khung Linear: PIDOpt (và PIDLag) đã tìm xong ở seed 10000; chỉ cần dùng hàm chọn nhiều seed chung (Phần 6) với hàm đánh giá pidlag_eval hiện có. Quyết định tên: sau khi chọn lại, PIDOpt là
+"PID" của bài báo; giữ nguyên tên mã PIDOpt và kết quả Result/Controllers/PIDOpt để không đè kết quả PID cũ; bài báo gọi là PID [CẦN CHỐT với khung Linear và COMMON]. PID quét lưới cũ giữ làm bản
+cũ.
+5.3. Khung MapPID: viết hàm chọn nhiều seed dùng chung (Phần 6), thử trên MapPID trước (khoảng 1 giờ), rồi MapPIDLag; viết lại chương so sánh nhiều bộ nhiều seed (thay compare_mappid.m một seed).
+5.4. Khung COMMON: bỏ PI khỏi bài báo và luận văn (Q6), đổi mô tả phương pháp trong bài (một đoạn phương pháp chọn chung cho mọi bộ), số liệu và hình theo kết quả mới, ghi 1.3 vào mục hạn
+chế/phương pháp; paper.txt và hình là của khung này.
+5.5. Khung SMC, MapSMC: chưa chạy, nhưng khi chạy dùng đúng quy trình này; Tracking/CLAUDE.md ghi dải seed của từng bộ.
+==============================================================================================================================================================================================
+PHẦN 6 - HÀM DÙNG CHUNG VÀ TÊN FILE
+==============================================================================================================================================================================================
+6.1. Model/common/select_multiseed.m (khung MapPID viết, báo khi xong, các khung khác KHÔNG viết bản riêng): nhận mô tả bộ gồm tên, danh sách biến, cách đọc csv đánh giá giai đoạn 1 (cột biến, J,
+R, S, e_rel, PM, GM), hàm đánh giá evalFcn(x, seed) trả cấu trúc (J, R, S, TV, erel, rev, PM, GM, HF, simulated), hàm u2x/x2u, danh sách 5 seed chọn, số điểm top (mặc định 20), hàm kiểm
+calib_margin và calib_bangbang của bộ; làm giai đoạn 2, 3, 4 như Phần 3; ghi csv; trả cấu trúc điểm chọn. Cùng hàm cho mọi bộ để cùng quy trình tuyệt đối. Lệnh gọi thử bằng test: dùng dữ liệu
+MapPID có sẵn trước khi tin.
+6.2. Tên file kết quả (theo quy tắc đặt tên của Tracking/CLAUDE.md, thêm hai token nội dung ngắn `top`, `best`): Result/Controllers/<Ctrl>/Calib/<Ctrl>_CALIB_top_s<x0000>.csv (nhóm top, mục 3.2);
+<Ctrl>_CALIB_best_s<x0001>-s<x0005>.csv (J từng seed của mỗi điểm top, J_bar, sigma_J); <Ctrl>_CALIB_pick_ms.csv (điểm chọn và các cổng); design lưu Model/data/<ctrl>.json, trường design (ghi đè
+trường cũ; bản cũ sao lưu sang trường design_grid hoặc design_1seed để đối chiếu). Kết quả DREWS: Result/Controllers/<Ctrl>/Cases/<Ctrl>_metrics_s99999.csv ... s99995 (như run_cases). So sánh:
+Result/Compare/<tập bộ>/<tập bộ>_summary_s99999-s99995.csv (trung bình, độ lệch chuẩn, hiệu theo cặp).
+6.3. Các script chung đã có để dùng lại, không viết lại: calib_run, calib_margin, calib_bangbang, run_cases, run_scoring_seeds (Model/Sim/script), pick_by_balance, selection_sensitivity
+(Model/common). Các hàm eval/optimize/refine của từng bộ nằm trong script/ của bộ đó (mẫu: Model/Controllers/MapPID/script và MapPIDLag/script).
+==============================================================================================================================================================================================
+PHẦN 7 - TÀI NGUYÊN MÁY (bài học đêm 2026-10-13 và 2026-10-16, BẮT BUỘC cho mọi khung)
+==============================================================================================================================================================================================
+7.1. Máy 32 GB RAM chỉ đủ khoảng 3 MATLAB (mỗi cái 2.3 GB) cùng lúc khi các ứng dụng khác của người dùng đang mở (RAM trống 3 GB, bộ nhớ cam kết 48.6 trên 55.1 GB). Các khung phải xếp hàng, không
+tự mở thêm. Cổng khởi động: chỉ mở MATLAB mới khi khoảng trống bộ nhớ (nhỏ hơn của RAM trống và hạn mức cam kết trừ đã cam kết) từ 5 GB; script mẫu: scratchpad của khung MapPID lag_lib.sh,
+headroom.ps1, kill_job.ps1 (sao chép, không sửa tại chỗ).
+7.2. Mọi lần mô phỏng phải gọi Simulink.sdi.clear ngay sau (tệp .dmr của Simulation Data Inspector 190 MB mỗi lần CALIB từng làm đầy ổ C và treo máy); TEMP và TMP của MATLAB đặt D:/MatlabTemp.
+7.3. KHÔNG dừng MATLAB theo tên chung (từng làm tắt nhầm job của khung khác ngày 2026-10-16); chỉ dừng tiến trình có nội dung lệnh của chính mình. MATLAB thoát bằng heap corruption có thể để lại
+tiến trình treo 2 GB: dừng theo nội dung lệnh sau khi job trả về.
+7.4. Mọi lần đánh giá ghi một dòng csv ngay (chạy tiếp được khi sập); chạy nền bằng đường dẫn tuyệt đối; các vỏ chạy thử lại tối đa 6-8 lần và ghi log.
+7.5. Thời gian máy ước tính: giai đoạn 1 khoảng 1 đêm (3 chuỗi song song, 100-140 phút nếu máy rảnh; đêm 2026-10-16 chạy 5 giờ vì chờ bộ nhớ); giai đoạn 3 khoảng 40 phút một MATLAB cho 100 lần;
+giai đoạn 5 khoảng 30 phút một bộ (5 seed, 5 ca); calib_margin vài phút. Tổng khoảng 2-3 đêm máy cho Map, PID, MapPID (và hai bộ lag nếu giữ).
+==============================================================================================================================================================================================
+PHẦN 8 - LỊCH (đề xuất, 2 tháng đến bảo vệ)
+==============================================================================================================================================================================================
+Tuần 1 (đến 2026-10-23): người dùng duyệt văn bản này; QuyChuan v6 và Tracking/CLAUDE.md cập nhật (Phần 9); viết và kiểm select_multiseed.m; thử trên MapPID (giai đoạn 2-4). Khung Map viết
+map_eval và bắt đầu giai đoạn 1 của Map thuần.
+Tuần 2: Map thuần xong giai đoạn 1; giai đoạn 2-4 cho Map, PIDOpt, MapPID (và hai bộ lag nếu giữ); giai đoạn 5 (DREWS 5 seed) cho mọi bộ.
+Tuần 3: giai đoạn 6 (so sánh theo cặp, bảng, hình); đọc kết quả với người dùng; chốt kết luận.
+Tuần 3-4: COMMON cập nhật bài báo (bỏ PI, phương pháp, bảng, hình); báo cáo thầy thứ 7 hằng tuần có số cụ thể.
+Từ tuần 5: viết luận văn theo kết quả đã đóng băng; không đổi phương pháp.
+==============================================================================================================================================================================================
+PHẦN 9 - SỬA GÌ TRONG TÀI LIỆU KHÁC (CHƯA LÀM; làm khi người dùng bảo, khung nào bắt đầu trước ghi và báo các khung khác)
+==============================================================================================================================================================================================
+9.1. QuyChuan.txt: phiên bản 6. Mục 3.3 (seed): thay "một seed local" bằng 1 + 5 và 5 seed chấm; mục 6.1: tối ưu đồng thời thành quy trình CHUNG (ngoại lệ MapPID được bỏ), nêu giai đoạn 1-6, lưới
+chỉ còn là lịch sử; mục 6.2: điểm chọn = J_bar nhỏ nhất trên 5 seed, quy tắc hòa Q4; mục 6.4: ngưỡng hòa theo độ lệch chuẩn của hiệu theo cặp; mục 6.7: báo số lần đánh giá giai đoạn 1 và số lần mô
+phỏng giai đoạn 3; nhật ký thay đổi: ghi ngày 2026-10-16, lý do, tác động (mọi bộ phải chọn lại hoặc chấm lại; PI bỏ), và rằng làm sau khi thấy kết quả (1.3).
+9.2. Tracking/CLAUDE.md: quy tắc seed (dải, x0000/x0001-x0005, seed chấm 5), token nội dung `top`, `best`, mục "Chọn tham số" trỏ sang văn bản này; danh sách bộ bỏ PI.
+9.3. Documents/Notes/Controllers/DieuKhien_<Ctrl>.txt của từng bộ: một mục nhật ký ghi kết quả từng giai đoạn; DieuKhien_MapPID.txt và DieuKhien_MapPIDLag.txt giữ kết quả cũ (một seed), thêm mục
+trỏ sang kết quả mới.
+9.4. Bài báo (paper.txt, khung COMMON): mục phương pháp chọn tham số, bảng điểm chọn, bảng kết quả DREWS (trung bình cộng trừ độ lệch chuẩn trên 5 seed), hình Pareto, mục hạn chế (1.3); bỏ PI.
+Luận văn: chương Map (tools/build_map_txt.py sinh từ csv và json) sinh lại theo Map thuần mới; bỏ chương PI nếu có.
+==============================================================================================================================================================================================
+PHẦN 10 - RỦI RO
+==============================================================================================================================================================================================
+10.1. Kết luận có thể đổi: MapPID có thể chỉ ngang PIDOpt khi PID cũng được tối ưu; Map thuần tối ưu có thể khá hơn Map cũ và hẹp khoảng cách với PID. Báo đúng như đo, không chỉnh quy trình để ra
+kết luận mong muốn.
+10.2. Học thuộc seed: nhóm top lọc trên x0000 nên J ở x0000 lạc quan; đó là lý do không tính x0000 vào trung bình (Q3) và báo tương quan hạng (3.4). Chọn trên 5 seed vẫn là CALIB; đánh giá cuối
+trên ca DREWS ở seed chấm riêng.
+10.3. Tối ưu đồng thời có thể không tìm được cực tiểu toàn cục; kiểm chứng bằng ba chuỗi hội tụ cùng vùng (J chênh dưới 3 %). Điều kiện "không điểm lân cận nào nhỏ hơn" đã không đạt hoàn toàn ở
+MapPID (9 trong 17) và MapPIDLag (6 trong 14) nhưng chênh nhỏ; báo trung thực.
+10.4. Cận hộp ảnh hưởng điểm tối ưu: khâu lead của MapPID kẹt ở cận dưới (p/z 1.2) và khâu lag của MapPIDLag bị đẩy gần 1; Kd chạm cận trên 0.05. Báo ràng buộc đang chặn cho từng bộ (3.4) và xét 11.1.
+10.5. Máy dùng chung nhiều khung: nếu không xếp hàng thì cả hai chạy chậm và dễ sập (Phần 7).
+10.6. Mặt Pareto từ tối ưu thưa và không đều như từ lưới; không so Pareto lưới với Pareto tối ưu.
+10.7. Thời gian: nếu tuần 3 chưa xong giai đoạn 5 cho mọi bộ thì bỏ hai bộ lag (11.2) trước, không bỏ Map, PID, MapPID.
+==============================================================================================================================================================================================
+PHẦN 11 - ĐIỀU CÒN MỞ (cần người dùng chốt; mỗi mục có khuyến nghị)
+==============================================================================================================================================================================================
+11.1. Cận dưới p/z của khâu lead (Map thuần, MapPID): hiện 1.2 và MapPID đã kẹt ở đó (tối ưu muốn khâu lead yếu hơn nữa). KHUYẾN NGHỊ: hạ xuống 1 (không lead) cho cả Map thuần và MapPID, đồng bộ
+với p1/z1 tới 1 của khâu lag, để tối ưu tự tắt được khâu bù; chi phí: MapPID chạy lại giai đoạn 1 (1 đêm). Nếu giữ 1.2 thì ghi rõ cận trong bài.
+11.2. Có giữ MapPIDLag và PIDLag trong bài/luận văn không. KHUYẾN NGHỊ: giữ như thí nghiệm bổ sung (kết quả âm: khâu lag sau tổng không giúp, tối ưu tự tắt lag), chỉ chạy giai đoạn 2-6 nếu còn
+thời gian (mỗi bộ khoảng 1.5 giờ máy).
+11.3. Tên PID trong bài: PIDOpt gọi là PID (5.2). Cần khung Linear và COMMON đồng ý.
+11.4. Số điểm top: 20 (đề xuất); với bộ có ít biến (PID 4 biến) vùng tối ưu nhỏ nên 20 điểm khác nhau có thể gần nhau; nếu vậy lấy 15.
+11.5. Seed MapSMC 40000-49999 chưa chốt (đã đề xuất ở khung MapSMC).
+11.6. Cổng e_rel nhỏ hơn hoặc bằng 5 % áp ở MỌI một trong 5 seed (3.3) hay ở trung bình: khuyến nghị mọi seed (nghiêm hơn), nhưng e_rel gần như không phụ thuộc seed nên khác biệt nhỏ.
+==============================================================================================================================================================================================
+PHẦN 12 - NHẬT KÝ
+==============================================================================================================================================================================================
+H0. 2026-10-16: người dùng hỏi nhiều seed cho CALIB; khung MapPID khuyên hai giai đoạn (tìm một seed, chấm lại top trên K seed); người dùng chốt tỉ lệ 1 : 5 (x0000 tìm, x0001-x0005 chọn), làm lại
+Map thuần, PID, MapPID và các bộ sau, trả lời 8 câu hỏi (Phần 2); yêu cầu một file kế hoạch đầy đủ cho các khung khác. Văn bản này được viết; chưa làm gì khác.

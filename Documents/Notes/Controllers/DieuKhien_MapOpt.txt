@@ -1,0 +1,134 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH VÀ NHẬT KÝ MAPOPT (MAP THUẦN, TỐI ƯU ĐỒNG THỜI 5 THAM SỐ, CHỌN TRÊN NHIỀU SEED) - bắt đầu 2026-10-16
+==============================================================================================================================================================================================
+Văn bản này ghi kế hoạch làm lại bộ Map thuần bằng phương pháp chung mới của mọi bộ (Documents/Shared/KeHoach_ChonNhieuSeed.txt; người dùng chốt 2026-10-16): tối ưu đồng thời trên seed x0000, nhóm
+top 20, chọn trên 5 seed x0001-x0005, chấm DREWS trên 5 seed 99999-99995. MapOpt là TÊN MỚI của bản chạy lại (hậu tố Opt, quy ước 2026-10-16); bộ Map cũ (quét lưới K, khâu bù tính ngoại tuyến,
+Documents/Notes/Controllers/DieuKhien_Map.txt, Model/data/map.json, Result/Controllers/Map) GIỮ NGUYÊN làm bản cũ để đối chiếu và không bị ghi đè. Soạn bởi khung MapPID theo lời người dùng; khung
+nào được chỉ định thực hiện (khung Map hoặc khung MapPID) làm theo Phần F.
+TRẠNG THÁI: mới có kế hoạch (cập nhật 2026-10-16 sau khi người dùng chốt Phần I). Chưa viết mã, chưa chạy mô phỏng. Người dùng giao KHUNG MapPID làm lại toàn bộ Map từ đầu tới DREWS MỘT seed
+(00000); bước bắt đầu khi người dùng bảo "bắt đầu".
+==============================================================================================================================================================================================
+PHẦN A - CƠ SỞ: MAP CŨ ĐƯỢC CHỌN NHƯ THẾ NÀO VÀ VÌ SAO LÀM LẠI
+==============================================================================================================================================================================================
+A1. Cấu trúc Map (không đổi trong MapOpt): T_a,map = H(s) sgn(T_s) M_K(v, |T_s|); M_K là bảng tra theo tốc độ v và |T_s| lấy từ hiệu chỉnh đường khô tới 0.4 g (data/map.json, phần calibration) với
+vùng chết T_s0 = 0.3 N.m và độ dốc chặn K (M_k = min(T_a,cal,k, M_(k-1) + K (T_s,k - T_s,k-1))); H(s) = khâu lead (s/z + 1)/(s/p + 1) (p lớn hơn z) nhân khâu lag (s/z1 + 1)/(s/p1 + 1) (p1 nhỏ hơn
+z1), độ lợi DC bằng 1, rời rạc Tustin 1 ms. Map chỉ đọc T_s và v; KHÔNG có tích phân, KHÔNG đọc a_y hay T_d,ref.
+A2. Cách chọn cũ (DieuKhien_Map.txt A2-A8, B11): K là tham số duy nhất chọn bằng mô phỏng CALIB (61 cặp (g_min, K) đã mô phỏng); bốn tham số (z, p, z1, p1) là hàm của K và g_min tính NGOẠI TUYẾN
+trên 68 mô hình tuyến tính (17 tốc độ x 4 điểm làm việc) bằng quét lưới hai giai đoạn: với mỗi K lấy bộ có độ lợi tần số cao K (p/z)(p1/z1) nhỏ nhất trong các bộ có PM từ 45 độ và GM từ 2; rồi
+chọn điểm J = R x S nhỏ nhất qua cổng (ổn định bằng mô phỏng, e_rel nhỏ hơn hoặc bằng 5 %, độ lợi lag tại 2 Hz từ 0.707). Chỉ MỘT seed (00000).
+A3. Điểm Map cũ (map.json): K 6, g_min 0.7, lead z 33.50 và p 600.11 rad/s, lag z1 28.13 và p1 10.69 rad/s; CALIB seed 00000: R 27.05 %, S 0.2492 N.m, J 6.743, TV 92.5, e_rel 3.17 %, trợ lực ngược
+0.21 %; PM tuyến tính 45.29 độ, GM 5.67, độ lợi lag tại 2 Hz 0.7096 (ràng buộc dải lái đang chặn); calib_margin PASS (0.78 / 1.00). Seed chấm 99999 (RMS e_T N.m): DRY 0.689, RAMP 0.835, SLIP
+0.538, WEAVE 1.327, EDGE 1.534; S 0.149, 0.168, 0.162, 0.160, 0.130; sai số xác lập lớn nhất RAMP 46.7 %, EDGE 99.7 %.
+A4. Vì sao làm lại. (a) Cùng một phương pháp cho mọi bộ: MapPID, PIDOpt được chọn bằng tối ưu đồng thời, Map bằng quét lưới ngoại tuyến, nên khi so Map với MapPID/PIDOpt không biết hơn kém do cấu
+trúc hay do phương pháp chọn. (b) Khâu bù của Map cũ chọn theo "độ lợi cao tần nhỏ nhất", KHÔNG theo J: tối ưu trực tiếp trên J với bốn tham số bù thả tự do có thể tìm điểm tốt hơn. (c) Chọn trên
+một seed nên xếp hạng các điểm cách nhau dưới khoảng 3 % không đáng tin; MapOpt chọn trên 5 seed và báo độ lệch chuẩn. (d) Ràng buộc ổn định tuyến tính thống nhất với mọi bộ: PM từ 30 độ, GM từ 2
+(Map cũ dùng PM từ 45 độ).
+A5. Điều KHÔNG kỳ vọng thay đổi: Map không có tích phân nên sai số xác lập ở ma sát khô, vùng cực và đổi tốc độ là CẤU TRÚC (độ dốc chặn K, không có phản hồi trên T_d,ref); không tối ưu nào bỏ
+được. MapOpt chỉ có thể dịch điểm trên mặt Pareto (R, S) và đổi kích cỡ vùng lead, lag.
+==============================================================================================================================================================================================
+PHẦN B - BÀI TOÁN TỐI ƯU
+==============================================================================================================================================================================================
+B1. Năm biến, ánh xạ từ biến chuẩn hóa u trong [0,1]^5 qua mapopt_u2x (cận giống MapPID C2 và G3 của DieuKhien_MapPID.txt, để cùng hộp giữa các bộ Opt):
+  K         0.1 - 16 (log)            ĐỔI thang sang log, cận trên 16 GIỮ (người dùng chốt 2026-10-16; 16 là K lớn nhất khả thi khi Map đứng một mình); K nhỏ bị cổng e_rel loại
+  z         5 - 500 rad/s (log)       khâu lead
+  p/z       1 - min(300, 3142/z) (log)  p nhỏ hơn hoặc bằng 3142 rad/s (Nyquist của 1 ms); p/z = 1: khâu lead bằng 1 (suy biến thành lag đơn)
+  z1        8 - 120 rad/s (log)       khâu lag
+  p1/z1     max(0.1, 3/z1) - 1 (tuyến tính)  p1 từ 3 rad/s; p1/z1 = 1: khâu lag bằng 1 (suy biến thành lead đơn)
+Kp = Ki = Kd = 0 (không phần PID). HỘP CHUNG cho mọi bộ Opt (người dùng chốt "cận rộng" 2026-10-16; Map chỉ dùng K và bốn tham số bù, các dòng sau để các bộ khác đồng bộ): Kp 1e-3-30, Ki 0.1-2000,
+Kd 0 hoặc 1e-4-2 (u dưới 0.01 thì 0), Tf 1-79.6 ms, tất cả thang log; cận trên K giữ 16. Quy tắc mở rộng khi chạm biên và chạy thêm 150 lần nếu chưa hội tụ: G9, G10 của DieuKhien_MapPID.txt. Vùng
+chết T_s0 = 0.3 N.m cố định. Cả hai khâu về 1 thì Map chỉ còn bảng M_K.
+B2. Mục tiêu: cực tiểu J = R x S trên ca CALIB, seed 00000 (giai đoạn tìm); mục tiêu dùng log J như MapPID.
+B3. Ràng buộc, khai báo riêng (không gộp thành hàm phạt): (a) tuyến tính, tính trước, dưới 1 s, không đạt thì không mô phỏng: vòng L(jw) = -k H(jw) Gm(jw) exp(-jw 1 ms) G(jw) ổn định, PM lớn hơn 0
+và GM từ 1 trên 68 mô hình x độ dốc k = K x {0, 0.25, 0.5, 0.75, 1} khi TÌM; điểm cuối PM từ 30 độ và GM từ 2 (đồng bộ MapPID D14); (b) dải lái: độ lợi khâu lag tại 2 Hz từ 0.707; (c) mô phỏng:
+e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa sổ static. Cổng calib_margin (độ lợi x2, trễ +1 ms, R không tăng quá 2 lần) chạy cho điểm chọn. Bang-bang và trợ lực ngược chỉ báo cáo. Ghi chú: k = 0 (T_s
+trong vùng chết) bỏ qua vì không có PID; độ dốc K thấp hơn không xét thêm.
+B4. Hàm đánh giá dùng LẠI máy móc của MapPID khi PID bằng 0: mappid_margins (Kp = Ki = Kd = 0 cho đúng PM, GM của Map: đã kiểm F6 của DieuKhien_MapPID.txt, Map một mình PM 45.292 độ và GM 5.674)
+hoặc map_margins_batch của Map; model đóng vòng dùng Model_Map.mdl với biến Map_* đặt bằng map_variables(Cal, d) qua calib_run (không dựng model mới, vì MapOpt chỉ đổi giá trị tham số). Xem Phần
+D.
+==============================================================================================================================================================================================
+PHẦN C - QUY TRÌNH (theo KeHoach_ChonNhieuSeed.txt Phần 3; riêng cho MapOpt)
+==============================================================================================================================================================================================
+C1. Giai đoạn 1 - TÌM, seed 00000. Ba chuỗi độc lập, mỗi chuỗi surrogateopt 250 lần đánh giá rồi patternsearch 60 lần (chuỗi 2, 3 tự cấp 30 điểm đầu ngẫu nhiên riêng; rng 1001-1003); mỗi lần đánh
+giá ghi một dòng csv để chạy tiếp được. Hộp 5 biến nhỏ hơn 9 biến của MapPID nên kỳ vọng hội tụ nhanh; quy tắc chạy thêm 150 lần surrogateopt nếu ba chuỗi chưa cùng một vùng (J chênh dưới 3 %)
+theo G10(b) của DieuKhien_MapPID.txt, tối đa một lần.
+C2. Giai đoạn 2 - NHÓM TOP: gộp ba chuỗi; giữ điểm khả thi ở seed 00000 (có mô phỏng, e_rel nhỏ hơn hoặc bằng 5 %, PM từ 30 độ, GM từ 2, lag 2 Hz từ 0.707); xếp theo J; lấy 20 điểm khác nhau (cách
+nhau ít nhất 0.02 theo một biến chuẩn hóa). Nếu có ít hơn 20 điểm khác nhau thì lấy hết và ghi số đó.
+C3. Giai đoạn 3 - CHỌN: 20 điểm x 5 seed (00001-00005) = 100 lần CALIB; J_k = R_k x S_k, J trung bình, độ lệch chuẩn mẫu; cổng e_rel nhỏ hơn hoặc bằng 5 % ở MỌI một trong 5 seed; chọn J trung bình
+nhỏ nhất; hòa (chênh nhỏ hơn độ lệch chuẩn) thì chọn PM tuyến tính lớn hơn. Seed 00000 KHÔNG tính vào trung bình.
+C4. Giai đoạn 4 - KIỂM: calib_margin trên seed 00001 (không qua thì điểm kế); báo bang-bang, trợ lực ngược, PM, GM, độ lợi cao tần K (p/z)(p1/z1), ràng buộc đang chặn, lead và lag còn hay suy biến
+(quy ước: p/z dưới 1.02 là không còn lead; p1/z1 trên 0.98 là không còn lag), hạng ở seed 00000 và tương quan hạng với J trung bình, vùng tối ưu. Ghi design vào Model/data/mapopt.json (trường
+design); không đụng map.json.
+C5. Giai đoạn 5 - DREWS. LẦN NÀY (người dùng chốt 2026-10-16): chạy MỘT seed local 00000 (run_cases(MapOpt, 0)) để có kết quả ngay; 5 seed chấm 99999-99995 (run_scoring_seeds) làm SAU, khi so
+nhiều bộ, và khi đó Map cũ cũng phải có đủ 5 seed (hiện mới có 99999: chạy thêm 99998-99995, khoảng 25 phút).
+C6. Giai đoạn 6 - so theo cặp: MapOpt với Map cũ (cùng cấu trúc, khác phương pháp chọn: đo hiệu quả của tối ưu đồng thời), rồi với PIDOpt và MapPIDOpt khi các bộ đó xong (đo hiệu quả của cấu trúc).
+==============================================================================================================================================================================================
+PHẦN D - MÃ CẦN VIẾT (ĐÃ CHỐT 2026-10-16: sao chép model của Map cũ sang MapOpt rồi đổi tên; KHÔNG sửa file nào của Map cũ)
+==============================================================================================================================================================================================
+D1. Model: sao chép Model/Controllers/Map/Map.mdl thành Model/Controllers/MapOpt/MapOpt.mdl và dựng Model_MapOpt.mdl bằng build_closed_loop(MapOpt) (khung vòng kín chung của PRSM); trong
+MapOpt.mdl đổi tên khối gốc Map thành MapOpt và đổi tiền tố biến Map_ thành MapOpt_ (Map_Ts_ctrl, Map_v_bp, Map_Ts_bp, Map_table, Map_H_num, Map_H_den) bằng một script đổi tên có kiểm
+(clone_map_to_mapopt.m, chạy một lần, sau đó sao lưu); cấu trúc khối giữ NGUYÊN. test_mapopt.m so MapOpt.mdl với phép tính độc lập như test_map.m (bảng, vùng chết, lead-lag Tustin). load_mapopt.m
+nạp biến MapOpt_* (từ mapopt.json, mặc định cấu hình bằng thiết kế Map cũ trước khi có thiết kế mới). Dữ liệu Model/data/mapopt.json (Ts_ctrl; design ghi bởi select). Kết quả
+Result/Controllers/MapOpt/{Design, Calib, Cases}. Map cũ không bị đụng.
+D2. Hàm (tên, nhiệm vụ; mẫu: Model/Controllers/MapPID/script):
+  - mapopt_u2x.m, mapopt_x2u.m: ánh xạ u (5 biến) sang x = [K, z, p/z, z1, p1/z1] theo B1 và ngược lại; cận cấu hình được (bộ cận cũ của Map: K 4-14, p/z từ 1.2, p1/z1 tới 0.9, để tái lập được).
+  - mapopt_plants.m: 68 mô hình tuyến tính (dùng bộ nhớ đệm có sẵn của Map hoặc MapPID: Result/Controllers/MapPID/Design/MapPID_plants.mat; sao chép sang Result/Controllers/MapOpt/Design/ một lần).
+  - mapopt_margins.m: PM, GM, độ lợi cao tần, ổn định trên 68 mô hình x 4 độ dốc; thực chất mappid_margins với Kp = Ki = Kd = 0 (kiểm trùng map_margins_batch).
+  - mapopt_eval.m(x, seed, csvFile): sàng tuyến tính, rồi calib_run('Model_MapOpt', seed, mapopt_variables(Cal, d)), Simulink.sdi.clear, ghi csv (chạy tiếp được); trả J, R, S, TV, e_rel, rev, PM,
+    GM, HF, ràng buộc c.
+  - optimize_mapopt.m(runId, maxEvals), refine_mapopt.m(runId, maxEvals): surrogateopt, patternsearch (mẫu optimize_mappid, refine_mappid).
+  - select_mapopt.m: gọi Model/common/select_multiseed.m (khung MapPID viết; xem KeHoach_ChonNhieuSeed.txt 6.1) với hàm đánh giá của MapOpt; ghi mapopt.json.
+  - mapopt_variables.m, mapopt_design_variables.m: biến MapOpt_* từ thiết kế (gọi map_variables rồi đổi tiền tố); DREWS chạy trực tiếp run_cases('MapOpt', seed) và run_scoring_seeds('MapOpt',
+    seeds) vì có Model_MapOpt riêng (không cần cất, chuyển file).
+  - test_mapopt.m: kiểm trước khi chạy (Phần E).
+D3. Dùng lại, không viết lại: calibrate_map_cached, map_variables (qua mapopt_variables), map_table, map_eval, map_params, map_op_points, map_plant_lin (khung Map); calib_run, calib_margin,
+calib_bangbang, run_cases, run_scoring_seeds, make_cases (khung chung); pick_by_balance (nếu cần).
+==============================================================================================================================================================================================
+PHẦN E - KIỂM TRƯỚC KHI CHẠY (đặt trước)
+==============================================================================================================================================================================================
+E1. Tái lập Map cũ: mapopt_eval tại x của map.json (K 6, z 33.50, p/z 17.91, z1 28.13, p1/z1 0.380) ở seed 00000 phải cho J 6.743 (R 27.05 %, S 0.2492, e_rel 3.17 %) tới 1e-4 tương đối, PM 45.29
+độ, GM 5.67.
+E2. Suy biến: p = z (lead bằng 1) và p1 = z1 (lag bằng 1) cho H bằng 1: mapopt_margins trùng map_margins của Map với K cho cùng PM, GM; mapopt_eval với cả hai khâu bằng 1 trùng
+calib_run('Model_Map') với bảng M_K không khâu bù (đã kiểm ở check_mappidlag_loop: trùng 6 chữ số).
+E3. u2x/x2u khứ hồi: sai số dưới 1e-9 trên 1000 điểm ngẫu nhiên; mọi u cho điểm thực hiện được (p nhỏ hơn hoặc bằng 3142, p1 từ 3).
+E4. select_multiseed chạy thử trên 2 điểm x 2 seed của dữ liệu MapPID để kiểm cột và tên file trước khi chạy MapOpt.
+==============================================================================================================================================================================================
+PHẦN F - CÁC BƯỚC (chỉ bắt đầu khi người dùng bảo; xong bước nào ghi một mục K)
+==============================================================================================================================================================================================
+M0. Người dùng duyệt văn bản này và chốt E1 của Phần D; khung thực hiện (Map hoặc MapPID).
+M1. Viết mã Phần D (khoảng nửa ngày làm), kiểm Phần E (vài phút máy).
+M2. Giai đoạn 1: ba chuỗi (khoảng 1.5-2.5 giờ nếu máy rảnh; xếp hàng bộ nhớ theo Phần 7 của KeHoach_ChonNhieuSeed.txt).
+M3. Giai đoạn 2-4: nhóm top, chọn trên 5 seed (khoảng 40 phút một MATLAB), kiểm điểm chọn.
+M4. Giai đoạn 5: DREWS MỘT seed 00000 cho MapOpt (khoảng 6 phút); 5 seed chấm cho MapOpt và Map cũ làm sau (khoảng 1 giờ).
+M5. Đọc kết quả và so Map cũ với MapOpt theo cặp; kiểm các dự đoán Phần G.
+M6. Tài liệu: mục K; chương Map của luận văn (tools/build_map_txt.py sinh từ csv và json) và LyThuyet_Map.txt phải viết lại theo MapOpt sau khi người dùng chốt kết quả; báo các khung khác.
+==============================================================================================================================================================================================
+PHẦN G - DỰ ĐOÁN ĐẶT TRƯỚC (viết trước khi chạy, để không đọc kết quả theo ý muốn; kết quả sai dự đoán vẫn báo)
+==============================================================================================================================================================================================
+G1. J trung bình trên 5 seed của MapOpt thấp hơn Map cũ ít nhất 5 % (vì Map cũ chọn khâu bù theo độ lợi cao tần nhỏ nhất, không theo J, và chỉ K được chỉnh bằng mô phỏng).
+G2. Khâu lead KHÔNG suy biến (p/z lớn hơn 1.02, thực chất mạnh), khác MapPID: Map đứng một mình không có khâu D lo phần sớm pha nên cần lead để có PM từ 30 độ.
+G3. K nằm gần phía dưới của khoảng khả thi (khoảng 5.5-7), vì S tăng theo K và e_rel nhỏ hơn hoặc bằng 5 % buộc K từ khoảng 5.5.
+G4. Khâu lag ở ràng buộc dải lái (độ lợi tại 2 Hz gần 0.707) như bản cũ, vì J thưởng cho sự chậm (QuyChuan 6.2).
+G5. Bám vẫn kém xa PID và MapPID ở RAMP và EDGE (sai số xác lập 40-100 % cho Map cũ): là cấu trúc, tối ưu không sửa được. Nếu MapOpt khép được khoảng cách này thì đó là kết quả bất ngờ, báo kỹ.
+G6. Độ ồn S của MapOpt thấp hơn PIDOpt và MapPIDOpt ở mọi ca (nhánh Map không có độ lợi cao tần của khâu D); trợ lực ngược gần bằng 0.
+==============================================================================================================================================================================================
+PHẦN H - RỦI RO
+==============================================================================================================================================================================================
+H1. PM từ 30 độ thay 45 độ có thể cho J thấp hơn nhưng dự trữ ổn định thấp hơn Map cũ; calib_margin vẫn là cổng thật. Báo cả PM của Map cũ (45.3) và MapOpt trong cùng một bảng.
+H2. Mặt J phẳng theo hai tham số bù (đã thấy ở MapPID, F20) nên điểm chọn nhạy với seed; chọn trên 5 seed giảm rủi ro này, và vùng tối ưu được báo chứ không chỉ một điểm.
+H3. Điểm chọn nằm ở biên hộp: báo, theo quy tắc mở rộng G9 của DieuKhien_MapPID.txt (nếu hơn 5 % thiết kế vùng tối ưu nằm trong 5 % phía biên thì nới gấp đôi và chạy lại một lần; ngoại lệ p nhỏ
+hơn hoặc bằng 3142, p1 từ 3, p/z từ 1, p1/z1 tới 1).
+H4. Luận văn: chương Map và LyThuyet_Map đã viết theo Map cũ (lead-lag, 61 cặp); đổi sang MapOpt kéo theo viết lại các chương đó và các hình (tools/build_map_txt.py). Giữ bản cũ trong git.
+==============================================================================================================================================================================================
+PHẦN I - CÒN MỞ
+==============================================================================================================================================================================================
+I1. [ĐÃ CHỐT 2026-10-16] Sao chép model Map cũ sang MapOpt và đổi tên (Phần D1).
+I2. [ĐÃ CHỐT 2026-10-16] Khung MapPID làm toàn bộ Map từ đầu tới DREWS một seed 00000, kể cả hàm chọn nhiều seed dùng chung. Chương luận văn và LyThuyet_Map: sau, khi người dùng bảo.
+I3. [ĐÃ CHỐT 2026-10-16] Cận K trên giữ 16; hộp "rộng" theo B1 (thang log).
+I4. Số điểm top 20, cổng e_rel ở mọi seed, hòa theo độ lệch chuẩn: đã chốt (KeHoach_ChonNhieuSeed.txt Phần 2).
+==============================================================================================================================================================================================
+PHẦN K - NHẬT KÝ KẾT QUẢ
+==============================================================================================================================================================================================
+K0. 2026-10-16: người dùng chốt làm lại Map trước theo phương pháp mới và bảo tạo file kế hoạch riêng cho MapOpt (hậu tố Opt cho mọi bản chạy lại). Viết văn bản này sau khi đọc DieuKhien_Map.txt
+(A1-A9), map.json, design_leadlag.m, map_margins_batch.m, select_map.m. Chưa mã, chưa chạy.
+K1. 2026-10-16: người dùng chốt Phần I (sao chép model Map cũ sang MapOpt, khung MapPID làm hết đến DREWS một seed 00000, cận rộng thang log nhưng K giữ 16) và bảo CHỈ cập nhật văn bản này, chưa
+làm. Đã cập nhật Phần B1, D, C5, F, I.
