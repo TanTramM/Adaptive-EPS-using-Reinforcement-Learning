@@ -34,6 +34,7 @@ TEMPLATE = os.path.join(REPO_ROOT, 'References', 'JSTT_Manuscript_template_EN.do
 COL_W = 8.4                         # [cm] width of one column
 TEXT_W = 17.4                       # [cm] text width of the template (page 21 cm, margins 1.83 and 1.70 cm)
 MAX_FIG_H = 12.0                    # [cm]
+FLOW = bool(os.environ.get('JSTT_FLOW'))   # no pictures, no one-column blocks: tables stay inside the column, text runs on column after column
 WIDE_EQ = set()                     # every display equation fits one column (long ones are broken into rows in the .txt)
 UNNUMBERED_H = ('Acknowledgments', 'Author contributions', 'Conflict of Interest', 'Declaration of Generative AI', 'References')
 
@@ -185,14 +186,106 @@ def jstt_equation(doc, latex, num):
     p._p.append(para)
 
 
+NS_DECL = ('xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+           'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+           'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+           'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
+           'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+           'xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" '
+           'xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"')
+CAP_PT = 9.0
+_group_id = [100]
+
+
+def figure_group(doc, items, caption, total_w_cm):
+    """w:drawing holding ONE inline group: the pictures (one under the other, each with its panel label in a small borderless text box) and, at the bottom, a
+    borderless text box with the caption; pictures and caption move together.  items = [(file, width_cm, height_cm, panel_label or '')]"""
+    from docx.text.paragraph import Paragraph
+    from docx.oxml import parse_xml
+    emu = lambda cm: int(round(cm * 360000))
+    gap = emu(0.12)
+    cw = emu(total_w_cm)
+    _group_id[0] += 1
+    n0 = _group_id[0] * 10
+    y = 0
+    shapes = []
+    boxes = []                                                # (xml placeholder id, text, size pt, align, bold)
+    k = 0
+    for (full, wcm, hcm, label) in items:
+        rid, _ = doc.part.get_or_add_image(full)
+        pw, ph = emu(wcm), emu(hcm)
+        x = (cw - pw) // 2
+        k += 1
+        shapes.append(
+            f'<pic:pic><pic:nvPicPr><pic:cNvPr id="{n0 + k}" name="Picture {n0 + k}"/><pic:cNvPicPr/></pic:nvPicPr>'
+            f'<pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+            f'<pic:spPr><a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{pw}" cy="{ph}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>')
+        y += ph + gap
+        if label:
+            lh = emu(0.50)
+            k += 1
+            shapes.append(_textbox_xml(n0 + k, 0, y, cw, lh))
+            boxes.append((label, CAP_PT + 0.5, True))
+            y += lh + gap
+    plain = re.sub(r'\$[^$]*\$', 'xx', caption)
+    per_line = max(10, int(total_w_cm / 0.158))               # characters of 9 pt Arial per line
+    lines = -(-len(plain) // per_line)
+    cap_h = emu(0.20 + 0.40 * lines)
+    k += 1
+    shapes.append(_textbox_xml(n0 + k, 0, y, cw, cap_h))
+    boxes.append((caption, CAP_PT, False))
+    total_h = y + cap_h
+    xml = (
+        f'<w:drawing {NS_DECL}><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{cw}" cy="{total_h}"/>'
+        f'<wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="{n0}" name="Figure group {n0}"/><wp:cNvGraphicFramePr/>'
+        f'<a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"><wpg:wgp><wpg:cNvGrpSpPr/>'
+        f'<wpg:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cw}" cy="{total_h}"/><a:chOff x="0" y="0"/><a:chExt cx="{cw}" cy="{total_h}"/></a:xfrm></wpg:grpSpPr>'
+        + ''.join(shapes) + '</wpg:wgp></a:graphicData></a:graphic></wp:inline></w:drawing>')
+    el = parse_xml(xml)
+    for content, (text, size, bold) in zip(el.iter(qn('w:txbxContent')), boxes):
+        p_el = OxmlElement('w:p')
+        content.append(p_el)
+        par = Paragraph(p_el, doc._body)
+        par.style = doc.styles['JSTT-figure-caption']
+        add_rich(par, text, bold=bold)
+        par.paragraph_format.first_line_indent = Cm(0)
+        par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(0)     # no style spacing: the text box has its own height
+        par.paragraph_format.line_spacing = 1.0
+        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        set_size(par, size)
+    return el
+
+
+def _textbox_xml(nid, x, y, w, h):
+    return (f'<wps:wsp><wps:cNvPr id="{nid}" name="Text box {nid}"/><wps:cNvSpPr txBox="1"/>'
+            f'<wps:spPr><a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{w}" cy="{h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
+            f'<a:noFill/><a:ln><a:noFill/></a:ln></wps:spPr><wps:txbx><w:txbxContent/></wps:txbx>'
+            f'<wps:bodyPr rot="0" vert="horz" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="t" anchorCtr="0"><a:noAutofit/></wps:bodyPr></wps:wsp>')
+
+
 def add_figure(doc, caption, path, wide=True):
-    full = os.path.join(REPO_ROOT, path)
+    """path = one file, or several pictures separated by ' ; ', each 'file@width_cm|panel label' (inserted as separate pictures in ONE group with the caption)"""
+    items = []
+    for part in [p.strip() for p in path.split(' ; ')]:
+        spec, _, label = part.partition('|')
+        file_, _, wcm = spec.partition('@')
+        full = os.path.join(REPO_ROOT, file_.strip())
+        w, h = Image.open(full).size
+        width = float(wcm) if wcm else (min(TEXT_W, MAX_FIG_H * w / h) if wide else min(COL_W, 20.0 * w / h))
+        width = min(width, TEXT_W)
+        items.append((full, width, width * h / w, label.strip()))
+    total_w = max(i[1] for i in items) if len(items) == 1 else TEXT_W if wide else COL_W
     box = doc.add_paragraph(style='0.đánh dấu hình'); box.paragraph_format.keep_with_next = True
-    w, h = Image.open(full).size
-    width = min(TEXT_W, MAX_FIG_H * w / h) if wide else min(COL_W, 20.0 * w / h)
-    box.add_run().add_picture(full, width=Cm(width))
-    cap = add_text(doc, 'JSTT-figure-caption', caption, size=9, italic=False)
-    cap.paragraph_format.first_line_indent = Cm(0)
+    box.add_run()._r.append(figure_group(doc, items, caption, total_w))
+
+
+def add_figure_placeholder(doc, caption, path):
+    """no picture: a one-line note for the author and the caption (the picture is inserted by hand)"""
+    n = int(re.match(r'Fig\. (\d)', caption).group(1)) if re.match(r'Fig\. (\d)', caption) else 0
+    names = {1: 'Fig1_mechanism', 2: 'Fig2_plant', 3: 'Fig3_control', 4: 'Fig4_pareto', 5: 'Fig5_dry', 6: 'Fig6_slip', 7: 'Fig7_drews'}.get(n, '?') + '.png'
+    note = add_text(doc, 'JSTT-figure-caption', '[Insert figure here: %s]' % names, size=9, italic=True)
+    note.paragraph_format.keep_with_next = True
+    add_text(doc, 'JSTT-figure-caption', caption, size=9, bold=True)
 
 
 def add_table(doc, caption, rows):
@@ -202,13 +295,15 @@ def add_table(doc, caption, rows):
     t = doc.add_table(rows=len(rows), cols=ncol); t.alignment = 1
     plain = lambda x: re.sub(r'\$(.+?)\$', lambda q: 'x' * max(2, len(q.group(1)) // 3), x)
     col = lambda ci: [plain(r[ci]) for r in rows if ci < len(r)]
-    cmw = lambda n: 0.17 * n + 0.45
+    dense = FLOW and ncol >= 5
+    cmw = (lambda n: 0.135 * n + 0.2) if dense else (lambda n: 0.17 * n + 0.45)
     lo = [cmw(max(len(w) for c in col(ci) for w in (c.split() or ['']))) for ci in range(ncol)]
     hi = [max(lo[ci], cmw(max(len(c) for c in col(ci)))) for ci in range(ncol)]
-    if sum(hi) <= TEXT_W:
+    tw = COL_W if FLOW else TEXT_W
+    if sum(hi) <= tw:
         widths = hi
     else:
-        spare = max(0.0, TEXT_W - sum(lo)); extra = [h - l for h, l in zip(hi, lo)]
+        spare = max(0.0, tw - sum(lo)); extra = [h - l for h, l in zip(hi, lo)]
         widths = [l + spare * e / sum(extra) for l, e in zip(lo, extra)]
     wordy = lambda c: any(len(w) >= 4 and w.isalpha() and not w.isupper() for w in re.split(r'[^A-Za-z]+', re.sub(r'\$.+?\$', '', c)))
     centred = [sum(wordy(r[ci]) for r in rows[1:] if ci < len(r)) * 2 < max(1, len(rows) - 1) for ci in range(ncol)]
@@ -227,7 +322,7 @@ def add_table(doc, caption, rows):
             p.style = doc.styles['JSTT-table-col-head' if ri == 0 else 'JSTT-table-text']
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER if (ri == 0 or centred[ci]) else WD_ALIGN_PARAGRAPH.LEFT
             add_rich(p, rw[ci] if ci < len(rw) else '', bold=(ri == 0))
-            set_size(p, 9)
+            set_size(p, 7.5 if dense else 9)
             if ri < len(rows) - 1:
                 p.paragraph_format.keep_with_next = True
             if ri == 0:                                   # rule under the header row
@@ -285,13 +380,13 @@ def parse(lines):
         mf = figcap.match(raw)
         if mf:
             cap, _, path = mf.group(1).partition(' | ')
-            blocks.append({'kind': 'fig', 'caption': cap.strip(), 'path': path.strip(), 'wide': '_col.' not in path}); i += 1; continue
+            blocks.append({'kind': 'fig', 'caption': cap.strip(), 'path': path.strip(), 'wide': (not FLOW) and '_col.' not in path.split(' ; ')[0]}); i += 1; continue
         mt = tabcap.match(raw)
         if mt and i + 1 < len(lines) and ' | ' in lines[i + 1]:
             rows = []; j = i + 1
             while j < len(lines) and ' | ' in lines[j]:
                 rows.append([c.strip() for c in lines[j].strip().split(' | ')]); j += 1
-            blocks.append({'kind': 'tab', 'caption': mt.group(1), 'rows': rows, 'wide': True}); i = j; continue
+            blocks.append({'kind': 'tab', 'caption': mt.group(1), 'rows': rows, 'wide': not FLOW}); i = j; continue
         if s.startswith('- '):
             blocks.append({'kind': 'bullet', 'text': s[2:]}); i += 1; continue
         if re.match(r'^\[\d+\]\.', s):
@@ -341,7 +436,10 @@ def build(txt_path, docx_path):
         elif k == 'eq':
             jstt_equation(doc, b['latex'], b['n'])
         elif k == 'fig':
-            add_figure(doc, b['caption'], b['path'], wide=b['wide'])
+            if FLOW:
+                add_figure_placeholder(doc, b['caption'], b['path'])
+            else:
+                add_figure(doc, b['caption'], b['path'], wide=b['wide'])
         elif k == 'tab':
             add_table(doc, b['caption'], b['rows'])
         elif k == 'ref':

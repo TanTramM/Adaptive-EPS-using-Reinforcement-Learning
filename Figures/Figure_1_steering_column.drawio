@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="hjax2ms1yZnlo0XKPrHj">
-        <mxGraphModel dx="1067" dy="663" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="none" math="1" shadow="0">
+        <mxGraphModel dx="804" dy="663" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="none" math="1" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -609,6 +609,30 @@
                 </mxCell>
                 <mxCell id="eps_tag1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fontColor=default;" value="`\theta_2, \dot(\theta_2)`" vertex="1">
                     <mxGeometry height="24" width="80" x="490" y="327" as="geometry"/>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-144" connectable="0" parent="1" style="group" value="" vertex="1">
+                    <mxGeometry height="100" width="100" x="130" y="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-145" parent="bqCWz-Lfxn-y-Kw6ea2z-144" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.arc;startAngle=0.41315630084895155;endAngle=0.5987157716443733;labelBackgroundColor=none;fontColor=default;" value="" vertex="1">
+                    <mxGeometry height="100" width="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-146" edge="1" parent="bqCWz-Lfxn-y-Kw6ea2z-144" source="bqCWz-Lfxn-y-Kw6ea2z-145" style="endArrow=classic;html=1;exitX=0.709;exitY=0.955;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+                    <mxGeometry height="50" relative="1" width="50" as="geometry">
+                        <mxPoint x="50" y="110" as="sourcePoint"/>
+                        <mxPoint x="80" y="90" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-147" connectable="0" parent="1" style="group" value="" vertex="1">
+                    <mxGeometry height="100" width="100" x="110" y="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-148" parent="bqCWz-Lfxn-y-Kw6ea2z-147" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.arc;startAngle=0.39886451508952125;endAngle=0.5987157716443733;labelBackgroundColor=none;fontColor=default;" value="" vertex="1">
+                    <mxGeometry height="100" width="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="bqCWz-Lfxn-y-Kw6ea2z-149" edge="1" parent="bqCWz-Lfxn-y-Kw6ea2z-147" source="bqCWz-Lfxn-y-Kw6ea2z-148" style="endArrow=classic;html=1;labelBackgroundColor=none;fontColor=default;exitX=0.285;exitY=0.951;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+                    <mxGeometry height="50" relative="1" width="50" as="geometry">
+                        <mxPoint x="24" y="95" as="sourcePoint"/>
+                        <mxPoint x="20" y="90" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
             </root>
         </mxGraphModel>

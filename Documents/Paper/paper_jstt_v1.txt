@@ -43,13 +43,13 @@ A nonlinear tire model is used to represent the effect of road friction on steer
   [ F_{zr}=mg\dfrac{l_f}{l_f+l_r} ]
 \noindent Each axle is represented by one equivalent tire in the single-track model. The corresponding lateral tire forces are calculated using the Pacejka Magic Formula [7]:
   (7)  F_y = D*sin(C*atan(B*alpha - E*(B*alpha - atan(B*alpha))))
-  [ F_y= \\ D\sin(C\,\mathrm{atan}(B\alpha-E(B\alpha-\mathrm{atan}(B\alpha)))) ]
+  [ F_y=D\sin(C\,\mathrm{atan}(B\alpha-E(B\alpha-\mathrm{atan}(B\alpha)))) ]
   (8)  D = mu*F_z,   B = C_alpha/(C*D)
   [ D=\mu F_z,\quad B=\dfrac{C_\alpha}{C\,D} ]
 \noindent where $\mu$ is the tire–road friction coefficient, $F_z$ is the static vertical axle load, and $C_\alpha$ is the cornering stiffness. The tire-shape parameters are listed in Section 4.1.
 The effective steering moment arm combines geometric caster trail and slip-dependent pneumatic trail [2]:
   (9)  e_p = e_c + max(0, t_0 - t_0*C_alpha_f*|tan(alpha_f)|/(3*mu*F_zf))
-  [ e_p=e_c+ \\ \max(0,\ t_0-\dfrac{t_0C_{\alpha f}|\tan(\alpha_f)|}{3\mu F_{zf}}) ]
+  [ e_p=e_c+\max(0,\ t_0-\dfrac{t_0C_{\alpha f}|\tan(\alpha_f)|}{3\mu F_{zf}}) ]
   (10)  e_c = e_p0 - t_0
   [ e_c=e_{p0}-t_0 ]
 \noindent where $e_{p0}$ and $t_0$ are the effective moment arm and pneumatic trail at zero slip. The pneumatic trail decreases as the tire contact patch develops a larger sliding region. In the adopted approximation, the trail decreases linearly with the magnitude of $\tan(\alpha_f)$ and becomes zero when the modeled sliding threshold is reached. The geometric caster trail remains unchanged. This approximation captures the reduction in steering reaction torque as tire slip increases, but it does not reproduce the full nonlinear trail characteristic of the brush model. The resulting road reaction torque, referred to the steering column, is
@@ -125,7 +125,7 @@ At 100 km/h and 0.2 g, the model gives a road-reaction torque of 5.22 N·m at μ
 3.3. PI and PID Torque-Feedback Control
 The PI and PID controllers directly regulate the torque-tracking error defined in Eq. (18). Their control laws are represented by
   (27)  T_a,cmd(s) = (K_p + K_i/s)*e_T(s) + (K_d*s/(tau_d*s + 1))*T_s(s)
-  [ T_{a,cmd}(s)=(K_p+\dfrac{K_i}{s})e_T(s)+ \\ (\dfrac{K_ds}{\tau_ds+1})T_s(s) ]
+  [ T_{a,cmd}(s)=(K_p+\dfrac{K_i}{s})e_T(s)+(\dfrac{K_ds}{\tau_ds+1})T_s(s) ]
 \noindent where $K_p$, $K_i$, and $K_d$ are the proportional, integral, and derivative gains, and $\tau_d$ is the derivative-filter time constant. The derivative term acts on measured steering torque rather than tracking error, avoiding derivative kick when the reference changes. In the implemented control law, the derivative contribution is added with a positive sign, consistent with the assist-torque convention adopted for the steering-column dynamics.
 Setting $K_d=0$ gives the PI controller. Integral feedback can eliminate persistent tracking error when the closed loop is stable, the reference is attainable, and actuator saturation does not prevent the required control action. Both controllers use back-calculation anti-windup, with the implementation described in Section 4.1. The PI and PID gain searches are bounded using a reduced linear model of the steering column. Two road-stiffness conditions are considered: small tire slip on a dry road and the saturated-tire limit. The corresponding resonance frequencies are approximately 6.3 and 5.7 Hz. These models are used to screen controller gains before nonlinear calibration. The gain ranges are further constrained by the specified doubled-motor-gain and additional-delay tests. Final parameters are selected from the admissible nonlinear simulation results using the common tracking and high-frequency assist-torque metrics.
 Table 2. Selected controller parameters.
@@ -172,7 +172,7 @@ The motor dynamics are approximated by a first-order transfer function [1]:
   [ G_m(s)=\dfrac{\omega_m}{s+\omega_m},\quad \omega_m=2\pi(100)\ \mathrm{rad/s} ]
 \noindent The common motor model includes a 1 ms computation delay and the speed-dependent assist limit defined in Eq. (19). The latter is calculated from the maximum required dry-road assistance:
   (29)  T_a,max(v) = max over 0 <= a_y <= a_y,lim(v) of [T_r(v, a_y, 0.8) - T_ref(v, a_y)] + T_f
-  [ T_{a,max}(v)=\limlow{max}{0\le a_y\le a_{y,lim}(v)} \\ \,\brack{T_r(v,a_y,0.8)-T_{ref}(v,a_y)}+T_f ]
+  [ T_{a,max}(v)=\limlow{max}{0\le a_y\le a_{y,lim}(v)}\,\brack{T_r(v,a_y,0.8)-T_{ref}(v,a_y)}+T_f ]
   (30)  a_y,lim(v) = min(a_y,max(v, 0.8), 0.4g)
   [ a_{y,lim}(v)=\min(a_{y,max}(v,0.8),\ 0.4g) ]
 \noindent where $a_{y,max}(v,0.8)$ denotes the maximum attainable lateral acceleration under the adopted dry-road model. This limit is derived from the simulation model and does not represent a validated capacity of a production EPS motor.

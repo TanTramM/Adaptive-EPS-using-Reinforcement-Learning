@@ -38,8 +38,7 @@ REFS = [
 
 
 # equations longer than one column (8.4 cm): where the line is broken, given as (marker, break_after_marker)
-ROW_BREAKS = {7: ('=', True), 9: ('e_c+', True), 23: ('=', True), 27: ('e_T(s)+', True),
-              29: (r'\,\brack', False), 31: ('u_I[k]+', True), 35: (r'\,\paren{\dfrac{RMS', False)}
+ROW_BREAKS = {23: ('=', True), 31: ('u_I[k]+', True), 35: (r'\,\paren{\dfrac{RMS', False)}   # (7), (9), (27), (29) fit one line: Word breaks them itself if needed
 
 
 def break_equations(t):

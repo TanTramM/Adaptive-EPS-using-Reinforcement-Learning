@@ -29,7 +29,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm
+from docx.shared import Cm, Pt
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -41,7 +41,8 @@ TEMPLATE = os.path.join(REPO_ROOT, 'tools', 'journal_template.docx')
 TEXT_W = 21.0 - 2 * 2.54          # A4 width minus the advisor's margins [cm]
 MAX_FIG_H = 15.0                  # [cm]
 INDENT = Cm(1.27)                 # 720 twips, the advisor's first-line indent
-EQ_PT = 10                        # display equations and their numbers [pt] (advisor: HTML Code style, 10 pt)
+PAGE_BREAK_BEFORE = True          # page break before "1. Introduction": the title page holds the title, the Abstract and the keywords only
+EQ_PT = 10                       # display equations and their numbers [pt] (advisor: HTML Code style, 10 pt)
 BULLET_NUM_ID = '4'
 UNNUMBERED_H1 = ('Abstract', 'Acknowledgements', 'Conflict of Interest', 'References')
 RICH = re.compile(r'\$(.+?)\$|\*(.+?)\*')
@@ -96,16 +97,27 @@ def equation(doc, latex, num, style=None):
 
 
 def figure(doc, caption, path):
-    full = os.path.join(REPO_ROOT, path)
-    box = doc.add_paragraph(); box.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    box.paragraph_format.keep_with_next = True
-    if os.path.isfile(full):
-        w, h = Image.open(full).size
-        width = min(TEXT_W, MAX_FIG_H * w / h)
-        box.add_run().add_picture(full, width=Cm(width))
-    else:
-        print('warning: image not found:', full)
-        box.add_run('[insert figure]').italic = True
+    """one figure = one caption. `path` is either one file, or several pictures separated by ' ; ', each written as
+    'file@width_cm|panel label': the pictures are inserted as separate pictures one under the other (not merged), each followed by its panel label."""
+    parts = [p.strip() for p in path.split(' ; ')]
+    for pi, part in enumerate(parts):
+        spec, _, label = part.partition('|')
+        file_, _, wcm = spec.partition('@')
+        full = os.path.join(REPO_ROOT, file_.strip())
+        box = doc.add_paragraph(); box.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        box.paragraph_format.keep_with_next = True
+        if os.path.isfile(full):
+            w, h = Image.open(full).size
+            width = float(wcm) if wcm else min(TEXT_W, MAX_FIG_H * w / h)
+            box.add_run().add_picture(full, width=Cm(min(width, TEXT_W)))
+        else:
+            print('warning: image not found:', full)
+            box.add_run('[insert figure]').italic = True
+        if label.strip():
+            lab = doc.add_paragraph(); lab.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            lab.paragraph_format.keep_with_next = True
+            lab.paragraph_format.space_after = Pt(6)
+            add_rich(lab, label.strip())
     cap = doc.add_paragraph()
     add_rich(cap, caption, char_style=doc.styles['Emphasis'])
 
@@ -181,7 +193,10 @@ def build(txt_path, docx_path):
         if i == title_idx:
             add_rich(doc.add_paragraph(style='Title'), s); i += 1; continue
         if s in UNNUMBERED_H1 or (h1.match(s) and not h2.match(s) and len(s) < 100):
-            add_rich(doc.add_paragraph(style='Heading 1'), s); in_refs = (s == 'References'); i += 1; continue
+            hp = doc.add_paragraph(style='Heading 1'); add_rich(hp, s); in_refs = (s == 'References')
+            if PAGE_BREAK_BEFORE and h1.match(s) and s.startswith('1.'):
+                hp.paragraph_format.page_break_before = True              # title and Abstract stay alone on the first page
+            i += 1; continue
         if h2.match(s) and len(s) < 120:
             add_rich(doc.add_paragraph(style='Heading 2'), s); i += 1; continue
         me = eq.match(raw)
