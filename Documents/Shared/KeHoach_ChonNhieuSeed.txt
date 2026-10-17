@@ -159,3 +159,8 @@ PHẦN 12 - NHẬT KÝ
 ==============================================================================================================================================================================================
 H0. 2026-10-16: người dùng hỏi nhiều seed cho CALIB; khung MapPID khuyên hai giai đoạn (tìm một seed, chấm lại top trên K seed); người dùng chốt tỉ lệ 1 : 5 (x0000 tìm, x0001-x0005 chọn), làm lại
 Map thuần, PID, MapPID và các bộ sau, trả lời 8 câu hỏi (Phần 2); yêu cầu một file kế hoạch đầy đủ cho các khung khác. Văn bản này được viết; chưa làm gì khác.
+H1. 2026-10-17 (kết quả đầu tiên của quy trình, MapOpt và PIDOpt): SỬA 3.1 cho bộ mà J nhỏ nhất nằm ở PM thấp: ràng buộc lúc TÌM phải bằng ràng buộc CUỐI (PM từ 30 độ, GM từ 2 áp trong lúc tìm),
+vì tìm với PM lớn hơn 0 rồi lọc sau bỏ sót vùng hợp lệ. MapOpt lần 1 (tìm lỏng): chỉ 7 trong 583 điểm đạt PM từ 30 độ, nhóm top 7 điểm, J trung bình 6.294; lần 2 chạy lại với ràng buộc chặt
+(DieuKhien_MapOpt.txt Phần M). PIDOpt (khung Linear) không bị ảnh hưởng: điểm tốt nhất của PID có PM 46-47 độ, nhóm top đủ 20, J trung bình 3.486 cộng trừ 0.021. Các bộ chạy từ nay (MapPIDOpt, bộ
+mới) tìm với PM từ 30 độ và GM từ 2. Công cụ chạy nền dùng chung đã nằm trong repo: tools/jobs/ (job_lib.sh, headroom.ps1, kill_job.ps1, guard_ram.ps1, mapopt_pipeline.sh); hàm chọn
+Model/common/select_multiseed.m đã viết và đã dùng cho MapOpt.

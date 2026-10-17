@@ -1,21 +1,27 @@
-function out = mapopt_eval(x, seed, csvFile)
-%MAPOPT_EVAL Evaluate ONE MapOpt design on the calibration case CALIB: linear screen first (cheap), then the simulation (the MapPID method, mappid_eval.m, without the PID branch).
+function out = mapopt_eval(x, seed, csvFile, cfg)
+%MAPOPT_EVAL Evaluate ONE MapOpt design on the calibration case CALIB: linear screen first (cheap), then the simulation (one calib_run, about 24 s).
 %
-%   out = mapopt_eval(x, seed, csvFile)    x = [K, z, p/z, z1, p1/z1]: slope limit of the table, lead z, p [rad/s], lag z1, p1 [rad/s] (p1/z1 < 1)
-%   seed: run seed of the sensor noise (MapOpt tuning seed 00000, check seed 00001: the Map seed range); csvFile: every evaluation appended (resumable)
-%   Constraints (same as MapPID/PIDOpt): while searching linear PM > 0 and GM >= 1 over the 68 plants x 5 slopes (mappid_margins with the PID gains 0), lag gain at
-%   2 Hz >= 0.707 (QuyChuan 6.2), e_rel <= 5 % on the 9 static windows; p <= pi/Ts and p1 >= 3 rad/s. out.c = [PM_min - PM, GM_min - GM, g_lag_min - lagGain, erel - 5];
-%   out.J = R*S, Inf when a constraint fails or not simulated. The simulation margin gate (calib_margin) only for the final candidates.
+%   out = mapopt_eval(x, seed, csvFile)
+%     x       row or column of the five design variables [K, z, p/z, z1, p1/z1]   K slope limit of the table; lead z, p [rad/s] (p/z >= 1); lag z1, p1 [rad/s] (p1/z1 <= 1)
+%     seed    run seed of the sensor noise (MapOpt: search seed 0, selection seeds 1-5)
+%     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file for the same seed is returned from it, not simulated again)
+%     cfg     optional struct with PMmin, GMmin [deg, -] of the search (mapopt_cfg(suffix); run 1: 0 and 1, run 2: 30 and 2). A csv file must only hold rows of ONE cfg.
+%   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5]
+%   out.J      R*S [% N.m], Inf when a constraint fails (not simulated for the linear ones); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
+%   Constraints (DieuKhien_MapOpt.txt B3): linear PM > 0 and GM >= 1 over 68 plants x 4 slopes while searching (the final point must have PM >= 30 deg, GM >= 2:
+%   select_mapopt); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 9 static windows (QuyChuan 5.3); p1 >= 3 rad/s, p1 <= z1, p >= z.
+%   The simulation margin gate (calib_margin) is NOT run here: only for the final candidate.
 if nargin < 2 || isempty(seed), seed = 0; end
 if nargin < 3, csvFile = ''; end
-persistent Gj w Cal
+if nargin < 4 || isempty(cfg), cfg = mapopt_cfg(''); end
+persistent Gj w Cal haveBase
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
 x = x(:)';
 assert(numel(x) == 5, 'x must have five entries');
 names = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1'};
-PMmin = 0; GMmin = 1; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
+PMmin = cfg.PMmin; GMmin = cfg.GMmin; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
 
 if ~isempty(csvFile) && exist(csvFile, 'file')
     T = readtable(csvFile);
@@ -28,18 +34,19 @@ if ~isempty(csvFile) && exist(csvFile, 'file')
         return;
     end
 end
-if isempty(Gj), [Gj, w] = mappid_plants(); Cal = calibrate_map_cached(); end
+
+if isempty(Gj), [Gj, w] = mapopt_plants(); Cal = calibrate_map_cached(); end
 Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
-d = xToDesign(x, Ts, Ts0);
+d = struct('Ts_ctrl', Ts, 'Ts0', Ts0, 'Kmax', x(1), 'lead', struct('z', x(2), 'p', x(2) * x(3)), 'lag', struct('z1', x(4), 'p1', x(4) * x(5)));
 w2 = 2 * pi * 2;
 lagGain = abs((1 + 1i * w2 / d.lag.z1) / (1 + 1i * w2 / d.lag.p1));
 c = [0 0 0 0];
 out = struct('x', x, 'seed', seed, 'J', Inf, 'R', NaN, 'S', NaN, 'TV', NaN, 'erel', NaN, 'rev', NaN, 'PM', NaN, 'GM', NaN, 'HF', NaN, ...
     'lagGain2Hz', lagGain, 'simulated', 0, 'c', c, 'cached', false);
 tStart = tic;
-bad = d.lead.p > pi / Ts || d.lag.p1 < 3 || d.lead.p <= d.lead.z || d.lag.p1 >= d.lag.z1;
-dm = struct('Kmax', d.Kmax, 'lead', d.lead, 'lag', d.lag, 'Kp', 0, 'Ki', 0, 'Kd', 0, 'Tf', 0.005);
-R = mappid_margins(Gj, w, dm);
+
+bad = d.lead.p > pi / Ts * (1 + 1e-9) || d.lead.p < d.lead.z * (1 - 1e-9) || d.lag.p1 < 3 * (1 - 1e-9) || d.lag.p1 > d.lag.z1 * (1 + 1e-9);
+R = mapopt_margins(Gj, w, d);
 out.PM = R.PM; out.GM = R.GM; out.HF = R.HF;
 PMeff = R.PM; if ~R.stable, PMeff = -180; end
 c(1) = PMmin - PMeff; c(2) = GMmin - R.GM; c(3) = gLagMin - lagGain;
@@ -48,24 +55,24 @@ if bad || any(c(1:3) > 0)
     if bad, out.c(3) = max(out.c(3), 1); end
     finish(); return;
 end
-if ~evalin('base', 'exist(''MapOpt_table'', ''var'')')
-    evalin('base', sprintf('run(''%s'');', strrep(fullfile(modelDir, 'Controllers', 'MapOpt', 'load_mapopt.m'), '\', '/')));
+
+if isempty(haveBase) || ~evalin('base', 'exist("MapOpt_table", "var")')
+    evalin('base', sprintf('run("%s");', strrep(fullfile(modelDir, 'Controllers', 'MapOpt', 'load_mapopt.m'), '\', '/')));
+    haveBase = true;
 end
 if ~exist(fullfile(modelDir, 'Controllers', 'MapOpt', 'Model_MapOpt.mdl'), 'file'), build_closed_loop('MapOpt'); end
 [~, m] = calib_run('Model_MapOpt', seed, mapopt_variables(Cal, d));
-Simulink.sdi.clear;                 % the Simulation Data Inspector keeps every run (about 190 MB each) and filled the C drive on 2026-10-13
-out.R = m.R; out.S = m.S; out.TV = m.TV; out.erel = m.erel; out.rev = 100 * m.rev; out.simulated = 1;
+Simulink.sdi.clear;                 % the Simulation Data Inspector keeps every run (about 190 MB each in the temp .dmr file) and filled the C drive on 2026-10-13
+out.R = m.R; out.S = m.S; out.TV = m.TV; out.erel = m.erel; out.rev = m.rev; out.simulated = 1;
 out.c(4) = m.erel - erelMax;
 if out.c(4) <= 0, out.J = m.R * m.S; else, out.J = Inf; end
 finish();
 
     function finish()
-        if ~isempty(csvFile), writeRow(csvFile, names, x, seed, out, toc(tStart)); end
+        if ~isempty(csvFile)
+            writeRow(csvFile, names, x, seed, out, toc(tStart));
+        end
     end
-end
-
-function d = xToDesign(x, Ts, Ts0)
-d = struct('Ts_ctrl', Ts, 'Ts0', Ts0, 'Kmax', x(1), 'lead', struct('z', x(2), 'p', x(2) * x(3)), 'lag', struct('z1', x(4), 'p1', x(4) * x(5)));
 end
 
 function writeRow(csvFile, names, x, seed, out, secs)

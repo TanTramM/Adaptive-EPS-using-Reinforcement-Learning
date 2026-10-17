@@ -310,6 +310,7 @@ F29. 2026-10-16: người dùng chốt phương pháp chọn mới cho MỌI b�
 chi tiết ở Phần G. Kết quả MapPID hiện có (F20-F27, một seed) GIỮ NGUYÊN làm bản cũ.
 ==============================================================================================================================================================================================
 PHẦN G - KẾ HOẠCH MAPPIDOPT: CHẠY LẠI MAPPID VỚI CẬN LEAD, LAG NỚI VỀ 1 VÀ CHỌN TRÊN NHIỀU SEED (viết 2026-10-16, CHƯA LÀM)
+(LƯU Ý 2026-10-17: Phần G là bản nháp đầu; BẢN CHỐT để làm là PHẦN H bên dưới. Chỗ nào G và H khác nhau thì theo H.)
 ==============================================================================================================================================================================================
 G1. Mục đích. (a) Kiểm xem MapPID có thật cần khâu lead và khâu lag không: ở lần chạy cũ khâu lead kẹt ở cận dưới (z 5.01 rad/s, p/z 1.2) tức tối ưu muốn lead yếu hơn nữa, nên cận được nới về 1 để
 tối ưu tự tắt được; (b) chọn điểm theo phương pháp chung mới (1 seed tìm, 5 seed chọn, 5 seed chấm) để so được với MapOpt và PIDOpt cùng cách. MapPID làm trước để thử quy trình và hàm dùng chung,
@@ -383,3 +384,73 @@ G11. Cơ sở các cận (tra 2026-10-16, vùng tối ưu = thiết kế có J t
 trong 5 % phía trên của hộp, điểm chọn 0.047), MapPID tiến sát (tối đa 0.0472). Tf 1-20 ms: đáy 1 ms là chu kỳ điều khiển (vật lý), đỉnh 20 ms là phán đoán, trần thật là 79.6 ms của ràng buộc dải
 lái; vùng 1.0-9.2 ms, chạm đáy ở MapPIDLag. z 5-500, z1 8-120: lấy cùng cận design_leadlag.m (phán đoán: dưới 5 rad/s lead tác động ngay trong dải lái 0.2-2 Hz); khi lead bằng 1 thì z vô nghĩa nên
 vùng z rộng (5-399) là bình thường.
+==============================================================================================================================================================================================
+PHẦN H - KẾ HOẠCH CHỐT MAPPIDOPT (viết 2026-10-17; gộp mọi quyết định của người dùng ngày 2026-10-16, 2026-10-17 và bài học MapOpt; CHƯA LÀM, chờ người dùng bảo)
+==============================================================================================================================================================================================
+H1. Mục đích và tên. Chạy lại MapPID bằng quy trình chung mới (KeHoach_ChonNhieuSeed.txt) dưới tên MapPIDOpt (hậu tố Opt cho mọi bản chạy lại, người dùng chốt 2026-10-16). MapPID cũ (mappid.json,
+Result/Controllers/MapPID, Phần F) GIỮ NGUYÊN làm bản cũ. Câu hỏi khoa học: với hộp rộng và chọn trên nhiều seed, MapPIDOpt còn cần lead và lag không (lần cũ lead kẹt ở cận dưới p/z 1.2), và có
+tốt hơn PIDOpt (PID tối ưu cùng cách, J trung bình 3.486) không.
+H2. Cấu trúc và model (giống cách đã làm cho MapOpt): T_a = H sgn(T_s) M_K(v, |T_s|) + u_PID, H = lead x lag CHỈ trên nhánh Map, chống bão hòa trên tổng lệnh, Kaw = Ki / (Kp + K). Sao chép
+Model/Controllers/MapPID/MapPID.mdl thành Model/Controllers/MapPIDOpt/MapPIDOpt.mdl, đổi tên khối gốc MapPID thành MapPIDOpt và tiền tố biến MapPID_ thành MapPIDOpt_ (thay chuỗi trong file .mdl,
+như MapOpt); Model_MapPIDOpt.mdl dựng bằng build_closed_loop(MapPIDOpt). load_mappidopt.m, Model/data/mappidopt.json, Result/Controllers/MapPIDOpt/{Design, Calib, Cases}. Không sửa file nào của
+MapPID.
+H3. Chín biến và HỘP RỘNG (cùng hộp với MapOpt và PIDOpt để so được; tất cả thang log trừ p1/z1):
+  K        0 hoặc 0.1 - 16      u dưới 0.01 thì K = 0 (nhánh Map tắt, bộ suy biến thành PID: giữ D10 của MapPID); cận trên 16 giữ (người dùng chốt)
+  z        5 - 500 rad/s        lead
+  p/z      1 - min(300, 3142/z) 1 = không lead (suy biến thành lag đơn); p nhỏ hơn hoặc bằng 3142 rad/s (Nyquist 1 ms)
+  z1       8 - 120 rad/s        lag
+  p1/z1    max(0.1, 3/z1) - 1   tuyến tính; 1 = không lag (suy biến thành lead đơn); p1 từ 3 rad/s
+  Kp       1e-3 - 30            như PIDOpt
+  Ki       0.1 - 2000 1/s       như PIDOpt
+  Kd       0 hoặc 1e-4 - 2 s    u dưới 0.01 thì Kd = 0; như PIDOpt
+  Tf       1 - 79.6 ms          đáy = chu kỳ điều khiển; đỉnh = ràng buộc dải lái (QuyChuan 6.2)
+Vùng chết 0.3 N.m cố định. Quy ước suy biến (G4): p/z dưới 1.02 là không còn lead; p1/z1 trên 0.98 là không còn lag; K dưới 0.1 (bằng 0) là không còn nhánh Map.
+H4. Ràng buộc (bài học MapOpt, KeHoach_ChonNhieuSeed.txt H1): áp NGAY KHI TÌM đúng ràng buộc cuối: ổn định tuyến tính, PM từ 30 độ và GM từ 2 trên 68 mô hình x 5 độ dốc k = K x {0, 0.25, 0.5,
+0.75, 1}; độ lợi khâu lag tại 2 Hz từ 0.707; e_rel nhỏ hơn hoặc bằng 5 % trên 9 cửa sổ static (mô phỏng). Điểm không đạt ràng buộc tuyến tính nhận log 30, không mô phỏng. Cổng calib_margin cho
+điểm chọn. Bang-bang, trợ lực ngược chỉ báo cáo.
+H5. Quy trình (giống MapOpt và PIDOpt): giai đoạn 1 tìm ở seed 30000, ba chuỗi độc lập surrogateopt 250 lần rồi patternsearch 60 lần (rng 1001-1003; chuỗi 2, 3 tự cấp 30 điểm đầu ngẫu nhiên
+riêng); KHÔNG dùng lại các lần đánh giá của MapPID cũ (khác hộp và khác ràng buộc tìm). Giai đoạn 2 nhóm top 20 điểm khác nhau (cách ít nhất 0.02 theo một biến chuẩn hóa). Giai đoạn 3 chọn trên
+seed 30001-30005 (J trung bình nhỏ nhất, e_rel nhỏ hơn hoặc bằng 5 % ở mọi seed, hòa theo độ lệch chuẩn thì PM lớn hơn; seed 30000 không tính vào trung bình). Giai đoạn 4 calib_margin seed 30001,
+bang-bang, báo suy biến lead, lag, nhánh Map, hạng ở seed 30000, tương quan hạng, vùng tối ưu, ràng buộc và biên hộp đang chặn. Giai đoạn 5 DREWS MỘT seed local 30000 (như MapOpt dùng seed 0); 5
+seed chấm 99999-99995 làm sau khi so nhiều bộ.
+H6. Mã (trong Model/Controllers/MapPIDOpt/script; mẫu MapPID/script và MapOpt/script): mappidopt_variables (gọi mappid_variables rồi đổi tiền tố), mappidopt_design_variables, mappidopt_plants
+(chép bộ nhớ đệm 68 mô hình của MapPID), mappidopt_margins (cùng định nghĩa mappid_margins), mappidopt_u2x, mappidopt_x2u (9 biến, hộp H3), mappidopt_eval (PMmin 30, GMmin 2; ghi csv chạy tiếp
+được; Simulink.sdi.clear), optimize_mappidopt, refine_mappidopt, select_mappidopt (gọi Model/common/select_multiseed.m), run_mappidopt_cases, test_mappidopt. Chạy nền bằng tools/jobs/job_lib.sh
+(thêm mappidopt_pipeline.sh theo mẫu mapopt_pipeline.sh).
+H7. Kiểm trước khi chạy (đặt trước): (a) MapPIDOpt.mdl cho đầu ra giống MapPID.mdl tuyệt đối trên 3 thiết kế (thiết kế mappid.json; một thiết kế không lead, không lag, K = 0; một thiết kế mạnh);
+(b) u2x/x2u khứ hồi dưới 1e-9 trên 1000 điểm và mọi u cho thiết kế thực hiện được; (c) mappidopt_margins trên thiết kế mappid.json cho PM 38.0 độ, GM 6.72 (khớp mappid.json); (d) mappidopt_eval
+với thiết kế mappid.json ở seed 30000 tái lập J 3.0716 (R 9.79 %, S 0.3137) tới 2e-3 tương đối; (e) thiết kế PIDOpt (K = 0) trong mappidopt_eval cho PM, GM giống pidlag_margins của khung Linear.
+H8. Dự đoán ghi trước khi chạy: (a) lead suy biến (p/z dưới 1.02) vì khâu D của PID đã cho pha; (b) lag còn hoạt động (p1/z1 khoảng 0.4-0.7) vì lọc nhánh Map; (c) K khoảng 2-5, không về 0 (nhánh
+Map có ích); (d) J trung bình trên 5 seed khoảng 2.95-3.10, thấp hơn PIDOpt (3.486) ít nhất 5 %; (e) ràng buộc PM từ 30 độ không chặn (MapPID cũ có PM 38 độ); (f) Kd có thể lớn hơn 0.05 (cận cũ)
+vì MapPIDLag đã chạm 0.05. Kết quả nào trái dự đoán cũng báo.
+H9. Quy tắc dừng và mở rộng (đặt trước, như MapOpt): hội tụ khi J tốt nhất ba chuỗi chênh dưới 3 %; không đạt thì mỗi chuỗi chạy tiếp 150 lần surrogateopt (từ checkpoint) rồi 60 lần patternsearch,
+tối đa một lần; nhóm top dưới 20 điểm thì lấy hết và ghi số; điểm chọn chạm biên hộp thì báo, không tự nới.
+H10. Thời gian máy (máy rảnh, ba MATLAB song song): kiểm khoảng 15 phút; tìm khoảng 2-3 giờ (9 biến, hộp rộng); chọn 100 lần CALIB khoảng 40 phút; kiểm điểm chọn vài phút; DREWS seed 30000 khoảng
+6 phút. Tổng khoảng 3.5-4.5 giờ. Tuân thủ Phần 7 của KeHoach_ChonNhieuSeed.txt (xếp hàng bộ nhớ, không dừng MATLAB của khung khác).
+H11. Sau MapPIDOpt: (khi người dùng bảo) DREWS 5 seed chấm cho MapOpt, PIDOpt, MapPIDOpt và so theo cặp (giai đoạn 6); bảng tổng hợp ba bộ cho báo cáo thầy.
+H12. Còn mở [CẦN CHỐT]: (a) cho phép K = 0 (khuyến nghị CÓ: nếu tối ưu tự tắt nhánh Map thì đó là kết luận "nhánh Map không thêm giá trị", và MapPIDOpt khi đó trùng PIDOpt); (b) DREWS lần này một
+seed 30000 (khuyến nghị, đồng bộ với MapOpt) hay chạy luôn 5 seed chấm 99999-99995 (thêm khoảng 30 phút).
+==============================================================================================================================================================================================
+PHẦN I - KẾT QUẢ MAPPIDOPT (2026-10-17, chạy 00:54-03:29, quy trình Phần H; mã Model/Controllers/MapPIDOpt, dữ liệu Model/data/mappidopt.json, kết quả Result/Controllers/MapPIDOpt)
+==============================================================================================================================================================================================
+I1. Kiểm trước khi chạy (H7) ĐẠT: MapPIDOpt.mdl giống MapPID.mdl tuyệt đối (chênh 0) trên 3 thiết kế; u2x/x2u khứ hồi 1.1e-15, K = 0 và Kd = 0 đạt được; mappidopt_margins trên thiết kế mappid.json
+cho PM 38.019 độ, GM 6.721; mappidopt_eval tái lập J 3.0715 (R 9.790 %, S 0.3137, e_rel 2.14 %) ở seed 30000.
+I2. Tìm (seed 30000): ba chuỗi surrogateopt 250 + patternsearch 60 = 930 lần đánh giá, 617 điểm khả thi với PM từ 30 độ và GM từ 2 áp ngay khi tìm; nhóm top ĐỦ 20 điểm khác nhau (J ở seed tìm
+3.123-3.136). Máy bận nên chuỗi 3 chờ bộ nhớ khoảng 12 phút (cơ chế tự tiếp tục của tools/jobs/job_lib.sh chạy đúng); không lần thử lại nào thất bại.
+I3. Chọn (20 điểm x 5 seed 30001-30005): 20 điểm có J trung bình từ 3.042 đến 3.090, độ lệch chuẩn giữa seed 0.028-0.044: chênh giữa các điểm nhỏ hơn độ lệch giữa seed, 16 điểm nằm trong nhóm hòa.
+Tương quan hạng giữa J ở seed tìm và J trung bình chỉ 0.43 (chọn trên một seed gần như ngẫu nhiên trong nhóm này; đây là lý do chọn trên 5 seed). ĐIỂM CHỌN: hạng 9 ở seed tìm; K 3.726, lead z
+405.0 và p 427.6 rad/s (p/z 1.056: gần như KHÔNG CÒN LEAD, z nằm xa dải làm việc; vượt ngưỡng suy biến 1.02 của G4 nên tính là "còn" theo quy ước đặt trước), lag z1 30.75 và p1 18.62 rad/s (p1/z1
+0.61, còn), Kp 0.0071 (gần 0: nhánh Map đảm nhận phần tỷ lệ), Ki 49.4, Kd 0.0464, Tf 4.16 ms, Kaw 13.2. J trung bình 3.054 cộng trừ 0.043 (J từng seed 3.073, 3.090, 3.071, 3.057, 2.979); R 9.75 %,
+S 0.3131, TV 51.3, trợ lực ngược 11.6 %, e_rel lớn nhất 2.52 %; PM tuyến tính 34.2 độ, GM 5.24, độ lợi cao tần 13.6 (MapPID cũ 20.7), độ lợi lag tại 2 Hz 0.895; calib_margin PASS (0.30 / 1.01);
+bang-bang f 0.039 / 0.040; không biên hộp nào chặn.
+I4. Dự đoán H8: (a) lead suy biến: ĐÚNG VỀ THỰC CHẤT (p/z 1.056, z 405 rad/s), SAI THEO NGƯỠNG 1.02; (b) lag còn (p1/z1 0.6): ĐÚNG; (c) K 2-5: ĐÚNG (3.73), K không về 0 (nhánh Map có ích); (d) J
+trung bình 2.95-3.10 và thấp hơn PIDOpt (3.486) ít nhất 5 %: ĐÚNG (3.054, thấp hơn 12.4 %; hai bộ chọn ở dải seed khác nhau nên so thô); (e) PM từ 30 độ không chặn: ĐÚNG (PM 34.2, không ràng buộc
+nào chặn); (f) Kd vượt 0.05: SAI (0.046).
+I5. DREWS seed local 30000 (một seed), MapPID cũ so với MapPIDOpt. RMS e_T (N.m): DRY 0.134 / 0.145, RAMP 0.042 / 0.061, SLIP 0.137 / 0.157, WEAVE 0.215 / 0.252, EDGE 0.144 / 0.158. S: 0.201 /
+0.201, 0.115 / 0.108, 0.240 / 0.241, 0.315 / 0.323, 0.255 / 0.256. TV: 73.3 / 49.1, 75.4 / 53.2, 75.9 / 50.2, 75.3 / 47.4, 73.9 / 48.4 (giảm khoảng 33 %). Trợ lực ngược WEAVE 26.3 / 26.8 %. Sai số
+xác lập lớn nhất DRY 2.02 / 1.97 %, RAMP 0.18 / 0.17 %, EDGE 0.22 / 0.24 %.
+I6. Đọc kết quả (một seed, chênh dưới khoảng 5 % coi là ngang): MapPIDOpt có J trên CALIB ngang MapPID cũ (3.054 so với 3.072), độ ồn S ngang, tổng biến thiên TV thấp hơn 33 % (êm hơn nhờ độ lợi
+cao tần 13.6 thay vì 20.7), nhưng RMS e_T trên ca chấm kém hơn 8-45 % (DRY +8 %, RAMP +45 %, SLIP +15 %, WEAVE +17 %, EDGE +10 %): hộp rộng và chọn trên 5 seed đổi điểm chọn sang thiết kế êm hơn
+và bám kém hơn một chút, J không phản ánh hết (J = R x S chỉ tính S sau lọc 5 Hz, không tính TV). Vẫn là một seed: cần 5 seed chấm (99999-99995) để kết luận. Hệ quả cho báo cáo: MapPID cũ và
+MapPIDOpt gần như cùng điểm trên mặt Pareto (R, S) nhưng khác ở TV và bám trên ca động; hai khâu bù kiểu lead không đóng góp (lead về gần 1), lag vẫn đóng góp.
+I7. Việc tiếp theo (khi người dùng bảo): DREWS 5 seed chấm 99999-99995 cho MapPIDOpt, MapOpt, PIDOpt, MapPID cũ và so theo cặp (giai đoạn 6); cập nhật bài báo và luận văn.

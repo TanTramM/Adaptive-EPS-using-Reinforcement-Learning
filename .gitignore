@@ -23,3 +23,4 @@ scratch/
 
 # Python bytecode cache
 __pycache__/
+tools/jobs/ram_log.csv

@@ -1,0 +1,69 @@
+{
+  "Ts_ctrl": 0.001,
+  "note": "MapPIDOpt: MapPID structure (Map branch + PID branch, lead-lag on the Map branch) chosen by the common method: search seed 30000 (surrogateopt x3 + patternsearch x3, wide box, PM >= 30 and GM >= 2 already in the search), the 20 best distinct designs re-scored on seeds 30001-30005. design is written by select_mappidopt.m. See Documents/Notes/Controllers/DieuKhien_MapPID.txt Part H.",
+  "design": {
+    "Kmax": 3.72603406851796,
+    "Ts0": 0.3,
+    "lead": {
+      "z": 405.045908337261,
+      "p": 427.58548883130703
+    },
+    "lag": {
+      "z1": 30.7513770898154,
+      "p1": 18.6206899496719
+    },
+    "Kp": 0.00707555978074535,
+    "Ki": 49.3705604862111,
+    "Kd": 0.0464458697783474,
+    "Tf": 0.0041561792982866,
+    "Kaw": 13.225049731183706,
+    "rule": "min mean J = R*S over CALIB seeds 30001-30005 among the 20 best distinct designs of the search at seed 30000 (surrogateopt x3 + patternsearch x3, wide box, PM >= 30, GM >= 2 in the search)",
+    "CALIB_J_mean": 3.0541413591447,
+    "CALIB_J_sigma": 0.043343234712985762,
+    "CALIB_J_per_seed": [
+      3.0725227836948648,
+      3.090247070274641,
+      3.0712358745710171,
+      3.0572018913002377,
+      2.9794991758827396
+    ],
+    "CALIB_R_pct_mean": 9.7545763048099889,
+    "CALIB_S_Nm_mean": 0.31309497637093575,
+    "CALIB_TV_mean": 51.322444402802986,
+    "CALIB_rev_pct_mean": 11.552595194824393,
+    "CALIB_erel_max_pct": 2.5219627606056831,
+    "CALIB_J_search_seed": 3.1303013004805331,
+    "rank_at_search_seed": 9,
+    "rank_correlation": 0.43458646616541358,
+    "PM_deg": 34.182997003483365,
+    "GM": 5.2409636224398879,
+    "HF_gain": 13.563964820956652,
+    "lag_gain_2Hz": 0.8954408217877996,
+    "no_map_branch": false,
+    "no_lead": false,
+    "no_lag": false,
+    "margin_ratio_gain": 0.2998963750962117,
+    "margin_ratio_delay": 1.0070989713403129,
+    "active": [
+      "none (interior optimum)"
+    ],
+    "n_region": 20,
+    "n_pool": 617,
+    "n_top": 20,
+    "search_seed": 30000,
+    "selection_seeds": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005
+    ],
+    "date": "2026-10-17 03:26:28",
+    "bangbang": {
+      "f_ideal": 0.03899966087251415,
+      "f_noisy": 0.039869218528534534,
+      "delta": 0.00089129659742089376,
+      "spread": 4.3477882801019885E-5
+    }
+  }
+}

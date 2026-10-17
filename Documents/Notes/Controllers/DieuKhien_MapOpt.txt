@@ -5,8 +5,9 @@ Văn bản này ghi kế hoạch làm lại bộ Map thuần bằng phương ph�
 top 20, chọn trên 5 seed x0001-x0005, chấm DREWS trên 5 seed 99999-99995. MapOpt là TÊN MỚI của bản chạy lại (hậu tố Opt, quy ước 2026-10-16); bộ Map cũ (quét lưới K, khâu bù tính ngoại tuyến,
 Documents/Notes/Controllers/DieuKhien_Map.txt, Model/data/map.json, Result/Controllers/Map) GIỮ NGUYÊN làm bản cũ để đối chiếu và không bị ghi đè. Soạn bởi khung MapPID theo lời người dùng; khung
 nào được chỉ định thực hiện (khung Map hoặc khung MapPID) làm theo Phần F.
-TRẠNG THÁI: mới có kế hoạch (cập nhật 2026-10-16 sau khi người dùng chốt Phần I). Chưa viết mã, chưa chạy mô phỏng. Người dùng giao KHUNG MapPID làm lại toàn bộ Map từ đầu tới DREWS MỘT seed
-(00000); bước bắt đầu khi người dùng bảo "bắt đầu".
+TRẠNG THÁI (2026-10-17): LẦN CHẠY 1 XONG (M1-M4: mã, kiểm, tìm, chọn, DREWS seed 0; kết quả Phần L); phát hiện ràng buộc PM lúc tìm quá lỏng nên CHỜ LẦN CHẠY 2 (Phần M: kế hoạch và bàn giao cho
+khung Map). Phần A-I bên dưới là kế hoạch ban đầu. Chưa viết mã, chưa chạy mô phỏng. Người dùng giao KHUNG MapPID làm lại toàn bộ Map từ đầu tới DREWS MỘT seed (00000); bước bắt đầu khi người dùng
+bảo "bắt đầu".
 ==============================================================================================================================================================================================
 PHẦN A - CƠ SỞ: MAP CŨ ĐƯỢC CHỌN NHƯ THẾ NÀO VÀ VÌ SAO LÀM LẠI
 ==============================================================================================================================================================================================
@@ -132,3 +133,86 @@ K0. 2026-10-16: người dùng chốt làm lại Map trước theo phương phá
 (A1-A9), map.json, design_leadlag.m, map_margins_batch.m, select_map.m. Chưa mã, chưa chạy.
 K1. 2026-10-16: người dùng chốt Phần I (sao chép model Map cũ sang MapOpt, khung MapPID làm hết đến DREWS một seed 00000, cận rộng thang log nhưng K giữ 16) và bảo CHỈ cập nhật văn bản này, chưa
 làm. Đã cập nhật Phần B1, D, C5, F, I.
+==============================================================================================================================================================================================
+PHẦN L - KẾT QUẢ LẦN CHẠY 1 (2026-10-16 tối, khung MapPID; quy trình đúng Phần C, tìm với PM lớn hơn 0 và GM từ 1)
+==============================================================================================================================================================================================
+L1. Việc đã làm. Xóa MapOpt của khung Linear (bản đã commit fbd74d4, sao lưu Desktop/Adaptive-EPS_backup_2026-10-16_MapOpt_of_Linear_frame, hộp cũ, một seed) rồi làm lại: MapOpt.mdl sao chép từ
+Map.mdl (đổi tên khối gốc và tiền tố biến Map_ thành MapOpt_ bằng thay chuỗi trong file, Model_MapOpt.mdl dựng bằng build_closed_loop), mã trong Model/Controllers/MapOpt/script/ (mapopt_variables,
+mapopt_design_variables, mapopt_plants, mapopt_margins, mapopt_u2x, mapopt_x2u, mapopt_eval, optimize_mapopt, refine_mapopt, select_mapopt, run_mapopt_cases, test_mapopt) và hàm chung
+Model/common/select_multiseed.m; load_mapopt.m; Model/data/mapopt.json.
+L2. Kiểm trước khi chạy (Phần E): test_mapopt PASS: MapOpt.mdl cho đầu ra giống Map.mdl TUYỆT ĐỐI (chênh 0) trên 3 thiết kế; p = z và p1 = z1 cho khâu bù bằng 1; u2x/x2u khứ hồi 3.3e-16;
+mapopt_margins trên thiết kế Map cũ cho PM 45.292 độ, GM 5.674 (khớp map.json). Tái lập Map cũ ở seed 0: J 6.7429, R 27.054 %, S 0.2492, e_rel 3.17 % (khớp map.json). Lỗi gặp: lệnh đặt đường dẫn
+Unix cho addpath trong MATLAB (phải dùng C:/...); bộ canh RAM dừng MATLAB khi RAM trống dưới 3 GB lúc khung Linear đang chạy.
+L3. Tìm (giai đoạn 1): ba chuỗi surrogateopt 250 + patternsearch 60, seed 0, hộp rộng (K 0.1-16 log, p/z từ 1, p1/z1 tới 1): 928 lần đánh giá, 583 điểm khả thi (e_rel nhỏ hơn hoặc bằng 5 %, lag 2
+Hz từ 0.707, PM lớn hơn 0, GM từ 1). J tốt nhất mỗi chuỗi 5.49-5.56 NHƯNG ở PM chỉ 9-18 độ (chuỗi 1: J 5.487, PM 16.5, K 8.13; chuỗi 3: J 5.537, PM 17.7, K 7.77). Chỉ 7 trong 583 điểm đạt PM từ 30
+độ và GM từ 2, chỉ 2 trong 519 điểm có J nhỏ hơn 6.5.
+L4. Chọn (giai đoạn 2-4): nhóm top chỉ có 7 điểm khác nhau (J ở seed 0 từ 6.317 đến 12.92), không đủ 20; chọn trên seed 1-5. ĐIỂM CHỌN (mapopt.json): J trung bình 6.294, độ lệch chuẩn 0.011 (J ở
+seed 0: 6.324); R trung bình 25.30 %, S 0.2487, e_rel lớn nhất 0.45 %; PM tuyến tính 35.1 độ, GM 5.71, độ lợi cao tần 45.5; độ lợi lag tại 2 Hz 0.708 (ràng buộc dải lái đang chặn); lead và lag đều
+còn; calib_margin PASS (0.86 / 1.00); tương quan hạng 1.00 (chỉ 7 điểm). So với Map cũ J 6.743: thấp hơn 6.7 %.
+L5. DREWS seed 0 (Result/Controllers/MapOpt/Cases), Map cũ so với MapOpt. RMS e_T (N.m): DRY 0.689 / 0.623, RAMP 0.835 / 0.645, SLIP 0.538 / 0.528, WEAVE 1.327 / 1.322, EDGE 1.535 / 1.226. S:
+0.150 / 0.153, 0.170 / 0.161, 0.161 / 0.156, 0.160 / 0.153, 0.129 / 0.127. TV: 78 / 84, 115 / 115, 95 / 93, 47 / 40, 22 / 19. Sai số xác lập lớn nhất: DRY 13.0 / 0.5 %, RAMP 46.7 / 29.3 %, EDGE
+99.7 / 59.0 %. Trợ lực ngược gần 0 ở cả hai. Bám vẫn kém xa các bộ có PID (cấu trúc, G5).
+L6. Dự đoán Phần G: G1 (J thấp hơn Map cũ ít nhất 5 %) ĐÚNG (6.7 %); G2 (lead không suy biến) ĐÚNG; G3 (K khoảng 5.5-7) SAI: điểm chọn có K 8.47, lead z 24.4 và p 707.7 rad/s (p/z 29, lead mạnh),
+lag z1 65.7 và p1 12.16 rad/s; G4 (lag chạm dải lái) ĐÚNG (0.708); G5 (bám vẫn kém xa PID) ĐÚNG; G6 (S thấp hơn PIDOpt) chưa so.
+L7. PHÁT HIỆN QUAN TRỌNG: ràng buộc PM lúc tìm (lớn hơn 0) lỏng hơn ràng buộc cuối (từ 30 độ), nên vùng PM từ 30 độ gần như không được khám phá; Map đứng một mình (không có khâu D cho pha dư) có J
+nhỏ nhất ở PM thấp. Bản MapOpt của khung Linear (hộp hẹp cũ, cũng tìm với PM lớn hơn 0) có 27 trong 762 điểm đạt PM từ 30 độ và điểm chọn J 5.739 (seed 0, PM 33.1 độ, K 7.07, lead p/z 10.8, lag q
+0.28), tốt hơn 6.317 của lần này 10 %, nên điểm chọn lần 1 CHƯA tối ưu dưới PM từ 30 độ. PIDOpt của khung Linear không bị vì điểm tốt nhất của PID đã có PM 46-47 độ (nhóm top đủ 20, J trung bình
+3.486, PM 52.8). Bản gốc MapPID (D13, D14) cũng tìm lỏng rồi lọc sau, chỉ vô hại vì PM từ 30 độ làm J tăng 0.3 %.
+==============================================================================================================================================================================================
+PHẦN M - KẾ HOẠCH LẦN CHẠY 2 VÀ BÀN GIAO CHO KHUNG MAP (viết 2026-10-17; người dùng bảo lưu kế hoạch để khung Map đọc và làm tiếp; CHƯA LÀM; [CẦN CHỐT] điều ghi ở M8)
+==============================================================================================================================================================================================
+M1. Mục tiêu: tìm MapOpt với PM từ 30 độ và GM từ 2 áp ngay trong lúc tìm (cổng c1, c2 của mapopt_eval), để khám phá đúng vùng hợp lệ. Mọi thứ khác GIỮ NGUYÊN lần 1: hộp rộng (B1), ba chuỗi,
+patternsearch, nhóm top 20, chọn trên seed 1-5, hòa theo PM, calib_margin, DREWS seed 0. Đây là đổi quy trình SAU khi đã thấy kết quả (L7): báo trong bài và luận văn cùng thời điểm 2026-10-17 và
+lý do; kết quả lần 1 giữ làm đối chiếu.
+M2. Sửa mã (khung Map; mẫu: Model/Controllers/MapPID/script và MapOpt/script):
+  - mapopt_eval.m: ngưỡng PMmin, GMmin thành tham số cấu hình (mặc định lần 1: 0 và 1, để tái lập; lần 2: 30 và 2). Cách làm gọn: tham số thứ tư cfg (struct) hoặc hậu tố tên run; ghi vào csv cột
+    c1, c2 theo ngưỡng của lần chạy.
+  - optimize_mapopt.m(runId, maxEvals, suffix): lần 2 chạy với suffix b, file Result/Controllers/MapOpt/Calib/MapOpt_CALIB_opt<k>b_s00000.csv, ckpt riêng; ĐIỂM ĐẦU: đọc csv lần 1 của CHÍNH chuỗi k
+    (cùng seed 0, cùng hộp, cùng hàm đánh giá nên hợp lệ), đưa vào optimoptions InitialPoints dạng struct (X = u của mapopt_x2u, Fval = log J nếu mô phỏng được và e_rel nhỏ hơn hoặc bằng 5 %
+    (ngược lại log 30), Ineq = [30 - PM_deg, 2 - GM, c3, c4] tính lại từ PM_deg, GM, c3, c4 đã ghi) để mô hình thay thế biết sẵn nơi nào khả thi; thêm 250 lần đánh giá. Điểm cũ không tốn mô phỏng.
+  - refine_mapopt.m(runId, maxEvals, suffix): điểm đầu = điểm khả thi tốt nhất (theo ngưỡng mới) của file opt<k>b.
+  - select_mapopt.m(writeJson, suffix): bể điểm = file opt<k>b và ref<k>b của lần 2 cộng file lần 1 (lọc PM từ 30 độ, GM từ 2 sẵn có ở select_multiseed); cần thêm tên file ra có hậu tố
+    (top_s00000b, best_...b, pick_msb) để không đè lần 1; trước khi chạy: sao lưu mapopt.json lần 1 thành trường design_run1, chuyển Calib lần 1 sang Result/Controllers/MapOpt/Calib_run1 và Cases
+    sang Cases_run1.
+  - mapopt.json trường design được ghi đè bởi lần 2; trường design_run1 giữ lần 1.
+M3. Chạy (công cụ đã lưu trong repo, dùng chung cho mọi khung): tools/jobs/job_lib.sh (hàm run_job: chờ khoảng trống bộ nhớ từ 5 GB, thử lại 8 lần, nhật ký trong scratch/jobs, dừng tiến trình treo
+theo nội dung lệnh), headroom.ps1, kill_job.ps1, guard_ram.ps1 (dừng MATLAB mới nhất khi RAM trống dưới 3 GB), mapopt_pipeline.sh (ba chuỗi, chọn, DREWS seed 0). Lệnh: bash
+tools/jobs/mapopt_pipeline.sh b (sau khi sửa mã nhận tham số suffix b). MATLAB khởi động bằng đường dẫn Windows (C:/...). Máy chỉ đủ khoảng 3 MATLAB cùng lúc; ba chuỗi cần máy rảnh khoảng 2 giờ.
+M4. Thứ tự và thời gian: sửa mã và kiểm (test_mapopt vẫn PASS; mapopt_eval với ngưỡng 0 và 1 tái lập lần 1; với ngưỡng 30 và 2 loại đúng điểm PM dưới 30) khoảng 1 giờ; tìm khoảng 1.5-2 giờ; chọn
+khoảng 40 phút; DREWS seed 0 khoảng 6 phút. Tổng khoảng 3-4 giờ máy.
+M5. Tiêu chí đặt trước: (a) nhóm top lần 2 phải đủ 20 điểm khác nhau; nếu vẫn dưới 20 thì lấy hết và ghi số; (b) báo J trung bình lần 2 so với lần 1 (6.294), với Map cũ (6.743) và với MapOpt khung
+Linear (5.739, hộp cũ, đã sao lưu; chỉ để tham khảo); (c) hội tụ: J tốt nhất ba chuỗi chênh dưới 3 %, nếu không thì chạy thêm 150 lần surrogateopt mỗi chuỗi, tối đa một lần (G10b của
+DieuKhien_MapPID.txt); (d) điểm chọn chạm biên hộp thì báo, không tự nới (quy tắc G9 của DieuKhien_MapPID.txt); (e) không đổi cổng, ngưỡng hay hộp nào khác.
+M6. Dự đoán lần 2 (ghi trước): J trung bình giữa 5.7 và 6.3, gần 5.74 của bản Linear; lead mạnh (p/z lớn hơn 5) vì Map cần pha; K khoảng 7-8; lag vẫn chạm dải lái. Sai thì báo.
+M7. Sau lần 2: DREWS 5 seed chấm (99999-99995, run_scoring_seeds) cho MapOpt và Map cũ khi người dùng bảo để so theo cặp; so MapOpt với PIDOpt, MapPIDOpt; chương Map của luận văn và LyThuyet_Map
+viết lại theo MapOpt chốt (khung Map, tools/build_map_txt.py).
+M8. [CẦN CHỐT] (a) Người dùng đã hỏi "chạy lại chi nữa" (MapOpt đã lọc PM từ 30 độ): lý do chạy lại là L7; nếu người dùng quyết định KHÔNG chạy lại thì dùng kết quả lần 1 và ghi hạn chế "tìm với
+PM lớn hơn 0, lọc PM từ 30 độ sau, vùng hợp lệ ít được khám phá". (b) Có áp ngưỡng tìm PM từ 30 độ và GM từ 2 cho MapPIDOpt (chưa chạy theo kế hoạch mới) không: khuyến nghị có, để quy trình đồng
+nhất; PIDOpt đã xong và không bị ảnh hưởng (điểm tối ưu PM 46-53 độ).
+M9. Bàn giao: khung Map đọc (1) văn bản này, đặc biệt Phần L và M; (2) Documents/Shared/KeHoach_ChonNhieuSeed.txt (quy trình chung); (3) Tracking/historychat_mappid.md Lượt 10-12; rồi làm M2-M7
+khi người dùng bảo. Không đụng map.json, Result/Controllers/Map (Map cũ). Bất kỳ khung nào cũng phải tuân thủ Phần 7 của KeHoach_ChonNhieuSeed.txt (bộ nhớ, Simulink.sdi.clear, không dừng MATLAB
+của khung khác).
+==============================================================================================================================================================================================
+PHẦN N - NHẬT KÝ LẦN CHẠY 2 (khung Map, 2026-10-17; làm theo Phần M)
+==============================================================================================================================================================================================
+N1. 2026-10-17: người dùng chốt M8a: chạy lại. Đã làm M2: mapopt_cfg.m (ngưỡng PM, GM của lần 1: 0 và 1, lần 2 hậu tố b: 30 và 2); mapopt_eval nhận tham số cfg; optimize_mapopt, refine_mapopt, select_mapopt nhận
+tham số suffix; mapopt_run1_points.m (điểm đầu của surrogateopt lần 2 = mọi đánh giá cùng chuỗi lần 1: X = u, Fval = log(R S) nếu đã mô phỏng và log 30 nếu không, Ineq tính lại theo ngưỡng lần 2; thí nghiệm nhỏ
+cho thấy điểm đầu có Fval không tính vào MaxFunctionEvaluations); test_mapopt_run2.m kiểm các phần mới. Lần 1 được giữ: Result/Controllers/MapOpt/Calib_run1 và Cases_run1, trường design_run1 của mapopt.json (ghi khi
+select_mapopt(true, 'b') chạy), bản sao Desktop/Adaptive-EPS_backup_2026-10-17_MapOpt_run1.
+N2. Cơ chế chạy tiếp theo tài nguyên (người dùng yêu cầu 2026-10-17 vì các khung khác chạy cùng và guard_ram.ps1 dừng MATLAB mới nhất khi RAM trống dưới 3 GB): tools/jobs/job_lib_patient.sh (run_job_patient: chờ khoảng
+trống bộ nhớ từ 6 GB trước mỗi lần chạy, KHÔNG bỏ cuộc vì thiếu RAM: MATLAB bị dừng hoặc sập thì chờ 60 s, 120 s ... tối đa 10 phút rồi chạy lại, bộ giải tiếp từ checkpoint và mọi đánh giá có sẵn trong csv; chỉ lỗi MATLAB
+thật (Exit Status 0x00000001) lặp 3 lần mới dừng và ghi FAILED) và tools/jobs/mapopt_run2.sh (kiểm mã, ba chuỗi surrogateopt 250 rồi patternsearch 60, chọn, DREWS seed 0; chạy lại bất kỳ lúc nào thì bỏ qua giai đoạn
+đã xong). Theo dõi: scratch/jobs/mo_b_master_status.txt và mo_b_*_status.txt. Khởi động ẩn bằng PowerShell Start-Process (nhật ký tool/jobs: scratch/jobs/mo_b_supervisor.log).
+N3. KẾT QUẢ LẦN CHẠY 2 (2026-10-17, xong 07:55; chạy 06:18-07:55 bằng tools/jobs/mapopt_run2.sh, không lần nào bị dừng vì RAM). Kiểm: test_mapopt PASS, test_mapopt_run2 PASS (250 điểm đầu từ lần 1, chỉ 2 điểm khả
+thi theo ngưỡng PM 30 và GM 2). Tìm: ba chuỗi, mỗi chuỗi 250 lần surrogateopt (mô phỏng 1809 điểm ở seed 0 gồm cả refine) rồi patternsearch; J tốt nhất mỗi chuỗi: chuỗi 1 5.862 (K 5.96, lead p/z 18.4, lag q 0.19), chuỗi 2
+5.6375 (K 6.06, lead 38.7/385, p/z 9.95, lag 46.2/11.74), chuỗi 3 7.126 (K 6.44, lead p/z 6.9, lag gần như không có: p1/z1 0.98). 360 điểm khả thi với PM từ 30 độ và GM từ 2; nhóm top đủ 20 điểm khác nhau (J ở seed 0 từ
+5.6375 đến 6.0039). ĐIỂM CHỌN (mapopt.json design; lần 1 giữ ở design_run1): K_max 6.06, lead z 38.71 và p 385.2 rad/s, lag z1 46.16 và p1 11.74 rad/s; J trung bình seed 1-5 là 5.6303 với độ lệch chuẩn 0.0048 (J ở seed
+0: 5.6375; hạng 1; tương quan hạng 1.00), R 27.23 %, S 0.2067, TV 36.3, e_rel lớn nhất 3.11 %; PM tuyến tính 30.1 độ, GM 7.36, độ lợi cao tần 15.3; độ lợi lag tại 2 Hz 0.7074; calib_margin PASS (0.78 / 1.00); bang-bang 0;
+vùng J trong 5 % của tốt nhất: 15 điểm. Ràng buộc đang chặn: dải lái (lag 2 Hz) và PM tuyến tính 30.1 độ; không chạm biên hộp. So sánh J trung bình: Map cũ 6.743 (thấp hơn 16.5 %), MapOpt lần 1 6.294 (thấp hơn 10.5 %), MapOpt
+khung Linear 5.739 (seed 0; lần 2 seed 0 5.6375, thấp hơn 1.8 %). DREWS seed 0, RMS e_T (N.m) Map cũ / MapOpt lần 1 / lần 2: DRY 0.689 / 0.623 / 0.687, RAMP 0.835 / 0.645 / 0.828, SLIP 0.538 / 0.528 / 0.539, WEAVE 1.327 /
+1.322 / 1.329, EDGE 1.535 / 1.226 / 1.518; S: 0.150 / 0.153 / 0.098, 0.170 / 0.161 / 0.079, 0.161 / 0.156 / 0.103, 0.160 / 0.153 / 0.126, 0.129 / 0.127 / 0.106; TV: 78 / 84 / 30, 115 / 115 / 45, 95 / 93 / 37, 47 / 40 / 18,
+22 / 19 / 8.7. Sai số xác lập lớn nhất: DRY 11.5 % (v40a0p3r; Map cũ 13.0, lần 1 0.5), RAMP +46.0 / -20.2 %, vũng nước -86.9 %, EDGE 0.4 g 98.3 / 55.5 / 51.6 %. Tức lần 2 BÁM NGANG Map cũ nhưng ỒN THẤP HƠN 35-50 % và TV
+thấp hơn 60-65 %; lần 1 bám tốt hơn ở DRY, RAMP, EDGE nhưng ồn bằng Map cũ (hai điểm khác nhau trên cùng mặt Pareto). Tiêu chí M5: (a) ĐẠT (20 điểm); (b) đã báo; (c) CHƯA ĐẠT: J tốt nhất ba chuỗi chênh hơn 3 % (5.86,
+5.64, 7.13; chuỗi 3 kẹt ở vùng gần lead đơn); theo kế hoạch cho phép thêm 150 lần surrogateopt mỗi chuỗi, tối đa một lần (G10b DieuKhien_MapPID): CHƯA làm, chờ người dùng; (d) điểm chọn không chạm biên hộp. Dự đoán M6:
+J 5.7-6.3 SAI (thấp hơn: 5.63), lead mạnh ĐÚNG (p/z 9.95), K 7-8 SAI (6.06), lag chạm dải lái ĐÚNG. Lưu ý: hiện chương Map, LyThuyet_Map, README gói gửi thầy và map.json vẫn mô tả Map cũ (g_min 0.7, K 6); DREWS năm seed
+99999-99995 và viết lại chương theo MapOpt (M7) chưa làm.

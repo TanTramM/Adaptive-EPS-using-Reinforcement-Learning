@@ -1,42 +1,123 @@
 {
-  "x_note": "MapOpt controller data: the Map assist table with lead and lag, designed by simultaneous optimisation of J = R*S (the MapPID method), a new controller separate from Map. Ts_ctrl [s]. The dry-road calibration points are read from data/map.json (data, not design). design: written by Controllers/MapOpt/script/select_mapopt.m: Kmax, Ts0, lead {z, p}, lag {z1, p1} [rad/s]. Absent: load_mapopt.m loads the Map design of map.json (the check of build_mapopt / test_mapopt).",
   "Ts_ctrl": 0.001,
+  "note": "MapOpt: the Map structure with K, lead (z, p) and lag (z1, p1) chosen by simultaneous optimisation (surrogateopt x3 + patternsearch x3 on CALIB seed 0, the 20 best re-scored on seeds 1-5). design is written by select_mapopt.m. See Documents/Notes/Controllers/DieuKhien_MapOpt.txt.",
   "design": {
-    "Kmax": 7.07342810621007,
+    "Kmax": 6.0597400620238,
     "Ts0": 0.3,
     "lead": {
-      "z": 39.6782446040261,
-      "p": 427.64797646190959
+      "z": 38.714670992582,
+      "p": 385.24649448740126
     },
     "lag": {
-      "z1": 41.1941419171607,
-      "p1": 11.543724202057776
+      "z1": 46.1556183998433,
+      "p1": 11.735552120646032
     },
-    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), the MapPID method; PM >= 30, GM >= 2, calib_margin",
-    "CALIB_R_pct": 26.3533069,
-    "CALIB_S_Nm": 0.2177622666,
-    "CALIB_TV_Nm_per_s": 48.88442587,
-    "CALIB_erel_pct": 1.669518088,
-    "CALIB_rev_pct": 0.1234771872,
-    "CALIB_J": 5.73875584294942,
-    "seed_00001_R_pct": 26.305126974572016,
-    "seed_00001_S_Nm": 0.21739636675698229,
-    "seed_00001_erel_pct": 1.7059237708643027,
-    "PM_deg": 33.117624471674588,
-    "GM": 6.2825747855649281,
-    "HF_gain": 21.363597945859379,
-    "lag_gain_2Hz": 0.70728280468187987,
-    "margin_ratio_gain": 0.81913976554820467,
-    "margin_ratio_delay": 1.0011217414305684,
+    "rule": "min mean J = R*S over CALIB seeds 1-5 among the 20 best distinct designs of the search at seed 0 (surrogateopt x3 + patternsearch x3); run 2 (2026-10-17): linear PM >= 30 deg and GM >= 2 applied during the search, start points from run 1",
+    "CALIB_J_mean_seeds_1_5": 5.6303491339504355,
+    "CALIB_J_sigma": 0.0048115424826147071,
+    "CALIB_J_per_seed": [
+      5.6276588695373251,
+      5.6294560812700762,
+      5.63218516001533,
+      5.624911234730452,
+      5.6375343241989961
+    ],
+    "CALIB_R_pct_mean": 27.234388624889039,
+    "CALIB_S_Nm_mean": 0.20673675915985062,
+    "CALIB_TV_mean": 36.270408480850726,
+    "CALIB_rev_pct_mean": 0.11025991078338448,
+    "CALIB_erel_max_pct": 3.1067759052762884,
+    "CALIB_J_search_seed0": 5.6375199648420447,
+    "rank_at_seed0": 1,
+    "rank_correlation": 0.99849624060150377,
+    "PM_deg": 30.10308094995392,
+    "GM": 7.3612848113133369,
+    "HF_gain": 15.331903261271798,
+    "lag_gain_2Hz": 0.70737849973961719,
+    "no_lead": false,
+    "no_lag": false,
+    "margin_ratio_gain": 0.78146872608566531,
+    "margin_ratio_delay": 1.001149141885965,
+    "active": [
+      "steering band (lag gain at 2 Hz near 0.707)",
+      "final linear PM near 30 deg"
+    ],
+    "n_region": 15,
+    "n_pool": 360,
+    "search_seed": 0,
+    "selection_seeds": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "map_source_date": "2026-10-11 20:55:26",
+    "date": "2026-10-17 07:53:27",
+    "bangbang": {
+      "f_ideal": 0,
+      "f_noisy": 0,
+      "delta": 0,
+      "spread": 0
+    }
+  },
+  "design_run1": {
+    "Kmax": 8.46801701554856,
+    "Ts0": 0.3,
+    "lead": {
+      "z": 24.3770524431206,
+      "p": 707.66938768722832
+    },
+    "lag": {
+      "z1": 65.7097928000893,
+      "p1": 12.161404171409533
+    },
+    "rule": "min mean J = R*S over CALIB seeds 1-5 among the 20 best distinct designs of the search at seed 0 (surrogateopt x3 + patternsearch x3)",
+    "CALIB_J_mean_seeds_1_5": 6.2939599846127328,
+    "CALIB_J_sigma": 0.011308594140767762,
+    "CALIB_J_per_seed": [
+      6.2777422719644251,
+      6.2927087215687862,
+      6.2984857825510687,
+      6.2919843381179623,
+      6.3088788088614214
+    ],
+    "CALIB_R_pct_mean": 25.304142927920623,
+    "CALIB_S_Nm_mean": 0.24873244327362087,
+    "CALIB_TV_mean": 89.6782023093798,
+    "CALIB_rev_pct_mean": 0.12765106390379213,
+    "CALIB_erel_max_pct": 0.449535560200632,
+    "CALIB_J_search_seed0": 6.3238976418697641,
+    "rank_at_seed0": 2,
+    "rank_correlation": 0.99999999999999978,
+    "PM_deg": 35.1182153593069,
+    "GM": 5.706579467536848,
+    "HF_gain": 45.497188892010051,
+    "lag_gain_2Hz": 0.708036063001435,
+    "no_lead": false,
+    "no_lag": false,
+    "margin_ratio_gain": 0.85719090395518294,
+    "margin_ratio_delay": 1.0007674232336772,
+    "active": [
+      "steering band (lag gain at 2 Hz near 0.707)"
+    ],
+    "n_region": 2,
+    "n_pool": 7,
+    "search_seed": 0,
+    "selection_seeds": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "map_source_date": "2026-10-11 20:55:26",
+    "date": "2026-10-16 22:35:49",
     "bangbang": {
       "f_ideal": 8.6955765602038248E-6,
       "f_noisy": 8.6955765602038248E-6,
-      "delta": 0,
-      "spread": 0
-    },
-    "n_evaluations": 928,
-    "n_simulations": 809,
-    "design_seed": 0,
-    "date": "2026-10-16 17:13:50"
+      "delta": 4.3477882801019124E-6,
+      "spread": 8.6955765602038248E-6
+    }
   }
 }

@@ -1,134 +1,89 @@
-function sel = select_mapopt(writeJson)
-%SELECT_MAPOPT Verify the optimisation and choose the MapOpt design: the rule of select_mappid.m (DieuKhien_MapPID.txt O6) with the Map seeds 0 / 1.
+function sel = select_mapopt(writeJson, suffix)
+%SELECT_MAPOPT Stages 2-4 of DieuKhien_MapOpt.txt (C2-C4): the 20 best distinct designs of the search (seed 0), re-scored on seeds 1-5, chosen by the mean J, checked.
 %
 %   sel = select_mapopt(true)   also writes the design to data/mapopt.json
-%   Pools every evaluation at seed 0 (MapOpt_CALIB_opt*_s00000.csv, MapOpt_CALIB_ref*_s00000.csv), then: (1) optimal region J <= 1.05 J*; (2) convergence of the runs;
-%   (3) neighbourhood +-0.01 of the box of the best design with linear PM >= 30 deg and GM >= 2; (4) seed 1 for the 10 best such designs, ranking by the mean J of the
-%   two seeds; (5) the first that passes calib_margin (R not more than 2x at gain x2 and +1 ms) is chosen; (6) reports: bang-bang, reverse assist, e_rel sensitivity
-%   3 % and 10 %, the active constraints and box bounds. Outputs in Result/Controllers/MapOpt/Calib/: _region_s00000.csv, _nbr_s00000.csv, _seed2_s00001.csv, _pick_s00000.csv.
+%   sel = select_mapopt(true, 'b')   RUN 2 (DieuKhien_MapOpt.txt Part M): pool = the files ...opt<k>b, ...ref<k>b of Calib plus the run-1 files of Calib_run1 (filtered by PM >= 30,
+%   GM >= 2); the run-1 design is kept in the json field design_run1 (written once); run-1 Calib and Cases must have been moved to Calib_run1 and Cases_run1 beforehand.
+%   Uses Model/common/select_multiseed.m (the common rules, KeHoach_ChonNhieuSeed.txt Part 3) with the MapOpt evaluation, the stability gate calib_margin on the
+%   selection seed 1 and the bang-bang report calib_bangbang (seeds 0 and 1). Output files in Result/Controllers/MapOpt/Calib/.
 if nargin < 1, writeJson = false; end
+if nargin < 2, suffix = ''; end
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
 outDir = result_dir('MapOpt', 'Calib');
-vn = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1'}; n = 5;
-PMfin = 30; GMfin = 2; Ts = 1e-3;
-Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
-
-files = [dir(fullfile(outDir, 'MapOpt_CALIB_opt*_s00000.csv')); dir(fullfile(outDir, 'MapOpt_CALIB_ref*_s00000.csv'))];
-P = table();
-for i = 1:numel(files)
-    T = readtable(fullfile(outDir, files(i).name));
-    tok = regexp(files(i).name, 'MapOpt_CALIB_(opt|ref)(\d+)_', 'tokens', 'once');
-    T.stage = repmat(string(tok{1}), height(T), 1); T.run = repmat(str2double(tok{2}), height(T), 1);
-    P = [P; T]; %#ok<AGROW>
-end
-nEval = height(P); nSim = nnz(P.simulated == 1);
-feas = P.simulated == 1 & P.c1 <= 0 & P.c2 <= 0 & P.c3 <= 0 & P.c4 <= 0;
-F = P(feas, :);
-F.Jv = F.R_pct .* F.S_Nm;
-[~, iu] = unique(round(table2array(F(:, vn)), 6, 'significant'), 'rows', 'stable');
-F = sortrows(F(iu, :), 'Jv');
-Jstar = F.Jv(1);
-fprintf('select_mapopt: %d evaluations (%d simulated), %d feasible; J* = %.4f (R %.3f %%, S %.4f)\n', nEval, nSim, height(F), Jstar, F.R_pct(1), F.S_Nm(1));
-
-Rg = F(F.Jv <= 1.05 * Jstar, :);
-writetable(Rg, fullfile(outDir, 'MapOpt_CALIB_region_s00000.csv'));
-fprintf('(1) optimal region (J <= 1.05 J*): %d designs; ranges:\n', height(Rg));
-for k = 1:n, fprintf('    %-11s %.4g .. %.4g\n', vn{k}, min(Rg.(vn{k})), max(Rg.(vn{k}))); end
-
-runs = unique(F.run)';
-bestRun = arrayfun(@(r) min(F.Jv(F.run == r)), runs);
-nConv = nnz(bestRun <= 1.03 * Jstar);
-fprintf('(2) best J per run: %s; %d of %d runs within 3 %% of J*\n', mat2str(bestRun, 4), nConv, numel(runs));
-
-Fok = F(F.PM_deg >= PMfin & F.GM >= GMfin, :);
-assert(height(Fok) > 0, 'select_mapopt: no feasible design with PM >= %g and GM >= %g', PMfin, GMfin);
-JstarOk = Fok.Jv(1);
-fprintf('    best design with linear PM >= %g, GM >= %g: J %.4f (%.2f %% above J*), PM %.1f\n', PMfin, GMfin, JstarOk, 100 * (JstarOk / Jstar - 1), Fok.PM_deg(1));
-ub = mapopt_x2u(table2array(Fok(1, vn)));
-nbrFile = fullfile(outDir, 'MapOpt_CALIB_nbr_s00000.csv');
-better = 0; nnb = 0;
-for k = 1:n
-    for sgn = [-1 1]
-        u = ub; u(k) = min(max(u(k) + sgn * 0.01, 0), 1);
-        if abs(u(k) - ub(k)) < 1e-12, continue; end
-        o = mapopt_eval(mapopt_u2x(u), 0, nbrFile);
-        f = o.simulated && all(o.c <= 0);
-        nnb = nnb + 1;
-        if f && o.R * o.S < JstarOk, better = better + 1; end
-        if ~f, fprintf('    neighbour %s %+d: infeasible, constraints [%s]\n', vn{k}, sgn, num2str(o.c, 3)); end
-    end
-end
-fprintf('(3) neighbourhood: %d feasible neighbours of %d have a smaller J than the best design with PM >= %g\n', better, nnb, PMfin);
-
-top = Fok(1:min(10, height(Fok)), :);
-seedFile = fullfile(outDir, 'MapOpt_CALIB_seed2_s00001.csv');
-top.J2 = nan(height(top), 1); top.R2 = top.J2; top.S2 = top.J2; top.erel2 = top.J2;
-for i = 1:height(top)
-    o = mapopt_eval(table2array(top(i, vn)), 1, seedFile);
-    top.J2(i) = o.R * o.S; top.R2(i) = o.R; top.S2(i) = o.S; top.erel2(i) = o.erel;
-end
-top.Jmean = (top.Jv + top.J2) / 2;
-top.Jchange_pct = 100 * (top.J2 - top.Jv) ./ top.Jv;
-top = sortrows(top, 'Jmean');
-fprintf('(4) seed 1: J change %s %%\n', mat2str(round(top.Jchange_pct', 1)));
-
-[Gj, w] = mappid_plants();
+evalin('base', sprintf('run("%s");', strrep(fullfile(modelDir, 'Controllers', 'MapOpt', 'load_mapopt.m'), '\', '/')));
 Cal = calibrate_map_cached();
-evalin('base', sprintf('run(''%s'');', strrep(fullfile(modelDir, 'Controllers', 'MapOpt', 'load_mapopt.m'), '\', '/')));
-pick = 0;
-top.margin_pass = nan(height(top), 1); top.ratio_gain = top.margin_pass; top.ratio_delay = top.margin_pass;
-for i = 1:height(top)
-    d = xToDesign(table2array(top(i, vn)), Ts, Ts0);
-    M = calib_margin('Model_MapOpt', 0, mapopt_variables(Cal, d));
-    Simulink.sdi.clear;
-    top.margin_pass(i) = M.pass; top.ratio_gain(i) = M.ratio_gain; top.ratio_delay(i) = M.ratio_delay;
-    if M.pass, pick = i; break; end
-end
-assert(pick > 0, 'select_mapopt: no candidate passes calib_margin');
-c = top(pick, :);
-x = table2array(c(1, vn));
-d = xToDesign(x, Ts, Ts0);
-Rl = mappid_margins(Gj, w, struct('Kmax', d.Kmax, 'lead', d.lead, 'lag', d.lag, 'Kp', 0, 'Ki', 0, 'Kd', 0, 'Tf', 0.005));
-fprintf('(5) chosen: candidate %d of the seed ranking: J %.4f (seed 0) / %.4f (seed 1), linear PM %.1f GM %.2f, margin ratios %.2f / %.2f\n', pick, c.Jv, c.J2, Rl.PM, Rl.GM, c.ratio_gain, c.ratio_delay);
-
-B = calib_bangbang('Model_MapOpt', 0, mapopt_variables(Cal, d));
-Simulink.sdi.clear;
-T10 = P(P.simulated == 1 & P.c1 <= 0 & P.c2 <= 0 & P.c3 <= 0 & P.erel_pct <= 10, :);
-J3 = min(F.Jv(F.erel_pct <= 3)); J10 = min(T10.R_pct .* T10.S_Nm);
+Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
+files = poolFiles(outDir, suffix);
+if ~isempty(suffix), files = [files, poolFiles(fullfile(fileparts(outDir), 'Calib_run1'), '')]; end
+spec = struct('name', 'MapOpt', 'outDir', outDir, 'poolFiles', {files}, 'vn', {{'K', 'z', 'p_over_z', 'z1', 'p1_over_z1'}}, ...
+    'evalFcn', @mapopt_eval, 'x2u', @mapopt_x2u, 'seed0', 0, 'seeds', 1:5, 'nTop', 20, 'PMfin', 30, 'GMfin', 2, 'erelMax', 5, ...
+    'marginFcn', @(x) marginGate(x, Cal, Ts0), 'bangbangFcn', @(x) bangbang(x, Cal, Ts0));
+sel = select_multiseed(spec);
+[Gj, w] = mapopt_plants();
+d = xToDesign(sel.x, Ts0);
+Rl = mapopt_margins(Gj, w, d);
 lagGain = abs((1 + 1i * 4 * pi / d.lag.z1) / (1 + 1i * 4 * pi / d.lag.p1));
-fprintf('(6) bang-bang: f_ideal %.4f f_noisy %.4f delta %.4f spread %.4f | rev %.2f %% | e_rel %.2f %% | J* if e_rel <= 3 %%: %.4g, if <= 10 %%: %.4g | lag gain 2 Hz %.3f\n', ...
-    B.f_ideal, B.f_noisy, B.delta, B.disp, c.rev_pct, c.erel_pct, J3, J10, lagGain);
+noLead = sel.x(3) < 1.02; noLag = sel.x(5) > 0.98;
+uc = mapopt_x2u(sel.x); atB = find(uc < 0.005 | uc > 0.995);
+vn = spec.vn;
 active = {};
 if lagGain < 0.72, active{end + 1} = 'steering band (lag gain at 2 Hz near 0.707)'; end
-if c.erel_pct > 4.5, active{end + 1} = 'e_rel near 5 %'; end
-if Rl.PM < PMfin + 2, active{end + 1} = sprintf('final linear PM near %g deg', PMfin); end
-if Rl.GM < GMfin + 0.1, active{end + 1} = sprintf('final linear GM near %g', GMfin); end
-uc = mapopt_x2u(x); atB = find(uc < 0.005 | uc > 0.995);
+if Rl.PM < 32, active{end + 1} = 'final linear PM near 30 deg'; end
+if Rl.GM < 2.1, active{end + 1} = 'final linear GM near 2'; end
 for k = atB, active{end + 1} = sprintf('box bound of %s', vn{k}); end %#ok<AGROW>
 if isempty(active), active = {'none (interior optimum)'}; end
-fprintf('    active constraints / bounds: %s\n', strjoin(active, '; '));
-
-sel = struct('x', x, 'design', d, 'J', c.Jv, 'R', c.R_pct, 'S', c.S_Nm, 'TV', c.TV, 'erel', c.erel_pct, 'rev', c.rev_pct, 'J_seed2', c.J2, 'PM', Rl.PM, 'GM', Rl.GM, ...
-    'lagGain2Hz', lagGain, 'bangbang', B, 'Jstar', Jstar, 'nEval', nEval, 'nSim', nSim, 'active', {active});
-writetable(top, fullfile(outDir, 'MapOpt_CALIB_pick_s00000.csv'));
+fprintf('lead %s, lag %s; PM %.1f GM %.2f HF %.2f; lag gain 2 Hz %.3f; active: %s\n', tf2s(~noLead), tf2s(~noLag), Rl.PM, Rl.GM, Rl.HF, lagGain, strjoin(active, '; '));
+sel.design = d; sel.active = active; sel.noLead = noLead; sel.noLag = noLag; sel.lagGain2Hz = lagGain; sel.PMlin = Rl.PM; sel.GMlin = Rl.GM; sel.HF = Rl.HF;
 if writeJson
     jf = fullfile(modelDir, 'data', 'mapopt.json');
     J = jsondecode(fileread(jf));
-    q = struct('Kmax', d.Kmax, 'Ts0', Ts0, 'lead', d.lead, 'lag', d.lag);
-    q.rule = 'min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), the MapPID method; PM >= 30, GM >= 2, calib_margin';
-    q.CALIB_R_pct = c.R_pct; q.CALIB_S_Nm = c.S_Nm; q.CALIB_TV_Nm_per_s = c.TV; q.CALIB_erel_pct = c.erel_pct; q.CALIB_rev_pct = c.rev_pct; q.CALIB_J = c.Jv;
-    q.seed_00001_R_pct = c.R2; q.seed_00001_S_Nm = c.S2; q.seed_00001_erel_pct = c.erel2; q.PM_deg = Rl.PM; q.GM = Rl.GM; q.HF_gain = Rl.HF; q.lag_gain_2Hz = lagGain;
-    q.margin_ratio_gain = c.ratio_gain; q.margin_ratio_delay = c.ratio_delay;
-    q.bangbang = struct('f_ideal', B.f_ideal, 'f_noisy', B.f_noisy, 'delta', B.delta, 'spread', B.disp);
-    q.n_evaluations = nEval; q.n_simulations = nSim; q.design_seed = 0; q.date = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
-    J.design = q;
+    if ~isempty(suffix) && ~isfield(J, 'design_run1'), J.design_run1 = J.design; end
+    B = sel.bangbang;
+    J.design = struct('Kmax', d.Kmax, 'Ts0', Ts0, 'lead', d.lead, 'lag', d.lag, ...
+        'rule', ruleText(suffix), ...
+        'CALIB_J_mean_seeds_1_5', sel.Jbar, 'CALIB_J_sigma', sel.sigma, 'CALIB_J_per_seed', sel.Jseeds, 'CALIB_R_pct_mean', sel.Rbar, 'CALIB_S_Nm_mean', sel.Sbar, ...
+        'CALIB_TV_mean', sel.TVbar, 'CALIB_rev_pct_mean', 100 * sel.revbar, 'CALIB_erel_max_pct', sel.erelMax, 'CALIB_J_search_seed0', sel.Jsearch, 'rank_at_seed0', sel.rank0, ...
+        'rank_correlation', sel.rankCorr, 'PM_deg', Rl.PM, 'GM', Rl.GM, 'HF_gain', Rl.HF, 'lag_gain_2Hz', lagGain, 'no_lead', noLead, 'no_lag', noLag, ...
+        'margin_ratio_gain', sel.margin.ratio_gain, 'margin_ratio_delay', sel.margin.ratio_delay, 'active', {active}, ...
+        'n_region', sel.nRegion, 'n_pool', sel.nPool, 'search_seed', 0, 'selection_seeds', 1:5, 'map_source_date', Jm.design.date, 'date', char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss')));
+    if ~isempty(fieldnames(B)), J.design.bangbang = struct('f_ideal', B.f_ideal, 'f_noisy', B.f_noisy, 'delta', B.delta, 'spread', B.disp); end
     fid = fopen(jf, 'w'); fprintf(fid, '%s', jsonencode(J, 'PrettyPrint', true)); fclose(fid);
     fprintf('select_mapopt: design written to %s\n', jf);
 end
 end
 
-function d = xToDesign(x, Ts, Ts0)
-d = struct('Ts_ctrl', Ts, 'Ts0', Ts0, 'Kmax', x(1), 'lead', struct('z', x(2), 'p', x(2) * x(3)), 'lag', struct('z1', x(4), 'p1', x(4) * x(5)));
+function M = marginGate(x, Cal, Ts0)
+d = xToDesign(x, Ts0);
+M = calib_margin('Model_MapOpt', 1, mapopt_variables(Cal, d));
+Simulink.sdi.clear;
+end
+
+function B = bangbang(x, Cal, Ts0)
+d = xToDesign(x, Ts0);
+B = calib_bangbang('Model_MapOpt', 0, mapopt_variables(Cal, d));
+Simulink.sdi.clear;
+end
+
+function d = xToDesign(x, Ts0)
+d = struct('Ts_ctrl', 1e-3, 'Ts0', Ts0, 'Kmax', x(1), 'lead', struct('z', x(2), 'p', x(2) * x(3)), 'lag', struct('z1', x(4), 'p1', x(4) * x(5)));
+end
+
+function s = tf2s(b)
+if b, s = 'present'; else, s = 'absent'; end
+end
+
+function f = poolFiles(dirName, suffix)
+% search files of one run: MapOpt_CALIB_opt<k><suffix>_s00000.csv and MapOpt_CALIB_ref<k><suffix>_s00000.csv (exact suffix, so run 1 never picks up run 2)
+L = dir(fullfile(dirName, 'MapOpt_CALIB_*_s00000.csv'));
+keep = ~cellfun(@isempty, regexp({L.name}, ['^MapOpt_CALIB_(opt|ref)\d+' suffix '_s00000\.csv$'], 'once'));
+f = cellstr(fullfile(dirName, {L(keep).name}));
+end
+
+function s = ruleText(suffix)
+s = 'min mean J = R*S over CALIB seeds 1-5 among the 20 best distinct designs of the search at seed 0 (surrogateopt x3 + patternsearch x3)';
+if ~isempty(suffix)
+    s = [s '; run 2 (2026-10-17): linear PM >= 30 deg and GM >= 2 applied during the search, start points from run 1'];
+end
 end
