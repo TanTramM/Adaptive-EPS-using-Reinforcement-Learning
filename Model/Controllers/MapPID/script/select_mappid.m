@@ -12,8 +12,8 @@ outDir = result_dir('MapPID', 'Calib');
 evalin('base', sprintf('run("%s");', strrep(fullfile(modelDir, 'Controllers', 'MapPID', 'load_mappid.m'), '\', '/')));
 Cal = calibrate_map_cached();
 Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
-a = dir(fullfile(outDir, 'MapPID_CALIB_opt*_s30000.csv')); b = dir(fullfile(outDir, 'MapPID_CALIB_ref*_s30000.csv'));
-files = cellfun(@(n) fullfile(outDir, n), [{a.name}, {b.name}], 'UniformOutput', false);
+a = dir(fullfile(outDir, 'MapPID_CALIB_opt*_s30000.csv'));   % surrogateopt rows only (no patternsearch, COMMON decision 2026-10-18)
+files = cellfun(@(n) fullfile(outDir, n), {a.name}, 'UniformOutput', false);
 vn = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1', 'Kp', 'Ki', 'Kd', 'Tf'};
 spec = struct('name', 'MapPID', 'outDir', outDir, 'poolFiles', {files}, 'vn', {vn}, ...
     'evalFcn', @mappid_eval, 'x2u', @mappid_x2u, 'seed0', 30000, 'seeds', 30001:30005, 'nTop', 20, 'PMfin', 30, 'GMfin', 2, 'erelMax', 5, ...
