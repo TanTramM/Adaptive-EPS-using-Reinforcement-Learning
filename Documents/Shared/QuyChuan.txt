@@ -1,5 +1,5 @@
 ==============================================================================================================================================================================================
-QUY CHUẨN THIẾT KẾ VÀ ĐÁNH GIÁ CHUNG CHO MỌI BỘ ĐIỀU KHIỂN (Map, PI, PID, SMC, RL) - phiên bản 5, 2026-10-11 (bổ sung: rev chỉ báo cáo; 6.2 J = R x S cộng ràng buộc dải lái)
+QUY CHUẨN THIẾT KẾ VÀ ĐÁNH GIÁ CHUNG CHO MỌI BỘ ĐIỀU KHIỂN (Map, PI, PID, SMC, RL) - phiên bản 6, 2026-10-17 (CALIB v2 thay CALIB v1; R là trung bình nhân ba nhóm; trước đó v5: 6.2 J = R x S cộng ràng buộc dải lái)
 ==============================================================================================================================================================================================
 Văn bản này là quy chuẩn bắt buộc: MỖI LẦN thiết kế hoặc chỉnh một bộ điều khiển (Map, PI, PID, SMC là điều khiển trượt, RL là học tăng cường) đều phải tuân theo, kể cả khi làm ở khung chat
 khác. Mục đích: kết quả so sánh giữa các bộ không phụ thuộc vào việc người làm chọn ngưỡng nào, đo bằng cách nào, hay chỉnh công sức nhiều ít khác nhau. Nguyên nhân ra đời: quy tắc cũ chỉ
@@ -9,8 +9,7 @@ Cách dùng: đọc trước khi bắt đầu thiết kế; ghi vào file kế h
 chọn tham số; báo ngay nếu phát hiện cần sai khác. Nếu quy chuẩn này mâu thuẫn với mục "Quy tắc chọn tham số và so sánh" của Tracking/CLAUDE.md thì quy chuẩn này ưu tiên (mục đó là bản tóm
 tắt). Mục nào đề xuất nhưng chưa chốt số được đánh dấu [CẦN CHỐT] và phải được người dùng chốt trước khi dùng cho bộ điều khiển đầu tiên.
 Quy ước từ viết tắt dùng trong văn bản: PRSM = Plant (đối tượng, mô hình xe và cột lái), Reference (giá trị đặt mô-men tay lái), Sensors (cảm biến), Actuator (motor trợ lực): mọi phần của
-vòng kín trừ bộ điều khiển. CALIB = ca thử dùng để chọn tham số. DRY, SLIP, WEAVE = ba ca thử chuẩn dùng để chấm điểm; EDGE = ca thứ tư chỉ báo cáo cho vùng cực trên 0.3 g (cửa sổ ext_* của
-CALIB cũng thuộc vùng này). RMS = căn bậc hai của trung bình bình phương. PM, GM = độ dự trữ pha và độ dự trữ biên (mức an toàn ổn định). ESC = hệ thống cân bằng điện tử cung cấp a_y và v
+vòng kín trừ bộ điều khiển. CALIB = ca thử dùng để chọn tham số. DRY, SLIP, WEAVE = ba ca thử chuẩn dùng để chấm điểm; EDGE = ca thứ tư chỉ báo cáo cho vùng cực trên 0.3 g (CALIB v2 không có cửa sổ trong vùng này). RMS = căn bậc hai của trung bình bình phương. PM, GM = độ dự trữ pha và độ dự trữ biên (mức an toàn ổn định). ESC = hệ thống cân bằng điện tử cung cấp a_y và v
 qua mạng CAN.
 ==============================================================================================================================================================================================
 PHẦN 1 - NGUYÊN TẮC
@@ -52,14 +51,21 @@ tạp.) Bộ lọc nằm BÊN TRONG một khâu của lõi (bộ lọc của kh�
 ==============================================================================================================================================================================================
 PHẦN 3 - CA THỬ VÀ SEED
 ==============================================================================================================================================================================================
-3.1. Ca thiết kế CALIB (Model/Sim/script/make_cases.m, make_cases('CALIB')), CHUNG cho mọi bộ, dựng theo vùng làm việc của xe chứ không theo khả năng của bộ nào: đường khô mu 0.8 trừ một bậc
-mu ở khối 60 km/h; ba khối tốc độ 20, 60, 100 km/h (cùng miền tốc độ với DRY, SLIP, WEAVE); mức a_y phủ 0.1-0.4 g ở nơi Plant đạt được (20 km/h chỉ tới khoảng 0.2 g nên dùng 0.1/0.15/0.18 g).
-Mỗi khối gồm: (A) bậc thang giữ cua, mỗi bậc 1 s chuyển và 3 s giữ, cửa sổ chấm static là 1 s cuối của bậc (đã ổn định, để bộ có tích phân chậm không bị nhầm sai số chưa kịp xác lập là sai số
-xác lập); (B) lái sin 0.5 Hz bốn chu kỳ quanh nền 0.1 g biên 0.05 g (20 km/h) hoặc nền 0.2 g biên 0.1 g (60 và 100 km/h), cửa sổ sine bỏ 0.5 s đầu; (C) chỉnh lái nhỏ +-0.03 g quanh nền, cửa sổ
-small dài 6 s; (D) chỉ ở khối 60 km/h: giữ 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8, hai cửa sổ mu_drop và mu_rise là 2 s sau mỗi bậc (đo đáp ứng, không phải xác lập); mu 0.6 không có trong DRY,
-SLIP, WEAVE. Tổng 117 s, 19 cửa sổ, nền sin không vượt 0.3 g. Từ phiên bản 4 (2026-10-11) hai cửa sổ 0.4 g (60 và 100 km/h) mang nhãn ext_* thay vì static_*: chỉ báo cáo e_rel có dấu
-(m.eextSigned), KHÔNG vào R và KHÔNG vào cổng e_rel; việc chọn tham số chỉ dùng 9 cửa sổ static 0.1-0.3 g (vùng thường). Lý do: ở 0.4 g bảng của Map bị chặn độ dốc nên e_rel của Map lớn do cấu
-trúc (60 km/h 57 %, 100 km/h 47 %), làm cổng 3 % không thể đạt và ép chọn theo quy tắc dự phòng 5.6. Ca CALIB không đổi nếu không có lý do ghi rõ cho mọi bộ.
+3.1. Ca thiết kế CALIB v2 (Model/Sim/script/make_cases.m, make_cases('CALIB'); người dùng chốt 2026-10-17, thay ca 117 s ba khối 20, 60, 100 km/h, từ nay gọi CALIB v1), CHUNG cho mọi bộ, 140
+s, MỘT ca liền: tốc độ tăng 20, 30, ..., 100 km/h (chín khối, bước đều 10 km/h; đổi tốc độ ngay trong đoạn thẳng nối hoặc trong lúc lái sin), đường khô mu 0.8 trừ một bậc mu ở khối 60 km/h.
+Mỗi đoạn lộ một cơ chế của bộ điều khiển (lý do từng đoạn: Tracking/historychat_testcase.md Lượt 6-10). (A) Bậc thang giữ cua MỘT chiều đi lên, mức a_y 0.1, 0.2, 0.3 g (20 km/h chỉ 0.10 và
+0.18 g vì Plant chỉ tới khoảng 0.2 g); mỗi mức 3 s: dốc 1 s, lắng 1 s, cửa sổ 1 s. Cửa sổ static_* là 1 s cuối (sai số xác lập: vào cổng e_rel và nhóm static); cửa sổ trans_* là đoạn dốc
+cộng 1 s đầu (quá độ: nhóm dyn). Đây là phép thử bậc góc vô-lăng chuẩn của tài liệu EPS (mô-men xác lập sau một bậc góc, ví dụ Multi-Map WEVJ 2023, Fan SAE 2014-01-0083); kích thích thật là
+GÓC vô-lăng vòng hở và tốc độ, a_y chỉ là nhãn để chọn góc (bảng góc xác lập), bộ điều khiển không thấy a_y mục tiêu. (B) Từ 40 km/h trở lên, ngay sau mức cao nhất: sin qua 0 bắt đầu từ đỉnh
+(cos, liên tục với mức giữ, không về 0), 0.5 Hz 1.25 chu kỳ biên bằng mức cao nhất (0.3 g), kết thúc ở điểm qua 0, rồi sin 1 Hz 3.5 chu kỳ biên 0.15 g (cùng tốc độ đổi a_y đỉnh 0.94 g/s),
+kết thúc ở 0. Tốc độ tăng 10 km/h TRONG 6 s sin (0.46 m/s^2 trung bình) nên sin làm luôn đoạn đổi tốc độ; nhãn v là tốc độ lúc bắt đầu sin. Cửa sổ sine_v<v>_f0p5 là chu kỳ đầu (2 s),
+sine_v<v>_f1 là ba chu kỳ (3 s); nhóm dyn. Sin qua 0 là chỗ duy nhất đo vùng chết quanh 0 và việc đổi dấu của trợ lực; 1 Hz có tiền lệ ở Nguyen 2025 kịch bản 3. Dưới 40 km/h KHÔNG có sin:
+người lái vòng hở cần 80-144 độ vô-lăng, T_s bị mô-men quán tính cột lái chi phối và e_T bằng 170-560 % T_d,ref với MỌI bộ (đo 2026-10-17 trên PIDOpt, MapPIDOpt, MapOpt), sin ở đó không nói
+gì về bộ điều khiển và chỉ làm nhóm dyn mất độ nhạy tham số; sau mức giữ cao nhất a_y về 0 trong 1 s và tốc độ đổi trong 3 s đi thẳng. (C) Bậc mu ở 60 km/h, trong mức 0.3 g (mức sâu nhất mà
+người lái vòng hở theo được, dùng 86 % độ bám): mu 0.8 -> 0.35 trong 6 s -> 0.8, giữ thêm 4 s; hai cửa sổ mu_drop và mu_rise là 2 s sau mỗi bậc (đo đáp ứng, không phải xác lập). Map một mình
+(không phản hồi) mất khoảng 7 % T_d,ref ở đó (đo); mu 0.35 không có trong DRY, SLIP, WEAVE. Có 68 cửa sổ: 26 static, 26 trans, 14 sine, 2 mu; 2 s đầu không chấm, đuôi 2 s đi thẳng; mọi mốc
+cửa sổ là số nguyên giây. Bỏ so với CALIB v1: cửa sổ 0.4 g (ext_*; vùng cực thuộc ca EDGE), chỉnh lái nhỏ (small_*), sin quanh mức không qua 0, bậc đi xuống và đổi chiều, ramp-steer (tương
+đương sin tần số thấp). Ca CALIB không đổi nếu không có lý do ghi rõ cho mọi bộ.
 3.2. Ca chấm điểm DRY, SLIP, WEAVE (người dùng chốt 2026-10-10, thay sáu ca TC1-TC6 cũ; ba ca mới chỉ ghép lại các đoạn của sáu ca cũ, cùng tốc độ, mức a_y và mu, không thêm tình huống mới;
 định nghĩa trong make_cases.m và Documents/Thesis/cases.txt). Mỗi ca trả lời MỘT câu hỏi. DRY (mu = 0.8 không đổi, 129 s): đường khô, ba bậc a_y 0.1-0.3 g ở 20, 40, 60, 80, 100 km/h; hỏi sai
 số tĩnh có gần không không; chỉ tiêu chính max |e_rel| theo mục 4.4 (cũ TC1). SLIP (63 s): mu đổi khi đang cua, ba cảnh nối nhau bằng đoạn đi thẳng (đổi tốc độ 0.2 s cho mỗi km/h, tối thiểu 4
@@ -87,18 +93,25 @@ mục 6.2 chạy thêm MỘT seed thứ hai cùng dải của bộ đó để ư
 PHẦN 4 - CHỈ TIÊU (mỗi chỉ tiêu một hàm; mô tả thủ tục đo)
 ==============================================================================================================================================================================================
 Trạng thái cột "hàm": CÓ = đã có trong Model; CẦN VIẾT = quy chuẩn yêu cầu nhưng chưa có hàm.
-4.1. R (độ bám, %): sai số tương đối của e_T = T_s - T_d,ref trên bốn nhóm cửa sổ của CALIB: static (các bậc giữ cua 0.1-0.3 g, 9 cửa sổ; hai cửa sổ 0.4 g là nhóm ext, ngoài R), dyn (lái sin),
-small (chỉnh lái nhỏ), mu (2 s sau mỗi bậc mu). R_g = 100 x RMS(e_T trên các cửa sổ của nhóm g) / trung bình |T_d,ref| trên các cửa sổ đó; R = trung bình ĐỀU của bốn R_g (không nhóm nào chiếm
-ưu thế chỉ vì cửa sổ dài hơn; chuẩn hóa theo T_d,ref để nhóm mô-men lớn không lấn át). Cho điểm chọn báo độ nhạy khi đổi từng trọng số +-50 %. Bỏ 2 s đầu của ca. Với DRY, SLIP, WEAVE báo thêm
-RMS e_T toàn ca (N.m) và lớn nhất của |e_T|. Hàm: calib_run.m (toàn ca: m.R, m.Rg, m.RgNm), calib_block_scores.m (theo khối tốc độ), Gates.mdl (theo cửa sổ: RWin, refWin, cntWin, từ đó dựng R
-ngoài khối). Trạng thái: CÓ (đã cập nhật 2026-10-09, chưa chạy).
+4.1. R (độ bám, %): sai số tương đối của e_T = T_s - T_d,ref trên ba nhóm cửa sổ của CALIB v2: static (static_*, 26 cửa sổ), dyn (trans_* và sine_*, 40 cửa sổ), mu (mu_drop, mu_rise, 2 cửa
+sổ). R_g = 100 x RMS(e_T trên các cửa sổ của nhóm g) / trung bình |T_d,ref| trên các cửa sổ đó (một mẫu thuộc hai cửa sổ cùng nhóm, ví dụ cuối sin và đầu bậc kế, chỉ tính một lần). R = TRUNG
+BÌNH NHÂN của ba R_g, mỗi R_g bị chặn dưới ở 1 % (R_FLOOR trong calib_score.m; khoảng hai đến ba bước T_s, dưới độ phân giải cảm biến thì không được thưởng): giảm cùng tỉ lệ ở nhóm nào cũng
+làm R giảm cùng tỉ lệ, nhóm lớn (dyn khoảng 20 %) không nuốt nhóm nhỏ (static 1-2 %), và cùng dạng không thứ nguyên với J = R x S. Thay trung bình đều bốn nhóm của CALIB v1 (người dùng chốt
+2026-10-17). Đo độ nhạy 2026-10-17 trên PIDOpt, cảm biến lý tưởng, từng tham số +-20 %: Kp đổi R 7-8 % (nhóm static 12-14 %), Ki 3-8 % (cổng e_rel nhạy nhất: +147 % khi Ki x0.8), Kd và Tf
+dưới 1 % (hai tham số này chủ yếu lộ ra qua S và TV: S đổi 0.4-0.5 %, TV 0.5-2.4 %, so với độ lệch seed của S khoảng 0.1 %); độ lệch seed của R 3 %. Bỏ 2 s đầu của ca. Với DRY, SLIP, WEAVE
+báo thêm RMS e_T toàn ca (N.m) và lớn nhất của |e_T|. Hàm: calib_run.m (toàn ca: m.R, m.Rg, m.RgNm), calib_score.m, calib_block_scores.m (theo khối tốc độ); Gates.mdl chưa cập nhật (NW = 32
+< 68 cửa sổ, không dùng trong CALIB). Trạng thái: CÓ (2026-10-17, test_calib PASS 33 kiểm).
 4.2. S (độ ồn, N.m): RMS của T_a sau khi lọc cao qua 5 Hz (lọc thông cao bậc 1: a = dt/(1/(2 pi 5) + dt), hp = T_a - lọc thông thấp(T_a)) trên toàn ca, bỏ 2 s đầu; đo phần mô-men trợ lực dao
 động nhanh mà lệnh lái (dưới khoảng 2 Hz) không giải thích được, chủ yếu là nhiễu cảm biến bị khuếch đại. Hàm: calib_run.m, calib_block_scores.m. Trạng thái: CÓ.
 4.3. TV (tổng biến thiên của T_a, N.m/s) = tổng |T_a[k] - T_a[k-1]| chia cho thời gian chấm. S_cmd: như S nhưng trên lệnh T_a_cmd của bộ điều khiển (cho thấy bang-bang mà giới hạn T_a,max che
 đi). Trạng thái: CÓ.
-4.4. Độ chính xác tĩnh e_rel (%): e_rel = 100 x |trung bình e_T| / trung bình |T_d,ref| trên TỪNG cửa sổ static của CALIB (9 cửa sổ: 3 ở 20 km/h, 3 ở 60 km/h, 3 ở 100 km/h, a_y 0.1-0.3 g; hai
-cửa sổ 0.4 g ext_* chỉ báo cáo có dấu, m.eextSigned), lấy giá trị lớn nhất; cũng báo có dấu (âm = trợ lực thừa, tay lái nhẹ hơn mong muốn; dương = tay lái nặng hơn). Không bộ nào được miễn một
-cửa sổ; bộ không đạt ở vùng nào thì xử theo mục 5.6. Hàm: calib_run.m (m.erel, m.erelWin, m.erelSigned, m.erelLabel), calib_block_scores.m. Trạng thái: CÓ (cập nhật 2026-10-09, chưa chạy).
+4.4. Độ chính xác tĩnh e_rel (%): e_rel = 100 x |trung bình e_T| / trung bình |T_d,ref| trên TỪNG cửa sổ static của CALIB v2 (26 cửa sổ: 2 ở 20 km/h, 3 ở mỗi tốc độ 30-100 km/h, a_y 0.1-0.3
+g), lấy giá trị lớn nhất; cũng báo có dấu (âm = trợ lực thừa, tay lái nhẹ hơn mong muốn; dương = tay lái nặng hơn). Cửa sổ đo là 1 s cuối của mức 3 s, tức 2 s sau khi dốc xong: bộ cần lâu
+hơn 2 s để lắng (tích phân chậm, Ki thấp; Map ở 30-50 km/h, 0.3 g) bị tính vào sai số, và đó là chủ ý (đo 2026-10-17: PIDOpt lắng trong 2 s, trôi trong cửa sổ không quá 4 % T_d,ref; Map ở 30
+km/h, 0.3 g chưa lắng sau 9 s, sai số xác lập 16 % so với 43 % đo ở cửa sổ; 40 km/h 9 % so với 32 %; 60 km/h -4 %; 100 km/h +2 %). Hệ quả cần biết: sai số xác lập của Map ở 30-40 km/h, 0.3 g
+là do cấu trúc (độ dốc K bị chặn bởi ổn định, đã thấy ở DRY 40 km/h +13 %), nên cổng 5 % có thể không đạt với Map ở đó; xử theo mục 5.6 (khung Map). Không bộ nào được miễn một cửa sổ. Hằng
+số EREL_DEN_FLOOR trong calib_score.m (sàn mẫu số, 0 = tắt) để dành nếu người dùng chốt sàn 0.06 N.m cho cửa sổ 0.1 g ở 20 km/h (ngưỡng 5 % chỉ 0.05 N.m, ngang độ phân giải a_y); chưa bật.
+Hàm: calib_run.m (m.erel, m.erelWin, m.erelSigned, m.erelLabel), calib_block_scores.m. Trạng thái: CÓ (2026-10-17).
 4.5. Chỉ tiêu trợ lực thừa (chỉ ca SLIP (các cảnh down, pud, up)): (a) sai số xác lập sau khi mu đổi, có dấu, tính theo % T_d,ref, trên cửa sổ ổn định sau đổi mu (dương = tay lái nặng hơn mong
 muốn, âm = trợ lực thừa); (b) đỉnh |e_T| trong 2 s sau thời điểm đổi mu; (c) thời gian hồi phục: từ thời điểm đổi mu tới khi |e_T| < 0.1 N.m và giữ như vậy 1 s; (d) đỉnh |T_a|. Trạng thái: (a)
 CÓ (cột Mean_eT_signed_pct_of_Tdref của run_make_cases.m); (b), (c), (d) CẦN VIẾT.
@@ -124,7 +137,7 @@ mẫu. Con số 1 ms = một chu kỳ điều khiển = 2 lần trễ nửa chu 
 motor), báo độ nhạy ở 0.5 ms và 2-5 ms. Ngưỡng tính bằng thời gian chứ không bằng độ vì trễ ngoài đời là thời gian tuyệt đối (cùng PM 45 độ, PID băng thông 115 rad/s chịu được 6.8 ms còn PI băng
 thông 7 rad/s chịu được 112 ms). Với bộ có mô hình tuyến tính (Map, PI, PID) vẫn tính PM, GM trên hai mặt đường (k_r = 30 và 0) chỉ để BÁO CÁO, không còn là cổng (hàm pi_margins.m, pid_margins.m,
 design_lead.m). Trạng thái: CẦN VIẾT: khối trễ thuần và hệ số độ lợi trên đường bộ điều khiển -> Actuator trong build_closed_loop, và hàm chạy CALIB với hai thay đổi đó.
-5.3. Độ chính xác tĩnh: e_rel <= 5 % theo mục 4.4 trên mọi cửa sổ static (9 cửa sổ 0.1-0.3 g, không gồm ext), cả hai dấu (người dùng chốt 2026-10-11, trước đó 3 %; cả 3 % lẫn 5 % đều là con
+5.3. Độ chính xác tĩnh: e_rel <= 5 % theo mục 4.4 trên mọi cửa sổ static (26 cửa sổ 0.1-0.3 g của CALIB v2), cả hai dấu (người dùng chốt 2026-10-11, trước đó 3 %; cả 3 % lẫn 5 % đều là con
   số tự chọn, chưa có nguồn ngoài, 3 % là ràng buộc gốc của Map; báo độ nhạy ở 3 % và 10 % cho mọi bộ).
 5.4. Bang-bang: CHỈ BÁO CÁO, KHÔNG CÒN LÀ CỔNG từ 2026-10-11 (người dùng chốt). Đo bằng cách chạy CALIB ba lần (cảm biến lý tưởng và hai seed có nhiễu cùng dải), tỉ lệ mẫu từ 2 s mà |T_a_cmd|
 chạm giới hạn T_a,max(v) của Actuator; báo f lý tưởng, f có nhiễu, Delta = trung bình của (f có nhiễu - f lý tưởng) trên hai seed và độ phân tán |Delta1 - Delta2|, cùng S_cmd và TV. Trước đây là
@@ -174,7 +187,7 @@ PHẦN 7 - BÁO CÁO VÀ QUY TRÌNH
 của lưới, kết quả quét, điểm chọn, ngoại lệ so với quy chuẩn (nếu có) kèm lý do trung thực.
 7.2. Bảng khác biệt cấu trúc trong luận văn: với mỗi bộ ghi tín hiệu đọc (T_s, v, a_y qua T_d,ref...), có khâu tích phân hay không, số tham số chỉnh, số ứng viên đã thử, ngoại lệ so với quy
 chuẩn. Đây là thứ giúp người đọc hiểu một bộ hơn bộ khác vì cấu trúc hay vì chỉnh.
-7.3. Báo cáo kết quả theo ba nhóm ca chấm DRY, SLIP, WEAVE (mục 3.2) kèm bảng từng ca, và ca EDGE (chỉ báo cáo) tách riêng cùng bảng e_ext của CALIB; với nhóm đổi mu dùng chỉ tiêu mục 4.5;
+7.3. Báo cáo kết quả theo ba nhóm ca chấm DRY, SLIP, WEAVE (mục 3.2) kèm bảng từng ca, và ca EDGE (chỉ báo cáo) tách riêng; với nhóm đổi mu dùng chỉ tiêu mục 4.5;
 không lấy trung bình giữa các nhóm. Báo cùng lúc R, S, TV, S_cmd, độ chính xác tĩnh, trợ lực ngược chiều, bang-bang cho mọi bộ.
 7.4. Kết quả so sánh nhiều bộ: Result/Compare/<A>_vs_<B>/ bằng seed chung 99999 (make_pair_comparisons) và hình mặt Pareto chồng nhau. Kết luận trong luận văn viết theo dạng đánh đổi và khác
 biệt cấu trúc, không viết "bộ này chỉnh tốt hơn" khi khác biệt đến từ cấu trúc.
@@ -183,6 +196,10 @@ dụng đồng thời cho mọi bộ.
 ==============================================================================================================================================================================================
 PHẦN 8 - HIỆN TRẠNG ÁP DỤNG (cập nhật mỗi khi đổi)
 ==============================================================================================================================================================================================
+- 2026-10-17, phiên bản 6: mã đã cập nhật (make_cases.m buildCALIB v2 và assemble; calib_score.m; calib_block_scores.m; calib_run.m; test_calib.m PASS 33 kiểm; run_pi_sweep, run_pi_fine,
+  run_pid_sweep, run_smc_sweep, run_ismc_sweep, run_calib_sweep của Map bỏ nhóm small và ext; chú thích '9 cửa sổ static' trong các hàm *_eval đổi thành 26). Kết quả CALIB và Cases cũ của
+  MỌI bộ chọn trên CALIB v1 nên không so với v2 được; việc tìm và chọn lại do khung của từng bộ làm (Map, PI/PID, SMC/ISMC, MapPID, MapPIDLag, MapOpt, PIDOpt, MapPIDOpt, PIDLag). Chưa chạy
+  lại tìm tham số nào. Chưa cập nhật: Gates.mdl (không dùng trong CALIB), tools/build_*_report*.py và build_map_txt.py (mô tả CALIB v1 của các báo cáo đã gửi).
 - Cập nhật 2026-10-09 (T_a,max): đã thêm dự phòng F = T_f vào make_ta_max.m và ref.json; tách khối AssistLimit (build_assistlimit, test_assistlimit PASS); Actuator đổi giao diện sang In
   T_a_cmd, T_a_max (test_actuator PASS); build_closed_loop nối T_a_max (kiểm bằng bộ điều khiển tạm: nhận T_a_max theo tên, Actuator chặn đúng); test_tk PASS (29 kiểm), test_gates PASS. Chưa
   chạy lại bất kỳ ca nào của bộ điều khiển.
@@ -204,7 +221,7 @@ nguồn công khai đã mở được (ghi trang hoặc đường dẫn); [GIẢ
 hướng xử lý. Các Phần 1-8 giữ nguyên cho tới khi khung Linear làm lại các mục đánh dấu "VIỆC CỦA LINEAR"; mục nào ở đây mâu thuẫn với Phần 1-8 thì Phần 9 ưu tiên sau khi người dùng duyệt kết
 quả.
 9.1. Môi trường (Phần 2 của dàn ý)
-- Chu kỳ điều khiển 1 ms: [NGUỒN] Nguyen, Vu, Sename (2025), References/CEPS ANFIS-FOC Model.pdf, trang 32 của PDF: ECU EPS của Bosch và Nexteer dùng vi điều khiển 200-300 MHz, "supporting
+- Chu kỳ điều khiển 1 ms: [NGUỒN] Nguyen, Vu, Sename (2025), References/Combining adaptive neural-fuzzy inference system with field-oriented control strategy for electric power steering system in cars.pdf, trang 32 của PDF: ECU EPS của Bosch và Nexteer dùng vi điều khiển 200-300 MHz, "supporting
   control loops below 1 ms", và tốc độ điều khiển 1 kHz là mức "required in EPS applications". Lee 2018 không nêu chu kỳ (đã tìm trong PDF, không có). Bỏ phương án dự phòng "tỉ lệ với cộng
   hưởng 6.2 Hz".
 - Dự phòng F = T_f = 2 N.m: [NGUỒN] Slotine và Li mục 7.1.3 (cận bất định), T_f từ Lee 2018 Bảng III; băng thông motor 100 Hz: [NGUỒN] Lee 2018 Bảng III. Không đổi.
@@ -243,7 +260,7 @@ quả.
 9.5. Quy tắc chọn (Phần 6 của dàn ý)
 - Ràng buộc tích phân PID Ti >= Pu/2 và PI Ti >= Pu/1.2: [NGUỒN] Seborg Bảng 12.7 (trang 227 của PDF, phương pháp chu kỳ liên tục của Ziegler và Nichols; Kcu và Pu đo từ mô hình). Bộ lọc đạo
   hàm Tf >= 0.1 Td: [NGUỒN] Seborg phương trình 8-12 (trang 141: hằng số alpha thường 0.05-0.2, hay dùng 0.1). Map PM >= 45 độ: [NGUỒN] Seborg mục 14.7 (PM 30-45 độ), chỉ là công cụ thiết kế,
-  không còn là cận lưới. Các mục này đã kiểm trong References/Process_Control.pdf.
+  không còn là cận lưới. Các mục này đã kiểm trong References/Process Dynamics and Control, 4th Edition (Seborg, Edgar, Mellichamp, Doyle).pdf.
 - Điểm chọn cực tiểu J = R x S: [GIẢI THÍCH] trao đổi phần trăm ngang nhau, không phụ thuộc đơn vị. Ngưỡng hòa thay 5 % bằng độ phân tán giữa các seed: [GIẢI THÍCH] thống kê. Lập lịch theo
   vận tốc chỉ giữ khi R giảm hơn ngưỡng hòa mà S không tăng. Cận lưới mở rộng tới khi một cổng chặn hoặc R phẳng; so mặt Pareto và báo số ứng viên: giữ, không số.
 - Ràng buộc dải lái (mục 6.2, thêm 2026-10-11): [GIẢI THÍCH] và [NGUỒN] Nguyen 2025 tr. 19 (dải lái 0.2-2.0 Hz); mốc -3 dB là định nghĩa băng thông. VIỆC CỦA LINEAR và SMC: kiểm điểm đã chọn
@@ -258,6 +275,20 @@ quả.
 ==============================================================================================================================================================================================
 NHẬT KÝ THAY ĐỔI QUY CHUẨN
 ==============================================================================================================================================================================================
+- 2026-10-17, phiên bản 6 (người dùng chốt trong phiên khung TESTCASE, sau khi bàn từng đoạn, Tracking/historychat_testcase.md Lượt 1-10): CALIB v1 (117 s, ba khối 20, 60, 100 km/h, bốn nhóm
+  R) thay bằng CALIB v2 (140 s, chín khối 20-100 km/h bước 10, 68 cửa sổ; mục 3.1); R đổi từ trung bình đều bốn nhóm sang trung bình nhân ba nhóm static, dyn, mu với sàn 1 % mỗi nhóm (mục
+  4.1); cổng e_rel lấy trên 26 cửa sổ (mục 4.4, 5.3). Lý do: (1) CALIB v1 không phân biệt được Kp (92 % trong 120 thiết kế tốt nhất của MapPIDOpt có Kp dưới 0.1, R và S trùng nhau, MapPID
+  Lượt 12); (2) thiếu tốc độ giữa 20 và 60 km/h (Map sai +11.5-13 % ở DRY 40 km/h mà cổng không thấy); (3) bậc mu 0.6 gần như không đổi T_r; (4) nhóm dyn (khoảng 29 %) lấn át static (1-1.5
+  %) trong trung bình cộng; (5) bước tốc độ không đều bị phản biện; (6) thầy yêu cầu thời lượng ca là số chẵn. Kiểm chứng đã làm (scratch, 2026-10-17): các khối tốc độ độc lập (ca liền so
+  với khối chạy riêng: chênh tối đa 2e-5 N.m với cảm biến lý tưởng, bằng độ lệch seed khi có nhiễu); sin ở 20 và 30 km/h bị loại vì e_T bằng 170-560 % T_d,ref với mọi bộ; bậc mu đặt ở 0.3 g
+  vì ở 0.2 g Map chỉ đổi 1-3 %; độ nhạy PIDOpt như mục 4.1; 20 thiết kế top của MapOpt, PIDOpt, MapPIDOpt xếp hạng khác nhau giữa khối 20 km/h và khối 60/100 km/h (Spearman J 0.0-0.7), nên
+  giữ khối 20 km/h. ĐÂY LÀ LẦN ĐỔI CA THỬ SAU KHI ĐÃ THẤY KẾT QUẢ của phương pháp nhiều seed; báo cáo phải nêu điều đó. Ảnh hưởng: MỌI kết quả CALIB cũ (Calib/, design trong *.json) của Map,
+  PI, PID, SMC, ISMC, MapPID, MapPIDLag, MapOpt, PIDOpt, MapPIDOpt, PIDLag là CALIB v1 và không so được với v2; các bộ phải tìm và chọn lại theo phương pháp của mình. DRY, RAMP, SLIP, WEAVE,
+  EDGE KHÔNG đổi (thiết kế lại sau theo người dùng). Cần người dùng chốt thêm: sàn 0.06 N.m cho cổng e_rel ở 20 km/h; tông 1 Hz giữ hay bỏ nếu cần thêm thời gian. Cảnh báo cho khung Map:
+  cổng e_rel 5 % có thể không đạt ở 30-40 km/h, 0.3 g do cấu trúc (mục 4.4).
+  Đo thêm cùng ngày (scratch/smoke_mapK.m, MapOpt lần 2 giữ lead và lag, K đổi): e_rel 45 % ở K 6, 5.4 % ở K 8, 5.2 % ở K 10, 4.95 % ở K 12, 4.8 % ở K 14, 4.7 % ở K 16, nhưng PM tuyến tính
+  tụt từ 30.1 độ (K 6) xuống 28.2 độ (K 12) và 25.3 độ (K 16); tức cổng e_rel 5 % trên CALIB v2 đòi K khoảng 12 trở lên và phải thiết kế lại khâu lead và lag để giữ PM từ 30 độ; không chứng
+  minh là không đạt. Việc của khung Map.
 - 2026-10-16 (MapPIDLag, người dùng chốt): thêm bộ MapPIDLag (Map cộng PID, rồi TỔNG lệnh qua một khâu lag, bỏ lead; bảy tham số) vào quy chuẩn: token MapPIDLag, dải seed 50000-59999 (3.3),
   chọn bằng tối ưu đồng thời như MapPID (ngoại lệ 6.1: surrogateopt x3 rồi patternsearch x3, điểm cuối PM từ 30 độ, GM từ 2, dải lái, e_rel, calib_margin; p1/z1 tới 1 để tối ưu tự tắt được lag).
   Chống bão hòa tích phân tính trên lệnh SAU khâu lag. Đối chứng PID có lag (PIDLag) và PID tối ưu lại (PIDOpt) do khung Linear làm cùng phương pháp. Không bộ nào khác phải chạy lại. Đề xuất sau

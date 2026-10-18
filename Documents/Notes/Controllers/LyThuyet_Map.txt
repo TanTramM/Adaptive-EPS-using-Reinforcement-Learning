@@ -3,7 +3,7 @@ LÝ THUYẾT XÂY DỰNG BỘ ĐIỀU KHIỂN BẢN ĐỒ (MAP) - TỪ ĐẦU Đ
 Mục đích: ghi chép đủ chi tiết để viết chương Map của luận văn và để trả lời được câu hỏi "tại sao làm bước này, công thức ở đâu ra, số này chọn thế nào". Mỗi bước trình bày theo 4 ý: làm
 gì, vì sao, nguồn (tài liệu hoặc LỰA CHỌN của tác giả), kiểm bằng gì. Nguồn số liệu: chương Documents/Thesis/map.txt và Model/data/map.json (kết quả chạy; từ 2026-10-09 Map do khung Map
 làm); bài gốc [1]
-Lee, Kim, Kim (2018), References/lee2018.pdf (đã đọc lại mục III.A, III.D ngày 2026-10-09); phần "kiểm độc lập" do khung 1 tính ngày 2026-10-09 bằng MATLAB (mục 4.7).
+Lee, Kim, Kim (2018), References/Controller Design of an Electric Power Steering System.pdf (đã đọc lại mục III.A, III.D ngày 2026-10-09); phần "kiểm độc lập" do khung 1 tính ngày 2026-10-09 bằng MATLAB (mục 4.7).
 Chú thích viết tắt dùng xuyên suốt: EPS (Electric Power Steering, trợ lực lái điện); T_s (mô-men cảm biến ở trụ lái, cái tay người lái cảm nhận); T_a (mô-men trợ lực của motor); T_r (mô-men
 cản do lốp, ngược chiều); T_d,ref (giá trị đặt: mô-men tay lái ĐẸP mà người lái muốn); e_T = T_s - T_d,ref (sai số bám); PM (phase margin, dự trữ pha: còn cách mốc mất ổn định bao nhiêu độ
 pha); GM (gain margin, dự trữ độ lợi: độ lợi vòng còn tăng được bao nhiêu lần); R (RMS, căn bình phương trung bình, của e_T: độ bám); S (RMS của T_a sau lọc cao 5 Hz: độ giật do nhiễu); CALIB

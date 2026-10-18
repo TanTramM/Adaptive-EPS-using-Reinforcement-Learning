@@ -15,7 +15,7 @@ scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
 if nargin < 1 || isempty(stages), stages = 1:6; end
-calibDir = result_dir('Map', 'Calib');
+calibDir = result_dir('Map', 'CalibV1');      % reproduces the CALIB v1 results of the paper (old method)
 tStart = tic;
 
 if any(stages == 1)

@@ -10,7 +10,7 @@ function out = mappid_eval(x, seed, csvFile)
 %   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5, p - 3142, 3 - p1, ratio bounds]
 %   out.J      R*S [% N.m], Inf when a linear constraint fails (not simulated); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
 %   Constraints (DieuKhien_MapPID.txt C3, option C of 2026-10-13): linear PM > 0 and GM >= 1 over 68 plants x 5 slopes while searching (the final point must have PM >= 15 deg, GM >= 1.5: verify_mappid); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2);
-%   e_rel <= 5 % on the 9 static windows (QuyChuan 5.3); p <= pi/Ts (Nyquist) and p1 >= 3 rad/s (as design_leadlag.m). The simulation margin gate
+%   e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); p <= pi/Ts (Nyquist) and p1 >= 3 rad/s (as design_leadlag.m). The simulation margin gate
 %   (calib_margin) is NOT run here: only for the final candidates (verify_mappid).
 if nargin < 2 || isempty(seed), seed = 30000; end
 if nargin < 3, csvFile = ''; end
@@ -21,7 +21,7 @@ addpath(modelDir); setup_paths;
 x = x(:)';
 assert(numel(x) == 9, 'x must have nine entries');
 names = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1', 'Kp', 'Ki', 'Kd', 'Tf'};
-PMmin = 0; GMmin = 1; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
+PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
 
 % cached row?
 if ~isempty(csvFile) && exist(csvFile, 'file')
@@ -48,7 +48,7 @@ out = struct('x', x, 'seed', seed, 'J', Inf, 'R', NaN, 'S', NaN, 'TV', NaN, 'ere
 tStart = tic;
 
 % hard structural bounds (cheap)
-bad = d.lead.p > pi / Ts || d.lag.p1 < 3 || d.lead.p <= d.lead.z || d.lag.p1 >= d.lag.z1;
+bad = d.lead.p > pi / Ts * (1 + 1e-9) || d.lag.p1 < 3 * (1 - 1e-9) || d.lead.p < d.lead.z * (1 - 1e-9) || d.lag.p1 > d.lag.z1 * (1 + 1e-9);
 R = mappid_margins(Gj, w, d);
 out.PM = R.PM; out.GM = R.GM; out.HF = R.HF;
 PMeff = R.PM; if ~R.stable, PMeff = -180; end
@@ -60,7 +60,7 @@ if bad || any(c(1:3) > 0)
 end
 
 % simulation
-if isempty(haveBase) || ~evalin('base', 'exist(''MapPID_Kp'', ''var'')')
+if isempty(haveBase) || ~evalin('base', 'exist("MapPID_table", "var")')
     evalin('base', sprintf('run(''%s'');', strrep(fullfile(modelDir, 'Controllers', 'MapPID', 'load_mappid.m'), '\', '/')));
     haveBase = true;
 end

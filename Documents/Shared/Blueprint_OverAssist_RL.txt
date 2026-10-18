@@ -11,7 +11,7 @@ Quy ước đọc tài liệu:
   [CẦN SỬA]   = đã có nhưng phải đổi cho khớp bản chốt hiện tại.
   [CẦN LÀM]   = chưa có.
   [CẦN CHỌN]  = chưa chốt, phải tìm nguồn hoặc hiệu chỉnh.
-  Nguồn dẫn theo số [n] trong Documents/References.txt. Mục 1.2 theo Process_Control.pdf (Seborg, Edgar, Mellichamp, Doyle - Process Dynamics and Control, Ch.1).
+  Nguồn dẫn theo số [n] trong Documents/References.txt. Mục 1.2 theo Process Dynamics and Control, 4th Edition (Seborg, Edgar, Mellichamp, Doyle).pdf (Seborg, Edgar, Mellichamp, Doyle - Process Dynamics and Control, Ch.1).
 
   Phạm vi file này: (1) xác lập bài toán điều khiển, (2) tóm tắt mô hình đối tượng (Plant) và phần hiện thực Model/, (3) tóm tắt và so sánh bộ điều khiển PID, SMC (Phần 4). Suy diễn chi tiết nằm
   ở file cụm (Cum1/2/3) và DieuKhien_PID.txt, DieuKhien_SMC.txt. CHƯA làm RL và kịch bản huấn luyện.

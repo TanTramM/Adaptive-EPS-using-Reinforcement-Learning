@@ -11,7 +11,7 @@ function out = mappidlag_eval(x, seed, csvFile)
 %   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5]
 %   out.J      R*S [% N.m], Inf when a linear constraint fails (not simulated); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
 %   Constraints (DieuKhien_MapPIDLag.txt C3, as MapPID after D13): linear PM > 0 and GM >= 1 over 68 plants x 5 slopes while searching (the final point must
-%   have PM >= 30 deg, GM >= 2: select_mappidlag); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 9 static windows
+%   have PM >= 30 deg, GM >= 2: select_mappidlag); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 26 static windows of CALIB v2
 %   (QuyChuan 5.3); p1 >= 3 rad/s and p1 <= z1. The simulation margin gate (calib_margin) is NOT run here: only for the final candidates.
 if nargin < 2 || isempty(seed), seed = 50000; end
 if nargin < 3, csvFile = ''; end

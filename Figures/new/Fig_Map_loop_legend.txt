@@ -1,0 +1,20 @@
+Legend / text for Fig_Map_loop (paste into the paper next to the figure, as Seborg does next to Fig. 11.8)
+
+Caption:
+Fig. X. Block diagram of the assist-map control loop.
+
+Nomenclature (in the text of the paper):
+Y   = T_s, steering torque (controlled variable)
+U   = T_a, assist torque (manipulated variable)
+D   = theta_1, driver steering angle (disturbance variable)
+P   = T_a,cmd, assist-torque command (controller output)
+Y_m = T_s,m, measured steering torque
+v, v_m = vehicle speed and its measurement
+Y_u, Y_d = parts of T_s due to the assist torque and to the driver angle
+G_c = assist map M(v, T_s) with the lead-lag compensator C_map(s)
+G_v = assist-torque limit +-T_a,max(v) and motor G_a(s)
+G_p = response of T_s to T_a (negative: a larger assist torque lowers T_s, Eq. (15))
+G_d = response of T_s to theta_1 (steering column)
+G_m = torque and speed sensors
+
+Text: The assist map has no set point; the reference is contained implicitly in the calibration of the map (dry road). The measured torque and speed are fed back to G_c, so the loop is closed through T_s.

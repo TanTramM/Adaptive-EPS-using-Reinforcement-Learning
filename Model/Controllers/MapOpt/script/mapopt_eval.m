@@ -9,7 +9,7 @@ function out = mapopt_eval(x, seed, csvFile, cfg)
 %   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5]
 %   out.J      R*S [% N.m], Inf when a constraint fails (not simulated for the linear ones); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
 %   Constraints (DieuKhien_MapOpt.txt B3): linear PM > 0 and GM >= 1 over 68 plants x 4 slopes while searching (the final point must have PM >= 30 deg, GM >= 2:
-%   select_mapopt); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 9 static windows (QuyChuan 5.3); p1 >= 3 rad/s, p1 <= z1, p >= z.
+%   select_mapopt); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); p1 >= 3 rad/s, p1 <= z1, p >= z.
 %   The simulation margin gate (calib_margin) is NOT run here: only for the final candidate.
 if nargin < 2 || isempty(seed), seed = 0; end
 if nargin < 3, csvFile = ''; end

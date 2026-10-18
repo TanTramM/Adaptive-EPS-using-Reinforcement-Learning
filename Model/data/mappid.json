@@ -2,47 +2,68 @@
   "x_note": "MapPID controller data (Documents/Notes/Controllers/DieuKhien_MapPID.txt). Ts_ctrl: controller period [s]. The Map branch (calibration points of the dry-road assist) is read from data/map.json, never copied here. design: written by Controllers/MapPID/script/select_mappid.m, fields Kmax (slope limit of the table), lead {z, p} and lag {z1, p1} [rad/s] (Map branch only), Kp, Ki [1/s], Kd [s], Tf [s] (PID branch), Kaw = Ki/(Kp+Kmax). Absent until the optimisation has chosen a point: load_mappid.m then loads the Map design of map.json with all PID gains 0, so MapPID equals Map (the check of build_mappid / test_mappid).",
   "Ts_ctrl": 0.001,
   "design": {
-    "Kmax": 3.58690958408001,
+    "Kmax": 2.20284063020019,
     "Ts0": 0.3,
     "lead": {
-      "z": 5.0112079655603,
-      "p": 6.0134495586723595
+      "z": 122.354832659568,
+      "p": 1831.0048749902573
     },
     "lag": {
-      "z1": 35.1013071470242,
-      "p1": 14.477413271958762
+      "z1": 78.7358247786599,
+      "p1": 27.97250486406552
     },
-    "Kp": 0.593917488598889,
-    "Ki": 44.161741129045,
-    "Kd": 0.0452687641362878,
-    "Tf": 0.0024754079423587,
-    "Kaw": 10.562919814989622,
-    "rule": "min J = R*S by simultaneous optimisation (surrogateopt x3 + patternsearch x3), QuyChuan 6.1 exception",
-    "CALIB_R_pct": 9.790349894,
-    "CALIB_S_Nm": 0.3137387765,
-    "CALIB_TV_Nm_per_s": 73.32918703,
-    "CALIB_erel_pct": 2.139078024,
-    "CALIB_rev_pct": 11.5164216,
-    "CALIB_J": 3.0716123972504645,
-    "seed_30001_R_pct": 9.76298342,
-    "seed_30001_S_Nm": 0.3147926403,
-    "seed_30001_erel_pct": 1.981197222,
-    "PM_deg": 38.01874845549375,
-    "GM": 6.7208055633686632,
-    "HF_gain": 20.656603226099158,
-    "lag_gain_2Hz": 0.80212750072604488,
-    "margin_ratio_gain": 0.29725943614402689,
-    "margin_ratio_delay": 1.0059338486299525,
+    "Kp": 2.76033778682224,
+    "Ki": 105.616992628511,
+    "Kd": 0.0832199384599336,
+    "Tf": 0.00254242449493734,
+    "Kaw": 21.280112007715012,
+    "rule": "min mean J = R*S over CALIB seeds 30001-30005 among the 20 best distinct designs of the search at seed 30000 (surrogateopt x3 + patternsearch x3, wide box, PM >= 30, GM >= 2 in the search)",
+    "CALIB_J_mean": 2.1951462620688362,
+    "CALIB_J_sigma": 0.10710987154169362,
+    "CALIB_J_per_seed": [
+      2.3485106571193533,
+      2.0888130797079376,
+      2.1242498024576877,
+      2.153452250375989,
+      2.2607055206832132
+    ],
+    "CALIB_R_pct_mean": 2.7358793508851504,
+    "CALIB_S_Nm_mean": 0.80223703196394847,
+    "CALIB_TV_mean": 170.43962334867382,
+    "CALIB_rev_pct_mean": 18.371316149882972,
+    "CALIB_erel_max_pct": 1.5351236322654014,
+    "CALIB_J_search_seed": 2.0813105833859331,
+    "rank_at_search_seed": 18,
+    "rank_correlation": 0.97744360902255634,
+    "PM_deg": 39.945023594648944,
+    "GM": 3.7585821790279224,
+    "HF_gain": 47.204292585843518,
+    "lag_gain_2Hz": 0.92372551872909614,
+    "no_map_branch": false,
+    "no_lead": false,
+    "no_lag": false,
+    "margin_ratio_gain": 0.69479594762269226,
+    "margin_ratio_delay": 1.020214900048338,
+    "active": [
+      "none (interior optimum)"
+    ],
+    "n_region": 20,
+    "n_pool": 599,
+    "n_top": 20,
+    "search_seed": 30000,
+    "selection_seeds": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005
+    ],
+    "date": "2026-10-18 05:19:12",
     "bangbang": {
-      "f_ideal": 0.038573577621064163,
-      "f_noisy": 0.040069216789419222,
-      "delta": 0.0014217267675933273,
-      "spread": 0.00014782480152346344
-    },
-    "n_evaluations": 930,
-    "n_simulations": 855,
-    "design_seed": 30000,
-    "map_source_date": "2026-10-11 20:55:26",
-    "date": "2026-10-13 16:19:10"
+      "f_ideal": 0.019014354968442258,
+      "f_noisy": 0.020912891935565683,
+      "delta": 0.001916652777878421,
+      "spread": 3.6231621509990458E-5
+    }
   }
 }

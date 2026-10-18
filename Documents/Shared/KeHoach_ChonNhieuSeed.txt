@@ -164,3 +164,9 @@ vì tìm với PM lớn hơn 0 rồi lọc sau bỏ sót vùng hợp lệ. MapOp
 (DieuKhien_MapOpt.txt Phần M). PIDOpt (khung Linear) không bị ảnh hưởng: điểm tốt nhất của PID có PM 46-47 độ, nhóm top đủ 20, J trung bình 3.486 cộng trừ 0.021. Các bộ chạy từ nay (MapPIDOpt, bộ
 mới) tìm với PM từ 30 độ và GM từ 2. Công cụ chạy nền dùng chung đã nằm trong repo: tools/jobs/ (job_lib.sh, headroom.ps1, kill_job.ps1, guard_ram.ps1, mapopt_pipeline.sh); hàm chọn
 Model/common/select_multiseed.m đã viết và đã dùng cho MapOpt.
+H2. 2026-10-17 (khung TESTCASE, người dùng chốt): CALIB đổi từ v1 (117 s, ba khối 20, 60, 100 km/h) sang v2 (140 s, chín khối 20-100 km/h bước 10, 68 cửa sổ; QuyChuan 3.1, 4.1, 4.4) và R
+thành trung bình nhân ba nhóm với sàn 1 %. Mọi giai đoạn 1 (tìm ở seed x0000) và giai đoạn 2-3 (nhóm top, chọn trên x0001-x0005) của Phần 3 phải chạy lại trên CALIB v2 cho từng bộ: kết quả
+CALIB cũ (opt, ref, top, best, pick, design_* trong *.json) là CALIB v1, không dùng để so sánh nữa; điểm đầu của surrogateopt lấy lại từ lần chạy v1 phải tính lại J (hàm mapopt_run1_points
+ghi X, Fval theo CALIB v1 nên KHÔNG dùng cho v2). Seed, tỉ lệ 1 : 5, cổng, ràng buộc PM từ 30 độ và GM từ 2 không đổi. Mỗi lần CALIB mô phỏng khoảng 140 s thay vì 117 s (khoảng 1.2 lần thời
+gian). Cổng e_rel 5 % nay lấy trên 26 cửa sổ: Map có thể không đạt ở 30-40 km/h, 0.3 g do cấu trúc (QuyChuan 4.4), khung Map xử theo 5.6. DRY, RAMP, SLIP, WEAVE, EDGE chưa đổi. Chi tiết và
+bằng chứng: Tracking/historychat_testcase.md Lượt 10.

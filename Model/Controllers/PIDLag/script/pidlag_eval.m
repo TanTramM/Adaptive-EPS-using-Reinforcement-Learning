@@ -2,11 +2,11 @@ function out = pidlag_eval(ctrl, x, seed, csvFile)
 %PIDLAG_EVAL Evaluate ONE PIDOpt / PIDLag design on the calibration case CALIB: linear screen first (cheap), then the simulation (one calib_run).
 %
 %   out = pidlag_eval(ctrl, x, seed, csvFile)
-%     ctrl    'PIDOpt' (x = [Kp, Ki, Kd, Tf]) or 'PIDLag' (x = [Kp, Ki, Kd, Tf, z1, p1/z1]); Kp, Ki [1/s], Kd [s], Tf [s], lag z1, p1 [rad/s]; Kaw = Ki/Kp
+%     ctrl    'PID' or 'PIDOpt' (x = [Kp, Ki, Kd, Tf]) or 'PIDLag' (x = [Kp, Ki, Kd, Tf, z1, p1/z1]); Kp, Ki [1/s], Kd [s], Tf [s], lag z1, p1 [rad/s]; Kaw = Ki/Kp
 %     seed    run seed of the sensor noise (tuning seed 10000, check seed 10001: the PID family seed, so the result is comparable with PI and PID)
 %     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file is returned from it, not simulated again)
 %   Same method and constraints as MapPID (mappid_eval.m, DieuKhien_MapPID.txt C3, D13, D14): while searching, linear PM > 0 and GM >= 1 over the 68 plants,
-%   lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2), e_rel <= 5 % on the 9 static windows (QuyChuan 5.3); Tf <= 79.6 ms holds by the bound (20 ms).
+%   lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2), e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); Tf <= 79.6 ms holds by the bound (20 ms).
 %   out.c = [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5] (feasible when all <= 0); out.J = R*S [% N.m], Inf when a constraint fails or
 %   when the simulation was not run; out.R, S, TV, erel, rev, PM, GM, HF, lagGain2Hz, simulated. The simulation margin gate (calib_margin) is run only for the final candidates.
 if nargin < 3 || isempty(seed), seed = 10000; end

@@ -5,7 +5,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/job_lib.sh"
 one() { c=$1; l=$2
   run_job "d5_$c" "$l; run_scoring_seeds('$c', 99995:99999); disp('D5_DONE')" "D5_DONE"; }
 pids=""
-one MapPIDOpt load_mappidopt & pids="$pids $!"; sleep 90
 one MapOpt load_mapopt & pids="$pids $!"; sleep 90
 one PIDOpt load_pidopt & pids="$pids $!"
 wait $pids

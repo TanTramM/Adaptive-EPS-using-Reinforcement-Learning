@@ -25,14 +25,35 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fig_blocks import tex2html
 
+
+def tex2ascii(s):
+    """convert the $...$ segments of s to AsciiMath between backticks (draw.io renders them when Extras > Mathematical Typesetting is on, i.e. math="1");
+    other text is escaped.  Examples: $T_{a,lim}$ -> `T_(a,lim)`, $\\theta_1$ -> `theta_1`, $\\pm T_{a,max}(v)$ -> `+-T_(a,max)(v)`"""
+    out = []
+    for i, part in enumerate(re.split(r'\$', s)):
+        if i % 2 == 0:
+            out.append(html.escape(part))
+            continue
+        t = part
+        t = re.sub(r'\\dot\{\\(\w+)\}', lambda m: 'dot ' + m.group(1), t)
+        t = re.sub(r'\\dot\\(\w+)', lambda m: 'dot ' + m.group(1), t)
+        t = t.replace('\\pm', '+-').replace('\\cdot', '*')
+        t = re.sub(r'\\([A-Za-z]+)', lambda m: m.group(1), t)
+        t = re.sub(r'_\{([^}]*)\}', lambda m: '_(' + m.group(1) + ')', t)
+        t = t.replace('\\,', ' ').replace('\\ ', ' ')
+        out.append('`' + html.escape(t.strip()) + '`')
+    return ''.join(out)
+
 INK = '#222222'
 plt.rcParams.update({'font.family': 'Arial', 'mathtext.fontset': 'custom', 'mathtext.rm': 'Arial', 'mathtext.it': 'Arial:italic',
                      'mathtext.bf': 'Arial:bold', 'mathtext.default': 'it'})
 
 
 class Diagram:
-    def __init__(self, w, h):
+    def __init__(self, w, h, math=False, font='Arial'):
         self.w, self.h = w, h
+        self.font = font                             # font family of every label (draw.io fontFamily and the PNG/PDF preview)
+        self.math = math                             # True: draw.io labels use AsciiMath in backticks (math="1")
         self.items = []
         self.oy = 0                                  # vertical offset added to every y given to the drawing methods
 
@@ -65,6 +86,7 @@ class Diagram:
 
     # ------------------------------------------------------------------ PNG / PDF preview
     def save_preview(self, base, scale=2.0, pdf=True):
+        plt.rcParams.update({'font.family': self.font, 'mathtext.rm': self.font, 'mathtext.it': self.font + ':italic', 'mathtext.bf': self.font + ':bold'})
         fig = plt.figure(figsize=(self.w / 100, self.h / 100), dpi=100)
         ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, self.w); ax.set_ylim(self.h, 0); ax.axis('off')
         px = lambda v: v * 0.72
@@ -122,6 +144,7 @@ class Diagram:
 
     # ------------------------------------------------------------------ draw.io source
     def save_drawio(self, path):
+        conv = tex2ascii if self.math else tex2html
         cells, nid = [], [2]
 
         def new_id():
@@ -129,19 +152,21 @@ class Diagram:
             return 'c%d' % nid[0]
 
         def vertex(i, val, style, x, y, w, h):
+            if 'fontSize' in style:
+                style += 'fontFamily=%s;' % self.font
             return ('<mxCell id="%s" value="%s" style="%s" vertex="1" parent="1"><mxGeometry x="%g" y="%g" width="%g" height="%g" as="geometry"/></mxCell>'
                     % (i, html.escape(val, quote=True), style, x, y, w, h))
         for it in self.items:
             k = it[0]
             if k == 'frame':
                 _, x, y, w, h, label, fill, stroke, fs, dashed = it
-                val = '<b>%s</b>' % tex2html(label) if label else ''
+                val = '<b>%s</b>' % conv(label) if label else ''
                 st = ('rounded=0;whiteSpace=wrap;html=1;fillColor=%s;strokeColor=%s;fontColor=#555555;fontSize=%d;verticalAlign=top;align=left;spacingLeft=10;%s'
                       % (fill, stroke, fs - 2, 'dashed=1;' if dashed else ''))
                 cells.append(vertex(new_id(), val, st, x, y, w, h))
             elif k == 'block':
                 _, x, y, w, h, lines, fill, stroke, fs, bold_first, rounded, dashed, lw = it
-                val = '<br>'.join(('<b>%s</b>' % tex2html(l)) if (j == 0 and bold_first) else tex2html(l) for j, l in enumerate(lines))
+                val = '<br>'.join(('<b>%s</b>' % conv(l)) if (j == 0 and bold_first) else conv(l) for j, l in enumerate(lines))
                 st = ('rounded=%d;arcSize=12;whiteSpace=wrap;html=1;fillColor=%s;strokeColor=%s;strokeWidth=%.1f;fontColor=#222222;fontSize=%d;%s'
                       % (1 if rounded else 0, fill, stroke, lw, fs - 2, 'dashed=1;' if dashed else ''))
                 cells.append(vertex(new_id(), val, st, x, y, w, h))
@@ -168,7 +193,7 @@ class Diagram:
                 cells.append('<mxCell id="%s" edge="1" parent="1" style="%s" value=""> %s</mxCell>' % (new_id(), st, geo))
             elif k == 'text':
                 _, x, y, s, fs, ha, bold, color, italic, tw = it
-                lines = s.split('\n'); val = '<br>'.join(tex2html(l) for l in lines)
+                lines = s.split('\n'); val = '<br>'.join(conv(l) for l in lines)
                 if bold:
                     val = '<b>%s</b>' % val
                 width = tw or max(24, int(max(len(re.sub(r'[$\\{}_]', '', l)) for l in lines) * fs * 0.6) + 8)
@@ -180,8 +205,8 @@ class Diagram:
             elif k == 'dot':
                 cells.append(vertex(new_id(), '', 'ellipse;whiteSpace=wrap;html=1;fillColor=#222222;strokeColor=#222222;', it[1] - it[3], it[2] - it[3], 2 * it[3], 2 * it[3]))
         xml = ('<mxfile host="drawio"><diagram name="Page-1" id="fig"><mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" '
-               'arrows="1" fold="1" page="1" pageScale="1" pageWidth="%d" pageHeight="%d" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>'
-               '%s</root></mxGraphModel></diagram></mxfile>') % (self.w + 40, self.h + 40, '\n'.join(cells))
+               'arrows="1" fold="1" page="1" pageScale="1" pageWidth="%d" pageHeight="%d" math="%d" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>'
+               '%s</root></mxGraphModel></diagram></mxfile>') % (self.w + 40, self.h + 40, 1 if self.math else 0, '\n'.join(cells))
         open(path, 'w', encoding='utf-8', newline='').write(xml)
 
     def save(self, base, scale=2.0):

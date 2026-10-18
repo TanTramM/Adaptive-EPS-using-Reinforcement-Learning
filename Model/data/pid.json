@@ -1,7 +1,7 @@
 {
-  "x_note": "PID controller data (Documents/Notes/Controllers/DieuKhien_Linear.txt). Ts_ctrl: controller period [s]. design: written by select_pid.m (Kp [N.m/(N.m)], Ki [1/s], Kd [s], Tf [s]); absent until the design is chosen, load_pid.m then loads all gains 0 (open loop).",
+  "x_note": "PID controller data (Documents/Notes/Controllers/DieuKhien_Linear.txt). Ts_ctrl: controller period [s]. design: written by select_pid.m (common method, wide box); design_grid: old grid design (select_pid_grid.m, CALIB v1) (Kp [N.m/(N.m)], Ki [1/s], Kd [s], Tf [s]); absent until the design is chosen, load_pid.m then loads all gains 0 (open loop).",
   "Ts_ctrl": 0.001,
-  "design": {
+  "design_grid": {
     "Kp": 1.5,
     "Ki": 32,
     "Kd": 0.025,
@@ -23,5 +23,37 @@
     "seed_10001_erel_pct": 1.7833627726108314,
     "seed_10001_rev_pct": 11.059034269267224,
     "date": "2026-10-11 21:31:34"
+  },
+  "design": {
+    "Kp": 3.58027397587004,
+    "Ki": 117.642186921742,
+    "Kd": 0.0860239362551799,
+    "Tf": 0.00105296712367719,
+    "Kaw": 32.858431425811162,
+    "rule": "common method 2026-10-16: search at seed 10000 (surrogateopt x3 + patternsearch x3, wide box), top 20, choice by J_bar over seeds 10001-10005 (e_rel <= 5 % at every seed), calib_margin",
+    "CALIB_Jbar": 2.4821038828009465,
+    "CALIB_sigmaJ": 0.0818417295655784,
+    "CALIB_Rbar_pct": 2.930807221313509,
+    "CALIB_Sbar_Nm": 0.84700254234054273,
+    "CALIB_TVbar_Nm_per_s": 257.52489694979096,
+    "CALIB_erel_max_pct": 1.8241373751395393,
+    "CALIB_rev_bar_pct": 18.44899674640039,
+    "J_seed10000": 2.4569819472632171,
+    "rank_seed10000": 4,
+    "rank_correlation": 0.67218045112781954,
+    "PM_deg": 50.742304319046383,
+    "GM": 5.1564822283695122,
+    "HF_gain": 85.276971166913981,
+    "margin_ratio_gain": 0.71379436017556408,
+    "margin_ratio_delay": 1.0304962127131088,
+    "bangbang": {
+      "f_ideal": 0.018434649024282431,
+      "f_noisy": 0.021536075825537498,
+      "delta": 0.0029637466395171074,
+      "spread": 0.00027536032347591846
+    },
+    "n_evaluations_stage1": 888,
+    "n_simulations_stage1": 677,
+    "date": "2026-10-18 04:37:35"
   }
 }

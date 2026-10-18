@@ -2,8 +2,8 @@ function C = make_cases(which)
 %MAKE_CASES The scenario set shared by EVERY controller (Map, PI, PID, SMC, ISMC, RL, ...).
 %
 %   C = make_cases()          the scoring cases [DRY, RAMP, SLIP, WEAVE, EDGE] (struct array, run by run_cases.m; RAMP and EDGE are report only)
-%   C = make_cases('CALIB')   the calibration case CALIB only (not a scoring case; every controller picks its parameters on it,
-%                             Documents/Shared/QuyChuan.txt part 3; run by calib_run.m)
+%   C = make_cases('CALIB')   the calibration case CALIB v2 only (150 s, 2026-10-17; not a scoring case; every controller picks its parameters on it,
+%                             Documents/Shared/QuyChuan.txt part 3; run by calib_run.m; the old 117 s case is CALIB v1, see QuyChuan change log)
 %
 %   DRY, SLIP, WEAVE are built from the segments of the old six cases TC1-TC6 (same speeds, a_y levels and mu values; nothing new).
 %   EDGE (2026-10-11, the extreme region above 0.3 g) and RAMP (2026-10-11, speed changing while cornering) are REPORT ONLY: not a gate, not a score
@@ -46,7 +46,7 @@ function C = make_cases(which)
 %
 %   Fields of C(k): tag, name, t [s] (1 ms grid), theta1 [rad], v [m/s], mu [-], ayTarget [g],
 %   win (struct array: label, t0, t1) = windows where the mean e_T is reported. CALIB also has blk (speed blocks: speed, t0, t1).
-%   Window labels follow the naming rule of Tracking/CLAUDE.md (lower case, short; CALIB keeps static_*, ext_*, sine_*, small_*, mu_drop, mu_rise).
+%   Window labels follow the naming rule of Tracking/CLAUDE.md (lower case, short; CALIB v2 uses static_*, trans_*, sine_*, mu_drop, mu_rise).
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
@@ -162,61 +162,69 @@ end
 
 %% ===================== CALIB: calibration case shared by every controller ========
 function S = buildCALIB(thTab)
-% Calibration case of QuyChuan.txt part 3. Windows above 0.3 g (the 0.4 g steps at 60 and 100 km/h) are labelled ext_* instead of static_*: they are reported
-% (m.eextSigned) but are in neither R nor the e_rel gate, so the tuning uses only the 9 static windows 0.1-0.3 g. The speed blocks cover the range of the scoring cases (20, 60, 100 km/h); a_y levels cover 0.1-0.4 g
-% wherever the Plant reaches them (20 km/h: about 0.2 g). Dry road mu = 0.8 except the mu step in the 60 km/h block. Per block (T = start):
-%   staircase   each level: 1 s transition + 3 s hold; window static_* = last 1 s of the hold (settled: slow integrators are not mistaken for
-%               steady error)                                                               20 km/h: 0.1 0.15 0.18 g; 60, 100 km/h: 0.1 0.2 0.3 0.4 g
-%   sine        1.5 s down to the base level, 1 s hold, then 4 cycles of 0.5 Hz; window sine_* skips the first 0.5 s     base 0.1 +-0.05 g (20 km/h), 0.2 +-0.1 g
-%   small       around the same base: +0.03 g then -0.03 g steps (small lane corrections); window small_* = 6 s
-%   mu step     60 km/h only: hold 0.3 g, mu 0.8 -> 0.6 (4 s) -> 0.8; windows mu_drop, mu_rise = the 2 s after each step (response, not steady)
-% The first 2 s of the case are never scored; the 1 s straight run at the end of each block carries the speed change.
-    speeds = [20 60 100];
-    levels = {[0.1 0.15 0.18], [0.1 0.2 0.3 0.4], [0.1 0.2 0.3 0.4]};
-    aBase  = [0.1 0.2 0.2];          % base level of the sine and small corrections [g]
-    aSine  = [0.05 0.1 0.1];         % sine amplitude [g]
-    aMu    = 0.3;                    % level held during the mu step [g]
-    aExt   = 0.3;                    % levels above this are the extreme region: windows ext_* (reported only, not in R, not in the e_rel gate)
-    muLow  = 0.6;
-    kv = [0 speeds(1)]; ka = [0 0]; sines = []; kmu = [0 0.8];
+% Calibration case CALIB v2 (2026-10-17, QuyChuan.txt part 3; replaces the 117 s case with 20/60/100 km/h blocks). ONE continuous case, speed rising
+% 20, 30, ..., 100 km/h (nine blocks). Every segment exposes one mechanism of the controllers (reasons: Tracking/historychat_testcase.md, entries 6-9):
+%   staircase  levels 0.1, 0.2, 0.3 g held in turn, one direction, going up (20 km/h: 0.10, 0.18 g, 90 % of the 0.2 g that the Plant reaches there).
+%              Each level 3 s: 1 s ramp, 1 s to settle, 1 s window. Windows: static_* = the last 1 s (steady error: e_rel gate and group 'static');
+%              trans_* = ramp + first second (transient: group 'dyn'). This is the angle-step test of the EPS literature (steady torque after a step).
+%   sine       only from 40 km/h up (below it the open-loop driver needs 80-140 deg of hand wheel, T_s is dominated by the inertia of the column and
+%              e_T is 170-560 % of T_d,ref for every controller: measured 2026-10-17, the sine says nothing about the controller there).
+%              Starts at the top level of the staircase as a cosine (continuous, no return to 0), 0.5 Hz, 1.25 cycles, amplitude = top level, ends
+%              at the zero crossing; then a sine at 1 Hz, 3.5 cycles, amplitude top/2 (same peak a_y rate), ends at 0. It crosses 0 (dead zone of
+%              the map, change of sign of the assist) and exercises the lag, lead and D terms that 0.5 Hz alone hardly shows. Windows: sine_v<v>_f0p5 =
+%              the first full cycle (2 s from the peak), sine_v<v>_f1 = 3 full cycles (3 s from 0.5 s after the start); group 'dyn'.
+%              The speed rises by 10 km/h DURING the sine (6 s, 0.46 m/s^2 mean), so the sine doubles as the speed change to the next block;
+%              v in the label is the speed at the start of the sine. Below 40 km/h the staircase is followed by 3 s of straight with the speed change.
+%   mu step    60 km/h only, inside the top level 0.3 g (the deepest step the open-loop driver can follow: the grip use stays at 86 %): mu 0.8 -> 0.35 for 6 s ->
+%              0.8, held another 4 s; windows mu_drop, mu_rise = the 2 s after each step. Map alone (no feedback) loses 6.9 % of T_d,ref there (measured).
+%   lead 2 s straight at 20 km/h and a straight tail; the first 2 s of the case are never scored.
+% The driver is open loop: theta1 follows the target a_y through the steady angle table (a_y only labels the angle). Window labels, lower case:
+% static_v<v>_a<g>, trans_v<v>_a<g>, sine_v<v>_f0p5 / _f1, mu_drop, mu_rise. Blocks: S.blk (speed, t0, t1) = the staircase and the sine of one speed.
+    speeds = 20:10:100;
+    tLead = 2; tLvl = 3; tSin = 6; tSwitch = 3; vSineMin = 40; tMuLow = 6; tMuHold = 4; muLow = 0.35; aMuLevel = 0.3; vMu = 60;
+    tTotal = 140;                                           % total length [s]: round number; the straight tail makes up the rest
+    kv = [0 speeds(1)]; ka = [0 0]; kmu = [0 0.8]; sines = zeros(0, 6);
     win = struct('label', {}, 't0', {}, 't1', {});
     blk = struct('speed', {}, 't0', {}, 't1', {});
-    T = 0;
+    T = tLead; ka = [ka; T 0];
     for i = 1:numel(speeds)
-        v = speeds(i); lv = levels{i}; b = aBase(i);
-        if i > 1, kv = [kv; T - 1, speeds(i-1); T, v]; end %#ok<AGROW>
-        t = T + 1;
-        for k = 1:numel(lv)                                  % staircase
-            if k == 1, ka = [ka; t, 0]; end                  %#ok<AGROW>
-            ka = [ka; t + 1, lv(k); t + 4, lv(k)]; %#ok<AGROW>
-            win(end+1) = struct('label', sprintf('%s_v%d_a%s', ternary(lv(k) > aExt, 'ext', 'static'), v, g2s(lv(k))), 't0', t + 3, 't1', t + 4); %#ok<AGROW>
-            t = t + 4;
+        v = speeds(i);
+        if v == 20, lv = [0.10 0.18]; else, lv = [0.1 0.2 0.3]; end
+        Tb = T; t = T;
+        for k = 1:numel(lv)
+            if v == vMu && abs(lv(k) - aMuLevel) < 1e-9
+                m1 = t + 3; m2 = m1 + tMuLow; d = 3 + tMuLow + tMuHold;
+                kmu = [kmu; m1, 0.8; m1 + 0.001, muLow; m2, muLow; m2 + 0.001, 0.8]; %#ok<AGROW>
+                win(end+1) = struct('label', 'mu_drop', 't0', m1, 't1', m1 + 2); %#ok<AGROW>
+                win(end+1) = struct('label', 'mu_rise', 't0', m2, 't1', m2 + 2); %#ok<AGROW>
+            else
+                d = tLvl;
+            end
+            ka = [ka; t + 1, lv(k); t + d, lv(k)]; %#ok<AGROW>
+            win(end+1) = struct('label', sprintf('trans_v%d_a%s', v, g2s(lv(k))), 't0', t, 't1', t + 2); %#ok<AGROW>
+            win(end+1) = struct('label', sprintf('static_v%d_a%s', v, g2s(lv(k))), 't0', t + 2, 't1', t + 3); %#ok<AGROW>
+            t = t + d;
         end
-        ka = [ka; t + 1.5, b; t + 2.5, b]; %#ok<AGROW>        % sine
-        sines = [sines; t + 2.5, t + 10.5, aSine(i), 0.5]; %#ok<AGROW>
-        win(end+1) = struct('label', sprintf('sine_v%d', v), 't0', t + 3, 't1', t + 10.5); %#ok<AGROW>
-        f = t + 10.5;                                         % small corrections
-        ka = [ka; f + 1, b; f + 2.5, b; f + 3, b + 0.03; f + 4.5, b + 0.03; f + 5, b - 0.03; f + 6.5, b - 0.03; f + 7.5, b]; %#ok<AGROW>
-        win(end+1) = struct('label', sprintf('small_v%d', v), 't0', f + 1.5, 't1', f + 7.5); %#ok<AGROW>
-        t = f + 7.5;
-        if v == 60                                            % mu step block
-            m1 = t + 3.0; m2 = m1 + 4;
-            ka = [ka; t + 1, aMu; m2 + 3, aMu]; %#ok<AGROW>
-            kmu = [kmu; m1, 0.8; m1 + 0.001, muLow; m2, muLow; m2 + 0.001, 0.8]; %#ok<AGROW>
-            win(end+1) = struct('label', 'mu_drop', 't0', m1, 't1', m1 + 2); %#ok<AGROW>
-            win(end+1) = struct('label', 'mu_rise', 't0', m2, 't1', m2 + 2); %#ok<AGROW>
-            t = m2 + 3;
+        top = lv(end); s0 = t;
+        kv = [kv; s0, v]; %#ok<AGROW>
+        if v >= vSineMin
+            dBlk = tSin;
+            ka = [ka; s0 + dBlk, 0]; %#ok<AGROW>
+            sines = [sines; s0, s0 + 2.5, top, 0.5, pi/2, 1; s0 + 2.5, s0 + tSin, top / 2, 1, 0, 1]; %#ok<AGROW>
+            win(end+1) = struct('label', sprintf('sine_v%d_f0p5', v), 't0', s0, 't1', s0 + 2); %#ok<AGROW>
+            win(end+1) = struct('label', sprintf('sine_v%d_f1', v), 't0', s0 + 3, 't1', s0 + tSin); %#ok<AGROW>
+        else
+            dBlk = tSwitch;                                 % no sine: a_y back to 0 in 1 s, straight until the speed has changed
+            ka = [ka; s0 + 1, 0; s0 + dBlk, 0]; %#ok<AGROW>
         end
-        ka = [ka; t + 1, 0]; %#ok<AGROW>
-        Tend = t + 2;                                         % 1 s straight carries the speed change
-        blk(end+1) = struct('speed', v, 't0', T, 't1', Tend); %#ok<AGROW>
-        T = Tend;
+        if i < numel(speeds), kv = [kv; s0 + dBlk, speeds(i+1)]; else, kv = [kv; s0 + dBlk, v]; end %#ok<AGROW>
+        T = s0 + dBlk;
+        blk(end+1) = struct('speed', v, 't0', Tb, 't1', T); %#ok<AGROW>
     end
-    tEnd = T;
-    kv = [kv; tEnd, speeds(end)];
-    ka = [ka; tEnd, 0];
-    kmu = [kmu; tEnd, 0.8];
-    S = assemble('CALIB', 'CALIB: ca chọn tham số chung cho mọi bộ điều khiển (đường khô, một bậc mu)', tEnd, kv, ka, kmu, sines, thTab, win);
+    assert(tTotal - T >= 2, 'CALIB v2: no room for a tail of at least 2 s');
+    tEnd = tTotal;
+    kv = [kv; tEnd, speeds(end)]; ka = [ka; tEnd, 0]; kmu = [kmu; tEnd, 0.8];
+    S = assemble('CALIB', 'CALIB v2: parameter-selection case shared by every controller (20-100 km/h step 10, a_y staircase, sine through 0, mu step)', tEnd, kv, ka, kmu, sines, thTab, win);
     S.blk = blk;
 end
 
@@ -258,8 +266,15 @@ function S = assemble(tag, name, tEnd, kv, ka, kmu, sines, thTab, win)
     vK = smoothPath(kv, t);
     a  = smoothPath(ka, t);
     for i = 1:size(sines, 1)
-        in = t >= sines(i, 1) & t <= sines(i, 2);
-        a(in) = a(in) + sines(i, 3) * sin(2*pi*sines(i, 4) * (t(in) - sines(i, 1)));
+        % sines(i, :) = [t0 t1 amplitude f_Hz] (added to the path) or [t0 t1 amplitude f_Hz phase mode]: mode 1 REPLACES the path in [t0, t1) by
+        % amplitude * sin(2 pi f (t - t0) + phase), so that a segment can start from a given value (a cosine from the top level of a staircase)
+        if size(sines, 2) >= 6 && sines(i, 6) == 1
+            in = t >= sines(i, 1) & t < sines(i, 2);
+            a(in) = sines(i, 3) * sin(2*pi*sines(i, 4) * (t(in) - sines(i, 1)) + sines(i, 5));
+        else
+            in = t >= sines(i, 1) & t <= sines(i, 2);
+            a(in) = a(in) + sines(i, 3) * sin(2*pi*sines(i, 4) * (t(in) - sines(i, 1)));
+        end
     end
     mu = interp1(kmu(:, 1), kmu(:, 2), t, 'linear');
     theta1 = sign(a) .* interp2(thTab.ay, thTab.v, thTab.th, min(abs(a), thTab.ay(end)), min(max(vK, 20), 100), 'linear');

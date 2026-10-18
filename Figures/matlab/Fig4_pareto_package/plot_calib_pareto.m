@@ -42,7 +42,7 @@ tl = tiledlayout(fig, 1, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
 for k = 1:3
     ax = nexttile(tl); hold(ax, 'on'); box(ax, 'on'); grid(ax, 'on');
     X = d{k}; bad = X(:, 3) > GATE; ok = ~bad;
-    h1 = scatter(ax, X(bad, 1), min(X(bad, 2), yl(2)), 6, [0.77 0.77 0.77], 'filled');
+    scatter(ax, X(bad, 1), min(X(bad, 2), yl(2)), 6, [0.85 0.85 0.85], 'filled');   % failing points: light grey, no legend entry
     h2 = scatter(ax, X(ok, 1), X(ok, 2), 8, col(k, :), 'filled', 'MarkerFaceAlpha', 0.55);
     % Pareto front of the passing points: scan by increasing S and keep the points that lower R
     Y = sortrows(X(ok, 1:2), [1 2]); best = inf; keep = false(size(Y, 1), 1);
@@ -57,10 +57,10 @@ for k = 1:3
         'FontName', 'Arial', 'FontSize', 9);
     xlabel(ax, '{\itS} [N\cdotm]');
     if k == 1, ylabel(ax, '{\itR} [%]'); else, set(ax, 'YTickLabel', []); end
-    title(ax, {ttl{k}, sprintf('%d configurations', size(X, 1))}, 'FontWeight', 'normal');
-    legend(ax, [h1 h2 h3 h4], {sprintf('fails gate (%d)', nnz(bad)), sprintf('passes (%d)', nnz(ok)), 'Pareto front', 'selected'}, ...
-        'Location', 'northeast', 'FontSize', 6.5, 'Box', 'on');
+    title(ax, ttl{k}, 'FontWeight', 'normal');
 end
+% one legend for the three panels (in the last panel), counts left out: they are in the caption/table
+legend(ax, [h2 h3 h4], {'passes gate', 'Pareto front', 'selected'}, 'Location', 'northeast', 'FontSize', 7, 'Box', 'off');
 savefig(fig, fullfile(here, 'Fig4_pareto.fig'));
 exportgraphics(fig, fullfile(here, 'Fig4_pareto.png'), 'Resolution', 600);
 exportgraphics(fig, fullfile(here, 'Fig4_pareto.pdf'), 'ContentType', 'vector');

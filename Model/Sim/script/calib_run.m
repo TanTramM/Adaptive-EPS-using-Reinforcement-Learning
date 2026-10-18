@@ -1,5 +1,5 @@
 function [L, m] = calib_run(mdl, runSeed, vars)
-%CALIB_RUN Run the calibration case CALIB (make_cases('CALIB')) on a closed-loop model and score it. Shared by every controller tuning.
+%CALIB_RUN Run the calibration case CALIB v2 (make_cases('CALIB'), 150 s) on a closed-loop model and score it. Shared by every controller tuning.
 %
 %   [L, m] = calib_run('Model_Map', 0, struct('Kmax', 8))
 %
@@ -9,16 +9,16 @@ function [L, m] = calib_run(mdl, runSeed, vars)
 %   vars   struct of base-workspace variables overridden for this run only (Simulink.SimulationInput.setVariable); [] for none
 %   L      logged TRUE signals on the 1 ms grid of the case: t, T_s, T_d_ref, e_T, T_a (applied), T_a_cmd (controller command)
 %   m      scores on the TRUE signals, first 2 s not scored (QuyChuan.txt part 4):
-%            R       response error [%]: mean of the four group errors R_g = 100 RMS(e_T) / mean|T_d,ref| over the windows of group g
-%                    (static = steady cornering 0.1-0.3 g, the 9 windows static_*; the 0.4 g windows ext_* are NOT in R, dyn = sine, small = small corrections, mu = the 2 s after each mu step);
-%                    equal weights; the groups are in m.Rg (struct) and m.RgNm (RMS e_T in N.m)
+%            R       response error [%]: geometric mean of the three group errors R_g = 100 RMS(e_T) / mean|T_d,ref| over the windows of group g, each floored at 1 %
+%                    (static = steady cornering, the 26 windows static_* of the staircase 0.1-0.3 g; dyn = the transients trans_* of the staircase and the sine
+%                    windows sine_* through 0 at 0.5 and 1 Hz; mu = the 2 s after each mu step); the groups are in m.Rg (struct) and m.RgNm (RMS e_T in N.m)
 %            S       RMS of T_a high-passed at 5 Hz over the whole case [N.m]     (smoothness: what no driver command explains)
 %            Scmd    the same high-pass RMS of the controller command T_a_cmd [N.m] (shows chattering that the motor limit hides)
 %            TV      total variation of T_a per second [N.m/s]
 %            maxTa   largest |T_a| [N.m]
 %            erel    steady accuracy [%]: worst over the static windows of 100 |mean e_T| / mean |T_d,ref|; per window in m.erelWin
 %                    (labels in m.erelLabel); m.erelSigned = the same with the sign of mean e_T (negative = over-assist)
-%            eextSigned  signed e_rel [%] of the extreme windows ext_* (0.4 g at 60 and 100 km/h), labels in m.eextLabel; report only
+%            eextSigned  empty (CALIB v2 has no window above 0.3 g; the extreme region is the case EDGE)
 %            rev     reverse assist: fraction of scored samples with |T_s| >= 0.5 N.m and T_a against T_s [-]
 
 S = make_cases('CALIB');

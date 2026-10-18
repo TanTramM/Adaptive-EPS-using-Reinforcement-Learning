@@ -216,3 +216,8 @@ thấp hơn 60-65 %; lần 1 bám tốt hơn ở DRY, RAMP, EDGE nhưng ồn b�
 5.64, 7.13; chuỗi 3 kẹt ở vùng gần lead đơn); theo kế hoạch cho phép thêm 150 lần surrogateopt mỗi chuỗi, tối đa một lần (G10b DieuKhien_MapPID): CHƯA làm, chờ người dùng; (d) điểm chọn không chạm biên hộp. Dự đoán M6:
 J 5.7-6.3 SAI (thấp hơn: 5.63), lead mạnh ĐÚNG (p/z 9.95), K 7-8 SAI (6.06), lag chạm dải lái ĐÚNG. Lưu ý: hiện chương Map, LyThuyet_Map, README gói gửi thầy và map.json vẫn mô tả Map cũ (g_min 0.7, K 6); DREWS năm seed
 99999-99995 và viết lại chương theo MapOpt (M7) chưa làm.
+N4. 2026-10-18: CALIB v2 (khung TESTCASE, QuyChuan phiên bản 6) thay CALIB v1; CHƯA CHẠY LẠI. Mọi số ở Phần L, N3 (J 6.294 và 5.630, K 8.47 và 6.06, DREWS seed 0 của lần 1 và lần 2) là của CALIB v1 (117 s, chín cửa sổ static, R theo bốn nhóm
+tính trong mỗi khối) và KHÔNG so được với kết quả trên CALIB v2 (140 s, 26 cửa sổ static, R trung bình nhân ba nhóm với sàn 1 %). Trên đĩa: Result/Controllers/MapOpt/Calib (lần 2, v1; gọi bằng result_dir('MapOpt', 'CalibV1')), Calib_run1 (lần 1,
+v1), Cases, Cases_run1; result_dir('MapOpt', 'Calib') nay là Calib_v2 (rỗng). Khung TESTCASE đo cổng e_rel 5 % trên v2 cần K khoảng 12 trở lên, nên điểm K 6.06 không còn qua cổng; cần chạy MapOpt mới trên v2 (hộp K 0.1-16 đủ chứa K 12): mapopt_run2.sh
+chạy lại được sau khi (a) sao lưu mapopt.json (design lần 2 là v1) thành trường design_v1, (b) quyết định ngưỡng PM và GM của lần chạy trên v2 (lần 2 dùng PM từ 30 và GM từ 2), (c) quyết định điểm đầu (điểm đầu lấy từ Calib_run1 là v1: không hợp lệ
+cho v2, nên chạy không có điểm đầu như lần 1 hoặc thay bằng điểm đầu v2). Phần M5(c) (hội tụ ba chuỗi) chưa đạt ở lần 2. Chờ người dùng bảo.

@@ -34,7 +34,7 @@ BẢNG THAM SỐ CỤM 2 (chi tiết và nguồn: params_plant.xlsx, sheet Cum2)
   - m, l_f, l_r, C_alpha_f, C_r: lấy trực tiếp từ [3] (Rajamani 2012, Chương 3, tr.48), bộ số "representative of parameters for a passenger sedan". Không gắn một xe thật cụ thể nhưng tự nhất quán
     (cùng một nguồn).
   - C, E: lấy từ [2] (Pacejka 2006), Table 4.2, tr.196, "Magic Formula hypothetical parameter values". Tác giả ghi rõ "It has not been attempted to find a best fit" nên đây là số MINH HỌA, không
-    phải fit cho một lốp thật. Mọi nguồn khác đã kiểm tra (MATLAB Vehicle Dynamics Blockset, CEPS ANFIS-FOC Model.pdf) đều dẫn lại từ chính bảng này. C = 1.3 khớp pCy1 = 1.3; E = -1 khớp pEy1 =
+    phải fit cho một lốp thật. Mọi nguồn khác đã kiểm tra (MATLAB Vehicle Dynamics Blockset, Combining adaptive neural-fuzzy inference system with field-oriented control strategy for electric power steering system in cars.pdf) đều dẫn lại từ chính bảng này. C = 1.3 khớp pCy1 = 1.3; E = -1 khớp pEy1 =
     -1 (pEy2 = pEy3 = pEy4 = 0 nên số hạng phụ thuộc tải triệt tiêu). E âm cho đúng hình dạng lực bên lốp thật: tăng, đạt đỉnh rồi giảm nhẹ ở góc trượt lớn.
   - C, E dùng chung cho lốp trước và lốp sau (giả thiết hai cầu cùng loại lốp); C_r cùng nguồn [3] với C_alpha_f.
 
@@ -61,7 +61,7 @@ LÝ GIẢI CHỌN e_p0 = 0.048 m VÀ K_tr(alpha_f, mu) ĐỘNG
     e_p = max(0, e_p0 - sgn(alpha_f)*e_p0*C_alpha_f*tan(alpha_f) / (3*mu*F_zf))
     [ e_p = \max\!\Big(0,\;e_{p0} - \text{sgn}(\alpha_f)\,e_{p0}\dfrac{C_{\alpha f}\tan(\alpha_f)}{3\mu F_{zf}}\Big) ]
 
-  - Kiểm tra nguồn PT(4): [4] chỉ trích Guan (2021) và Pugi (2020) cho PT liền trước (T_z = F_Y*e). Đã đọc Guan (2021, References/guan2021.pdf): bài không đề cập mu và coi trail là hằng số, không
+  - Kiểm tra nguồn PT(4): [4] chỉ trích Guan (2021) và Pugi (2020) cho PT liền trước (T_z = F_Y*e). Đã đọc Guan (2021, References/Study on decomposition and calculation method of EPS assist characteristic curve.pdf): bài không đề cập mu và coi trail là hằng số, không
     chứa PT(4). Vậy PT(4) là công thức do [4] tự đưa ra; dùng và ghi nguồn là [4].
   - e_p0 (trail ở alpha_f = 0 vì sgn(0)*tan(0) = 0): [4] không cho số. Tự chọn từ hai hướng cho cùng bậc độ lớn 30-60 mm: (1) mô hình brush của Pacejka [2] cho trail lốp 0.33a-0.46a với a (nửa
     vùng tiếp xúc) ước 50-70 mm cộng caster; (2) T_r cỡ vài N.m ứng với F_yf cỡ vài nghìn N cho cánh tay đòn phía tay lái 0.001-0.005 m, nhân n_st = 16 ra 16-80 mm. Chọn giữa dải: e_p0 = 0.003*16
