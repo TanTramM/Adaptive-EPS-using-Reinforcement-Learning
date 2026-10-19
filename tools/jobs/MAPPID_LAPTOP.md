@@ -47,7 +47,7 @@ Laptop có MATLAB và toolbox cùng phiên bản desktop. Desktop tiếp tục M
 
 Runner tự tìm `matlab.exe` trên PATH hoặc thư mục R2023a mặc định, tự tính gốc repo và tạo TEMP/TMP dưới thư mục tạm Windows; không cần ổ D hoặc tên tài khoản Admin. Nếu MATLAB cài chỗ khác, thêm `-MatlabExe '...\bin\matlab.exe'` khi gọi runner. Không cần Git Bash để chạy runner laptop.
 
-Mặc định một worker `run_mappid_grid('S1',1,1)`, chờ không còn MATLAB engine khác và còn ít nhất 6 GB headroom trước mỗi lần launch. Máy nên để dành cho tác vụ này; không tự mở thêm MATLAB từ khung khác. Giữ một worker trong toàn bộ một xuất phát khi resume để tránh đổi cách chia lưới. Không sửa `nWorkers` giữa chừng. Nếu RAM không đủ, kiểm tra RAM/pagefile và ứng dụng đang mở; không tự hạ ngưỡng RAM để ép chạy.
+Mặc định một worker `run_mappid_grid('S1',1,1)`, chờ không còn MATLAB engine khác và giữ lại 10% RAM vật lý (đồng thời kiểm commit/pagefile trống) trước mỗi lần launch. Trên máy 32 GB, reserve xấp xỉ 3.2 GB. Máy nên để dành cho tác vụ này; không tự mở thêm MATLAB từ khung khác. Giữ một worker trong toàn bộ một xuất phát khi resume để tránh đổi cách chia lưới. Không sửa `nWorkers` giữa chừng. Chỉ dùng `-MinHeadroomGB` khi cần ghi đè có chủ ý.
 
 S1 chỉ cần PID đã chọn: `Model/data/pid.json` và `Result/Controllers/PID/Calib_v2/PID_CALIB_pick_s10000.csv`. Vẫn cần các JSON PRSM/Map hiện hành để nạp mô hình/calibration, nhưng không cần Map pick cho S1. `mappid_grid_start.m` đã tách guard đúng từng hướng. Runner kiểm helper trước tìm kiếm; không chạy precheck hard-code số CALIB cũ `check_mappid_grid_eval` vì đó là phép tái lập thiết kế lịch sử, không phải điều kiện S1.
 
@@ -63,6 +63,17 @@ S1 chỉ cần PID đã chọn: `Model/data/pid.json` và `Result/Controllers/PI
 ## S2 và Pareto sau khi desktop chọn Map xong
 
 S1 hoàn tất tạo `Result/Controllers/MapPID/Calib_v2/MapPID_CALIB_S1_summary.mat`. Sau đó kiểm tra Map desktop đã chọn và được commit/push; nhận đúng cặp `Model/data/map.json` và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv`. Không lấy Map json tạm rồi giả là kết quả đã chọn. `git pull` có thể xung đột vì laptop có kết quả/log mới; đọc `git status`, bảo toàn thay đổi laptop, không reset/checkout cưỡng bức. Chỉ cập nhật dữ liệu Map cần thiết nếu pull toàn bộ có xung đột, ghi rõ nguồn commit.
+
+### Chạy tách hai máy
+
+Laptop sở hữu S1; desktop sở hữu S2. Desktop chạy `tools/jobs/watch_mappid_s2_after_map.ps1` nền trước khi Map xong. Watcher chỉ mở S2 khi có Map pick, marker selector done và `map.json` mang provenance grid; nó sau đó gọi chính runner một worker, chờ selector Map thoát và đủ RAM. Nó không chạy `Select`. Vì S1 và S2 có CSV/summary tag khác nhau nên không đè nhau ở hai clone; sau S2, mỗi máy commit/push artifact của mình, rồi chỉ một máy pull đủ hai summary để chạy `Select`.
+
+Khởi động watcher desktop:
+
+```powershell
+$script = (Resolve-Path 'tools/jobs/watch_mappid_s2_after_map.ps1').Path
+Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $script + '"')) -WindowStyle Hidden -PassThru
+```
 
 Khi có đủ Map pick, chạy lần lượt (supervisor S1 đã thoát):
 

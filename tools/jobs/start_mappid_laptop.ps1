@@ -2,7 +2,8 @@
 param(
     [ValidateSet('S1','S2','Select','All')][string]$Stage = 'S1',
     [string]$MatlabExe = '',
-    [int]$MinHeadroomGB = 6,
+    [double]$MinHeadroomGB = 0,
+    [ValidateRange(0.05,0.50)][double]$ReserveRamFraction = 0.10,
     [switch]$CheckOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -49,19 +50,27 @@ function Get-MemoryHeadroomGB {
     # FreeVirtualMemory includes the commit/page-file limit, unlike physical RAM alone.
     [math]::Min($os.FreePhysicalMemory, $os.FreeVirtualMemory) / 1MB
 }
+function Get-RequiredHeadroomGB {
+    if ($MinHeadroomGB -gt 0) { return $MinHeadroomGB }
+    $os = Get-CimInstance Win32_OperatingSystem
+    # Use total visible RAM, not the page-file limit, for the requested buffer.
+    return [math]::Round(($os.TotalVisibleMemorySize / 1MB) * $ReserveRamFraction, 2)
+}
 function Get-MatlabEngines {
     @(Get-CimInstance Win32_Process | Where-Object {
         $_.Name -ieq 'MATLAB.exe' -and $_.ExecutablePath -match '\\bin\\win64\\MATLAB\.exe$'
     })
 }
+$requiredHeadroomGB = Get-RequiredHeadroomGB
+Write-Output ("RAM reserve={0:N2} GB ({1:P0} of physical RAM)" -f $requiredHeadroomGB, $ReserveRamFraction)
 function Run-CachedStage([string]$Name, [string]$Expression) {
     $done = Join-Path $state "$Name.done"
     if (Test-Path -LiteralPath $done) { Write-Output "$Name already complete"; return }
     $attempt = 0; $realErrors = 0
     while ($true) {
-        while ((Get-MatlabEngines).Count -gt 0 -or (Get-MemoryHeadroomGB) -lt $MinHeadroomGB) {
+        while ((Get-MatlabEngines).Count -gt 0 -or (Get-MemoryHeadroomGB) -lt $requiredHeadroomGB) {
             # Reserve this machine for a single grid worker: no cross-job slot race.
-            Set-Content -LiteralPath (Join-Path $state 'status.txt') -Value "$Name waiting for all MATLAB engines to exit and $MinHeadroomGB GB headroom"
+            Set-Content -LiteralPath (Join-Path $state 'status.txt') -Value "$Name waiting for all MATLAB engines to exit and $requiredHeadroomGB GB headroom"
             Start-Sleep -Seconds 30
         }
         $attempt++

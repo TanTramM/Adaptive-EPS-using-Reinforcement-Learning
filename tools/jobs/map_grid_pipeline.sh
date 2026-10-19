@@ -1,7 +1,11 @@
 #!/bin/bash
 # Deterministic coarse-to-fine Map grid pipeline (PhuongPhap_TimThamSo.txt 13.4).
-# Start only when the three-machine-wide MATLAB slots are free.
+# This Map-only run uses five MATLAB workers on the 32 GB / 24-thread host.
 source "$(dirname "$BASH_SOURCE")/job_lib_patient.sh"
+
+# PC-only resource profile: preserve approximately 10% of this 31.86 GB
+# desktop (3.2 GB) before launching/resuming a Map MATLAB worker.
+export PATIENT_START_GB=3.2
 
 MASTER="$S/map_grid_master_status.txt"
 RUN_LOCK="$S/map_grid_pipeline_running.txt"
@@ -33,14 +37,18 @@ run_job_patient "map_grid_check" "xr_o=map_opt_eval([6 33.50 17.9137313433 28.13
 
 worker() {
   id=$1
-  run_job_patient "map_grid_w$id" "run_map_grid($id,3); disp('MAP_GRID_WORKER_DONE')" "MAP_GRID_WORKER_DONE" || return 1
+  run_job_patient "map_grid_w$id" "run_map_grid($id,5); disp('MAP_GRID_WORKER_DONE')" "MAP_GRID_WORKER_DONE" || return 1
 }
 
 mstat "stage 1: Map grid, 1024 coarse points plus at most six fine layers"
 pids=""
-for id in 1 2 3; do worker "$id" & pids="$pids $!"; sleep 150; done
+for id in 1 2 3 4 5; do
+  worker "$id" & pids="$pids $!"
+  # On a selection-only restart, completed workers return immediately.
+  [ -f "$S/map_grid_w${id}_done.txt" ] || sleep 60
+done
 wait $pids
-for id in 1 2 3; do [ -f "$S/map_grid_w${id}_done.txt" ] || failed "worker $id"; done
+for id in 1 2 3 4 5; do [ -f "$S/map_grid_w${id}_done.txt" ] || failed "worker $id"; done
 
 mstat "stage 2: Pareto selection, calib_margin, and five-seed report"
 run_job_patient "map_grid_select" "select_map_pareto(true); disp('MAP_GRID_SELECT_DONE')" "MAP_GRID_SELECT_DONE" || failed selection
