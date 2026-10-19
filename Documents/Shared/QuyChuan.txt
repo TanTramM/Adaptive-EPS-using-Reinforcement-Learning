@@ -137,8 +137,11 @@ mẫu. Con số 1 ms = một chu kỳ điều khiển = 2 lần trễ nửa chu 
 motor), báo độ nhạy ở 0.5 ms và 2-5 ms. Ngưỡng tính bằng thời gian chứ không bằng độ vì trễ ngoài đời là thời gian tuyệt đối (cùng PM 45 độ, PID băng thông 115 rad/s chịu được 6.8 ms còn PI băng
 thông 7 rad/s chịu được 112 ms). Với bộ có mô hình tuyến tính (Map, PI, PID) vẫn tính PM, GM trên hai mặt đường (k_r = 30 và 0) chỉ để BÁO CÁO, không còn là cổng (hàm pi_margins.m, pid_margins.m,
 design_lead.m). Trạng thái: CẦN VIẾT: khối trễ thuần và hệ số độ lợi trên đường bộ điều khiển -> Actuator trong build_closed_loop, và hàm chạy CALIB với hai thay đổi đó.
-5.3. Độ chính xác tĩnh: e_rel <= 5 % theo mục 4.4 trên mọi cửa sổ static (26 cửa sổ 0.1-0.3 g của CALIB v2), cả hai dấu (người dùng chốt 2026-10-11, trước đó 3 %; cả 3 % lẫn 5 % đều là con
-  số tự chọn, chưa có nguồn ngoài, 3 % là ràng buộc gốc của Map; báo độ nhạy ở 3 % và 10 % cho mọi bộ).
+5.3. Độ chính xác tĩnh: e_rel <= 10 % theo mục 4.4 trên mọi cửa sổ static (26 cửa sổ 0.1-0.3 g của CALIB v2), cả hai dấu. NGƯỠNG HIỆN HÀNH LÀ 10 % (người dùng chốt 2026-10-18, đổi từ 5 %; 5 % chốt
+  2026-10-11, trước đó 3 %). 10 % bằng JND (just noticeable difference, độ chênh nhỏ nhất người lái phân biệt được) nhỏ nhất đo được của mô-men vô-lăng (Deborne 2014, xem phần NGUỒN bên dưới), nên là
+  cổng "sai số xác lập không vượt ngưỡng cảm nhận". TRUNG THỰC: đổi 5 % sang 10 % được làm SAU KHI thấy Map kẹt ở cổng 5 % (một cửa sổ 20 km/h, 0.18 g, sàn cảm biến), tức là lần thứ năm đổi cổng sau khi thấy
+  kết quả; vì vậy ba bộ Map, PID, MapPID đều được tìm lại từ đầu với 10 % (không giữ lại kết quả 5 %), và báo cáo phải nêu điều này cùng độ nhạy ở 5 %. Ngưỡng này dùng NHƯ NHAU ở hai chỗ: ràng buộc c4 khi
+  tìm (e_rel - 10 <= 0) và cổng ở mọi seed khi chọn. Xem Documents/Shared/PhuongPhap_TimThamSo.txt mục 13 để biết trình tự chạy lại.
 5.4. Bang-bang: CHỈ BÁO CÁO, KHÔNG CÒN LÀ CỔNG từ 2026-10-11 (người dùng chốt). Đo bằng cách chạy CALIB ba lần (cảm biến lý tưởng và hai seed có nhiễu cùng dải), tỉ lệ mẫu từ 2 s mà |T_a_cmd|
 chạm giới hạn T_a,max(v) của Actuator; báo f lý tưởng, f có nhiễu, Delta = trung bình của (f có nhiễu - f lý tưởng) trên hai seed và độ phân tán |Delta1 - Delta2|, cùng S_cmd và TV. Trước đây là
 cổng Delta <= 1 % (1 % tự chọn, không có nguồn). Hàm: calib_bangbang.m (CÓ), chỉ đo cho điểm đã chọn. Điểm chọn không bị ảnh hưởng vì J = R x S đã phạt độ ồn (mục 9.5).

@@ -1,0 +1,368 @@
+==============================================================================================================================================================================================
+PHƯƠNG PHÁP TÌM THAM SỐ BỘ ĐIỀU KHIỂN BẰNG surrogateopt TRÊN CA CALIB v2, CHỌN TRÊN NHIỀU SEED
+==============================================================================================================================================================================================
+Tài liệu này mô tả từng bước, tiến trình, công thức và cơ sở của phương pháp dùng chung để tìm tham số cho các bộ điều khiển của đề tài (Map, PID, MapPID): tìm toàn cục bằng một bộ tối ưu duy nhất (surrogateopt), lấy nhóm 20 thiết kế tốt nhất, chọn lại trên năm seed khác, rồi kiểm và chấm trên các ca kiểm tra. Các con số minh họa lấy từ bộ PID (kết quả trên CALIB v2, ngày 2026-10-18). Những điểm CHƯA CHỐT được đánh dấu [CHƯA CHỐT] và gom lại ở mục 10.
+
+CẬP NHẬT 2026-10-19 (người dùng chốt): phương pháp surrogateopt mô tả ở các mục 5, 6, 7 và 11 KHÔNG CÒN DÙNG. Ba bộ Map, PID, MapPID được chạy lại bằng QUÉT LƯỚI trên CALIB, lọc cổng, chọn trên mặt Pareto, theo kế hoạch chi tiết ở MỤC 13 (cuối tài liệu). Vẫn dùng: mục 3 (biến và hộp, Bảng 2), mục 4 (đánh giá một thiết kế, ràng buộc, seed), mục 8 (calib_margin, DREWS, so cặp). Các mục 5-7, 9-11 giữ lại làm hồ sơ của cách đã thử.
+
+Từ viết tắt dùng trong tài liệu, giải thích một lần ở đây. CALIB: ca mô phỏng dùng để hiệu chỉnh tham số, phiên bản 2 (CALIB v2), 140 s. DREWS: bộ năm ca chấm điểm (DRY đường khô, RAMP đổi vận tốc, SLIP đổi hệ số bám, EDGE vùng cực, WEAVE lái liên tục), chỉ dùng để báo cáo, không bao giờ dùng để chọn tham số. Seed: số khởi tạo bộ sinh nhiễu của cảm biến, cùng một seed cho đúng cùng một chuỗi nhiễu. PM (phase margin, độ dự trữ pha) và GM (gain margin, độ dự trữ độ lợi): hai thước đo độ xa của vòng điều khiển tới mất ổn định, tính trên mô hình tuyến tính. RMS (root mean square): căn bậc hai của trung bình bình phương. RBF (radial basis function): hàm cơ sở xuyên tâm, một họ hàm dùng để nội suy.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Mục đích và phạm vi
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mỗi bộ điều khiển có một số tham số cần chỉnh: Map có 5 (độ dốc K và hai khâu bù lead–lag), PID có 4 (Kp, Ki, Kd và hằng số lọc Tf), MapPID có 9 (gộp hai nhóm trên). Mỗi bộ tham số cho một lần mô phỏng CALIB tốn khoảng 25–35 s, hàm mục tiêu có nhiễu (do nhiễu cảm biến) và không có đạo hàm. Với 9 biến thì quét lưới cần hàng tỉ tổ hợp, không khả thi, nên cần một bộ tối ưu dùng ít lần thử.
+
+Yêu cầu của phương pháp: (a) cùng một quy trình, cùng ngân sách và cùng cổng cho mọi bộ để so sánh công bằng; (b) kết quả không phụ thuộc vào một seed nhiễu may mắn; (c) có số liệu hội tụ để chứng minh điểm tìm được không phải do may; (d) mọi con số của quy trình có cơ sở hoặc được ghi rõ là lựa chọn của tác giả.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Tiến trình tổng thể
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Quy trình gồm sáu bước, tóm tắt ở Hình 1 và Bảng 1. Bước 2 (đánh giá một thiết kế) được bộ tối ưu ở bước 3 gọi lặp lại ở mỗi lần thử.
+
+  [Hình 1: Tiến trình tìm và chọn tham số. Bước 2 được bước 3 gọi ở mỗi lần thử. | Figures/new/Fig_search_flow.png]
+
+  Bảng 1: Các bước, dữ liệu dùng và số lần mô phỏng CALIB (ví dụ PID)
+  Bước | Việc làm | Seed nhiễu | Số lần mô phỏng
+  1 | Chuẩn hóa biến, đặt hộp tìm kiếm | không | 0
+  2 | Đánh giá một thiết kế: sàng lọc tuyến tính, mô phỏng CALIB, tính R, S, J, e_rel | seed của lệnh gọi | 1 mỗi lần gọi
+  3 | Tìm toàn cục: ba chuỗi độc lập, mỗi chuỗi 200 lần thử (PID; Map 250, MapPID 450) | x0000 (PID: 10000) | tối đa 600
+  4 | Lấy nhóm top 20 thiết kế khả thi, khác nhau, J nhỏ nhất | x0000 (dùng số đã có) | 0
+  5 | Chọn: 20 thiết kế chạy lại trên 5 seed, lấy J trung bình nhỏ nhất | x0001–x0005 (PID: 10001–10005) | 100
+  6 | Kiểm độ dư ổn định, rồi chấm các ca DREWS | 99999–99995 | 2 + 5 ca × 5 seed
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Bước 1: Biến thiết kế và hộp tìm kiếm
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Bộ tối ưu làm việc trên biến chuẩn hóa u_i trong khoảng [0, 1]. Mỗi biến thật x_i với cận dưới a_i và cận trên b_i được suy ra theo thang logarit, vì các tham số trải nhiều bậc độ lớn (ví dụ Ki từ 0.1 đến 2000 1/s) và thang logarit đối xử công bằng với mọi bậc. Nhờ chuẩn hóa, cùng một cài đặt của bộ tối ưu dùng được cho mọi bộ điều khiển.
+
+  (1)  x_i = 10^( log10(a_i) + u_i * ( log10(b_i) - log10(a_i) ) )
+  [ x_i=10^{\,\mathrm{log}_{10}a_i+u_i\left(\mathrm{log}_{10}b_i-\mathrm{log}_{10}a_i\right)} ]
+
+Hai biến có quy tắc riêng để cho phép giá trị bằng 0: khi u nhỏ hơn 0.01 thì Kd = 0 (bộ PID không có khâu vi phân) và, với MapPID, K = 0 (không còn nhánh Map). Với khâu lead và lag, mã dùng hai biến cho mỗi khâu: không điểm z (rad/s) và tỉ số cực trên không điểm (p/z cho lead, p1/z1 cho lag). Tỉ số bằng 1 nghĩa là khâu đó bị tắt, nên bộ tối ưu có thể tự bỏ lead hoặc lag nếu chúng không có ích.
+
+  Bảng 2: Hộp tìm kiếm của ba bộ điều khiển (thang log trừ khi ghi khác)
+  Bộ điều khiển | Biến | Khoảng | Ghi chú
+  PID | Kp | 0.001 – 30 | hệ số tỉ lệ
+  PID | Ki | 0.1 – 2000 1/s | hệ số tích phân
+  PID | Kd | 0 hoặc 0.0001 – 2 s | u < 0.01 cho Kd = 0
+  PID | Tf | 1 – 79.6 ms | hằng số lọc của khâu D
+  Map | K | 5 – 16 (đổi từ 7 – 16 ngày 2026-10-18) | độ dốc bảng; cận 7 cũ suy ra từ cổng e_rel 5 %; với 10 % hạ xuống 5 (đo cũ: e_rel 45 % ở K 6; lần thử với 0.1 – 16 không có thiết kế khả thi nào trong 250 lần), xem mục 13.2
+  Map, MapPID | z | 5 – 500 rad/s | không điểm khâu lead
+  Map, MapPID | p/z | 1 – min(300, 3142/z) | cực lead không vượt tần số Nyquist (π/Ts = 3142 rad/s)
+  Map, MapPID | z1 | 8 – 120 rad/s | không điểm khâu lag
+  Map, MapPID | p1/z1 | từ max(0.1, 3/z1) đến 1 (thang tuyến tính) | giữ p1 từ 3 rad/s trở lên
+  MapPID | K | 0 hoặc 0.1 – 16 | u < 0.01 cho K = 0
+  MapPID | Kp, Ki, Kd, Tf | như PID | nhánh PID
+
+Cơ sở của các cận: cận trên của Tf là 79.6 ms, bằng 1/(2π × 2 Hz); đây là giá trị mà khâu lọc bậc nhất có độ lợi 0.707 (−3 dB) tại 2 Hz, cận trên của dải người lái đánh lái (0.2 – 2 Hz, Nguyen, Vu, Sename 2025 trích Yong 2019). Cận dưới 1 ms là chu kỳ điều khiển. Các cận còn lại là phán đoán của tác giả dựa trên lưới quét cũ, được mở rộng (hộp rộng) để bộ tối ưu không bị chặn; kết quả chạm cận nào thì được báo cáo (xem bước 6).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Bước 2: Đánh giá một thiết kế trên CALIB v2
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4.1. Ca CALIB v2
+
+CALIB v2 là một ca mô phỏng liền dài 140 s, chung cho mọi bộ, mô phỏng người lái vòng hở (góc vô-lăng được định trước, không phụ thuộc bộ điều khiển) trên đường khô (hệ số bám μ = 0.8) trừ một đoạn bậc μ. Tốc độ xe tăng 20, 30, …, 100 km/h (chín khối, mỗi khối một tốc độ). Mỗi khối gồm: bậc thang giữ cua một chiều đi lên ở gia tốc ngang 0.1, 0.2, 0.3 g (mỗi mức 3 s: dốc 1 s, lắng 1 s, đo 1 s cuối), rồi (từ 40 km/h) hai đoạn sin qua 0 ở 0.5 Hz và 1 Hz. Ở khối 60 km/h có thêm bậc hệ số bám μ từ 0.8 xuống 0.35 rồi trở lại. Có 68 cửa sổ đo: 26 cửa sổ tĩnh (static, 1 s cuối của mỗi mức giữ), 26 cửa sổ quá độ (trans), 14 cửa sổ sin (sine) và 2 cửa sổ μ (mu). Giá trị tham chiếu của mô-men vô-lăng T_d,ref(v, a_y) lấy từ Bảng 4 của nguồn tham chiếu (mô-men vô-lăng ưa thích của người lái theo tốc độ và gia tốc ngang). Hình 2 vẽ ca này.
+
+  [Hình 2: Ca CALIB v2: tốc độ, nhãn gia tốc ngang và góc vô-lăng theo thời gian. Vùng xám nhạt: các cửa sổ tĩnh; vùng xám đậm: hai cửa sổ bậc μ. | Figures/matlab/Fig_opt_search_package/Fig_calib_case.png]
+
+Cơ sở: bậc thang góc vô-lăng là phép thử chuẩn của tài liệu EPS (mô-men xác lập sau một bậc góc); sin qua 0 đo vùng chết quanh 0 và việc đổi dấu của trợ lực; bậc μ đo khả năng bù khi hệ số bám đổi. Dưới 40 km/h không có sin vì người lái vòng hở phải đánh 80–144 độ vô-lăng, mô-men quán tính cột lái chi phối nên sai số e_T lên tới 170–560 % T_d,ref với mọi bộ điều khiển (đo ngày 2026-10-17). Kích thích thật là góc vô-lăng, gia tốc ngang chỉ là nhãn để chọn góc.
+
+4.2. Các chỉ tiêu
+
+Sai số bám tại mỗi thời điểm:
+
+  (2)  e_T(t) = T_s(t) - T_d,ref( v(t), a_y(t) )
+  [ e_T(t)=T_s(t)-T_{d,ref}\left(v(t),a_y(t)\right) ]
+
+trong đó T_s là mô-men xoắn thanh xoắn (đại lượng đo được, đại diện cho cảm giác ở vô-lăng), v là tốc độ xe và a_y là gia tốc ngang; ở đây T_s, v và a_y là giá trị THẬT của mô phỏng (không phải giá trị đo có nhiễu), để việc chấm không bị sai lệch của cảm biến.
+
+Độ bám R được tính riêng cho ba nhóm cửa sổ W_g (static, dyn = trans + sine, mu), rồi lấy trung bình nhân:
+
+  (3)  R_g = 100 * RMS_{W_g}( e_T ) / mean_{W_g}( |T_d,ref| )
+  [ R_g=100\,\dfrac{\mathrm{RMS}_{W_g}(e_T)}{\mathrm{mean}_{W_g}\left(|T_{d,ref}|\right)} ]
+
+  (4)  R = ( R'_static * R'_dyn * R'_mu )^(1/3),   R'_g = max(R_g, 1 %)
+  [ R=\left(R'_{static}\,R'_{dyn}\,R'_{mu}\right)^{1/3},\qquad R'_g=\max(R_g,\,1\,\%) ]
+
+Cơ sở: trung bình nhân làm cho giảm cùng một tỉ lệ ở nhóm nào cũng làm R giảm cùng tỉ lệ, nên nhóm lớn (dyn, khoảng 20 %) không nuốt nhóm nhỏ (static, 1–2 %), và cùng dạng không thứ nguyên với J (phương trình 6). Sàn 1 % cho mỗi nhóm tương ứng khoảng hai đến ba bước phân giải của cảm biến mô-men (T_s có độ phân giải 0.01 N·m, tức 0.3–1 % của T_d,ref); sai số dưới mức đó nằm dưới độ phân giải nên không được thưởng. Ngày 2026-10-17, khung TESTCASE chuyển từ trung bình đều bốn nhóm (CALIB v1) sang trung bình nhân ba nhóm này.
+
+Độ ồn S là RMS của mô-men trợ lực T_a sau khi lọc cao qua tần số 5 Hz, trên toàn ca, bỏ 2 s đầu. Trong đó T_a,lp là T_a qua bộ lọc thông thấp bậc nhất tần số cắt f_c = 5 Hz, T_a,lp[k] = T_a,lp[k-1] + a (T_a[k] - T_a,lp[k-1]) với a = dt / (1/(2 pi f_c) + dt) và dt là bước thời gian; phần T_a - T_a,lp là phần dao động nhanh:
+
+  (5)  S = RMS( T_a - T_a,lp )
+  [ S=\mathrm{RMS}\left(T_a-T_{a,lp}\right) ]
+
+Cơ sở: dải đánh lái của người là 0.2 – 2 Hz, không quá 5 Hz (Nguyen, Vu, Sename 2025), nên phần T_a dao động nhanh trên 5 Hz không thể do lệnh lái giải thích; chủ yếu là nhiễu cảm biến bị bộ điều khiển khuếch đại.
+
+Hàm mục tiêu là tích của hai chỉ tiêu:
+
+  (6)  J = R * S
+  [ J=R\cdot S ]
+
+Cơ sở: J là tích hai đại lượng không thứ nguyên (R tính bằng %, S tính bằng N·m, nhưng tỉ lệ tương đối giữa hai điểm không phụ thuộc đơn vị), nên 1 % êm hơn đổi lấy đúng 1 % bám kém hơn; không có trọng số tự chọn, không phụ thuộc điểm cực trị nên không nhảy khi lưới hay hộp đổi. Cần nhớ: J thưởng cho S nhỏ, nên bộ điều khiển gần như tắt trợ lực cũng có J nhỏ; điều này được chặn bằng các ràng buộc ở mục 4.3 (xem mục 9 về ví dụ).
+
+Sai số xác lập tương đối trên từng cửa sổ tĩnh w, rồi lấy giá trị lớn nhất:
+
+  (7)  e_rel = max_w { 100 * | mean_w( e_T ) | / mean_w( |T_d,ref| ) }
+  [ e_{rel}=\max_{w}\ \left\{100\,\dfrac{\left|\mathrm{mean}_w(e_T)\right|}{\mathrm{mean}_w\left(|T_{d,ref}|\right)}\right\} ]
+
+4.3. Ràng buộc
+
+Một thiết kế x chỉ được xem là khả thi khi vector ràng buộc c(x) không dương ở mọi thành phần. Ràng buộc đầu tiên dùng phép sàng lọc tuyến tính trên 68 mô hình tuyến tính hóa của plant (17 tốc độ từ 20 đến 100 km/h × 4 điểm làm việc), tính độ dư pha và độ dư độ lợi của vòng điều khiển; thiết kế không ổn định thì không cần mô phỏng (tiết kiệm 25–35 s).
+
+  (8)  PM = 180 deg + arg L( j w_c )  với |L( j w_c )| = 1;   GM = 1 / |L( j w_180 )|  với arg L( j w_180 ) = -180 deg
+  [ \mathrm{PM}=180^\circ+\mathrm{arg}\,L(j\omega_c)\quad\text{với}\quad|L(j\omega_c)|=1,\qquad \mathrm{GM}=\dfrac{1}{|L(j\omega_{180})|}\quad\text{với}\quad\mathrm{arg}\,L(j\omega_{180})=-180^\circ ]
+
+  (9)  | H_lag( j 2 pi 2 Hz ) | = | ( 1 + j w / z1 ) / ( 1 + j w / p1 ) | >= 1/sqrt(2)
+  [ \left|H_{lag}(j\,2\pi\cdot 2\,\mathrm{Hz})\right|=\left|\dfrac{1+j\omega/z_1}{1+j\omega/p_1}\right|\ge\dfrac{1}{\sqrt{2}} ]
+
+  (10)  c(x) = [ PM_min - PM,  GM_min - GM,  1/sqrt(2) - |H_lag|,  e_rel - e_max ]  <=  0
+  [ c(x)=\left[\mathrm{PM}_{min}-\mathrm{PM},\ \ \mathrm{GM}_{min}-\mathrm{GM},\ \ \tfrac{1}{\sqrt{2}}-|H_{lag}|,\ \ e_{rel}-e_{max}\right]\le 0 ]
+
+Cơ sở và giá trị: (a) PM_min = 30 độ và GM_min = 2: đầu dưới của khoảng khuyến nghị PM 30–45 độ và GM 1.7–4 (Seborg, Edgar, Mellichamp, Doyle, ấn bản 4, mục 14.7); trong mã, Map và MapPID áp 30 độ và 2 ngay lúc tìm, còn PID áp PM lớn hơn 0 và GM từ 1 lúc tìm rồi lọc 30 độ và 2 ở bước 4 (không ảnh hưởng kết quả PID vì nghiệm có PM khoảng 50 độ). (b) Phương trình (9): khâu làm chậm (lag, hoặc bộ lọc của khâu D) không được hạ độ lợi tại 2 Hz xuống dưới −3 dB; không có ràng buộc này thì J giảm đơn điệu khi khâu lag sâu hơn, vì làm chậm hạ S nhanh hơn làm tăng R, tức J thưởng đúng sự chậm trái mục tiêu bám (đo trên Map ở CALIB v1: J giảm 10.6 → 5.1 khi lag sâu dần). (c) e_max = 10 % (người dùng chốt 2026-10-18, đổi từ 5 %): bằng độ chênh nhỏ nhất người lái phân biệt được (JND, just noticeable difference) đo bởi Deborne, Khouri Silva và Kemeny (2014): 10.2 % – 14.8 % theo chiều kim đồng hồ và 12.7 % – 18 % ngược chiều ở 1–5 N·m, đo lúc đứng yên; nghĩa là cổng này chỉ đòi sai số xác lập dưới ngưỡng cảm nhận, không đòi bám sát hơn. Trung thực: ngưỡng được đổi sau khi thấy Map kẹt ở 5 % (mục 13), nên cả ba bộ được tìm lại từ đầu với 10 %.
+
+Hàm mục tiêu và ràng buộc được giao cho bộ tối ưu dạng: cực tiểu log J(x) với c(x) ≤ 0. Lấy logarit để các thiết kế có J khác nhau nhiều bậc không làm lệch mô hình thay thế. Thiết kế bị sàng lọc tuyến tính loại ngay (không mô phỏng) nhận giá trị phạt log 30 và ràng buộc vi phạm.
+
+4.4. Nhiễu cảm biến và seed
+
+Chuỗi cảm biến của mô hình: giá trị thật, cộng nhiễu trắng (độ lệch chuẩn bằng một bước lượng tử, riêng tốc độ xe lấy 0.38 km/h theo phép đo thực), qua bộ lượng tử hóa theo độ phân giải của cảm biến (T_s 0.01 N·m, a_y 0.01 g, tốc độ 1 km/h, góc vô-lăng 0.1 độ) rồi giữ bậc không theo chu kỳ cập nhật (1 ms cho T_s và góc, 10 ms cho tốc độ và a_y). Seed chọn chuỗi nhiễu cho từng lần mô phỏng; không có seed nghĩa là cảm biến lý tưởng, nhưng quy trình này luôn dùng nhiễu.
+
+Mỗi bộ điều khiển có dải seed riêng (PID 10000–19999, Map 0–9999, MapPID 30000–39999): seed đầu dải (x0000) dùng để TÌM, năm seed kế (x0001–x0005) dùng để CHỌN, và năm seed 99999–99995 dùng để CHẤM, chung cho mọi bộ.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Bước 3: Tìm toàn cục bằng surrogateopt
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5.1. Vì sao chọn surrogateopt
+
+Mỗi lần đánh giá (bước 2) tốn 25–35 s, hàm mục tiêu có nhiễu, không có đạo hàm và có ràng buộc phi tuyến, miền tìm bị chặn bằng hộp. surrogateopt (Global Optimization Toolbox của MATLAB) được thiết kế cho đúng loại bài toán này: hàm tốn thời gian, không cần đạo hàm, hỗ trợ cận và ràng buộc phi tuyến. Phương pháp dựa trên mô hình thay thế bằng RBF của Gutmann (2001) và cách chọn điểm thử của Regis và Shoemaker (2007), trong đó Regis và Shoemaker chứng minh hội tụ xác suất tới cực tiểu toàn cục dưới các điều kiện kỹ thuật nhẹ và so sánh trên 17 bài toán đa cực trị. Các thuật toán khác thường cần nhiều lần thử hơn (thuật toán di truyền, tối ưu bầy đàn) hoặc cần đạo hàm (fmincon); đây là nhận định chung chưa thử trên mô hình của đề tài.
+
+5.2. Cách hoạt động (theo tài liệu MATLAB)
+
+surrogateopt luân phiên hai pha. Pha "dựng mô hình thay thế": thử một số điểm trong hộp (điểm đầu tiên theo dãy gần-ngẫu-nhiên, tức dãy phân bố đều có độ lệch thấp), rồi nội suy các giá trị J bằng RBF bậc ba có phần tuyến tính:
+
+  (11)  s(u) = sum_i lambda_i * |u - u_i|^3 + c^T u + c_0
+  [ s(u)=\sum_{i}\lambda_i\,\left|u-u_i\right|^{3}+c^{T}u+c_0 ]
+
+trong đó u_i là các điểm đã thử, hệ số lambda_i, c, c_0 chọn sao cho s đi qua mọi điểm đã thử. Pha "tìm cực tiểu": sinh vài nghìn điểm ngẫu nhiên quanh điểm tốt nhất hiện có (incumbent), chấm điểm từng điểm bằng hàm hợp thành (merit) cân bằng giữa giá trị mô hình thấp và độ xa các điểm đã thử, rồi mô phỏng thật điểm có hàm hợp thành tốt nhất và cập nhật mô hình:
+
+  (12)  S_n(u) = ( s(u) - s_min ) / ( s_max - s_min ),   D_n(u) = ( d_max - d(u) ) / ( d_max - d_min ),   f_merit(u) = w * S_n(u) + ( 1 - w ) * D_n(u)
+  [ S_n(u)=\dfrac{s(u)-s_{min}}{s_{max}-s_{min}},\qquad D_n(u)=\dfrac{d_{max}-d(u)}{d_{max}-d_{min}},\qquad f_{merit}(u)=w\,S_n(u)+(1-w)\,D_n(u) ]
+
+trong đó d(u) là khoảng cách từ u tới điểm đã thử gần nhất, và trọng số w quay vòng theo dãy 0.3, 0.5, 0.8, 0.95: w lớn thiên về cực tiểu của mô hình (khai thác), w nhỏ thiên về chỗ chưa thử (khám phá). Theo bảng bộ lấy mẫu của tài liệu MATLAB (bài toán có cận), với w = 0.8 và 0.95, bộ lấy mẫu của surrogateopt dùng các hướng dò kiểu OrthoMADS và kiểu GPS (generalized pattern search) quanh điểm tốt nhất, tức là đã có sẵn một phần tinh chỉnh cục bộ bên trong. Bán kính lấy mẫu bắt đầu bằng 0.2 cỡ hộp, nhân đôi sau ba lần thành công (tối đa 0.8) và giảm một nửa sau max(5, n) lần thất bại; khi mọi điểm mẫu quá gần các điểm đã thử, thuật toán quay lại pha dựng mô hình từ các điểm ngẫu nhiên mới (reset). Với ràng buộc phi tuyến, khi điểm tốt nhất hiện có chưa khả thi thì thuật toán ưu tiên điểm vi phạm ít ràng buộc nhất; khi đã có điểm khả thi thì bỏ qua điểm không khả thi.
+
+Cài đặt trong mã (optimize_pid.m, optimize_map.m, optimize_mappid.m): MinSurrogatePoints = 30, nghĩa là 30 điểm đầu của mỗi chuỗi chỉ dùng để dựng mô hình; MaxFunctionEvaluations bằng mặc định của MATLAB max(200, 50 × số biến) mỗi chuỗi, tức PID 200, Map 250, MapPID 450 (từ 2026-10-18; trước đó 250 cho mọi bộ); không chạy song song bên trong một chuỗi (mỗi chuỗi một tiến trình MATLAB); ghi một dòng csv ở mỗi lần đánh giá và một file checkpoint, nên chạy dở được thì chạy tiếp được.
+
+5.3. Ba chuỗi độc lập
+
+surrogateopt không đảm bảo tìm đúng cực tiểu toàn cục trong số lần hữu hạn, và kết quả phụ thuộc vào các điểm khởi đầu. Vì vậy mỗi bộ điều khiển chạy ba chuỗi độc lập, nghĩa là ba lần chạy surrogateopt hoàn chỉnh, không dùng thông tin của nhau, khác nhau ở 30 điểm khởi đầu: chuỗi 1 dùng thiết kế mặc định của surrogateopt (dãy tất định, lần nào chạy cũng cho đúng 30 điểm đó); chuỗi 2 và 3 tự rút 30 điểm khởi đầu bằng rand(30, n) sau khi đặt rng(1000 + chỉ số chuỗi) (bộ sinh số ngẫu nhiên của MATLAB, cùng hạt giống cho đúng cùng dãy số). Đây là hạt giống của bộ tối ưu, khác hoàn toàn với seed nhiễu cảm biến ở mục 4.4; cả ba chuỗi đều tìm trên cùng seed nhiễu x0000. Nếu không đặt hạt giống riêng thì ba chuỗi sẽ giống nhau và không kiểm chứng được gì (đã gặp ở lần chạy đầu, ghi ở DieuKhien_MapPID.txt F15).
+
+Tiêu chí hội tụ: J tốt nhất của ba chuỗi chênh nhau dưới 3 %. Nếu không đạt thì mỗi chuỗi chạy thêm 150 lần từ checkpoint, tối đa một lần, rồi báo kết quả dù hội tụ hay không (đặt trước khi chạy, KeHoach_ChonNhieuSeed.txt H9).
+
+5.4. Kết quả minh họa (PID)
+
+Hình 3 vẽ kết quả ba chuỗi của PID trên CALIB v2. Ba chuỗi đều có điểm khả thi đầu tiên ở các lần khác nhau (lần 4, 41 và 92: trước đó mọi thiết kế bị loại) và hạ J xuống gần cùng mức: J tốt nhất sau 250 lần là 2.4720, 2.4753 và 2.4540, chênh nhau 0.9 % (dưới ngưỡng 3 %). Các điểm đã thử trên mặt phẳng (S, R) tập trung thành một dải hẹp quanh S ≈ 0.85 N·m, R ≈ 2.9 %.
+
+  [Hình 3: Giai đoạn tìm toàn cục (surrogateopt) của PID, ba chuỗi, lần 1–250. (a) J tốt nhất tính đến lần thử đó. (b) Các thiết kế đã thử trên mặt phẳng (S, R); chấm xám nhạt: vi phạm ràng buộc. | Figures/matlab/Fig_opt_search_package/Fig_surrogateopt.png]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. Bước 4: Nhóm top 20
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Gộp mọi lần đánh giá của ba chuỗi ở seed x0000. Giữ các thiết kế khả thi (có mô phỏng, thỏa mọi thành phần của c, và PM, GM ở bước chọn cuối). Xếp theo J ở seed x0000 từ nhỏ đến lớn và lấy 20 thiết kế "khác nhau": hai thiết kế u và u' coi là khác nhau khi
+
+  (13)  max_i | u_i - u'_i |  >=  delta
+  [ \max_{i}\left|u_i-u'_i\right|\ \ge\ \delta ]
+
+Giá trị hiện hành delta = 0.02 [CHƯA CHỐT]: đề xuất nâng lên 0.1 (đặt trước khi thấy kết quả). Lý do: với delta = 0.02, 20 thiết kế top của Map chỉ khác nhau chút ít (K từ 11.2 đến 12.4, z và z1 gần như cố định), tức gần như một thiết kế; khi thiết kế đó trượt cổng ở seed khác thì không còn thiết kế dự phòng. Số 20 là lựa chọn của tác giả: đủ để có vài vùng khác nhau mà vẫn chạy được trên năm seed (100 lần mô phỏng, khoảng một giờ cho một MATLAB).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. Bước 5: Chọn trên 5 seed
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mỗi trong 20 thiết kế của nhóm top được mô phỏng lại trên CALIB ở năm seed x0001–x0005. Với mỗi thiết kế tính J ở từng seed, trung bình và độ lệch chuẩn mẫu:
+
+  (14)  J_k = R_k * S_k,   J_tb = ( 1/5 ) * sum_{k=1..5} J_k,   sigma_J = sqrt( sum_{k=1..5} ( J_k - J_tb )^2 / ( 5 - 1 ) )
+  [ J_k=R_k\,S_k,\qquad J_{tb}=\dfrac{1}{5}\sum_{k=1}^{5}J_k,\qquad \sigma_J=\sqrt{\dfrac{\sum_{k=1}^{5}\left(J_k-J_{tb}\right)^{2}}{5-1}} ]
+
+Cổng: e_rel ≤ e_max ở MỌI seed trong năm seed (không phải ở trung bình). Trong các thiết kế qua cổng, thiết kế được chọn là thiết kế có J_tb nhỏ nhất. Hai thiết kế hòa khi J_tb của nó chênh J_tb nhỏ nhất ít hơn độ lệch chuẩn của nó:
+
+  (15)  J_tb,i - J_tb,min  <  sigma_J,i
+  [ J_{tb,i}-J_{tb,min}<\sigma_{J,i} ]
+
+Khi (15) đúng, thiết kế i được coi là hòa với thiết kế tốt nhất; trong nhóm hòa, chọn thiết kế có PM lớn nhất.
+
+Cơ sở: (a) Seed x0000 KHÔNG tính vào trung bình vì nhóm top đã được lọc ra nhờ J thấp ở chính seed đó, nên J ở x0000 lạc quan (thiên lệch chọn lọc); các seed x0001–x0005 chưa từng được dùng để lọc nên cho ước lượng không thiên lệch. (b) Quy tắc hòa dùng độ lệch chuẩn giữa các seed làm thước đo: chênh lệch nhỏ hơn dao động do nhiễu thì không có cơ sở nói thiết kế nào tốt hơn, nên chọn thiết kế có dự trữ ổn định lớn hơn. (c) Tỉ lệ một seed tìm trên năm seed chọn là lựa chọn của tác giả. (d) Đo mức thiên lệch bằng hệ số tương quan hạng Spearman giữa J ở x0000 và J_tb trên 20 thiết kế: giá trị gần 1 nghĩa là chọn trên một seed đủ tốt, gần 0 nghĩa là chọn trên một seed gần như ngẫu nhiên (MapPID trên CALIB v1: 0.43).
+
+Hình 4 vẽ J ở năm seed, trung bình và độ lệch chuẩn của 20 thiết kế PID. Độ lệch chuẩn giữa các seed là khoảng 0.082, tức 3.3 % của J_tb, lớn hơn chênh lệch giữa nhiều thiết kế đứng đầu; thiết kế đứng thứ nhất có J_tb = 2.4797 và PM 49.9 độ, thiết kế đứng thứ tư có J_tb = 2.4821 và PM 50.7 độ; chúng hòa theo (15) nên chọn thiết kế thứ tư vì PM lớn hơn.
+
+  [Hình 4: Giai đoạn chọn của PID: J của 20 thiết kế nhóm top ở năm seed chọn, trung bình ± độ lệch chuẩn, và thiết kế được chọn. | Figures/matlab/Fig_opt_search_package/Fig_selection_5seeds.png]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8. Bước 6: Kiểm và chấm
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8.1. Kiểm độ dư ổn định bằng mô phỏng (calib_margin)
+
+Chạy lại CALIB ở seed x0001 với hai thay đổi, mỗi lần một thay đổi: (a) độ lợi của khâu motor nhân đôi; (b) thêm một trễ thuần 1 ms (một chu kỳ điều khiển) giữa bộ điều khiển và motor.
+
+  (16)  R_gain / R <= 2   và   R_delay / R <= 2
+  [ \dfrac{R_{gain}}{R}\le 2\quad\text{và}\quad\dfrac{R_{delay}}{R}\le 2 ]
+
+Mất ổn định được định nghĩa là có tín hiệu không hữu hạn, hoặc R tăng hơn gấp đôi so với lần chạy danh định. Thiết kế không qua thì lấy thiết kế kế tiếp theo thứ tự xếp. Cơ sở: độ dư ổn định phải đo được cho mọi bộ, kể cả bộ không tuyến tính hóa được (SMC, RL), nên dùng chung một phép thử mô phỏng; GM là hệ số mà độ lợi vòng có thể tăng trước khi mất ổn định, và trễ thêm lớn nhất bằng
+
+  (17)  tau_max = PM * pi / ( 180 * w_g )
+  [ \tau_{max}=\dfrac{\mathrm{PM}\cdot\pi}{180\,\omega_g} ]
+
+(Seborg và cộng sự, phương trình 14-63). Hệ số 2 và trễ 1 ms là lựa chọn của tác giả: 1 ms bằng một chu kỳ điều khiển, dự phòng cho trễ chưa mô hình hóa (thời gian tính, truyền tin, vòng dòng motor); báo độ nhạy ở các mức khác.
+
+8.2. Báo cáo kèm theo (không phải cổng)
+
+Với thiết kế được chọn: J_tb ± sigma_J, R, S, TV (tổng biến thiên của T_a), e_rel lớn nhất, PM, GM, độ lợi cao tần của vòng điều khiển, tỉ lệ bang-bang (lệnh chạm giới hạn trợ lực), tỉ lệ trợ lực ngược chiều tay người, các cận của hộp mà thiết kế chạm (nếu có), hạng của nó ở seed x0000 và hệ số tương quan hạng của bước 5, vùng tối ưu (các thiết kế nhóm top có J_tb nằm trong 5 % của nhỏ nhất).
+
+8.3. Chấm trên các ca DREWS
+
+Thiết kế được chọn chạy năm ca DREWS ở năm seed 99999–99995 (các seed này không bao giờ dùng để chọn); báo trung bình và độ lệch chuẩn của RMS e_T, S, TV, trợ lực ngược và e_rel lớn nhất của từng ca. Hai bộ A và B được so sánh theo cặp trên cùng seed: với mỗi chỉ tiêu m tính hiệu ở từng seed rồi trung bình và độ lệch chuẩn của hiệu.
+
+  (18)  Delta_k = m_A,k - m_B,k;   | mean( Delta_k ) | < max( 5 % , std( Delta_k ) )
+  [ \Delta_k=m_{A,k}-m_{B,k};\qquad \left|\mathrm{mean}(\Delta_k)\right|<\max\left(5\,\%,\ \mathrm{std}(\Delta_k)\right) ]
+
+Nếu bất đẳng thức thứ hai của (18) đúng thì A và B được coi là ngang nhau về chỉ tiêu m, và không nói bộ nào hơn.
+
+Cơ sở: so theo cặp loại bỏ phần dao động chung do cùng chuỗi nhiễu; ngưỡng hòa lấy số lớn hơn giữa 5 % (lựa chọn của tác giả) và độ phân tán giữa các seed. Mọi con số N·m báo cáo được làm tròn về 0.01 N·m, vì độ phân giải cảm biến mô-men là 0.01 N·m; chênh lệch nhỏ hơn mức đó được ghi là "dưới 0.01 N·m", không đưa ra như một số.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9. Kết quả minh họa và các giới hạn đã biết
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9.1. Thiết kế PID được chọn (CALIB v2)
+
+  Bảng 3: Thiết kế PID được chọn và các chỉ tiêu (trung bình của năm seed chọn)
+  Đại lượng | Giá trị
+  Kp | 3.58
+  Ki | 117.6 1/s
+  Kd | 0.086 s
+  Tf | 1.05 ms
+  J_tb ± sigma_J | 2.48 ± 0.08
+  R (trung bình năm seed) | 2.93 %
+  S (trung bình năm seed) | 0.85 N·m
+  e_rel lớn nhất (mọi cửa sổ, mọi seed) | 1.82 %
+  PM, GM | 50.7 độ, 5.16
+  Hạng ở seed tìm | 4 trong 20
+
+Ghi chú: Tf = 1.05 ms sát cận dưới của hộp (1 ms); khoảng 24 % vùng tối ưu nằm trong 5 % của cận dưới (đã nêu ở nhật ký khung Linear), chưa xử lý.
+
+9.2. Ví dụ về kẽ hở của J và vai trò của ràng buộc
+
+Khi bỏ cổng e_rel khỏi quy trình, điểm có J nhỏ nhất của PID trong các lần đánh giá đã có là Kp = 0.001, Ki = 0.1, Kd = 0 (gần như tắt điều khiển): R = 77.6 %, S = 0.011 N·m, J = 0.829 (nhỏ hơn thiết kế được chọn 2.48) nhưng e_rel = 158 %. Nghĩa là J = R·S không tự đảm bảo bám; bám chỉ được bảo vệ bởi cổng e_rel (phần xác lập) và ràng buộc dải lái. Vì vậy cổng e_rel là bắt buộc, và con số e_max cần được chọn có cơ sở (mục 10).
+
+9.3. Giới hạn của phương pháp
+
+(a) surrogateopt không có bảo đảm hội tụ trong số lần thử hữu hạn: bằng chứng hội tụ ở đây là ba chuỗi cùng về J gần nhau (5.4), không phải một chứng minh. (b) Quy trình chỉ khảo sát những thiết kế bộ tối ưu đã thử; mặt Pareto (R, S) vẽ từ các lần đánh giá là mặt "phụ phẩm", dày quanh cực tiểu J và thưa ở hai đầu, không dùng làm bằng chứng so sánh giữa các bộ. (c) Chọn trên CALIB chỉ với các chuỗi nhiễu khác nhau của cùng một ca; không kiểm trên tình huống lái khác (đó là việc của các ca DREWS ở bước 6). (d) Mô hình tuyến tính của sàng lọc chỉ gần đúng; cổng quyết định thật là mô phỏng.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+10. Các điểm chưa chốt và tham số có cơ sở yếu
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Bảng 4: Tham số của quy trình, cơ sở, và trạng thái
+  Tham số | Giá trị | Cơ sở | Trạng thái
+  Bộ tối ưu | surrogateopt | Hàm tốn thời gian, không đạo hàm, có nhiễu và ràng buộc; Regis và Shoemaker 2007 | Chọn
+  Số chuỗi, số lần thử mỗi chuỗi | 3; PID 200, Map 250, MapPID 450 | Ba chuỗi để kiểm hội tụ (chọn của tác giả); số lần thử = mặc định MATLAB max(200, 50 × số biến) | Chốt 2026-10-18
+  Số điểm khởi đầu | 30 | Mặc định của MATLAB là max(2n, 20); đặt 30 để mô hình ban đầu đủ điểm | Chọn
+  Ngưỡng hội tụ ba chuỗi | 3 % | Chọn của tác giả | Chọn
+  e_max (cổng sai số xác lập) | 10 % | Bằng JND nhỏ nhất (Deborne và cộng sự 2014, đo lúc đứng yên); 5 % cũ là một nửa JND, hệ số 1/2 tự chọn | Chốt 2026-10-18, tìm lại cả ba bộ
+  Khoảng cách tối thiểu của nhóm top | 0.02 (hiện hành) hoặc 0.1 | Tránh 20 thiết kế gần như trùng nhau | [CHƯA CHỐT]
+  Số thiết kế nhóm top | 20 | Chọn của tác giả | Chọn
+  Số seed chọn | 5 | Chọn của tác giả; đủ để ước độ lệch chuẩn | Chọn
+  PM, GM tối thiểu | 30 độ, 2 | Seborg và cộng sự, mục 14.7 | Chọn
+  Độ lợi khâu làm chậm tại 2 Hz | ≥ 0.707 | Dải lái 0.2–2 Hz (Nguyen và cộng sự 2025); −3 dB là định nghĩa băng thông | Chọn
+  Độ dư ổn định bằng mô phỏng | độ lợi ×2, trễ 1 ms, R không tăng quá 2 lần | Seborg 14.7; hệ số 2 và 1 ms là lựa chọn của tác giả | Chọn
+  Ngưỡng hòa khi so hai bộ | max(5 %, std của hiệu) | 5 % tự chọn; std là độ phân tán thật | Chọn
+  Giai đoạn tinh chỉnh cục bộ (patternsearch) | Bỏ | Cải thiện chỉ 0.03–0.7 % (Hình 5, phụ lục), dưới độ lệch chuẩn giữa các seed khoảng 3.3 %; surrogateopt đã có dò cục bộ bên trong | Chốt 2026-10-18: không chạy patternsearch, không viết refine_*.m mới
+
+Đã chốt ngày 2026-10-18: e_max = 10 %, bỏ patternsearch, tìm lại từ đầu cả Map, PID, MapPID (trình tự ở mục 13). Còn [CHƯA CHỐT]: delta của nhóm top và việc thay con số 20 bằng một mốc J (ví dụ mọi thiết kế có J trong 5 % của nhỏ nhất, sau khi loại bản sao); trong lúc chưa chốt, các khung giữ quy tắc hiện hành (20 thiết kế khác nhau, delta = 0.02) và LƯU mọi lần đánh giá để đổi quy tắc sau không cần mô phỏng lại phần tìm. Phải ghi QuyChuan.txt (đã ghi mục 5.3) và KeHoach_ChonNhieuSeed.txt.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11. Phụ lục: Vì sao không dùng thêm patternsearch
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phiên bản đầu của quy trình chạy thêm patternsearch (tìm theo mẫu, một bộ tối ưu cục bộ không cần đạo hàm) sau surrogateopt: bắt đầu từ thiết kế khả thi tốt nhất của chuỗi, thử các điểm lân cận theo 2n hướng (tăng và giảm từng biến), lưới ban đầu 0.05 cỡ hộp, nhận ngay điểm tốt hơn đầu tiên, thu nhỏ lưới một nửa khi không có điểm nào tốt hơn, dừng khi lưới dưới 0.02 hoặc hết 60 lần. Trên PID, giai đoạn này làm 26–59 lần đánh giá mỗi chuỗi và chỉ cải thiện J từ 2.4735 xuống 2.4569 (chuỗi 1, 0.7 %), từ 2.4759 xuống 2.4586 (chuỗi 2, 0.7 %) và từ 2.4557 xuống 2.4549 (chuỗi 3, 0.03 %), đều dưới độ lệch chuẩn giữa các seed (khoảng 3.3 %) nên không phân biệt được ở bước chọn. Phần lớn các điểm dò xấu hơn điểm xuất phát (Hình 5). Vì vậy giai đoạn này được bỏ để quy trình gọn hơn (bớt khoảng 140 lần mô phỏng mỗi bộ); các lần đánh giá cũ vẫn được giữ làm bằng chứng.
+
+  [Hình 5: Giai đoạn tinh chỉnh cục bộ (patternsearch) của PID. (a) J của từng lần thử và J tốt nhất tính đến lúc đó. (b) Các điểm dò trên mặt phẳng (S, R) và thiết kế cuối cùng được chọn. | Figures/matlab/Fig_opt_search_package/Fig_patternsearch.png]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+12. Tài liệu tham khảo
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[1] R. G. Regis, C. A. Shoemaker (2007). A stochastic radial basis function method for the global optimization of expensive functions. INFORMS Journal on Computing, 19(4), 497–509. doi:10.1287/ijoc.1060.0182
+[2] H.-M. Gutmann (2001). A radial basis function method for global optimization. Journal of Global Optimization, 19, 201–227. (Trích theo tài liệu MathWorks; chưa kiểm số DOI.)
+[3] M. J. D. Powell (1992). The theory of radial basis function approximation in 1990. Trong W. A. Light (chủ biên), Advances in Numerical Analysis, Volume 2: Wavelets, Subdivision Algorithms, and Radial Basis Functions, Clarendon Press, tr. 105–210. (Trích theo tài liệu MathWorks.)
+[4] MathWorks. Surrogate Optimization Algorithm. Global Optimization Toolbox documentation. https://www.mathworks.com/help/gads/surrogate-optimization-algorithm.html (đọc ngày 2026-10-18).
+[5] D. E. Seborg, T. F. Edgar, D. A. Mellichamp, F. J. Doyle III. Process Dynamics and Control, 4th Edition, Wiley. Mục 14.7 (dự trữ biên và dự trữ pha, phương trình 14-63).
+[6] A. Deborne, M. Khouri Silva, A. Kemeny (2014). Steering wheel torque rendering: measure of driver discrimination capabilities. SAE Technical Paper 2014-01-0447. doi:10.4271/2014-01-0447
+[7] Nguyen, Vu, Sename (2025). Combining adaptive neural-fuzzy inference system with field-oriented control strategy for electric power steering system in cars. Advances in Mechanical Engineering. (Dải đánh lái của người 0.2–2.0 Hz, không quá 5 Hz; chưa ghi số tập và trang.)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+13. KẾ HOẠCH CHẠY LẠI BẰNG QUÉT LƯỚI CHO CẢ BA BỘ (người dùng chốt 2026-10-19, thay kế hoạch surrogateopt ngày 2026-10-18; khung Linear (PID), khung Map và khung MapPID đọc mục này rồi làm đúng theo thứ tự)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Quyết định của người dùng: (1) BỎ surrogateopt và patternsearch; trở lại ý tưởng ban đầu: quét lưới thuần trên CALIB, lọc bằng cổng, vẽ mặt Pareto (R, S), chọn trên mặt Pareto; (2) quét ĐỦ biến: Map 5 biến (K, z, p/z, z1, p1/z1; không còn g_min và quy tắc "độ lợi cao tần nhỏ nhất"), PID 4 biến (Kp, Ki, Kd, Tf), MapPID 9 biến (5 + 4, quét luân phiên theo khối vì một lưới 9 chiều không mô phỏng nổi); (3) e_max = 10 % (giữ quyết định 2026-10-18); (4) tìm lại từ đầu cả ba bộ, không dùng kết quả cũ nào (kể cả lần chạy surrogateopt với e_max 10 % của khung Linear và khung Map ngày 2026-10-18). Lý do: lưới tất định (cùng lưới cho cùng đáp án), không có biến nào do tác giả khóa sẵn, và quy tắc lưới viết trước, dùng chung cho cả ba bộ, nên số điểm qua cổng ít hay nhiều là do cơ chế (ổn định, cổng e_rel), không do tác giả chọn điểm.
+
+Các số của quy tắc do khung COMMON đề xuất ngày 2026-10-19 (người dùng chưa đổi; muốn đổi thì đổi TRƯỚC khi chạy, không đổi sau khi thấy kết quả): lưới thô 4 mức mỗi biến kể cả hai đầu hộp; lưới mịn lặp 3 mức mỗi biến, bước bắt đầu bằng nửa bước thô và giảm một nửa tới khi dưới 0.02; hòa khi J chênh dưới 3 %; kiểm năm seed chỉ để báo cáo.
+
+13.0. Quy tắc chung cho cả ba khung
+- Đầu phiên đọc: mục 13 này, mục 3 (hộp biến, Bảng 2), mục 4 (đánh giá một thiết kế, ràng buộc c1-c4, seed), mục 8 (calib_margin, DREWS) của tài liệu này, QuyChuan.txt mục 5.3, và nhật ký của khung mình. Các mục 5, 6, 7, 11 (surrogateopt, nhóm top 20, chọn trên 5 seed, patternsearch) KHÔNG còn dùng.
+- Ghi một mục Lượt vào nhật ký của khung mình TRƯỚC khi chạy (bộ nào, giờ bắt đầu, số điểm lưới thô dự kiến) và SAU mỗi giai đoạn (số điểm đã đánh giá, số điểm mô phỏng thật, số điểm qua cổng, J tốt nhất, thiết kế tốt nhất).
+- Không đổi: ca CALIB v2 (140 s, 68 cửa sổ, kể cả cửa sổ 20 km/h), J = R × S, PM_min 30 độ, GM_min 2, độ lợi lag 0.707 tại 2 Hz, e_max 10 %, calib_margin, dải seed (tìm x0000, kiểm x0001-x0005, chấm 99995-99999). Các thứ này chỉ đổi khi người dùng bảo.
+- Không quá ba tiến trình MATLAB chạy cùng lúc trên cả máy (RAM). Thứ tự: PID, rồi Map, rồi MapPID (MapPID cần thiết kế đã chọn của PID và Map làm điểm xuất phát). Khung sau chỉ bắt đầu khi khung trước đã xong bước chọn (C). Không dừng hay xóa việc của khung khác.
+- Mỗi lần mô phỏng: MATLAB mở với -softwareopengl, TEMP và TMP ở D:/MatlabTemp, Simulink.sdi.clear sau mỗi mô phỏng (hàm *_eval.m đã làm). Chạy nền bằng tools/jobs (job_lib_patient.sh chờ đủ RAM trước khi mở MATLAB và tự chạy lại khi bị dừng); theo dõi ở scratch/jobs/*_status.txt.
+
+13.1. Chuẩn bị chung (khung Linear làm, vì PID chạy trước; khung Map và MapPID dùng lại, không viết lại)
+A. Sửa ba hàm đánh giá (mỗi bộ một hàm; các hàm này đã có sàng lọc tuyến tính, mô phỏng CALIB và bộ nhớ đệm csv, nên dùng lại nguyên):
+ - Model/Controllers/PIDLag/script/pidlag_eval.m dòng 23: erelMax = 5 thành 10, PMmin = 0 thành 30, GMmin = 1 thành 2 (để PID sàng lọc giống Map và MapPID, không mô phỏng những điểm chắc chắn trượt cổng 30 độ và 2; hàm dùng chung với bộ PIDLag, PIDLag không có trong bài báo nên chấp nhận); sửa chú thích dòng 8-10.
+ - Model/Controllers/Map/script/map_opt_eval.m dòng 21: erelMax = 5 thành 10; chú thích dòng 8.
+ - Model/Controllers/MapPID/script/mappid_eval.m dòng 24: erelMax = 5 thành 10; chú thích dòng 10.
+ Mỗi hàm tính c4 = e_rel - erelMax và GHI c1-c4 vào csv; bước chọn lọc theo các cột này, nên phải sửa ở đây.
+B. Viết hai hàm dùng chung trong Model/common/ (tiếng Anh, tên = tên hàm), dùng cho cả ba bộ:
+ - grid_search.m: grid_search(spec, workerId, nWorkers). spec gồm: name (tên bộ), n (số biến), u2x (hàm u -> x), evalFcn (hàm đánh giá, gọi evalFcn(x, seed, csvFile)), seed (seed tìm x0000), outDir, tag (tên lần quét, ví dụ 'grid' hoặc 'S1A1'), free (chỉ số các biến được quét), u0 (vector u đầy đủ, giá trị của các biến bị khóa và điểm xuất phát), hStart (bước mịn đầu: 1/6 cho lần quét có lưới thô, 1/12 cho lần quét chỉ có lưới mịn), coarse (true hay false). Mỗi tiến trình ghi một file <Ctrl>_CALIB_<tag>_w<k>_s<seed>.csv (k = workerId).
+ - select_pareto.m: gộp mọi file <Ctrl>_CALIB_*_w*_s<seed>.csv của một bộ, lọc, vẽ Pareto, chọn (bước C), ghi <Ctrl>_CALIB_pareto_s<seed>.csv, <Ctrl>_CALIB_pick_s<seed>.csv và hình <Ctrl>_CALIB_pareto_s<seed>.png.
+C. Logic của grid_search (viết đúng như sau, không thêm bớt):
+ 1. Lưới thô (nếu coarse = true): mỗi biến tự do lấy 4 giá trị u = 0, 1/3, 2/3, 1 (hai đầu hộp có mặt, nên các trạng thái "tắt" đều có trong lưới: Kd = 0 ở u = 0, không lead ở p/z: u = 0, không lag ở p1/z1: u = 1, nhánh Map tắt ở K của MapPID: u = 0); các biến bị khóa giữ u0. Số điểm 4^(số biến tự do).
+ 2. Lưới mịn lặp: tâm c = điểm khả thi (c1-c4 không dương) có J nhỏ nhất trong mọi điểm đã đánh giá của lần quét này; chưa có điểm khả thi thì lấy điểm có tổng phần vi phạm dương của c1-c4 nhỏ nhất. Lưới 3 giá trị c - h, c, c + h cho mỗi biến tự do, cắt về [0, 1], bỏ điểm trùng: tối đa 3^(số biến tự do) điểm. Sau khi đánh giá: nếu tâm mới khác tâm cũ thì lặp lại với cùng h; nếu không đổi thì h = h/2. Dừng khi h < 0.02, hoặc sau 6 lưới mịn, tùy cái nào trước. h bắt đầu bằng hStart.
+ 3. Mọi điểm (thô và mịn) đánh giá bằng evalFcn: sàng lọc tuyến tính trước (khoảng 0.1 s); chỉ điểm qua sàng lọc mới mô phỏng CALIB (18-75 s). Điểm đã có trong bất kỳ file csv nào của lần quét đó thì không đánh giá lại.
+ 4. Chia việc cho nhiều tiến trình: trong mỗi lưới (thô, hoặc một lưới mịn), các điểm chưa đánh giá được xếp theo thứ tự cố định (thứ tự của ndgrid), tiến trình k lấy các điểm thứ k, k + nWorkers, k + 2 nWorkers...; xong phần của mình thì CHỜ (kiểm lại mỗi 30 s) tới khi mọi điểm của lưới đó có trong các file csv rồi mới tính tâm cho lưới tiếp theo. Mọi tiến trình tính cùng một tâm vì cùng đọc cùng dữ liệu. Chạy lại sau khi bị dừng: đọc csv, bỏ qua điểm đã có, tiếp tục (resumable).
+ 5. In một dòng mỗi lưới: tag, loại lưới, h, số điểm, số mô phỏng, số khả thi, J tốt nhất, tâm (dạng x).
+D. Logic của select_pareto (bước chọn, chung cho cả ba bộ):
+ 1. Pool = mọi điểm có mô phỏng (simulated = 1) và c1, c2, c3, c4 đều không dương (tức PM từ 30 độ, GM từ 2, độ lợi lag từ 0.707 tại 2 Hz, e_rel từ 10 % trở xuống trên 26 cửa sổ static của CALIB v2).
+ 2. Mặt Pareto (R, S): các điểm của pool không bị điểm nào khác của pool trội hơn (điểm khác có R không lớn hơn và S không lớn hơn, ít nhất một nhỏ hơn hẳn).
+ 3. Chọn: điểm có J = R × S nhỏ nhất (điểm này luôn nằm trên mặt Pareto). Hòa: các điểm Pareto có J từ 1.03 J_min trở xuống coi là ngang nhau (3 % là độ lệch chuẩn giữa các seed của J đo được ở PID, 3.3 %), chọn điểm có PM tuyến tính lớn nhất.
+ 4. calib_margin ở seed x0001 (độ lợi motor x2, trễ +1 ms, R không tăng quá 2 lần); không qua thì lấy điểm kế tiếp theo J (vẫn trong pool), lặp tới khi qua.
+ 5. Báo cáo (không đổi điểm chọn): chạy thêm CALIB ở năm seed x0001-x0005 cho điểm được chọn và bốn điểm Pareto có J nhỏ kế tiếp (25 mô phỏng), báo J trung bình, độ lệch chuẩn, e_rel lớn nhất ở mọi seed; nếu điểm được chọn có e_rel vượt 10 % ở seed nào thì GHI RA, không tự đổi điểm, chờ người dùng quyết.
+ 6. Ghi data/<ctrl>.json trường design (giữ thiết kế cũ trong trường design_emax5 một lần), hình Pareto: mọi điểm mô phỏng (xám), điểm qua cổng (đen), mặt Pareto (đường), điểm chọn (tam giác).
+E. Viết tools/jobs/grid_pipeline.sh <ctrl> theo mẫu tools/jobs/map_opt_pipeline.sh: bước kiểm (một lần evalFcn trên một thiết kế đã biết, so với csv cũ đã sao lưu), ba tiến trình grid_search song song (workerId 1, 2, 3, nWorkers 3, cách nhau 150 s), select_pareto, rồi chấm DREWS (load_<ctrl>; run_scoring_seeds('<Ctrl>', 99995:99999)). Mỗi bước có file đánh dấu đã xong trong scratch/jobs để chạy lại bỏ qua bước đã xong.
+
+13.2. Dọn kết quả cũ (mỗi khung làm cho bộ của mình, trước khi chạy)
+- Sao lưu rồi xóa trong Result/Controllers/<Ctrl>/Calib_v2/: mọi file <Ctrl>_CALIB_opt*, <Ctrl>_CALIB_ref*, <Ctrl>_CALIB_top*, <Ctrl>_CALIB_best*, <Ctrl>_CALIB_pick*, *_ckpt.mat. Nơi sao lưu: C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-19_<Ctrl>_surrogateopt/. Riêng Map: checkpoint ở D:/MatlabTemp/map_ckpt/ (ngoài repo), sao lưu rồi xóa ở đó.
+- Sao lưu rồi xóa các file DREWS ở seed 99995-99999 của bộ đó trong Result/Controllers/<Ctrl>/Cases/ (run_scoring_seeds bỏ qua seed đã có file).
+- Xóa các file đánh dấu của các pipeline cũ trong scratch/jobs/ (map_*, mp_*, p_*, pid_* đuôi _done.txt, _chain_*.txt, _failed.txt, _master_*.txt) của bộ đó.
+- Sao lưu Model/data/<ctrl>.json (không xóa).
+
+13.3. PID (khung Linear; 4 biến; seed tìm 10000, seed kiểm 10001-10005)
+A. Làm 13.1 (sửa ba hàm đánh giá, viết grid_search.m, select_pareto.m, grid_pipeline.sh) và 13.2.
+B. Quét: spec name 'PID', n 4, u2x @pid_u2x, evalFcn @(x, s, f) pidlag_eval('PID', x, s, f), seed 10000, tag 'grid', free 1:4, coarse true, hStart 1/6. Lưới thô 4^4 = 256 điểm; mỗi lưới mịn tối đa 81 điểm.
+C. Chọn: select_pareto (13.1.D).
+D. Chấm: load_pid; run_scoring_seeds('PID', 99995:99999).
+E. Ước lượng (35 s mỗi mô phỏng, giả sử khoảng 3/4 số điểm qua sàng lọc): khoảng 250-750 lần đánh giá, khoảng 2-7 giờ cho một MATLAB, khoảng 1-2 giờ với ba tiến trình. Đây là ước lượng, ghi số thật vào nhật ký.
+F. Báo: số điểm thô, số lưới mịn và h cuối, số mô phỏng, số điểm qua cổng, thiết kế chọn (Kp, Ki, Kd, Tf), R, S, J, PM, GM, e_rel lớn nhất và cửa sổ của nó, kết quả năm seed (13.1.D.5), biến nào nằm ở đầu hộp (u = 0 hay 1; Tf sát 1 ms là chu kỳ điều khiển, không mở được), hình Pareto.
+
+13.4. Map (khung Map; 5 biến; seed tìm 00000, seed kiểm 00001-00005)
+A. Làm 13.2. Sửa cận dưới của K: 7 thành 5, ở Model/Controllers/Map/script/map_u2x.m dòng 8 và map_x2u.m dòng 6 (hai file phải giống nhau), sửa chú thích đầu map_u2x.m. Cơ sở: cận 7 suy ra từ cổng 5 %; đo cũ e_rel 45 % ở K 6, và lần thử với hộp 0.1-16 không có điểm khả thi nào trong 250 lần, nên dưới 5 gần như chắc chắn không qua cổng 10 %.
+B. Quét: spec name 'Map', n 5, u2x @map_u2x, evalFcn @map_opt_eval, seed 0, tag 'grid', free 1:5, coarse true, hStart 1/6. Lưới thô 4^5 = 1024 điểm; mỗi lưới mịn tối đa 243 điểm. Dùng grid_search.m và select_pareto.m của 13.1, không viết lại. KHÔNG dùng select_map.m, select_map_multiseed.m, run_calib_sweep.m, sweep_leadlag.m (cách cũ).
+C. Chọn và D. Chấm: như PID, với 'Map' và load_map.
+E. Ước lượng: khoảng 1000-2500 lần đánh giá, khoảng 8-20 giờ cho một MATLAB, khoảng 3-7 giờ với ba tiến trình.
+F. Báo như PID, thêm: K chọn so với cận 5, lead hay lag có bị tắt (p/z = 1, p1/z1 = 1), e_rel ở cửa sổ static_v20_apos0p18g (lần trước 4.55-5.76 %, chỗ Map kẹt ở cổng 5 %).
+
+13.5. MapPID (khung MapPID; 9 biến = khối A gồm K, z, p/z, z1, p1/z1 và khối B gồm Kp, Ki, Kd, Tf; seed tìm 30000, seed kiểm 30001-30005)
+A. Làm 13.2. Bắt đầu khi PID và Map đã xong bước chọn (cần hai thiết kế đó).
+B. Quét luân phiên theo khối từ HAI điểm xuất phát (mỗi lần quét một khối là một lần gọi grid_search với free = khối đó, các biến còn lại khóa ở u0):
+ - S1 "xuất phát từ PID": u0 khối B = pid_x2u của thiết kế PID đã chọn; khối A tắt nhánh Map: u K = 0, u z = 0.5, u p/z = 0, u z1 = 0.5, u p1/z1 = 1. Thứ tự: quét khối A (coarse true, hStart 1/6, tag 'S1A1'), rồi khối B với khối A khóa ở kết quả (coarse true, tag 'S1B1'), rồi khối A (coarse false, hStart 1/12, tag 'S1A2'), rồi khối B (coarse false, hStart 1/12, tag 'S1B2'), cứ thế.
+ - S2 "xuất phát từ Map": u0 khối A = mappid_x2u của thiết kế Map đã chọn (5 biến đầu); khối B gần như tắt: u Kp = 0, u Ki = 0, u Kd = 0, u Tf = 0.5. Thứ tự: khối B trước (coarse true, tag 'S2B1'), rồi khối A (coarse true, tag 'S2A1'), rồi B, A (coarse false, hStart 1/12), cứ thế.
+ - Dừng một xuất phát khi hai lần quét khối liên tiếp không đổi điểm tốt nhất, hoặc sau tổng cộng 6 lần quét khối (3 vòng), tùy cái nào trước. Mỗi lần quét khối lấy điểm tốt nhất (J nhỏ nhất trong điểm khả thi) của lần quét trước làm u0. Vì mỗi lần quét chỉ giữ hoặc giảm J ở seed tìm, kết quả của S1 không tệ hơn PID và của S2 không tệ hơn Map (gần đúng, vì "PID tắt" là Kp 0.001, Ki 0.1, không đúng bằng 0).
+ - spec: name 'MapPID', n 9, u2x @mappid_u2x, evalFcn @mappid_eval, seed 30000. Lưới thô khối A 4^5 = 1024, khối B 4^4 = 256; lưới mịn tối đa 243 và 81.
+C. Chọn: select_pareto trên MỌI điểm của cả hai xuất phát (mọi tag). Báo thêm: thiết kế tốt nhất và J của S1 và của S2; nếu chênh từ 3 % trở lên thì báo "có ít nhất hai vùng", chọn theo 13.1.D như thường, không bỏ kết quả xuất phát kia.
+D. Chấm: load_mappid; run_scoring_seeds('MapPID', 99995:99999).
+E. Ước lượng: mỗi xuất phát khoảng 2500-3500 lần đánh giá; hai xuất phát khoảng 50 giờ cho một MATLAB, khoảng 15-20 giờ với ba tiến trình. Nếu quá lâu, báo người dùng trước khi cắt bớt; không tự giảm số mức lưới.
+F. Báo như Map và PID, thêm: nhánh Map có bị tắt không (K = 0), PID có gần như tắt không, lead hay lag có bị tắt, tức thiết kế chọn có suy biến thành Map hay PID thuần không.
+
+13.6. Sau khi cả ba bộ xong (khung COMMON)
+So mặt Pareto của ba bộ trên cùng hình (QuyChuan: kết luận chính là so cả mặt Pareto); so cặp Map với PID, Map với MapPID, PID với MapPID trên seed 99995-99999 theo (18) (make_pair_comparisons); báo số điểm đã đánh giá, số mô phỏng thật và số điểm qua cổng của từng bộ (cùng quy tắc lưới, nên khác nhau là do cơ chế); độ nhạy: thiết kế chọn của mỗi bộ có qua e_max 5 % không. Số liệu cũ (lưới tay của bài báo, surrogateopt) không dẫn trong bài; phần phương pháp và kết quả của bài báo chỉ viết lại khi đã có đủ ba bộ.

@@ -1,0 +1,119 @@
+2. System Modeling and Problem Formulation
+
+The plant couples the mechanical dynamics of a column-type electric power steering system with nonlinear tire forces and the lateral and yaw motion of a single-track vehicle. This construction
+retains the path by which tire-road friction changes the road reaction transmitted to the steering column. The same section then defines the desired steering torque and the torque-tracking
+problem used for all controller structures.
+
+2.1. Coupled C-EPS–Vehicle Model
+
+The C-EPS–vehicle model consists of a steering column, an assist motor, and a nonlinear single-track vehicle model, as illustrated in Figs. 1 and 2. The steering-wheel angle $\theta_1$ is prescribed
+as the driver input, while the motor applies assist torque $T_a$ to the lower steering column. The lower-column dynamics and the measured torsion-bar torque are modeled as [1]
+  (1)  J_col*theta2_ddot = T_s + T_a - T_r - C_col*theta2_dot - T_f*tanh(c*theta2_dot)
+  [ J_{col}\ddot\theta_2=T_s+T_a-T_r-C_{col}\dot\theta_2-T_f\tanh(c\dot\theta_2) ]
+  (2)  T_s = K*(theta1 - theta2)
+  [ T_s=K(\theta_1-\theta_2) ]
+\noindent where $\theta_2$ is the lower-column angle; $J_{col}$, $C_{col}$, and $K$ are the equivalent column inertia, damping coefficient, and torsion-bar stiffness; and $T_f\tanh(c\dot\theta_2)$
+is a smooth approximation of Coulomb friction. Both $T_a$ and the road-reaction torque $T_r$ are referred to the steering-column side of the mechanism.
+
+Prescribing $\theta_1(t)$ allows $T_s$ to change when the road reaction or motor assistance changes. If driver torque were imposed directly at steady state, it would constrain the sensed torque
+and obscure the over-assist mechanism examined here. The prescribed-angle driver therefore supports a controlled comparison of steering-effort responses, but it does not represent the driver's
+neuromuscular response or the adjustment of steering angle in response to changing effort.
+
+[Fig. 1. Internal signal flow of the nonlinear coupled C-EPS–vehicle plant. | Figures/new/Fig_Plant_internal.png@16.0]
+[Fig. 2. Mechanical structure of the column-type EPS. | Figures/drawio/Fig1a_mechanism.png@12.5]
+
+The front-wheel angle is approximated by $\delta_f=\theta_2/n_{st}$, where $n_{st}$ is the steering ratio. Under the small-angle and constant-longitudinal-speed assumptions, the front and rear
+tire slip angles are [3]
+  (3)  alpha_f = theta2/n_st - beta - l_f*gamma/v
+  [ \alpha_f=\dfrac{\theta_2}{n_{st}}-\beta-\dfrac{l_f\gamma}{v} ]
+  (4)  alpha_r = -beta + l_r*gamma/v
+  [ \alpha_r=-\beta+\dfrac{l_r\gamma}{v} ]
+\noindent where $\beta$ is the vehicle sideslip angle, $\gamma$ is the yaw rate, and $l_f$ and $l_r$ are the distances from the center of gravity to the front and rear axles. Longitudinal and lateral
+load transfer are neglected, giving the static axle loads
+  (5)  F_zf = m*g*l_r/(l_f + l_r)
+  [ F_{zf}=mg\dfrac{l_r}{l_f+l_r} ]
+  (6)  F_zr = m*g*l_f/(l_f + l_r)
+  [ F_{zr}=mg\dfrac{l_f}{l_f+l_r} ]
+
+Each axle is represented by one equivalent tire. To retain force saturation when road friction changes, the lateral forces are calculated with a simplified Pacejka Magic Formula [2]:
+  (7)  F_yi = D_i*sin(C*atan(B_i*alpha_i - E*(B_i*alpha_i - atan(B_i*alpha_i)))),  i in {f,r}
+  [ F_{yi}=D_i\sin\!\left[C\tan^{-1}\!\left(B_i\alpha_i-E\left(B_i\alpha_i-\tan^{-1}(B_i\alpha_i)\right)\right)\right],\quad i\in\{f,r\} ]
+  (8)  D_i = mu*F_zi,   B_i = C_alpha_i/(C*D_i)
+  [ D_i=\mu F_{zi},\quad B_i=\dfrac{C_{\alpha i}}{CD_i} ]
+\noindent where $\mu$ is the common tire-road friction coefficient, $C_{\alpha i}$ is the axle cornering stiffness, and $C$ and $E$ are shape and curvature factors. This parameterization preserves
+the initial slope $C_{\alpha i}$ while reducing the peak force $D_i$ as $\mu$ decreases, so the tire saturates earlier on a lower-friction surface.
+
+The effective steering moment arm contains a constant geometric caster component and a slip-dependent pneumatic component. Adapting the pneumatic-trail relation used in [4], the model defines
+  (9)  t_p = max(0, t_0 - t_0*C_alpha_f*|tan(alpha_f)|/(3*mu*F_zf))
+  [ t_p=\max\!\left(0,\ t_0-\dfrac{t_0C_{\alpha f}|\tan\alpha_f|}{3\mu F_{zf}}\right) ]
+  (10) e_eff = e_c + t_p,   e_c = e_p0 - t_0
+  [ e_{eff}=e_c+t_p,\quad e_c=e_{p0}-t_0 ]
+\noindent where $e_{p0}$ is the effective moment arm at zero slip, $t_0$ is the zero-slip pneumatic trail, and $e_c$ is the constant caster component. The nonnegative bound on $t_p$ represents loss
+of pneumatic trail as the modeled contact patch reaches full sliding; retaining $e_c$ prevents the total moment arm from being forced to zero. These bounds are modeling choices added to the
+source relation and do not reproduce the complete aligning-moment behavior of a measured tire. The road reaction referred to the steering column is
+  (11) T_r = (e_eff/n_st)*F_yf
+  [ T_r=\dfrac{e_{eff}}{n_{st}}F_{yf} ]
+
+[Fig. 3. Top-view geometry of the front-tire steering angle, slip angle, and lateral force. | Figures/new/Fig_Tire_force.png@13.0]
+
+The lateral and yaw motion of the vehicle is governed by the nonlinear single-track balances [3]:
+  (12) a_y = (F_yf + F_yr)/m
+  [ a_y=\dfrac{F_{yf}+F_{yr}}{m} ]
+  (13) beta_dot = a_y/v - gamma
+  [ \dot\beta=\dfrac{a_y}{v}-\gamma ]
+  (14) gamma_dot = (l_f*F_yf - l_r*F_yr)/I_z
+  [ \dot\gamma=\dfrac{l_fF_{yf}-l_rF_{yr}}{I_z} ]
+\noindent where $m$ and $I_z$ are the vehicle mass and yaw moment of inertia. The coupled steering-column and vehicle subsystem has four states, $\theta_2$, $\dot\theta_2$, $\beta$, and $\gamma$;
+motor, compensator, and controller states are included separately in the closed-loop simulations.
+
+For a stationary steering column, Eq. (1) becomes
+  (15) T_s = T_r - T_a
+  [ T_s=T_r-T_a ]
+\noindent because the smoothed Coulomb-friction term is zero at $\dot\theta_2=0$. Equations (7)–(15) expose the mechanism of interest: decreasing $\mu$ lowers the tire-force capacity and can reduce
+the pneumatic trail, thereby changing $T_r$. If assistance does not decrease with that reaction torque, Eq. (15) predicts a reduction in the steering torque transmitted through the torsion bar.
+
+2.2. Lateral-Acceleration-Based Torque Reference
+
+The desired steering torque is obtained from the speed- and lateral-acceleration-dependent steering-effort data reported by Li and Xia [5]. The four lateral-acceleration levels published in that
+study are reproduced in Table 1 and are treated here as a reference characteristic rather than as a universal driver-preference model.
+
+Table 1. Ideal steering-wheel torque reference (N·m), adopted from [5].
+Lateral acceleration | 20 km/h | 40 km/h | 60 km/h | 80 km/h | 100 km/h
+0.1 g | 1.0 | 1.7 | 2.1 | 2.3 | 2.6
+0.2 g | 1.5 | 2.0 | 2.4 | 2.8 | 3.0
+0.3 g | 1.6 | 2.3 | 2.8 | 3.1 | 3.3
+0.4 g | 1.8 | 2.4 | 2.9 | 3.3 | 3.4
+
+A zero-torque point is added at zero lateral acceleration. Monotone piecewise cubic Hermite interpolation is applied first along lateral acceleration and then along vehicle speed, after which the
+result is sampled on a finer table for implementation. Odd symmetry supplies the negative-turning branch, while inputs beyond 20–100 km/h or 0–0.4 g are clipped to the nearest boundary:
+  (16) T_ref(v, a_y) = sgn(a_y)*T_hat(v, |a_y|)
+  [ T_{ref}(v,a_y)=\mathrm{sgn}(a_y)\widehat T(v,|a_y|) ]
+  (17) T_hat(v, 0) = 0
+  [ \widehat T(v,0)=0 ]
+\noindent where $\widehat T$ denotes the interpolated positive-acceleration characteristic. Adding the zero point, imposing odd symmetry, selecting PCHIP interpolation, and clipping outside the
+published grid are implementation choices of this study. They make the reference continuous through straight-ahead driving without extrapolating unreported steering-effort values.
+
+The reference uses measured vehicle speed and lateral acceleration and does not require an estimate of $\mu$ or rack force. Because $a_y$ is an input to the reference, a friction reduction can
+also change the target by changing the vehicle response. The controller therefore regulates effort relative to the motion actually produced by the vehicle instead of enforcing the same torque
+at a fixed steering-wheel angle on every surface.
+
+2.3. Torque-Tracking Objective
+
+The common control objective is to regulate the measured torsion-bar torque toward the reference:
+  (18) e_T = T_s - T_ref(v, a_y)
+  [ e_T=T_s-T_{ref}(v,a_y) ]
+
+For $T_{ref}\ne0$, $\mathrm{sgn}(T_{ref})e_T<0$ denotes a torque magnitude below the target in the commanded turning direction. Reversal intervals are evaluated with magnitude-based measures because
+the signed interpretation becomes ambiguous near a zero crossing. All controllers act through the same bounded assist-torque channel:
+  (19) |T_a| <= T_a,max(v)
+  [ |T_a|\le T_{a,max}(v) ]
+\noindent where $T_{a,max}(v)$ is derived from the modeled dry-road assistance requirement and is specified with the actuator implementation. The comparison therefore asks how each controller
+reduces torque-tracking error under varying friction while satisfying the same motor dynamics, assist limit, sensor conditions, and stability requirements.
+
+References (local numbering for this draft)
+[1] D. Lee, K.-S. Kim, S. Kim (2018). Controller design of an electric power steering system. IEEE Transactions on Control Systems Technology, 26(2), 748–755. doi:10.1109/TCST.2017.2679062
+[2] H. B. Pacejka (2006). Tyre and vehicle dynamics, 2nd ed. Elsevier.
+[3] R. Rajamani (2012). Vehicle dynamics and control, 2nd ed. Springer.
+[4] Y. Li, Z. Yang, D. Zhai, J. He, J. Fan (2023). Study on control strategy of electric power steering for commercial vehicle based on multi-map. World Electric Vehicle Journal, 14(2), 33. doi:10.3390/wevj14020033
+[5] Q. Li, C. Xia (2012). Research of electric power steering system assistance characteristic based on the identification of the road. Proceedings of ICCIA 2012, 402–405. doi:10.2991/iccia.2012.97
+

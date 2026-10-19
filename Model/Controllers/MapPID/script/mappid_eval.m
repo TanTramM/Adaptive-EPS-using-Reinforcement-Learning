@@ -7,10 +7,10 @@ function out = mappid_eval(x, seed, csvFile)
 %                                                     Kp, Ki [1/s], Kd [s], Tf [s] of the PID branch (Kaw = Ki/(Kp + K))
 %     seed    run seed of the sensor noise (MapPID tuning seed 30000; the check seed 30001)
 %     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file is returned from it, not simulated again)
-%   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5, p - 3142, 3 - p1, ratio bounds]
+%   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 10, p - 3142, 3 - p1, ratio bounds]
 %   out.J      R*S [% N.m], Inf when a linear constraint fails (not simulated); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
 %   Constraints (DieuKhien_MapPID.txt C3, option C of 2026-10-13): linear PM > 0 and GM >= 1 over 68 plants x 5 slopes while searching (the final point must have PM >= 15 deg, GM >= 1.5: verify_mappid); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2);
-%   e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); p <= pi/Ts (Nyquist) and p1 >= 3 rad/s (as design_leadlag.m). The simulation margin gate
+%   e_rel <= 10 % on the 26 static windows of CALIB v2 (QuyChuan 5.3; e_max 10 % since 2026-10-18); p <= pi/Ts (Nyquist) and p1 >= 3 rad/s (as design_leadlag.m). The simulation margin gate
 %   (calib_margin) is NOT run here: only for the final candidates (verify_mappid).
 if nargin < 2 || isempty(seed), seed = 30000; end
 if nargin < 3, csvFile = ''; end
@@ -21,7 +21,7 @@ addpath(modelDir); setup_paths;
 x = x(:)';
 assert(numel(x) == 9, 'x must have nine entries');
 names = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1', 'Kp', 'Ki', 'Kd', 'Tf'};
-PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
+PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 10; Ts = 1e-3;   % accuracy gate e_max [%], one constant (PhuongPhap_TimThamSo.txt 13.0)
 
 % cached row?
 if ~isempty(csvFile) && exist(csvFile, 'file')

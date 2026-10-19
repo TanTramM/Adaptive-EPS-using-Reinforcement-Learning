@@ -5,9 +5,9 @@ function out = map_opt_eval(x, seed, csvFile)
 %     x       row or column of the five design variables [K, z, p/z, z1, p1/z1]   K slope limit of the table; lead z, p [rad/s] (p/z >= 1); lag z1, p1 [rad/s] (p1/z1 <= 1)
 %     seed    run seed of the sensor noise (Map: search seed 0, selection seeds 1-5)
 %     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file for the same seed is returned from it, not simulated again)
-%   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5]
+%   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - erelMax]
 %   out.J      R*S [% N.m], Inf when a constraint fails (not simulated for the linear ones); out.R, S, TV, erel, rev; out.PM, GM, HF, lagGain2Hz; out.simulated (0/1)
-%   Constraints: linear PM >= 30 deg and GM >= 2 over 68 plants x 4 slopes (QuyChuan 5.2, applied already during the search); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); p1 >= 3 rad/s, p1 <= z1, p >= z.
+%   Constraints: linear PM >= 30 deg and GM >= 2 over 68 plants x 4 slopes (QuyChuan 5.2, applied already during the search); lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2); e_rel <= 10 % (e_max) on the 26 static windows of CALIB v2 (QuyChuan 5.3); p1 >= 3 rad/s, p1 <= z1, p >= z.
 %   The simulation margin gate (calib_margin) is NOT run here: only for the final candidate.
 if nargin < 2 || isempty(seed), seed = 0; end
 if nargin < 3, csvFile = ''; end
@@ -18,7 +18,7 @@ addpath(modelDir); setup_paths;
 x = x(:)';
 assert(numel(x) == 5, 'x must have five entries');
 names = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1'};
-PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
+PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 10; Ts = 1e-3;     % erelMax: accuracy limit e_max = 10 % (PhuongPhap_TimThamSo.txt 4.3, 13.2); the same value in optimize_map.m and select_map_multiseed.m
 
 if ~isempty(csvFile) && exist(csvFile, 'file')
     T = readtable(csvFile);

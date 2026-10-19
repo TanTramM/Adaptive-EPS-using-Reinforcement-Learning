@@ -1,0 +1,36 @@
+Caption:
+Fig. X. Closed-loop signal flow of the nonlinear PID steering-torque controller.
+
+Layout:
+The forward path follows the component-by-component convention of Seborg et
+al., Process Dynamics and Control, 4th ed., Fig. 11.7 (PDF p. 190). Measured
+signals return along separate lower paths. The block style and one signal per
+wire follow Fig_Plant_internal.drawio. A dot marks a branch of the same signal;
+plain crossings are not connections.
+
+Reference and three PID paths:
+The torque, lateral-acceleration, and speed sensors supply T_s,m, a_y,m, and
+v_m. Reference computes T_ref(v_m,a_y,m). The comparator uses T_s,m at its
+positive input and T_ref at its negative input, so e_T = T_s,m - T_ref.
+The controller has three separate parallel paths:
+  P: u_P = K_p e_T
+  I: dot(u_I) = K_i e_T + K_aw Delta T_a
+  D: u_D = K_d s/(T_f s + 1) T_s,m
+The three outputs meet at the summing junction: T_a,cmd = u_P + u_I + u_D.
+The derivative uses measured torque, avoiding derivative kick after a
+reference change. The dashed back-calculation path forms
+Delta T_a = T_a,lim - T_a,cmd and returns it only to the I path. The I path
+is implemented as a discrete integrator in PID.mdl; dot(u_I) describes its
+continuous-time signal-flow equivalent.
+
+Final control element and plant:
+The PID output T_a,cmd enters the speed-dependent assist limit, which produces
+T_a,lim. The motor G_a(s) produces applied assist torque T_a. The nonlinear
+coupled plant also receives the independent physical inputs theta_1 (driver
+angle), v (true speed), and mu (road friction), and produces the true outputs
+T_s and a_y shown here. True v also supplies the speed sensor. Other plant
+outputs are omitted because this controller does not use them.
+
+The plant block represents nonlinear state and output functions, not a global
+transfer function; no additive linear disturbance-output decomposition is
+assumed.

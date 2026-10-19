@@ -31,6 +31,16 @@ run_job_patient() {
     if grep -q "$marker" "$S/${tag}_try$i.log"; then
       echo done > "$S/${tag}_done.txt"; status "$tag" "$i" "DONE"; return 0
     fi
+    # MATLAB/Simulink can terminate with the Windows heap-corruption status
+    # after many simulations even when RAM headroom is healthy.  CSV/checkpoint
+    # caching makes an immediate clean process restart safe; do not let this
+    # known process-level crash inherit the growing resource-pressure backoff.
+    if grep -q "Exit Status: 0xc0000374, Heap corruption" "$S/${tag}_try$i.log"; then
+      status "$tag" "$i" "heap corruption; cached work kept, restarting in 60 s"
+      sleep 60
+      pause=60
+      continue
+    fi
     if grep -q "$failmark" "$S/${tag}_try$i.log" || grep -q "Exit Status: 0x00000001" "$S/${tag}_try$i.log"; then
       real=$((real + 1)); status "$tag" "$i" "real MATLAB error $real of $MAX_REAL_FAIL"
       if [ "$real" -ge "$MAX_REAL_FAIL" ]; then echo failed > "$S/${tag}_failed.txt"; status "$tag" "$i" "FAILED (see ${tag}_try$i.log)"; return 1; fi

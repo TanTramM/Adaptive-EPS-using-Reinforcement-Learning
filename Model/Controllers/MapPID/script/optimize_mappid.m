@@ -5,7 +5,7 @@ function optimize_mappid(runId, maxEvals)
 %                                      (an evaluation rejected by the linear screen costs no simulation but counts in maxEvals)
 %   Variables: u in [0,1]^9, mapped by mappid_u2x (bounds of C2). Objective log(J) (same minimizer, better scaled for the surrogate); a design rejected by
 %   the linear screen gets log(30) (J = 30 is worse than every useful design) with its constraint values. Constraints, declared separately (C3, option C):
-%   linear PM > 0, GM >= 1, lag gain at 2 Hz >= 0.707 (mappid_eval c1-c3), e_rel <= 5 % (c4, 0 when not simulated).
+%   linear PM > 0, GM >= 1, lag gain at 2 Hz >= 0.707 (mappid_eval c1-c3), e_rel <= eMax = 10 % (c4, 0 when not simulated).
 %   Starting points: none given (the user chose not to start from the Map or the PID design; the systune designs of O3 were degenerate), surrogateopt
 %   draws its own random design of experiments (MinSurrogatePoints 30). Resumable: every evaluation is cached in
 %   Result/Controllers/MapPID/Calib/MapPID_CALIB_opt<runId>_s30000.csv (mappid_eval) and the solver state in MapPID_CALIB_opt<runId>_ckpt.mat.
@@ -39,6 +39,7 @@ end
 
 function F = objconstr(u, csvFile)
 x = mappid_u2x(u);
+eMax = 10;   % accuracy gate e_max [%], same value as erelMax in mappid_eval.m
 try
     o = mappid_eval(x, 30000, csvFile);
 catch ME
@@ -47,7 +48,7 @@ catch ME
 end
 if o.simulated
     F.Fval = log(max(o.R * o.S, 1e-6));
-    F.Ineq = [o.c(1:3), o.erel - 5];
+    F.Ineq = [o.c(1:3), o.erel - eMax];
 else
     F.Fval = log(30);
     F.Ineq = [o.c(1:3), 0];

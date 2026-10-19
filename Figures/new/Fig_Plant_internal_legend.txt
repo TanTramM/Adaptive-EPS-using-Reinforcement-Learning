@@ -1,0 +1,37 @@
+Caption:
+Fig. X. Internal signal flow of the nonlinear coupled C-EPS-vehicle plant.
+
+Layout convention:
+All external plant inputs enter through the left boundary, and all external
+plant outputs leave through the right boundary. Each signal leaves its source
+block from the right edge. The backward-running lines below the forward path
+are physical feedback signals inside the plant, not external output ports.
+
+Scope:
+The dashed boundary contains only the steering column, tires, and 2-DOF
+vehicle body. The assist controller, motor dynamics, torque limit, and
+measurement models are outside this boundary.
+
+Inputs:
+theta_1                   prescribed driver steering-wheel angle
+T_a                       assist torque applied to the lower column
+v                         true longitudinal vehicle speed
+mu                        tire-road friction coefficient
+
+Outputs:
+T_s                       true torsion-bar torque
+theta_2_dot               lower-column angular velocity
+a_y                       true vehicle lateral acceleration
+gamma                     true vehicle yaw rate
+
+Internal signals:
+theta_2                   lower-column angle supplied to the tire kinematics
+F_yf, F_yr                front and rear lateral tire forces
+T_r                       road-reaction torque returned to the steering column
+beta, gamma               vehicle states returned to the tire slip-angle model
+
+Block relations:
+The steering-column block represents Eqs. (1)-(2), the tire block represents
+Eqs. (3)-(11), and the 2-DOF vehicle-body block represents Eqs. (12)-(14) of
+System Modeling and Problem Formulation. The blocks are nonlinear state and
+algebraic operators rather than transfer functions.

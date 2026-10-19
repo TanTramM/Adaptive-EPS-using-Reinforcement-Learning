@@ -5,9 +5,9 @@ function out = pidlag_eval(ctrl, x, seed, csvFile)
 %     ctrl    'PID' or 'PIDOpt' (x = [Kp, Ki, Kd, Tf]) or 'PIDLag' (x = [Kp, Ki, Kd, Tf, z1, p1/z1]); Kp, Ki [1/s], Kd [s], Tf [s], lag z1, p1 [rad/s]; Kaw = Ki/Kp
 %     seed    run seed of the sensor noise (tuning seed 10000, check seed 10001: the PID family seed, so the result is comparable with PI and PID)
 %     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file is returned from it, not simulated again)
-%   Same method and constraints as MapPID (mappid_eval.m, DieuKhien_MapPID.txt C3, D13, D14): while searching, linear PM > 0 and GM >= 1 over the 68 plants,
-%   lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2), e_rel <= 5 % on the 26 static windows of CALIB v2 (QuyChuan 5.3); Tf <= 79.6 ms holds by the bound (20 ms).
-%   out.c = [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 5] (feasible when all <= 0); out.J = R*S [% N.m], Inf when a constraint fails or
+%   Same method and constraints as MapPID (mappid_eval.m, PhuongPhap_TimThamSo.txt 13.0): while searching, linear PM >= 30 deg and GM >= 2 over the 68 plants,
+%   lag gain at 2 Hz >= 0.707 (steering band, QuyChuan 6.2), e_rel <= 10 % on the 26 static windows of CALIB v2 (QuyChuan 5.3, e_max 10 % since 2026-10-18); Tf <= 79.6 ms holds by the bound (20 ms).
+%   out.c = [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - erelMax] (feasible when all <= 0); out.J = R*S [% N.m], Inf when a constraint fails or
 %   when the simulation was not run; out.R, S, TV, erel, rev, PM, GM, HF, lagGain2Hz, simulated. The simulation margin gate (calib_margin) is run only for the final candidates.
 if nargin < 3 || isempty(seed), seed = 10000; end
 if nargin < 4, csvFile = ''; end
@@ -20,7 +20,7 @@ nx = 4 + 2 * strcmp(ctrl, 'PIDLag');
 assert(numel(x) == nx, 'x must have %d entries for %s', nx, ctrl);
 names = {'Kp', 'Ki', 'Kd', 'Tf', 'z1', 'p1_over_z1'};
 names = names(1:nx);
-PMmin = 0; GMmin = 1; gLagMin = 1 / sqrt(2); erelMax = 5; Ts = 1e-3;
+PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 10; Ts = 1e-3;
 
 if ~isempty(csvFile) && exist(csvFile, 'file')
     T = readtable(csvFile);

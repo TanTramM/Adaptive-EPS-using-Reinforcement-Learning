@@ -2,53 +2,53 @@
   "x_note": "MapPID controller data (Documents/Notes/Controllers/DieuKhien_MapPID.txt). Ts_ctrl: controller period [s]. The Map branch (calibration points of the dry-road assist) is read from data/map.json, never copied here. design: written by Controllers/MapPID/script/select_mappid.m, fields Kmax (slope limit of the table), lead {z, p} and lag {z1, p1} [rad/s] (Map branch only), Kp, Ki [1/s], Kd [s], Tf [s] (PID branch), Kaw = Ki/(Kp+Kmax). Absent until the optimisation has chosen a point: load_mappid.m then loads the Map design of map.json with all PID gains 0, so MapPID equals Map (the check of build_mappid / test_mappid).",
   "Ts_ctrl": 0.001,
   "design": {
-    "Kmax": 2.20284063020019,
+    "Kmax": 2.56293010467665,
     "Ts0": 0.3,
     "lead": {
-      "z": 122.354832659568,
-      "p": 1831.0048749902573
+      "z": 6.1742133040049,
+      "p": 13.937346991268518
     },
     "lag": {
-      "z1": 78.7358247786599,
-      "p1": 27.97250486406552
+      "z1": 31.0502549158217,
+      "p1": 12.590689162383219
     },
-    "Kp": 2.76033778682224,
-    "Ki": 105.616992628511,
-    "Kd": 0.0832199384599336,
-    "Tf": 0.00254242449493734,
-    "Kaw": 21.280112007715012,
-    "rule": "min mean J = R*S over CALIB seeds 30001-30005 among the 20 best distinct designs of the search at seed 30000 (surrogateopt x3 + patternsearch x3, wide box, PM >= 30, GM >= 2 in the search)",
-    "CALIB_J_mean": 2.1951462620688362,
-    "CALIB_J_sigma": 0.10710987154169362,
+    "Kp": 1.54874683207937,
+    "Ki": 110.867128472628,
+    "Kd": 0.0789290711332763,
+    "Tf": 0.00229173205616231,
+    "Kaw": 26.963968759690193,
+    "rule": "min mean J = R*S over CALIB seeds 30001-30005 among the 20 best distinct designs of the search at seed 30000 (surrogateopt x3 x 450 evaluations, no patternsearch, wide box, PM >= 30, GM >= 2 and e_rel <= 10 % in the search and at every selection seed)",
+    "CALIB_J_mean": 2.0729056631469094,
+    "CALIB_J_sigma": 0.11946446065878123,
     "CALIB_J_per_seed": [
-      2.3485106571193533,
-      2.0888130797079376,
-      2.1242498024576877,
-      2.153452250375989,
-      2.2607055206832132
+      2.2359515191388355,
+      1.9329822914023933,
+      2.01228896890031,
+      2.0344372247497895,
+      2.1488683115432186
     ],
-    "CALIB_R_pct_mean": 2.7358793508851504,
-    "CALIB_S_Nm_mean": 0.80223703196394847,
-    "CALIB_TV_mean": 170.43962334867382,
-    "CALIB_rev_pct_mean": 18.371316149882972,
-    "CALIB_erel_max_pct": 1.5351236322654014,
-    "CALIB_J_search_seed": 2.0813105833859331,
-    "rank_at_search_seed": 18,
-    "rank_correlation": 0.97744360902255634,
-    "PM_deg": 39.945023594648944,
-    "GM": 3.7585821790279224,
-    "HF_gain": 47.204292585843518,
-    "lag_gain_2Hz": 0.92372551872909614,
+    "CALIB_R_pct_mean": 2.8342532279602159,
+    "CALIB_S_Nm_mean": 0.7312875126314804,
+    "CALIB_TV_mean": 141.8746324122543,
+    "CALIB_rev_pct_mean": 18.366243722871573,
+    "CALIB_erel_max_pct": 1.4650122279440569,
+    "CALIB_J_search_seed": 1.9097026664328307,
+    "rank_at_search_seed": 14,
+    "rank_correlation": 0.81654135338345857,
+    "PM_deg": 39.410767173709985,
+    "GM": 4.03750211949974,
+    "HF_gain": 38.335495071011358,
+    "lag_gain_2Hz": 0.76355771060566835,
     "no_map_branch": false,
     "no_lead": false,
     "no_lag": false,
-    "margin_ratio_gain": 0.69479594762269226,
-    "margin_ratio_delay": 1.020214900048338,
+    "margin_ratio_gain": 0.69105403029873724,
+    "margin_ratio_delay": 1.0245774146260638,
     "active": [
       "none (interior optimum)"
     ],
-    "n_region": 20,
-    "n_pool": 599,
+    "n_region": 14,
+    "n_pool": 1141,
     "n_top": 20,
     "search_seed": 30000,
     "selection_seeds": [
@@ -58,12 +58,12 @@
       30004,
       30005
     ],
-    "date": "2026-10-18 05:19:12",
+    "date": "2026-10-19 00:55:53",
     "bangbang": {
-      "f_ideal": 0.019014354968442258,
-      "f_noisy": 0.020912891935565683,
-      "delta": 0.001916652777878421,
-      "spread": 3.6231621509990458E-5
+      "f_ideal": 0.018673777726248359,
+      "f_noisy": 0.020079564640835938,
+      "delta": 0.0014166564010405745,
+      "spread": 2.1738972905992193E-5
     }
   }
 }

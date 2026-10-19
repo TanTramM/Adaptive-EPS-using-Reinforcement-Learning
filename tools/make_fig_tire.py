@@ -1,7 +1,7 @@
-"""Figure for the paper, Section 2.3: forces on the front wheel seen from two views.
+"""Figure for the paper, Section 2.1: forces on the front wheel seen from two views.
 
 (a) top view: steered angle delta_f, velocity direction, slip angle alpha_f, lateral force F_yf, self-aligning moment about the kingpin point Q
-(b) side view: contact patch, caster trail e_c, pneumatic trail t, total lever arm e_p = e_c + t
+(b) side view: contact patch, caster trail e_c, pneumatic trail t_p, effective moment arm e_eff = e_c + t_p
 
 Usage:  python -X utf8 tools/make_fig_tire.py      (writes Figures/Figure_3_tire_forces.png)
 The geometry is exaggerated for readability (angles and trails are not to scale).
@@ -66,11 +66,11 @@ ang = d + t1
 tip = K + rM * np.array([np.cos(ang), np.sin(ang)])
 tan = np.array([np.sin(ang), -np.cos(ang)])                                                  # clockwise tangent
 arrow(A, tip - 0.3 * tan, tip + 0.02 * tan, DARK, lw=1.6, ms=13, z=6)
-A.text(*(K + (rM + 0.35) * n + 0.2 * h), r'$M_z=e_pF_{yf}$ about $Q$', fontsize=11.5, ha='center', va='bottom')
+A.text(*(K + (rM + 0.35) * n + 0.2 * h), r'$M_z=e_{eff}F_{yf}$ about $Q$', fontsize=11.5, ha='center', va='bottom')
 o = -1.25 * n                                                                               # dimension lines beside the wheel
 dim(A, C + o, K + o, r'$e_c$', -0.32 * n)
-dim(A, P + o, C + o, r'$t$', -0.32 * n)
-dim(A, P + 2.0 * o, K + 2.0 * o, r'$e_p=e_c+t$', -0.34 * n)
+dim(A, P + o, C + o, r'$t_p$', -0.32 * n)
+dim(A, P + 2.0 * o, K + 2.0 * o, r'$e_{eff}=e_c+t_p$', -0.34 * n)
 for q in (P, C, K):
     A.plot(*zip(q - 0.5 * n if q is not K else q, q + 2.0 * o), color=GREY, lw=0.8, ls=':', zorder=1)
 A.set_xlim(-2.8, 8.6); A.set_ylim(-4.3, 4.6); A.set_aspect('equal'); A.axis('off')
@@ -100,18 +100,18 @@ B.text(0.0, -0.75, 'contact patch', fontsize=9.5, ha='left', va='center', color=
 y0 = -1.9
 for q in (Pp, np.array([0, 0]), Kp):
     B.plot([q[0], q[0]], [-1.2, y0 - 0.55], color=GREY, lw=0.8, ls=':', zorder=1)
-dim(B, (Pp[0], y0), (0, y0), r'$t$', (0, -0.3))
+dim(B, (Pp[0], y0), (0, y0), r'$t_p$', (0, -0.3))
 dim(B, (0, y0), (Kp[0], y0), r'$e_c$', (0, -0.3))
-dim(B, (Pp[0], y0 - 0.8), (Kp[0], y0 - 0.8), r'$e_p=e_c+t$', (0, -0.34))
+dim(B, (Pp[0], y0 - 0.8), (Kp[0], y0 - 0.8), r'$e_{eff}=e_c+t_p$', (0, -0.34))
 arrow(B, (2.2, 5.3), (4.0, 5.3), '#555555', lw=1.6)
 B.text(4.1, 5.3, 'travel', fontsize=9.5, va='center', color='#555555')
-B.text(0.2, -4.7, 'caster angle $\\tau$ (exaggerated): $e_c$ is fixed by the geometry;\n$t$ shrinks as $\\alpha_f$ grows and vanishes when the patch slides', fontsize=9.5, va='center', ha='center',
+B.text(0.2, -4.7, 'caster angle $\\tau$ (exaggerated): $e_c$ is fixed by the geometry;\n$t_p$ shrinks as $\\alpha_f$ grows and vanishes when the patch slides', fontsize=9.5, va='center', ha='center',
        color='#222222', bbox=dict(boxstyle='round,pad=0.35', fc='white', ec=GREY, lw=0.8))
 B.plot([Kp[0], Kp[0]], [0, 3.9], color=GREY, lw=1.0, ls='--', zorder=1)
 B.add_patch(Arc(Kp, 7.0, 7.0, theta1=90, theta2=90 + np.rad2deg(tau), color=DARK, lw=1.3, zorder=4))
 B.text(Kp[0] - 0.05, 3.85, r'$\tau$', fontsize=11.5, ha='center', va='bottom')
 B.set_xlim(-4.4, 5.6); B.set_ylim(-5.4, 6.9); B.set_aspect('equal'); B.axis('off')
-B.set_title('(b) Side view: trails and lever arm', fontsize=11.5, pad=4)
+B.set_title('(b) Side view: trails and effective moment arm', fontsize=11.5, pad=4)
 
 fig.tight_layout(w_pad=1.0)
 fig.savefig(OUT, dpi=300, bbox_inches='tight', facecolor='white')

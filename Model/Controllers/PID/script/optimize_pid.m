@@ -1,9 +1,9 @@
 function optimize_pid(runId, maxEvals)
 %OPTIMIZE_PID Stage 1 of the common method (KeHoach_ChonNhieuSeed.txt 3.1): global search of Kp, Ki, Kd, Tf on J = R*S (CALIB, seed 10000) in the WIDE box (pid_u2x), surrogateopt.
-%   optimize_pid(runId, maxEvals)   runId 1, 2, 3: own random seed 1000+runId; maxEvals = TOTAL evaluations (default 250; 400 after the extra 150 of G10(b) when the three
+%   optimize_pid(runId, maxEvals)   runId 1, 2, 3: own random seed 1000+runId; maxEvals = TOTAL evaluations (default 200 = MATLAB default max(200, 50 x nvars); 350 after the extra 150 of G10(b) when the three
 %   chains have not converged: the run resumes from its checkpoint). Evaluations are cached in Result/Controllers/PID/Calib/PID_CALIB_opt<runId>_s10000.csv through pidlag_eval
 %   (resumable); a corrupt checkpoint is moved aside and the run restarts from the csv cache.
-if nargin < 2 || isempty(maxEvals), maxEvals = 250; end
+if nargin < 2 || isempty(maxEvals), maxEvals = 200; end
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
@@ -31,6 +31,7 @@ end
 
 function F = objconstr(u, csvFile)
 x = pid_u2x(u);
+eMax = 10;   % e_rel limit [%], same value as erelMax in pidlag_eval.m (PhuongPhap_TimThamSo.txt 13.0)
 try
     o = pidlag_eval('PID', x, 10000, csvFile);
 catch ME
@@ -38,7 +39,7 @@ catch ME
     F.Fval = log(30); F.Ineq = [200 200 200 200]; return;
 end
 if o.simulated
-    F.Fval = log(max(o.R * o.S, 1e-6)); F.Ineq = [o.c(1:3), o.erel - 5];
+    F.Fval = log(max(o.R * o.S, 1e-6)); F.Ineq = [o.c(1:3), o.erel - eMax];
 else
     F.Fval = log(30); F.Ineq = [o.c(1:3), 0];
 end

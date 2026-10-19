@@ -15,7 +15,7 @@ Cal = calibrate_map_cached();
 Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
 files = poolFiles(outDir, suffix);
 spec = struct('name', 'Map', 'outDir', outDir, 'poolFiles', {files}, 'vn', {{'K', 'z', 'p_over_z', 'z1', 'p1_over_z1'}}, ...
-    'evalFcn', @map_opt_eval, 'x2u', @map_x2u, 'seed0', 0, 'seeds', 1:5, 'nTop', 20, 'PMfin', 30, 'GMfin', 2, 'erelMax', 5, ...
+    'evalFcn', @map_opt_eval, 'x2u', @map_x2u, 'seed0', 0, 'seeds', 1:5, 'nTop', 20, 'PMfin', 30, 'GMfin', 2, 'erelMax', 10, ...
     'marginFcn', @(x) marginGate(x, Cal, Ts0), 'bangbangFcn', @(x) bangbang(x, Cal, Ts0));
 sel = select_multiseed(spec);
 [Gj, w] = map_opt_plants();
@@ -74,7 +74,7 @@ end
 function f = poolFiles(dirName, suffix)
 % search files of one run: Map_CALIB_opt<k><suffix>_s00000.csv and Map_CALIB_ref<k><suffix>_s00000.csv (exact suffix, so run 1 never picks up run 2)
 L = dir(fullfile(dirName, 'Map_CALIB_*_s00000.csv'));
-keep = ~cellfun(@isempty, regexp({L.name}, ['^Map_CALIB_(opt|ref)\d+' suffix '_s00000\.csv$'], 'once'));
+keep = ~cellfun(@isempty, regexp({L.name}, ['^Map_CALIB_opt\d+' suffix '_s00000\.csv$'], 'once'));
 f = cellstr(fullfile(dirName, {L(keep).name}));
 end
 

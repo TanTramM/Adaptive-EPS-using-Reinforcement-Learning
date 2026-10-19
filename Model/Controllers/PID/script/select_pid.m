@@ -2,10 +2,10 @@ function sel = select_pid(writeJson)
 %SELECT_PID Stages 2-4 of the common method (Documents/Shared/KeHoach_ChonNhieuSeed.txt Phase 3), for PID (Kp, Ki, Kd, Tf; wide box pid_u2x), seeds 10000 (search) and 10001-10005 (choice).
 %
 %   sel = select_pid(true)    also writes the design to data/pid.json (field design; the old grid design stays in design_grid)
-%   Stage 2 TOP GROUP: pool every evaluation of the three chains (PID_CALIB_opt*_s10000.csv, _ref*_s10000.csv); keep the feasible ones at seed 10000 (simulated, e_rel <= 5 %, linear
+%   Stage 2 TOP GROUP: pool every evaluation of the three chains (PID_CALIB_opt*_s10000.csv, ); keep the feasible ones at seed 10000 (simulated, e_rel <= 10 %, linear
 %     PM >= 30 deg and GM >= 2, constraints c1-c4 <= 0); sort by J; the 20 best DISTINCT designs (at least 0.02 apart in one normalized variable u); written to PID_CALIB_top_s10000.csv.
 %   Stage 3 CHOICE: each top design on CALIB at seeds 10001-10005 (20 x 5 = 100 runs, cached in PID_CALIB_best_s10001-s10005.csv, resumable): J_k = R_k S_k, mean J_bar, sample standard
-%     deviation sigma_J (n - 1), maximum e_rel; gate: e_rel <= 5 % at EVERY seed; best = smallest J_bar; tie (J_bar within sigma_J of the smallest, Q4): the largest linear PM.
+%     deviation sigma_J (n - 1), maximum e_rel; gate: e_rel <= 10 % at EVERY seed; best = smallest J_bar; tie (J_bar within sigma_J of the smallest, Q4): the largest linear PM.
 %   Stage 4 CHECK: calib_margin at seed 10001 (not passed: the next one), bang-bang (calib_bangbang), reverse assist, PM, GM, high-frequency gain, active bounds of the box, the rank at
 %     seed 10000 and the rank correlation between J at seed 10000 and J_bar, the optimal region (top designs with J_bar within 5 % of the smallest); chain convergence (best J per run).
 %   Seed 10000 is NOT in the mean (Q3). Same logic as the common Model/common/select_multiseed.m.
@@ -14,11 +14,11 @@ scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));
 addpath(modelDir); setup_paths;
 outDir = result_dir('PID', 'Calib');
-vn = {'Kp', 'Ki', 'Kd', 'Tf'}; seeds = 10001:10005; nTop = 20; PMfin = 30; GMfin = 2; Ts = 1e-3;
+vn = {'Kp', 'Ki', 'Kd', 'Tf'}; seeds = 10001:10005; nTop = 20; PMfin = 30; GMfin = 2; Ts = 1e-3; eMax = 10;   % e_rel limit [%] (PhuongPhap_TimThamSo.txt 13.0)
 mdl = 'Model_PID';
 
 %% stage 2: pool and top group
-files = [dir(fullfile(outDir, 'PID_CALIB_opt*_s10000.csv')); dir(fullfile(outDir, 'PID_CALIB_ref*_s10000.csv'))];
+files = dir(fullfile(outDir, 'PID_CALIB_opt*_s10000.csv'));
 P = table();
 for i = 1:numel(files)
     T = readtable(fullfile(outDir, files(i).name));
@@ -60,8 +60,8 @@ for i = 1:nT
 end
 Top.Jbar = mean(Jk, 2); Top.sigmaJ = std(Jk, 0, 2); Top.Rbar = mean(Rk, 2); Top.Sbar = mean(Sk, 2); Top.TVbar = mean(TVk, 2); Top.erel_max = max(Ek, [], 2); Top.rev_bar = mean(REVk, 2);
 for s = 1:numel(seeds), Top.(sprintf('J_s%d', seeds(s))) = Jk(:, s); end
-gate = Top.erel_max <= 5 & all(isfinite(Jk), 2);
-assert(any(gate), 'no top design passes e_rel <= 5 %% at every choice seed');
+gate = Top.erel_max <= eMax & all(isfinite(Jk), 2);
+assert(any(gate), 'no top design passes e_rel <= %g %% at every choice seed', eMax);
 Jg = Top.Jbar; Jg(~gate) = Inf;
 [Jmin, im] = min(Jg);
 tie = gate & (Top.Jbar - Jmin) <= Top.sigmaJ(im);                      % Q4: within the standard deviation of the smallest
@@ -116,7 +116,7 @@ if writeJson
     J = jsondecode(fileread(jf));
     q = struct('Kp', d.Kp, 'Ki', d.Ki, 'Kd', d.Kd, 'Tf', d.Tf);
     q.Kaw = ifelse(d.Ki > 0 && d.Kp > 0, d.Ki / d.Kp, 0);
-    q.rule = 'common method 2026-10-16: search at seed 10000 (surrogateopt x3 + patternsearch x3, wide box), top 20, choice by J_bar over seeds 10001-10005 (e_rel <= 5 % at every seed), calib_margin';
+    q.rule = 'common method 2026-10-16: search at seed 10000 (surrogateopt x3 (200 evaluations each), wide box), top 20, choice by J_bar over seeds 10001-10005 (e_rel <= 10 % at every seed), calib_margin';
     q.CALIB_Jbar = c.Jbar; q.CALIB_sigmaJ = c.sigmaJ; q.CALIB_Rbar_pct = c.Rbar; q.CALIB_Sbar_Nm = c.Sbar; q.CALIB_TVbar_Nm_per_s = c.TVbar; q.CALIB_erel_max_pct = c.erel_max; q.CALIB_rev_bar_pct = c.rev_bar;
     q.J_seed10000 = c.Jv; q.rank_seed10000 = c.rank_s10000; q.rank_correlation = rho; q.PM_deg = Rl.PM; q.GM = Rl.GM; q.HF_gain = Rl.HF;
     q.margin_ratio_gain = pm.ratio_gain; q.margin_ratio_delay = pm.ratio_delay;

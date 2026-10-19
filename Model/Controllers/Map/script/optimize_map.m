@@ -4,7 +4,7 @@ function optimize_map(runId, maxEvals)
 %   optimize_map(runId, maxEvals)   one independent surrogateopt run (runId 1, 2, 3: own random seed 1000+runId, own files), maxEvals evaluations (default 250;
 %                                   an evaluation rejected by the linear screen costs no simulation but counts in maxEvals).
 %   Variables: u in [0,1]^5 mapped by map_u2x. Objective log(J); a design rejected by the linear screen gets log(30). Constraints declared separately: linear PM >= 30 deg,
-%   GM >= 2, lag gain at 2 Hz >= 0.707 (map_opt_eval c1-c3), e_rel <= 5 % on the 26 static windows (c4). No start points from earlier work (they were CALIB v1): the solver
+%   GM >= 2, lag gain at 2 Hz >= 0.707 (map_opt_eval c1-c3), e_rel <= 10 % on the 26 static windows (c4). No start points from earlier work (they were CALIB v1): the solver
 %   starts from 30 uniform random points of its own.
 %   Resumable: every evaluation is cached in Result/Controllers/Map/Calib_v2/Map_CALIB_opt<runId>_s00000.csv and the solver state in D:/MatlabTemp/map_ckpt/Map_CALIB_opt<runId>_ckpt.mat.
 if nargin < 2 || isempty(maxEvals), maxEvals = 250; end
@@ -35,6 +35,7 @@ fprintf('optimize_map(%d) DONE: flag %d, %d evaluations, best J %.4f at K %.3g z
 end
 
 function F = objconstr(u, csvFile)
+eMax = 10;                           % must equal erelMax of map_opt_eval.m (PhuongPhap_TimThamSo.txt 13.2)
 x = map_u2x(u);
 try
     o = map_opt_eval(x, 0, csvFile);
@@ -44,7 +45,7 @@ catch ME
 end
 if o.simulated
     F.Fval = log(max(o.R * o.S, 1e-6));
-    F.Ineq = [o.c(1:3), o.erel - 5];
+    F.Ineq = [o.c(1:3), o.erel - eMax];
 else
     F.Fval = log(30);
     F.Ineq = [o.c(1:3), 0];

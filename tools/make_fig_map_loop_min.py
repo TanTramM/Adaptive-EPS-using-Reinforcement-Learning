@@ -1,9 +1,6 @@
-"""Minimal control-loop diagram of the assist-map controller (Map) in the notation of Seborg et al., Fig. 11.8: only the symbols G_c, G_v, G_p, G_d, G_m and
-the variables D, Y_d, Y_u, Y, Y_m, P, U (plus the vehicle speed v and its measurement v_m); the meaning of every symbol is given in the text of the paper
-(Figures/new/Fig_Map_loop_legend.txt), as Seborg does next to Fig. 11.8.  The map has no set point, so there is no first summing junction: the measured
-torque Y_m enters G_c directly.  Writes Figures/new/Fig_Map_loop.drawio (raw source, AsciiMath labels, Times New Roman) and .png/.pdf (preview).
+"""Draw the nonlinear Map closed loop in the signal-flow style of Seborg Fig. 11.7.
 
-Usage: python tools/make_fig_map_loop_min.py
+Run without arguments to write only draw.io; pass a preview base path for PNG.
 """
 import os
 import sys
@@ -12,37 +9,60 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from drawio_kit import Diagram
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BOX = dict(rounded=False, fill='#ffffff', fs=22, lw=1.8)
 
 
 def main():
-    d = Diagram(1500, 580, math=True, font='Times New Roman')
-    lab = 20
-    box = dict(rounded=False, fill='#ffffff', fs=22, lw=1.8)
-    y = 260                                                                   # forward path
-    # ---------------------------------------------------------------- forward path: G_c -> P -> G_v -> U -> G_p -> Y_u -> junction -> Y
-    d.block(210, y - 40, 130, 80, ['$G_c$'], **box)
-    d.block(480, y - 40, 130, 80, ['$G_v$'], **box)
-    d.block(750, y - 40, 130, 80, ['$G_p$'], **box)
-    d.sumj(1030, y, r=18, signs={'top': '+', 'left': '+'}, mark='x')
-    d.line([(340, y), (480, y)], arrow=True);  d.text(410, y - 24, '$P$', fs=lab)
-    d.line([(610, y), (750, y)], arrow=True);  d.text(680, y - 24, '$U$', fs=lab)
-    d.line([(880, y), (1012, y)], arrow=True); d.text(946, y - 24, '$Y_u$', fs=lab)
-    d.line([(1048, y), (1330, y)], arrow=True); d.text(1300, y - 24, '$Y$', fs=lab)
-    # ---------------------------------------------------------------- disturbance path (top): driver angle
-    d.block(750, 60, 130, 80, ['$G_d$'], **box)
-    d.line([(560, 100), (750, 100)], arrow=True); d.text(655, 76, '$D$', fs=lab)
-    d.line([(880, 100), (1030, 100), (1030, y - 18)], arrow=True); d.text(1052, 180, '$Y_d$', fs=lab, ha='left')
-    # ---------------------------------------------------------------- measurement: the only element of the bottom branch
-    d.block(760, 420, 170, 80, ['$G_m$'], **box)
-    d.dot(1150, y)
-    d.line([(1150, y), (1150, 460), (930, 460)], arrow=True)
-    d.line([(845, 560), (845, 500)], arrow=True); d.text(865, 540, '$v$', fs=lab, ha='left')
-    d.line([(760, 485), (60, 485), (60, y), (210, y)], arrow=True); d.text(410, 509, '$Y_m$', fs=lab)
-    d.line([(760, 440), (275, 440), (275, y + 40)], arrow=True); d.text(520, 416, '$v_m$', fs=lab)
-    out = os.path.join(REPO, 'Figures', 'new')
-    os.makedirs(out, exist_ok=True)
-    d.save(os.path.join(out, 'Fig_Map_loop'))
-    print('written', out)
+    d = Diagram(2670, 1130, math=True, font='Times New Roman')
+    y = 350
+    d.block(220, 290, 310, 120, ['Assist map', r'$M(v_m,T_{s,m})$'], **BOX)
+    d.block(670, 290, 230, 120, ['Lead-lag', r'$C_{map}(s)$'], **BOX)
+    d.frame(1010, 250, 690, 200, 'Final control element', fill='none', stroke='#555555', fs=22)
+    d.block(1040, 290, 240, 120, ['Assist limit', r'$L(T_{a,cmd},v_m)$'], **BOX)
+    d.block(1460, 290, 200, 120, ['Motor', r'$G_a(s)$'], **BOX)
+    d.block(1790, 250, 320, 200,
+            ['Nonlinear C-EPS plant', r'$\dot{x}=f(x,T_a,\theta_1,v,\mu)$',
+             r'$T_s=h_T(x,\theta_1)$'], **BOX)
+
+    for start, end, x, label in [
+        (530, 670, 600, r'$T_{map}$'),
+        (900, 1040, 970, r'$T_{a,cmd}$'),
+        (1280, 1460, 1370, r'$T_{a,lim}$'),
+        (1660, 1790, 1725, r'$T_a$'),
+    ]:
+        d.line([(start, y), (end, y)], arrow=True)
+        d.text(x, 318, label, fs=26)
+
+    for x, label in [(1850, r'$\theta_1$'), (1990, r'$v$'), (2070, r'$\mu$')]:
+        d.line([(x, 50), (x, 250)], arrow=True)
+        d.text(x - 25, 77, label, fs=26)
+    d.dot(1990, 110)
+
+    d.line([(2110, 320), (2400, 320)], arrow=True)
+    d.text(2180, 288, r'$T_s$', fs=26)
+    d.dot(2290, 320)
+    d.line([(2290, 320), (2290, 510), (2090, 510),
+            (2090, 630), (2150, 630)], arrow=True)
+
+    d.block(2150, 585, 230, 90, ['Torque sensor', r'$H_T$'], **BOX)
+    d.block(2150, 765, 230, 90, ['Speed sensor', r'$H_v$'], **BOX)
+    d.line([(1990, 110), (2520, 110), (2520, 725),
+            (2090, 725), (2090, 810), (2150, 810)], arrow=True)
+
+    d.line([(2380, 630), (2460, 630), (2460, 950),
+            (380, 950), (380, 410)], arrow=True)
+    d.text(2420, 593, r'$T_{s,m}$', fs=26)
+    d.line([(2380, 810), (2570, 810), (2570, 1050),
+            (130, 1050), (130, 325), (220, 325)], arrow=True)
+    d.text(2430, 773, r'$v_m$', fs=26)
+    d.dot(1150, 1050)
+    d.line([(1150, 1050), (1150, 410)], arrow=True)
+
+    path = os.path.join(REPO, 'Figures', 'new', 'Fig_Map_loop.drawio')
+    d.save_drawio(path)
+    print('written', path)
+    if len(sys.argv) > 1:
+        d.save_preview(sys.argv[1], scale=1.0, pdf=False)
 
 
 if __name__ == '__main__':

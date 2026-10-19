@@ -1,0 +1,17 @@
+Caption:
+Fig. X. Top-view geometry of the front-tire steering angle, slip angle, and
+lateral force.
+
+Notation:
+delta_f = theta_2/n_st   front-wheel steering angle
+v_f                      velocity at the equivalent front tire
+alpha_f                  angle from the velocity direction to the wheel plane
+F_yf(alpha_f,mu)         front-axle lateral tire force in the road plane
+
+Scope:
+This figure defines only the road-plane quantities used in the front slip-angle
+and lateral-force equations. It deliberately omits caster trail, pneumatic
+trail, and the effective steering moment arm. Those quantities remain modeling
+parameters in Eqs. (9)-(11), but their adopted dimensions have not been
+validated for a specific vehicle and are therefore not presented as measured
+geometry.
