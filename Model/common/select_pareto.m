@@ -40,10 +40,18 @@ xPreferred = table2array(front(preferred, spec.vn));
 samePreferred = all(abs(table2array(F(:, spec.vn)) - xPreferred) <= 1e-9 .* max(1, abs(xPreferred)), 2);
 order = [find(samePreferred, 1); find(~samePreferred)];
 pick = 0; M = struct();
+marginCacheFile = fullfile(spec.outDir, sprintf('%s_CALIB_margin_failures_s%05d.csv', spec.name, spec.seed0));
+marginFailures = readMarginFailures(marginCacheFile, spec.vn);
 for q = order(:)'
     x = table2array(F(q, spec.vn));
+    if ~isempty(marginFailures) && any(all(abs(table2array(marginFailures(:, spec.vn)) - x) <= 1e-9 .* max(1, abs(x)), 2))
+        fprintf('select_pareto(%s): J-rank %d skips cached calib_margin failure\n', spec.name, q);
+        continue;
+    end
     M = spec.marginFcn(x);
     if M.pass, pick = q; break; end
+    appendMarginFailure(marginCacheFile, spec.vn, x, M);
+    marginFailures = [marginFailures; array2table(x, 'VariableNames', spec.vn)]; %#ok<AGROW>
     fprintf('select_pareto(%s): J-rank %d fails calib_margin (%.3f / %.3f)\n', spec.name, q, M.ratio_gain, M.ratio_delay);
 end
 assert(pick > 0, 'select_pareto:noMargin', 'No feasible design passes calib_margin.');
@@ -107,6 +115,30 @@ if writeJson
     J.design = q;
     fid = fopen(spec.jsonPath, 'w'); assert(fid >= 0, 'Cannot write %s', spec.jsonPath);
     fprintf(fid, '%s', jsonencode(J, 'PrettyPrint', true)); fclose(fid);
+end
+end
+
+function T = readMarginFailures(fileName, variableNames)
+T = array2table(zeros(0, numel(variableNames)), 'VariableNames', variableNames);
+if ~isfile(fileName), return; end
+try
+    raw = readtable(fileName);
+    if all(ismember(variableNames, raw.Properties.VariableNames))
+        T = raw(:, variableNames);
+    end
+catch ME
+    warning('select_pareto:marginCacheRead', 'Ignoring unreadable margin cache %s: %s', fileName, ME.message);
+end
+end
+
+function appendMarginFailure(fileName, variableNames, x, M)
+row = array2table(x, 'VariableNames', variableNames);
+row.ratio_gain = M.ratio_gain;
+row.ratio_delay = M.ratio_delay;
+if isfile(fileName)
+    writetable(row, fileName, 'WriteMode', 'append');
+else
+    writetable(row, fileName);
 end
 end
 

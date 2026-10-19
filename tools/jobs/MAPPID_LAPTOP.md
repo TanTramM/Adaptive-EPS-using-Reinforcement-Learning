@@ -4,6 +4,8 @@
 
 Người dùng đã ủy quyền chạy MapPID trên laptop, tự chẩn đoán/sửa lỗi và ghi lịch sử. Khi nhận câu “đọc lịch sử các file tracking, bạn là khung chat mappid, làm theo hướng dẫn”, đọc `CLAUDE.md`, `Tracking/CLAUDE.md`, trạng thái và các lượt cuối `Tracking/historychat_mappid.md`, tài liệu này, cùng mục 13 của `Documents/Shared/PhuongPhap_TimThamSo.txt`. Bắt đầu công việc theo hướng dẫn dưới đây; không yêu cầu người dùng nhắc lại lệnh. Quyết định mới về lịch chạy trong tài liệu này thay khóa cũ chờ cả hai pick trước S1.
 
+Khi người dùng nói **“cập nhật và làm tiếp S2 sau khi xong S1”**, hiểu đó là lệnh đầy đủ để: (1) xác minh S1 có summary/done hợp lệ; (2) kiểm tra `git status` và bảo toàn toàn bộ kết quả mới trên laptop; (3) fetch/pull commit Map mới nhất; (4) chỉ khi commit đó có đồng thời `Model/data/map.json` đã chọn và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv` thì preflight rồi chạy S2; (5) sau S2 chạy `Select` và giám sát đến kết quả cuối. Không yêu cầu người dùng nhắc lại đường dẫn hay lệnh. Nếu remote chưa có đủ cặp Map này thì không lấy JSON tạm và không chạy S2; báo đúng rằng đầu vào Map chưa được push rồi tiếp tục bảo toàn S1.
+
 Laptop có MATLAB và toolbox cùng phiên bản desktop. Desktop tiếp tục Map; laptop sở hữu MapPID. Không khởi chạy Map/PID trên laptop. DREWS cũ đã bị hủy theo yêu cầu người dùng; hoàn tất ở bước chọn Pareto MapPID. Không tự chạy bộ DREWS mới đang được thiết kế.
 
 ## Chuẩn bị và chạy S1 ngay

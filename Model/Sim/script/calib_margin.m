@@ -86,6 +86,27 @@ catch ME
 end
 res.pass_gain = res.stable_gain && (res.ratio_gain <= 2.0);
 
+% A design that already fails the gain condition cannot pass the combined
+% margin gate.  Skip the delay simulation for that rejected candidate; the
+% delay condition is still always evaluated for every candidate that can be
+% selected.  This keeps the decision identical while avoiding one expensive
+% CALIB run for each failed fallback in a Pareto scan.
+if ~res.pass_gain
+    res.stable_delay = false;
+    res.R_delay = NaN;
+    res.ratio_delay = NaN;
+    res.pass_delay = false;
+    res.pass = false;
+    res.sensitivity = struct(...
+        'gain_1p5', res.stable_gain && (res.ratio_gain <= 1.5), ...
+        'gain_2p0', false, ...
+        'gain_3p0', res.stable_gain && (res.ratio_gain <= 3.0), ...
+        'delay_1p5', false, 'delay_2p0', false, 'delay_3p0', false);
+    fprintf('[calib_margin] %s: Gain x2 R=%.2f%% (x%.2f, FAIL) | Delay +1ms skipped => Margin: FAIL\n', ...
+        mdl, res.R_gain, res.ratio_gain);
+    return;
+end
+
 % 3. Condition (b): Pure transport delay +1 ms
 vars_delay = vars;
 vars_delay.act_gain_mult = 1;

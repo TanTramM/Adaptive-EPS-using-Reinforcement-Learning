@@ -6,6 +6,11 @@ addpath(modelDir); setup_paths;
 J = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json')));
 Ts0 = J.design.Ts0;
 Cal = calibrate_map_cached();
+% The selector starts in a fresh MATLAB process.  Keep the path in base so
+% mapMargin can load the shared Actuator/Plant variables before its first run.
+loadMapPath = which('load_map.m');
+assert(~isempty(loadMapPath), 'map_grid_spec:loadMap', 'load_map.m is not on the MATLAB path.');
+assignin('base', 'load_map_path', loadMapPath);
 spec = struct();
 spec.name = 'Map';
 spec.n = 5;
@@ -37,6 +42,11 @@ d = struct('Ts_ctrl', 1e-3, 'Ts0', Ts0, 'Kmax', x(1), ...
 end
 
 function M = mapMargin(x, Cal, Ts0)
+persistent mapWorkspaceLoaded
+if isempty(mapWorkspaceLoaded)
+    evalin('base', 'run(load_map_path)');
+    mapWorkspaceLoaded = true;
+end
 d = mapDesign(x, Ts0);
 M = calib_margin('Model_Map', 1, map_variables(Cal, d));
 Simulink.sdi.clear;
