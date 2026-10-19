@@ -2,6 +2,26 @@
 
 ## Chỉ dẫn cho khung chat MapPID mới
 
+### Tự động qua đêm: S1 → nhận Map → S2 → Select
+
+Desktop đã có bộ chờ `publish_map_when_ready.ps1`: chỉ khi pipeline Map DONE, pick và JSON khớp, hai margin đạt cổng và có báo cáo Pareto/năm seed thì tạo commit riêng và push nhánh `automation/map-s2-ready`. Không cần laptop chờ dữ liệu này trên `main`. Mất mạng được retry mỗi 60 giây; trạng thái ở `scratch/jobs/map_handoff_desktop/`.
+
+**Khung chat laptop kích hoạt NGAY trong lúc S1 đang chạy:** nhận commit cơ chế trên `main` bằng fetch/pull fast-forward (kiểm status, giữ mọi kết quả S1), rồi chạy tại gốc repo:
+
+```powershell
+$watcher = (Resolve-Path 'tools/jobs/continue_mappid_overnight.ps1').Path
+$job = Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $watcher + '"')) -WindowStyle Hidden -PassThru
+$job.Id
+```
+
+Xác nhận tiến trình còn sống và `scratch/jobs/map_handoff_laptop/status.txt` báo `WAIT_S1` hoặc `WAIT_MAP_REMOTE`. Chỉ có script trên GitHub chưa đủ: laptop phải khởi chạy bộ chờ này. Desktop không có kết nối điều khiển laptop. Hai máy phải thức, có mạng và MATLAB; bộ chờ tiếp tục chạy sau khi đóng khung chat, nhưng không tự bật lại máy khi mất điện/reboot.
+
+Bộ chờ đợi runner S1 nhả khóa, xác minh done/summary, fetch nhánh bàn giao mỗi 60 giây, kiểm mã nguồn và hash blob Git (dấu xác nhận nội dung), rồi nhập đúng năm file Map. Đây là cập nhật có chọn lọc thay cho merge toàn repo đang có dữ liệu chạy S1; giữ branch/HEAD và dữ liệu MapPID laptop, ghi commit nguồn vào `source_commit.txt`, sao lưu file bị thay vào scratch. Gặp thay đổi cục bộ xung đột hoặc mã MATLAB khác bản bàn giao thì dừng và ghi `FAILED` để khung laptop xử lý. Không dùng reset/clean. Khi hợp lệ, tự gọi runner S2 rồi Select, kiểm pick/JSON MapPID cuối và ghi `all.done`.
+
+Nếu S1 runner đã thoát nhưng chưa có summary/done, bộ chờ gọi lại S1 để dùng cache. Lỗi mạng tự retry; lỗi MATLAB vẫn dùng cơ chế retry của runner và dừng sau ba lỗi thật để agent đọc log/sửa. Cơ chế này không hứa chắc thời điểm hoàn tất: Map có thể không có ứng viên qua cổng hoặc S1/S2 có thể lâu hơn một đêm. Không hạ cổng để đạt hạn sáng.
+
+Xem trạng thái laptop: `scratch/jobs/map_handoff_laptop/status.txt`, `events.log`, `all.done`; log MATLAB vẫn ở `scratch/jobs/mappid_laptop/`. Khởi chạy một watcher duy nhất, khóa độc quyền chặn chạy trùng. DREWS cũ không chạy.
+
 Người dùng đã ủy quyền chạy MapPID trên laptop, tự chẩn đoán/sửa lỗi và ghi lịch sử. Khi nhận câu “đọc lịch sử các file tracking, bạn là khung chat mappid, làm theo hướng dẫn”, đọc `CLAUDE.md`, `Tracking/CLAUDE.md`, trạng thái và các lượt cuối `Tracking/historychat_mappid.md`, tài liệu này, cùng mục 13 của `Documents/Shared/PhuongPhap_TimThamSo.txt`. Bắt đầu công việc theo hướng dẫn dưới đây; không yêu cầu người dùng nhắc lại lệnh. Quyết định mới về lịch chạy trong tài liệu này thay khóa cũ chờ cả hai pick trước S1.
 
 Khi người dùng nói **“cập nhật và làm tiếp S2 sau khi xong S1”**, hiểu đó là lệnh đầy đủ để: (1) xác minh S1 có summary/done hợp lệ; (2) kiểm tra `git status` và bảo toàn toàn bộ kết quả mới trên laptop; (3) fetch/pull commit Map mới nhất; (4) chỉ khi commit đó có đồng thời `Model/data/map.json` đã chọn và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv` thì preflight rồi chạy S2; (5) sau S2 chạy `Select` và giám sát đến kết quả cuối. Không yêu cầu người dùng nhắc lại đường dẫn hay lệnh. Nếu remote chưa có đủ cặp Map này thì không lấy JSON tạm và không chạy S2; báo đúng rằng đầu vào Map chưa được push rồi tiếp tục bảo toàn S1.

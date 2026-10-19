@@ -9,7 +9,9 @@
 
 ---
 
-## TRẠNG THÁI HIỆN TẠI (cập nhật sau Lượt 436, 2026-10-19)
+## TRẠNG THÁI HIỆN TẠI (cập nhật sau Lượt 446, 2026-10-20)
+
+**Bàn giao tự động qua đêm:** Map grid đã xong, selector vẫn kiểm `calib_margin` (khoảng J-rank 108 lúc 00:58), chưa có pick/JSON mới. `tools/jobs/publish_map_when_ready.ps1` chờ pipeline DONE và xác minh pick/JSON/Pareto/năm seed rồi tự push nhánh `automation/map-s2-ready`; trạng thái ở `scratch/jobs/map_handoff_desktop/`. Laptop đang chạy S1; cần khung laptop nhận commit cơ chế trên main và khởi chạy `continue_mappid_overnight.ps1` ngay để tự chờ S1 → fetch bộ Map đã xác minh → S2 → Select. Không có kết nối điều khiển laptop từ desktop. Hướng dẫn và lệnh launch ở `tools/jobs/MAPPID_LAPTOP.md`. DREWS cũ bỏ qua. Không thể hứa chắc hạn buổi sáng khi chưa có Map qua cổng.
 
 **Vai:** khung Map (chat 1 trong 3 khung song song: Map, Linear = PI/PID, SMC). Chỉ ghi file này; đọc 1 lượt mới nhất của historychat_linear.md và historychat_smc.md mỗi lần làm việc để rút kinh nghiệm (chỉ ghi vào file của mình).
 
@@ -201,3 +203,20 @@ Người dùng xác nhận đang thiết kế bộ DREWS mới và không cần 
 
 ### Lượt 440 (2026-10-19 19:38) - Ước lượng thời gian Map Grid còn lại
 Sau phục hồi, CSV có 2,199 dòng và khoảng 456 thiết kế Map khác nhau đã cache; lưới thô còn xấp xỉ 568/1,024 điểm. Hai worker đang mô phỏng, worker 1 vừa retry sau heap corruption. Với tốc độ mới đo và phần còn lại gồm lưới thô, tối đa sáu lớp mịn và chọn năm seed (DREWS cũ đã bỏ), ước lượng thực tế khoảng 5--8 giờ, tức khoảng 00:40--03:40 ngày 2026-10-20 nếu không thêm crash/RAM wait. Đây là dải dự báo, không phải mốc chắc chắn vì chi phí CALIB và retry heap biến thiên.
+
+### Lượt 441 (2026-10-19 21:19) - Tiến độ Map Grid
+KIỂM: pipeline vẫn stage 1, 2,788 dòng CSV tương ứng 690 thiết kế Map khác nhau đã cache, tăng 234 thiết kế so với 19:38 và xấp xỉ 67% lưới thô 1,024 điểm. Worker 2 và 3 đang chạy; worker 1 retry lần 7 đang chờ headroom RAM 6 GB (hiện 3 GB), không phải failed. Chưa có worker grid hay chọn Pareto hoàn tất; DREWS cũ vẫn bị bỏ qua theo Lượt 439.
+
+### Lượt 442 (2026-10-19 21:53) - Tăng Map từ ba lên năm worker
+Người dùng xác nhận chỉ còn khung Map chạy và muốn tận dụng RAM tối đa với buffer nhỏ. Đo từ guard: RAM trống 9.9 GB, ba MATLAB dùng working set khoảng 2.6 GB, máy có 24 logical processors. Đã chuyển pipeline từ 3 lên 5 worker, giảm thời gian khởi động lệch từ 150 s xuống 60 s, hạ ngưỡng `job_lib_patient` từ 6 xuống 4 GB và guard từ 3 xuống 2 GB. Dừng đúng cây pipeline Map cũ PID 110188 cùng guard cũ PID 103312, sau đó mở lại cả hai; không xoá CSV/checkpoint nên cache 690 thiết kế được giữ nguyên và phân chia lại phần chưa làm theo năm worker. Lúc 21:58 đủ w1--w5 đều `running`; lúc 21:58:44 năm MATLAB dùng 10.16 GB và còn 4.29 GB RAM trống, cao hơn guard 2 GB; watchdog báo HEALTHY.
+
+### Lượt 443 (2026-10-19 22:14) - Kiểm tra các khung đang chạy/dừng
+KIỂM: Map grid pipeline vẫn hoạt động với 5 worker; w2 và w5 đang chạy MATLAB, w1/w3/w4 đang chờ headroom 2--3 GB để tự vào lại, không có marker `map_grid_*_failed.txt`. PID grid đã `ALL DONE` lúc 10:59, gồm cả chọn và scoring theo pipeline PID. MapPID supervisor vẫn sống nhưng báo `PID_pick=ready, Map_pick=pending`, tức đang chờ Map là đúng phụ thuộc, không phải crash. `failed_init_pid_grid_select_failed.txt` là marker lỗi cũ của lần khởi tạo PID, còn pipeline PID cuối đã hoàn tất; trạng thái MapOpt `map_o4_1` ngày 18/10 là log cũ, không có tiến trình `map_opt` hiện tại và không thuộc phương pháp grid mới. Watchdog Map vẫn HEALTHY.
+
+### Lượt 444 (2026-10-19 22:46--23:09) - Sửa chọn Map: workspace, crash và retry bền vững
+Theo yêu cầu người dùng, `mapMargin` nay nạp `load_map.m` vào base workspace bằng `evalin('base', 'run(load_map_path)')` một lần mỗi phiên MATLAB, trước `calib_margin`; lỗi `Actuator/Motor_lag/Numerator` đã hết. Dừng riêng select MATLAB cũ đang lặp lỗi, rồi chạy lại stage 2; cả năm worker grid đã DONE nên restart chọn không chạy lại lưới. Phát hiện một ứng viên làm MATLAB R2023a crash (`0xffffffff`) khi margin; thêm `Timeout=90` s ở `calib_run.m` và cơ chế Common `margin_inflight`: nếu MATLAB chết giữa một margin, retry ghi chính xác điểm đó vào `Map_CALIB_margin_failures_s00000.csv` và bỏ qua nó, không lặp vô hạn. Lúc 23:05 selection retry mới chạy đúng, đã skip điểm crash và các failure cache; rank 1--5 đều chạy `calib_margin` thật nhưng bị loại vì gain-margin 3.59--3.60 > 2.00. Chưa được tạo `Map_CALIB_pick_s00000.csv` hay ghi `map.json` mới vì chưa có ứng viên nào qua gate thực; selector vẫn đang tiếp tục các rank còn lại, không có lỗi workspace/crash-loop.
+### Lượt 445 (2026-10-20 00:21) - Trạng thái selector Map
+Kiểm tra mới nhất: Map grid đã hoàn tất; selector Pareto vẫn đang chạy trong MATLAB (try=1, watchdog HEALTHY, log cập nhật lúc 00:21). Log đã tới khoảng J-rank 64; các ứng viên hiện tại bị loại bởi `calib_margin` do gain-margin khoảng 3.59--3.61 vượt gate 2.00, không phải selector bị dừng. Chưa có `Map_CALIB_pick_s00000.csv`, marker done/failed, hoặc `map.json` mới; `Model/data/map.json` hiện vẫn là bản cũ. DREWS Map cũ không chạy theo yêu cầu.
+
+### Lượt 446 (2026-10-20) - Tự push Map và laptop tự tiếp tục S2 qua đêm
+Người dùng ủy quyền triển khai và push cơ chế tự bàn giao sau khi Map xong; laptop hiện chạy S1. Đã tạo ba script PowerShell: common kiểm Git/byte/hash/pick-json, publisher chờ Map pipeline DONE rồi kiểm cổng margin và năm file bàn giao, consumer chờ S1 nhả khóa và có summary/done rồi fetch nhánh riêng, giữ S1, nhận đúng Map và chạy S2 rồi Select. Publisher dùng index riêng/commit-tree nên không kéo các sửa bài báo hay index người dùng vào commit dữ liệu; không đổi HEAD khi tự publish. Consumer không merge toàn repo có kết quả S1, chỉ nhập payload đã xác minh, kiểm mã MATLAB không lệch, lưu commit nguồn và bản trước thay; có khóa chặn trùng, retry mạng, kiểm S1 summary không đổi, kiểm MapPID pick/JSON trước all.done. Đã cập nhật MAPPID_LAPTOP.md. Kiểm thử hai repo Git giả cục bộ PASS: push/fetch, giữ nguyên S1, thứ tự S2→Select, PNG không hỏng byte, all.done; không chạy MATLAB giả làm bằng chứng khoa học. Test tìm thấy và đã sửa giới hạn đường dẫn Windows. Muốn tự tiếp tục laptop phải bật watcher một lần; desktop không có quyền truy cập từ xa vào máy đó. Chưa thể đảm bảo xong sáng vì Map vẫn chưa qua chọn và thời gian S1/S2 phụ thuộc mô phỏng.
