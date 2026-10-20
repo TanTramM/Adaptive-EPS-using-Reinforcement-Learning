@@ -39,8 +39,16 @@ switch action
         result = alternate(upper(action),workerId,nWorkers);
     case 'select'
         for start = {'S1','S2'}
-            assert(isfile(fullfile(output(false),[start{1} '_summary.mat'])), ...
+            f=fullfile(output(false),[start{1} '_summary.mat']);
+            assert(isfile(f), ...
                 'run_mappid_six:missingStart','Missing completed %s.',start{1});
+            saved=load(f,'summary');
+            assert(isfield(saved,'summary') && isfield(saved.summary,'profile') && ...
+                strcmp(saved.summary.profile,'Map2_MapPID6_v1') && ...
+                strcmp(saved.summary.start,start{1}) && numel(saved.summary.x)==6, ...
+                'run_mappid_six:wrongProfile','%s is not a completed six-variable start.',start{1});
+            assert(saved.summary.nScans>=2 && saved.summary.nScans<=6, ...
+                'run_mappid_six:incompleteStart','%s scan count is invalid.',start{1});
         end
         result = choose(false);
     case {'loadmap','load'}
@@ -270,6 +278,7 @@ else
     blocks=[2 1 2 1 2 1];
 end
 unchanged=0; scans=cell(0,1);
+initialX=decode(u,false);
 for stage=1:6
     if blocks(stage)==1, s.free=1:2; letter='A'; else, s.free=3:6; letter='B'; end
     s.tag=sprintf('%s%s%d',start,letter,ceil(stage/2)); s.u0=u;
@@ -280,6 +289,6 @@ for stage=1:6
     if unchanged>=2, break; end
 end
 summary=struct('profile','Map2_MapPID6_v1','start',start,'nScans',numel(scans), ...
-    'u',u,'x',decode(u,false),'scans',{scans});
+    'u',u,'x',decode(u,false),'initialX',initialX,'searchSeed',30000,'scans',{scans});
 if workerId==1, save(fullfile(output(false),[start '_summary.mat']),'summary'); end
 end

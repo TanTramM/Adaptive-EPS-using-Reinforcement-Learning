@@ -35,6 +35,16 @@ function Stop-Owned($jobs) {
             & "$env:SystemRoot\System32\taskkill.exe" /PID $job.Process.Id /T /F | Out-Null
         }
     }
+    # A MATLAB launcher may exit before its engine. Identify surviving engines
+    # by this supervisor's unique batch expression before retrying the layer.
+    $engines=@(Get-CimInstance Win32_Process -Filter "Name='MATLAB.exe'" -ErrorAction SilentlyContinue)
+    foreach($job in $jobs) {
+        foreach($engine in $engines) {
+            if($engine.CommandLine -and $engine.CommandLine.Contains($job.Marker)) {
+                & "$env:SystemRoot\System32\taskkill.exe" /PID $engine.ProcessId /T /F | Out-Null
+            }
+        }
+    }
 }
 function Run-Stage([string]$name,[string]$action,[bool]$parallel) {
     $done=Join-Path $state "$name.done"
