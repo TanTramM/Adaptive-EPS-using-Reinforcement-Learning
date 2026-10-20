@@ -225,6 +225,24 @@ end
 
 function sel=choose(isMap)
 s=specification(isMap); sel=select_pareto(s,false);
+if ~isMap
+    for start={'S1','S2'}
+        files=dir(fullfile(output(false),sprintf('MapPID_CALIB_%s*_w*_s30000.csv',start{1})));
+        T=table();
+        for k=1:numel(files), T=[T;readtable(fullfile(files(k).folder,files(k).name))]; end %#ok<AGROW>
+        ok=T.simulated==1 & all(T{:,{'c1','c2','c3','c4'}}<=0,2) & isfinite(T.J);
+        best=Inf; if any(ok), best=min(T.J(ok)); end
+        sel.(start{1})=struct('bestJ',best);
+    end
+    sel.twoRegions=isfinite(sel.S1.bestJ) && isfinite(sel.S2.bestJ) && ...
+        abs(sel.S1.bestJ-sel.S2.bestJ)/min(sel.S1.bestJ,sel.S2.bestJ)>=.03;
+    sel.noMap=sel.x(1)==0;
+    u=encode(sel.x,false); sel.pidNearOff=all(u(3:5)<=.01);
+    sel.noLead=abs(sel.design.lead.p/sel.design.lead.z-1)<1e-9;
+    sel.noLag=abs(sel.design.lag.p1/sel.design.lag.z1-1)<1e-9;
+    fprintf('SixParam regions: S1 best J %.8g; S2 best J %.8g; separated >=3%%: %d\n', ...
+        sel.S1.bestJ,sel.S2.bestJ,sel.twoRegions);
+end
 J=struct('profile','Map2_MapPID6_v1','variables',{variables(isMap)}, ...
     'x',sel.x,'design',sel.design,'selection',sel, ...
     'rule','block grid; J=R*S; 3 percent PM tie; full original gates; five-seed report', ...
