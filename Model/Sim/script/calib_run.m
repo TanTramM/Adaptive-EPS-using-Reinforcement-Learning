@@ -29,6 +29,17 @@ modelDir = fileparts(fileparts(fileparts(mfilename('fullpath'))));   % Model/
 if ~bdIsLoaded(mdl), load_system(mdl); end
 in = Simulink.SimulationInput(mdl);
 in = in.setModelParameter('StopTime', sprintf('%.15g', S.t(end)));
+% Wall-clock cap: an unstable candidate must not block an entire grid selection.
+% Ordinary CALIB runs complete well below this limit; a timeout is handled as
+% a failed margin run by calib_margin.
+in = in.setModelParameter('Timeout', 90);
+% A parallel worker has its own base workspace.  Supplying the actuator
+% corner frequency explicitly keeps Motor_lag self-contained when the model
+% is compiled from a SimulationInput (rather than relying on a prior base
+% workspace lookup during model loading).
+assert(evalin('base', 'exist(''motor_wm'', ''var'')') == 1, ...
+    'calib_run:missingMotorWm', 'motor_wm is absent; run the controller load script before CALIB.');
+in = in.setVariable('motor_wm', evalin('base', 'motor_wm'));
 V = sensor_noise_vars(runSeed);
 fn = fieldnames(V);
 for k = 1:numel(fn), in = in.setVariable(fn{k}, V.(fn{k})); end

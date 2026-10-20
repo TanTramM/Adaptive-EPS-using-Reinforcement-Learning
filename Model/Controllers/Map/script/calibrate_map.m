@@ -1,4 +1,4 @@
-function Cal = calibrate_map()
+function Cal = calibrate_map(publish)
 %CALIBRATE_MAP Dry-road calibration points of the Map: for every speed and lateral acceleration, the sensor torque the driver should feel
 %   and the assist torque that gives it. Independent of K_max, of the lead and of any controller.
 %
@@ -14,6 +14,7 @@ function Cal = calibrate_map()
 %
 %   Cal.v_kmh (17x1); per speed i (cells): Cal.ay_g{i}, Cal.Ts{i}, Cal.Tr{i}, Cal.Ta{i}, Cal.slope{i} (first element NaN); Cal.ay_lim_g(i), Cal.Ta_max(i).
 %   Writes Result/Controllers/Map/Design/Map_calibration_points.csv and the "calibration" field of data/map.json.
+if nargin < 1, publish = true; end
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(fileparts(scriptDir)));   % Model/
 addpath(modelDir); setup_paths;
@@ -46,6 +47,9 @@ for i = 1:n
         rows(end+1, :) = {v_kmh(i), ay(j), Ts(j), Tr(j), Ta(j), sl(j), Cal.Ta_max(i), Cal.Ta_max(i) - Ta(j), Ta(j) > Cal.Ta_max(i) + 1e-9}; %#ok<AGROW>
     end
 end
+% Independent search profiles can compute calibration without publishing or
+% changing the Map frame's JSON or design outputs.
+if ~publish, return; end
 T = cell2table(rows, 'VariableNames', {'v_kmh', 'ay_g', 'Ts_cal_Nm', 'Tr_Nm', 'Ta_cal_Nm', 'natural_slope', 'Ta_max_Nm', 'Ta_margin_Nm', 'Ta_cal_exceeds_Ta_max'});
 T.Ta_cal_exceeds_Ta_max = double(T.Ta_cal_exceeds_Ta_max);
 outDir = result_dir('Map', 'Design');
@@ -61,7 +65,20 @@ for i = 1:n
     pts(i) = struct('v_kmh', v_kmh(i), 'ay_g', Cal.ay_g{i}, 'Ts_Nm', Cal.Ts{i}, 'Ta_Nm', Cal.Ta{i});
 end
 J.calibration = struct('ay_step_g', 0.005, 'ay_lim_g', Cal.ay_lim_g', 'points', pts);
-fid = fopen(mp, 'w'); fwrite(fid, jsonencode(J, 'PrettyPrint', true)); fclose(fid);
+% Publish JSON atomically.  A selector can have several MATLAB workers which
+% read map.json while another process refreshes calibration metadata; exposing
+% a half-written JSON document would make a valid candidate look invalid.
+tmp = [tempname(fileparts(mp)), '.json'];
+fid = fopen(tmp, 'w'); assert(fid >= 0, 'calibrate_map:jsonWrite', 'Cannot write %s', tmp);
+cleanup = onCleanup(@() deleteIfPresent(tmp));
+fwrite(fid, jsonencode(J, 'PrettyPrint', true)); fclose(fid);
+[ok, msg] = movefile(tmp, mp, 'f');
+assert(ok, 'calibrate_map:jsonPublish', 'Cannot publish %s: %s', mp, msg);
+clear cleanup;
 
 fprintf('calibrate_map: %d speeds, %d points; T_a,cal above T_a,max at %d points; written %s\n', n, height(T), sum(T.Ta_cal_exceeds_Ta_max), outDir);
+end
+
+function deleteIfPresent(fileName)
+if isfile(fileName), delete(fileName); end
 end
