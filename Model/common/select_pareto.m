@@ -5,7 +5,7 @@ function sel = select_pareto(spec, writeJson)
 %   toDesign, jsonPath. Optional fields: PMfin, GMfin, erelMax.
 
 if nargin < 2, writeJson = false; end
-defaults = {'PMfin',30; 'GMfin',2; 'erelMax',10};
+defaults = {'PMfin',30; 'GMfin',2; 'erelMax',10; 'marginWorkers',1};
 for i = 1:size(defaults, 1), if ~isfield(spec, defaults{i,1}), spec.(defaults{i,1}) = defaults{i,2}; end, end
 req = {'name','outDir','vn','seed0','seeds','evalFcn','marginFcn','toDesign','jsonPath'};
 for i = 1:numel(req), assert(isfield(spec, req{i}), 'select_pareto:spec', 'Missing spec.%s', req{i}); end
@@ -42,17 +42,56 @@ order = [find(samePreferred, 1); find(~samePreferred)];
 pick = 0; M = struct();
 marginCacheFile = fullfile(spec.outDir, sprintf('%s_CALIB_margin_failures_s%05d.csv', spec.name, spec.seed0));
 marginFailures = readMarginFailures(marginCacheFile, spec.vn);
-for q = order(:)'
-    x = table2array(F(q, spec.vn));
-    if ~isempty(marginFailures) && any(all(abs(table2array(marginFailures(:, spec.vn)) - x) <= 1e-9 .* max(1, abs(x)), 2))
-        fprintf('select_pareto(%s): J-rank %d skips cached calib_margin failure\n', spec.name, q);
-        continue;
+order = order(:)';
+marginWorkers = max(1, floor(spec.marginWorkers));
+pool = [];
+if marginWorkers > 1
+    try
+        pool = gcp('nocreate');
+        if isempty(pool) || pool.NumWorkers ~= marginWorkers
+            if ~isempty(pool), delete(pool); end
+            pool = parpool('local', marginWorkers);
+        end
+        fprintf('select_pareto(%s): evaluating calib_margin in ordered batches of %d workers\n', spec.name, marginWorkers);
+    catch ME
+        warning('select_pareto:parallelMargin', 'Parallel margin pool unavailable (%s); using one worker.', ME.message);
+        pool = [];
+        marginWorkers = 1;
     end
-    M = spec.marginFcn(x);
-    if M.pass, pick = q; break; end
-    appendMarginFailure(marginCacheFile, spec.vn, x, M);
-    marginFailures = [marginFailures; array2table(x, 'VariableNames', spec.vn)]; %#ok<AGROW>
-    fprintf('select_pareto(%s): J-rank %d fails calib_margin (%.3f / %.3f)\n', spec.name, q, M.ratio_gain, M.ratio_delay);
+end
+poolCleanup = onCleanup(@() closeMarginPool(pool));
+next = 1;
+while next <= numel(order)
+    batch = zeros(1, 0);
+    while next <= numel(order) && numel(batch) < marginWorkers
+        q = order(next); next = next + 1;
+        x = table2array(F(q, spec.vn));
+        if ~isempty(marginFailures) && any(all(abs(table2array(marginFailures(:, spec.vn)) - x) <= 1e-9 .* max(1, abs(x)), 2))
+            fprintf('select_pareto(%s): J-rank %d skips cached calib_margin failure\n', spec.name, q);
+        else
+            batch(end + 1) = q; %#ok<AGROW>
+        end
+    end
+    if isempty(batch), continue; end
+    Xbatch = table2array(F(batch, spec.vn));
+    Mbatch = cell(1, numel(batch));
+    if isempty(pool)
+        for b = 1:numel(batch), Mbatch{b} = runMargin(spec.marginFcn, Xbatch(b, :)); end
+    else
+        parfor b = 1:numel(batch)
+            Mbatch{b} = runMargin(spec.marginFcn, Xbatch(b, :));
+        end
+    end
+    % Consume results in J order. Parallel work can evaluate later points early,
+    % but it cannot change which feasible fallback is selected.
+    for b = 1:numel(batch)
+        q = batch(b); x = Xbatch(b, :); M = Mbatch{b};
+        if M.pass, pick = q; break; end
+        appendMarginFailure(marginCacheFile, spec.vn, x, M);
+        marginFailures = [marginFailures; array2table(x, 'VariableNames', spec.vn)]; %#ok<AGROW>
+        fprintf('select_pareto(%s): J-rank %d fails calib_margin (%.3f / %.3f)\n', spec.name, q, M.ratio_gain, M.ratio_delay);
+    end
+    if pick > 0, break; end
 end
 assert(pick > 0, 'select_pareto:noMargin', 'No feasible design passes calib_margin.');
 chosen = F(pick, :); x = table2array(chosen(:, spec.vn));
@@ -118,12 +157,38 @@ if writeJson
 end
 end
 
+function M = runMargin(marginFcn, x)
+%RUNMARGIN Preserve a worker failure: it must never become a cached rejection.
+M = marginFcn(x);
+end
+
+function closeMarginPool(pool)
+if ~isempty(pool) && isvalid(pool), delete(pool); end
+end
+
 function T = readMarginFailures(fileName, variableNames)
 T = array2table(zeros(0, numel(variableNames)), 'VariableNames', variableNames);
 if ~isfile(fileName), return; end
 try
     raw = readtable(fileName);
+    % Early selector runs wrote a headerless CSV.  Recover that cache rather
+    % than silently re-running all already validated candidates.
+    if ~all(ismember(variableNames, raw.Properties.VariableNames))
+        raw = readtable(fileName, 'ReadVariableNames', false);
+        if width(raw) >= numel(variableNames)
+            raw.Properties.VariableNames(1:numel(variableNames)) = variableNames;
+            if width(raw) >= numel(variableNames) + 2
+                raw.Properties.VariableNames(numel(variableNames) + (1:2)) = {'ratio_gain', 'ratio_delay'};
+            end
+        end
+    end
     if all(ismember(variableNames, raw.Properties.VariableNames))
+        % Inf means the MATLAB/Simulink execution itself failed (for example a
+        % missing worker workspace variable), not that this design failed a
+        % physical margin test.  Such rows must be retried after recovery.
+        if ismember('ratio_gain', raw.Properties.VariableNames)
+            raw = raw(isfinite(raw.ratio_gain), :);
+        end
         T = raw(:, variableNames);
     end
 catch ME
@@ -136,7 +201,9 @@ row = array2table(x, 'VariableNames', variableNames);
 row.ratio_gain = M.ratio_gain;
 row.ratio_delay = M.ratio_delay;
 if isfile(fileName)
-    writetable(row, fileName, 'WriteMode', 'append');
+    % A legacy headerless file is still readable by readMarginFailures, but
+    % write new files with the column names required for portable recovery.
+    writetable(row, fileName, 'WriteMode', 'append', 'WriteVariableNames', false);
 else
     writetable(row, fileName);
 end

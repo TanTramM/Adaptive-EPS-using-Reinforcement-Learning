@@ -65,5 +65,10 @@ physical RAM and consider commit headroom. If the reserve is crossed, stop only
 this supervisor's process trees, retain CSVs, reduce worker count and resume.
 RAM occupancy depends on current work; do not allocate filler memory to reach
 80%. Worker repartitioning is safe because each layer uses all per-tag CSVs.
+Selection also uses a RAM-sized margin pool (up to MaxWorkers minus its client).
+Only the client writes rejection caches and consumes worker results in ranking
+order. `test_mappid_six_selector` verifies a real two-worker rejection/fallback
+using synthetic data in a separate temporary directory; it does not simulate
+the plant or modify a real pick. Run this test while grid workers are stopped.
 
 Record scientific blockers and any code repairs in Tracking/historychat_mappid.md.

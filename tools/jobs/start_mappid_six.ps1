@@ -68,7 +68,9 @@ function Run-Stage([string]$name,[string]$action,[bool]$parallel) {
                 $stdout=Join-Path $state "${name}_${stamp}_w${worker}.out.log"
                 $stderr=Join-Path $state "${name}_${stamp}_w${worker}.err.log"
                 $marker="MAPPID_SIX_${name}_W${worker}_DONE"
-                $expr="run('$matlabRoot/Model/setup_paths.m'); run_mappid_six('$action',$worker,$count); disp('$marker')"
+                $matlabWorkers=$count
+                if($action -in @('mapselect','select')) { $matlabWorkers=$cap }
+                $expr="run('$matlabRoot/Model/setup_paths.m'); run_mappid_six('$action',$worker,$matlabWorkers); disp('$marker')"
                 $process=Start-Process -FilePath $MatlabExe -ArgumentList @('-softwareopengl','-batch',('"'+$expr+'"')) -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
                 $jobs+=@{Process=$process;Out=$stdout;Err=$stderr;Marker=$marker}
                 Start-Sleep -Seconds 2
@@ -105,7 +107,8 @@ function Run-Stage([string]$name,[string]$action,[bool]$parallel) {
                 $requested=$count+1
                 Status "$name below 80 percent RAM for 180 s; resuming cached grid with $requested workers"
             } elseif($ramStop) {
-                $cap=[math]::Max(1,$count-1)
+                if($action -in @('mapselect','select')) { $cap=[math]::Max(1,$cap-1) }
+                else { $cap=[math]::Max(1,$count-1) }
                 Status "$name RAM reserve reached; cached rows retained; retry cap=$cap"
             } elseif($allLogs -match 'select_pareto:noMargin|No feasible design passes calib_margin|No grid point passes all gates') {
                 Status "$name BLOCKED: no design passes unchanged gates; cache retained"

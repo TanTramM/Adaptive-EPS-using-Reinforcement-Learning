@@ -34,7 +34,7 @@ switch action
         s.u0 = [.5 .5]; s.coarse = true; s.hStart = 1/6;
         result = grid_search(s,workerId,nWorkers);
     case 'mapselect'
-        result = choose(true);
+        result = choose(true,nWorkers);
     case {'s1','s2'}
         result = alternate(upper(action),workerId,nWorkers);
     case 'select'
@@ -50,7 +50,7 @@ switch action
             assert(saved.summary.nScans>=2 && saved.summary.nScans<=6, ...
                 'run_mappid_six:incompleteStart','%s scan count is invalid.',start{1});
         end
-        result = choose(false);
+        result = choose(false,nWorkers);
     case {'loadmap','load'}
         isMap=strcmp(action,'loadmap');
         f=fullfile(output(isMap),'selected.json');
@@ -231,8 +231,19 @@ assert(isfinite(M.ratio_gain),'run_mappid_six:marginExecution', ...
     'Nonfinite margin result: inspect simulation before rejecting this design.');
 end
 
-function sel=choose(isMap)
-s=specification(isMap); sel=select_pareto(s,false);
+function sel=choose(isMap,maxProcesses)
+s=specification(isMap);
+% A selector client plus a small process pool uses the same overall budget
+% as the grid. Every worker initializes its own immutable calibration/base
+% variables; only the client appends margin rejections in deterministic order.
+if maxProcesses>2
+    [~,sys]=memory;
+    headroom=sys.PhysicalMemory.Available/2^30;
+    reserve=.10*sys.PhysicalMemory.Total/2^30;
+    s.marginWorkers=max(1,min(maxProcesses-1,floor((headroom-reserve)/1.8)));
+end
+fprintf('SixParam selection: margin workers=%d, client=1\n',s.marginWorkers);
+sel=select_pareto(s,false);
 if ~isMap
     for start={'S1','S2'}
         files=dir(fullfile(output(false),sprintf('MapPID_CALIB_%s*_w*_s30000.csv',start{1})));
