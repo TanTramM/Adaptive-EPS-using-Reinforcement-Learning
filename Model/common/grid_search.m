@@ -16,12 +16,12 @@ h = spec.hStart;
 fineCount = 0;
 seenX = zeros(0, spec.n);       % completed layers only; prevents a cross-worker race at layer boundaries
 
+center = u0;
 if spec.coarse
     U = makeGrid(u0, free, [0 1/3 2/3 1]);
     runLayer(U, 'coarse', NaN);
+    center = bestCenter(rowsForPoints(readRunRows(), seenX));
 end
-
-center = bestCenter(rowsForPoints(readRunRows(), seenX));
 while fineCount < maxFine && h >= 0.02
     oldCenter = center;
     U = makeLocalGrid(oldCenter, free, h);
