@@ -1,0 +1,71 @@
+{
+  "profile": "Map2_MapPID6_v1",
+  "grid_complete": true,
+  "margin_scan_complete": true,
+  "standalone_selected": false,
+  "search_seed": 0,
+  "margin_seed": 1,
+  "gain_ratio_limit": 2,
+  "n_evaluated": 38,
+  "n_simulated": 31,
+  "n_nominally_feasible": 22,
+  "n_gain_margin_pass": 0,
+  "nominal_best": {
+    "K": 8.52112777691,
+    "g_min": 0.707106781187,
+    "seed": 0,
+    "J": 3.11029433801279,
+    "R_pct": 6.780716762943,
+    "S_Nm": 0.45869698539994,
+    "TV": 166.69286352636,
+    "erel_pct": 5.24823595627589,
+    "rev_pct": 0.0389127615017282,
+    "PM_deg": 45.1846146668963,
+    "GM": 4.96158211551264,
+    "HF": 77.3296584096523,
+    "lagGain2Hz": 0.709616568036953,
+    "simulated": 1,
+    "c1": -15.1846146668963,
+    "c2": -2.96158211551264,
+    "c3": -0.0025097868504057,
+    "c4": -4.75176404372411,
+    "seconds": 113.1090988,
+    "margin_gain_ratio_seed1": 3.59543512012402
+  },
+  "lowest_gain_ratio": {
+    "K": 8.11800214941,
+    "g_min": 0.719310665304,
+    "seed": 0,
+    "J": 3.27222382230609,
+    "R_pct": 7.1897456092202,
+    "S_Nm": 0.455123727619759,
+    "TV": 162.468999009623,
+    "erel_pct": 5.34284011514517,
+    "rev_pct": 0.0352606140535213,
+    "PM_deg": 45.0386471947062,
+    "GM": 5.25002068507837,
+    "HF": 73.9521117278841,
+    "lagGain2Hz": 0.722947122739809,
+    "simulated": 1,
+    "c1": -15.0386471947062,
+    "c2": -3.25002068507837,
+    "c3": -0.0158403415532617,
+    "c4": -4.65715988485483,
+    "seconds": 106.4500138,
+    "margin_gain_ratio_seed1": 3.3468654041824
+  },
+  "note": "No point in this registered grid passes the unchanged gain x2 gate. This is not proof that the entire continuous family is infeasible. No selected Map or S2 initialization is published.",
+  "date": "2026-10-20 11:05:08",
+  "nominal_best_compensator": {
+    "Kmax": 8.52112777691,
+    "g_min": 0.707106781187,
+    "lead": {
+      "z": 37.028423461312187,
+      "p": 884.30206493702462
+    },
+    "lag": {
+      "z1": 28.127579267824331,
+      "p1": 10.688480121773246
+    }
+  }
+}

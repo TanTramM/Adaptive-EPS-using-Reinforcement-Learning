@@ -77,3 +77,9 @@ using synthetic data in a separate temporary directory; it does not simulate
 the plant or modify a real pick. Run this test while grid workers are stopped.
 
 Record scientific blockers and any code repairs in Tracking/historychat_mappid.md.
+
+For a completed grid with no passing Map margin, run `report_mappid_six_map`.
+It audits complete rejection coverage and publishes a joined CSV plus
+`Map_CALIB_search_report.json` with `standalone_selected=false`. This report
+is evidence only; it does not create a selected Map or unlock S2. A change
+to the S2 initialization prerequisite must be explicitly decided and recorded.

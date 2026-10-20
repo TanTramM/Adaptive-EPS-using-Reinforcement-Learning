@@ -45,7 +45,20 @@ marginFailures = readMarginFailures(marginCacheFile, spec.vn);
 order = order(:)';
 marginWorkers = max(1, floor(spec.marginWorkers));
 pool = [];
-if marginWorkers > 1
+% Do not create a native process pool merely to replay a complete rejection
+% cache. This path must report noMargin without pool startup/shutdown (which
+% can itself crash a MATLAB session after all candidate results are saved).
+pendingMargin = true;
+if ~isempty(marginFailures)
+    Xordered = table2array(F(order, spec.vn));
+    Xfailed = table2array(marginFailures(:, spec.vn));
+    cached = false(size(Xordered,1),1);
+    for q = 1:size(Xordered,1)
+        cached(q) = any(all(abs(Xfailed-Xordered(q,:)) <= 1e-9.*max(1,abs(Xordered(q,:))),2));
+    end
+    pendingMargin = any(~cached);
+end
+if marginWorkers > 1 && pendingMargin
     try
         pool = gcp('nocreate');
         if isempty(pool) || pool.NumWorkers ~= marginWorkers
