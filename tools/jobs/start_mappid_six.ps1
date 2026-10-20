@@ -72,18 +72,41 @@ function Run-Stage([string]$name,[string]$action,[bool]$parallel) {
                 if($action -in @('mapselect','select')) { $matlabWorkers=$cap }
                 $expr="run('$matlabRoot/Model/setup_paths.m'); run_mappid_six('$action',$worker,$matlabWorkers); disp('$marker')"
                 $process=Start-Process -FilePath $MatlabExe -ArgumentList @('-softwareopengl','-batch',('"'+$expr+'"')) -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
-                $jobs+=@{Process=$process;Out=$stdout;Err=$stderr;Marker=$marker}
+                $jobs+=@{Process=$process;Out=$stdout;Err=$stderr;Marker=$marker;Expression=$expr;Worker=$worker;Recoveries=0;RetryAt=$null}
                 Start-Sleep -Seconds 2
             }
             $ramStop=$false; $workerError=$false; $expand=$false; $lowSince=$null
             while($true) {
                 $running=0
                 foreach($job in $jobs) {
+                    if($null -ne $job.RetryAt) {
+                        $running++
+                        if((Get-Date) -ge $job.RetryAt) {
+                            $retryMemory=Memory
+                            if($retryMemory.Free -ge ($retryMemory.Reserve+1.6)) {
+                                $retryStamp=Get-Date -Format 'yyyyMMdd_HHmmss_fff'
+                                $job.Out=Join-Path $state "${name}_${retryStamp}_w$($job.Worker)_recovery$($job.Recoveries).out.log"
+                                $job.Err=Join-Path $state "${name}_${retryStamp}_w$($job.Worker)_recovery$($job.Recoveries).err.log"
+                                $job.Process=Start-Process -FilePath $MatlabExe -ArgumentList @('-softwareopengl','-batch',('"'+$job.Expression+'"')) -WindowStyle Hidden -RedirectStandardOutput $job.Out -RedirectStandardError $job.Err -PassThru
+                                $job.RetryAt=$null
+                                Status "$name worker=$($job.Worker) recovered from cache; healthy peers kept running"
+                            }
+                        }
+                        continue
+                    }
                     $job.Process.Refresh()
                     if(-not $job.Process.HasExited) { $running++ }
                     else {
                         $log=(Get-Content -LiteralPath $job.Out,$job.Err -Raw -ErrorAction SilentlyContinue)-join "`n"
-                        if(-not $log.Contains($job.Marker)) { $workerError=$true }
+                        if(-not $log.Contains($job.Marker)) {
+                            if($log -match '0xc0000374|0xffffffff') {
+                                Stop-Owned @($job)
+                                $job.Recoveries++
+                                $job.RetryAt=(Get-Date).AddSeconds(60)
+                                $running++
+                                Status "$name worker=$($job.Worker) native crash; cached rows kept; retry in 60 s; peers remain active"
+                            } else { $workerError=$true }
+                        }
                     }
                 }
                 if($running -eq 0 -or $workerError) { break }

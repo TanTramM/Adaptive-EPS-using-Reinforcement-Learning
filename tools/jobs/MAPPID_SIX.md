@@ -15,6 +15,11 @@ or untracked files. Conflicts/divergence are logged and deferred, never reset or
 stashed automatically. Monitor `scratch/jobs/mappid_six/sync.log`.
 Run supervisors hidden when starting from a chat. Only one supervisor owns this
 profile at a time. Do not start a second copy on the laptop against these outputs.
+Native heap corruption (`0xc0000374`) or interruption (`0xffffffff`) schedules
+only the failed grid worker for a 60-second retry with the same worker ID/count;
+healthy peers keep computing or wait at their normal layer barrier. Recovery
+waits for startup RAM headroom. Physical RAM pressure still restarts/repartitions
+the entire owned group. Real MATLAB code errors are diagnosed after three tries.
 
 ## Search fixed before execution
 
