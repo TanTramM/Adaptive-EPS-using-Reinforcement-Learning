@@ -25,7 +25,7 @@ run_job_patient() {
     status "$tag" "$i" "waiting for memory (need ${START_GB} GB headroom, now $(free_gb))"
     wait_mem
     status "$tag" "$i" "running"
-    export TEMP='D:\MatlabTemp' TMP='D:\MatlabTemp'
+    export TEMP="${MATLAB_TEMP:-D:\MatlabTemp}" TMP="${MATLAB_TEMP:-D:\MatlabTemp}"
     "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch "run('$REPO/Model/setup_paths.m'); $expr" > "$S/${tag}_try$i.log" 2>&1
     KILLMARK="$expr" powershell -NoProfile -ExecutionPolicy Bypass -File "$JOBS_DIR/kill_job.ps1"
     if grep -q "$marker" "$S/${tag}_try$i.log"; then

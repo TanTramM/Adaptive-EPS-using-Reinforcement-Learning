@@ -31,7 +31,7 @@ run_job() {
   rm -f "$S/${tag}_failed.txt"
   for i in $(seq 1 "$MAX_TRIES"); do
     wait_mem "$tag"
-    export TEMP='D:\MatlabTemp' TMP='D:\MatlabTemp'
+    export TEMP="${MATLAB_TEMP:-D:\MatlabTemp}" TMP="${MATLAB_TEMP:-D:\MatlabTemp}"
     log "$tag start try $i"
     "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch "run('$REPO/Model/setup_paths.m'); $expr" > "$S/${tag}_try$i.log" 2>&1
     KILLMARK="$expr" powershell -NoProfile -ExecutionPolicy Bypass -File "$JOBS_DIR/kill_job.ps1"
