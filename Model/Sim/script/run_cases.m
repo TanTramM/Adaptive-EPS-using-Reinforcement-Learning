@@ -1,36 +1,45 @@
-function M = run_cases(ctrlName, runSeed)
+function M = run_cases(ctrlName, runSeed, set)
 %RUN_CASES Run the standard test cases (make_cases.m) on one controller and save the results.
 %
 %   M = run_cases('Map')            % ideal sensors
 %   M = run_cases('Map', 99999)     % noisy sensors, run seed 99999 (the scoring seed of the standard test cases)
+%   M = run_cases('Map', 99999, 'V1')   % the old set DREWS v1 (make_cases('DREWS_V1')), results in Cases/; the default set is DREWS v2 (5 cases of 60 s,
+%                                       2026-10-22), results in Cases_v2/ (result_dir token 'CasesV2'); v2 runs never write into Cases/
 %
 %   Noise (Sensors subsystem, data/sensors.json, Documents/Sim/ThucTeHoa.txt): the seed is passed to the model per run
 %   (sensor_noise_vars.m), so every controller sees the same noise sequence for the same seed. All metrics and plots use the TRUE
 %   signals (log_T_s, log_e_T... come from the scoring Reference), not what the controller measured. The sensor mode is the token
 %   <sens> in every file name (sensor_tag.m): 'ideal' (no seed) or 's<5 digits>' (noisy, e.g. s99999).
 %
-%   Runs Model_<ctrlName>.mdl (run load_<ctrl> and build the closed-loop model first). For every case <CASE> in DRY, RAMP, SLIP, WEAVE, EDGE:
-%     Result/Controllers/<ctrlName>/Cases/<ctrlName>_<CASE>_sig_<sens>.csv    t, theta1, v, mu, a_y target, T_s, T_d_ref, e_T, T_a, a_y
+%   Runs Model_<ctrlName>.mdl (run load_<ctrl> and build the closed-loop model first). For every case <CASE> in DRY, RAMP, SLIP, EDGE, WEAVE:
+%     Result/Controllers/<ctrlName>/Cases_v2/<ctrlName>_<CASE>_sig_<sens>.csv    t, theta1, v, mu, a_y target, T_s, T_d_ref, e_T, T_a, a_y
 %     Result/Controllers/<ctrlName>/Cases/<ctrlName>_<CASE>_resp_<sens>.png   3 panels: T_s vs T_d,ref | e_T with the scoring windows shaded | T_a
-%   and one table Result/Controllers/<ctrlName>/Cases/<ctrlName>_metrics_<sens>.csv:
+%   and one table Result/Controllers/<ctrlName>/Cases_v2/<ctrlName>_metrics_<sens>.csv (Cases/ for the set 'V1'):
 %     per case  : RMS e_T, max |e_T|, RMS T_a, max |T_a|, total variation of T_a per second (smoothness), S (RMS of T_a high-passed at 5 Hz),
 %                 reverse assist (% of scored samples with |T_s| >= 0.5 N.m and T_a against T_s), peak |T_a| in % of T_a,max(v)
-%     per window: mean e_T, mean T_d,ref and mean e_T / mean T_d,ref over the windows defined in make_cases.m
+%                 and the report-only columns of KeHoach_DREWS_v2.txt 2.2 (added at the END of the table, on t >= 2 s, from the true T_s and T_d,ref):
+%                 MaxAbs_Ts_Nm, MaxOver_Nm = max(|T_s| - |T_d,ref|), Heavy_s = time |T_s| > 1.1 |T_d,ref| (heavy hand), MinRatio = min |T_s| / |T_d,ref|,
+%                 Light_s = time |T_s| < 0.9 |T_d,ref| (light hand), RevPeak_Nm = peak assist against T_s, Sat_pct = % of time |T_a| >= 0.98 T_a,max.
+%                 MinRatio, Heavy_s and Light_s use only samples with |T_d,ref| > 0.5 N.m (below it the ratio is noise); MaxAbs_Ts_Nm and MaxOver_Nm use all.
+%     per window: mean e_T, mean T_d,ref and mean e_T / mean T_d,ref over the windows defined in make_cases.m; Recovery_s for the windows whose label ends in
+%                 _rec: time from t0 (the mu step) until |e_T| < 10 % of |T_d,ref| and held for 1 s (NaN = not reached inside the window)
 %   The first 2 s of each case are not scored (start from rest). make_cases() returns DRY, RAMP, SLIP, WEAVE and EDGE (RAMP and EDGE are report only).
 
 scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir);
 if nargin < 2, runSeed = []; end
+if nargin < 3 || isempty(set), set = 'V2'; end
+assert(any(strcmp(set, {'V1', 'V2'})), 'run_cases: set must be V1 or V2');
 noiseVars = sensor_noise_vars(runSeed);
 saveFigs = true;
 sens = sensor_tag(runSeed);
-outDir = result_dir(ctrlName, 'Cases');
+if strcmp(set, 'V1'), outDir = result_dir(ctrlName, 'Cases'); else, outDir = result_dir(ctrlName, 'CasesV2'); end
 mdl = ['Model_' ctrlName];
 
-TC = make_cases();
+if strcmp(set, 'V1'), TC = make_cases('DREWS_V1'); else, TC = make_cases(); end
 TaMaxJ = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
-rows = {};
+rows = {}; nanc = num2cell(nan(1, 7));
 for k = 1:numel(TC)
     S = TC(k);
     L = runCase(modelDir, mdl, S, noiseVars);
@@ -38,14 +47,15 @@ for k = 1:numel(TC)
     dt = L.t(2) - L.t(1); a = dt / (1 / (2 * pi * 5) + dt);
     hp = L.T_a - filter(a, [1 -(1 - a)], L.T_a);
     TaMax = interp1(TaMaxJ.Ta_max.v_kmh(:), TaMaxJ.Ta_max.Ta_max_Nm(:), L.v * 3.6, 'linear', 'extrap');
+    ex = reportColumns(L, TaMax, w);
     rows(end+1, :) = {S.tag, 'whole case', sqrt(mean(L.e_T(w).^2)), max(abs(L.e_T(w))), NaN, NaN, ...
         sqrt(mean(L.T_a(w).^2)), max(abs(L.T_a(w))), sum(abs(diff(L.T_a(w)))) / (L.t(end) - 2), ...
-        sqrt(mean(hp(w).^2)), 100 * mean(abs(L.T_s(w)) >= 0.5 & L.T_a(w) .* L.T_s(w) < 0), 100 * max(abs(L.T_a(w)) ./ TaMax(w))}; %#ok<AGROW>
+        sqrt(mean(hp(w).^2)), 100 * mean(abs(L.T_s(w)) >= 0.5 & L.T_a(w) .* L.T_s(w) < 0), 100 * max(abs(L.T_a(w)) ./ TaMax(w)), ex{:}, NaN}; %#ok<AGROW>
     for j = 1:numel(S.win)
         in = L.t >= S.win(j).t0 & L.t <= S.win(j).t1;
         e = mean(L.e_T(in)); Td = mean(abs(L.T_d_ref(in)));
         rows(end+1, :) = {S.tag, S.win(j).label, sqrt(mean(L.e_T(in).^2)), max(abs(L.e_T(in))), e, ...
-            100 * e * sign(mean(L.T_d_ref(in))) / max(Td, eps), NaN, NaN, NaN, NaN, NaN, NaN}; %#ok<AGROW>
+            100 * e * sign(mean(L.T_d_ref(in))) / max(Td, eps), NaN, NaN, NaN, NaN, NaN, NaN, nanc{:}, recoveryTime(L, S.win(j))}; %#ok<AGROW>
     end
     T = table(L.t, L.theta1, L.v, L.mu, L.ayTarget, L.T_s, L.T_d_ref, L.e_T, L.T_a, L.a_y, 'VariableNames', ...
         {'t', 'theta1_rad', 'v_mps', 'mu', 'a_y_target_g', 'T_s', 'T_d_ref', 'e_T', 'T_a', 'a_y'});
@@ -56,9 +66,38 @@ for k = 1:numel(TC)
     fprintf('run_cases: %s %s done (RMS e_T %.3f N.m)\n', ctrlName, S.tag, rows{end - numel(S.win), 3});
 end
 M = cell2table(rows, 'VariableNames', {'Case', 'Window', 'RMS_eT_Nm', 'MaxAbs_eT_Nm', 'Mean_eT_Nm', ...
-    'Mean_eT_signed_pct_of_Tdref', 'RMS_Ta_Nm', 'MaxAbs_Ta_Nm', 'TV_Ta_Nm_per_s', 'S_Nm', 'Rev_pct', 'Peak_Ta_pct_of_Tamax'});
+    'Mean_eT_signed_pct_of_Tdref', 'RMS_Ta_Nm', 'MaxAbs_Ta_Nm', 'TV_Ta_Nm_per_s', 'S_Nm', 'Rev_pct', 'Peak_Ta_pct_of_Tamax', ...
+    'MaxAbs_Ts_Nm', 'MaxOver_Nm', 'Heavy_s', 'MinRatio', 'Light_s', 'RevPeak_Nm', 'Sat_pct', 'Recovery_s'});
 writetable(M, fullfile(outDir, sprintf('%s_metrics_%s.csv', ctrlName, sens)));
 evalin('base', 'clear sc_theta1 sc_v sc_mu');
+end
+
+%% ===================== report-only columns (KeHoach_DREWS_v2.txt 2.2) =====================
+function ex = reportColumns(L, TaMax, w)
+    dt = L.t(2) - L.t(1);
+    Ts = L.T_s(w); Td = L.T_d_ref(w); Ta = L.T_a(w);
+    big = abs(Td) > 0.5;                                  % ratio-based quantities only where T_d,ref is not near zero
+    ratio = abs(Ts(big)) ./ abs(Td(big));
+    minRatio = NaN; if any(big), minRatio = min(ratio); end
+    against = abs(Ts) >= 0.5 & Ta .* Ts < 0;
+    revPeak = 0; if any(against), revPeak = max(abs(Ta(against))); end
+    ex = {max(abs(Ts)), max(abs(Ts) - abs(Td)), dt * sum(big & abs(Ts) > 1.1 * abs(Td)), minRatio, ...
+        dt * sum(big & abs(Ts) < 0.9 * abs(Td)), revPeak, 100 * mean(abs(Ta) >= 0.98 * TaMax(w))};
+end
+
+function r = recoveryTime(L, win)
+% Time from win.t0 until |e_T| < 10 % of |T_d,ref| and kept for 1 s inside the window; NaN when not a recovery window or not reached.
+    r = NaN;
+    if ~endsWith(win.label, '_rec'), return; end
+    in = find(L.t >= win.t0 & L.t <= win.t1);
+    dt = L.t(2) - L.t(1); n1 = round(1 / dt);
+    bad = abs(L.e_T(in)) >= 0.1 * abs(L.T_d_ref(in));
+    cs = [0; cumsum(bad(:))];
+    for i = 1:numel(in) - n1
+        if cs(i + n1 + 1) - cs(i) == 0
+            r = (i - 1) * dt; return;
+        end
+    end
 end
 
 %% ===================== one case =====================

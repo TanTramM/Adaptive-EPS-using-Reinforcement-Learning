@@ -1,0 +1,10 @@
+DREWS v2 LOCKED (cases frozen; do not edit make_cases.m / run_cases.m after this point; a build error found later: stop, log, push, re-run all three controllers)
+Locked at   : 2026-10-22 01:12:21 +0700   (branch auto/drews-v2, framework TESTCASE, plan Documents/Shared/KeHoach_DREWS_v2.txt)
+Cases       : DRY, RAMP, SLIP, EDGE, WEAVE  (make_cases(); order as listed)
+Durations   : DRY 60.000 s, RAMP 60.000 s, SLIP 60.000 s, EDGE 60.000 s, WEAVE 60.000 s (1 ms grid, 60001 samples each; total 300 s)
+Windows     : DRY 8, RAMP 5, SLIP 9, EDGE 6, WEAVE 3 (names: Documents/Shared/QuyChuan.txt 3.2A)
+Seeds       : 99995-99999 (all controllers); controllers on PC: PID, Map; MapPID on the laptop
+Results dir : Result/Controllers/<Ctrl>/Cases_v2 (result_dir token 'CasesV2')
+Feasibility : test_drews.m PASS; check_drews.m (PID) in Result/Compare/DREWS_v2_check/
+SHA-256 Model/Sim/script/make_cases.m : 3b372ed5998f881880040574db99ad2286e5e920a73e3ac1d4a30495dbf06b99
+SHA-256 Model/Sim/script/run_cases.m  : 5bc2b348ed4ca0f71644e43bd51793d4bf72ee2048c8784afe396f74b9bf24c9

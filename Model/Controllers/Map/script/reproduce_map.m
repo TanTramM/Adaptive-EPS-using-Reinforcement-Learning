@@ -69,7 +69,7 @@ end
 if any(stages == 6)
     fprintf('\n[reproduce_map] STAGE 6: five scoring cases with the chosen point, seed 00000\n');
     evalin('base', sprintf('run(''%s'')', strrep(fullfile(modelDir, 'Controllers', 'Map', 'load_map.m'), '\', '/')));
-    run_cases('Map', 0);
+    run_cases('Map', 0, 'V1');   % DREWS v1 reproduction
 end
 fprintf('\n[reproduce_map] done in %.1f min\n', toc(tStart) / 60);
 end

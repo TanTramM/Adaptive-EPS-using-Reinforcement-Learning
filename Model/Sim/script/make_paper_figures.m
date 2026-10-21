@@ -25,7 +25,7 @@ ttl = {'(a) Assist map', '(b) PI', '(c) PID'};
 rc = fullfile(repo, 'Result', 'Controllers');
 
 fig3(rc, outDir, ctrl, col, ttl);
-TC = make_cases();
+TC = make_cases('DREWS_V1');   % the paper figures use DREWS v1 (Cases/)
 sig = struct();
 for k = 1:3
     for c = 1:numel(TC)

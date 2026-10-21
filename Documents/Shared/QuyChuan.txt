@@ -85,6 +85,45 @@ e_rel có dấu từng cửa sổ, RMS e_T, S, TV như EDGE. Lý do thêm: CALIB
 6 lệch +13 % ở DRY v40a0p3r); sửa riêng CALIB cho vùng đó bị coi là chỉnh cho riêng Map, và nếu sửa thì phải quét đều mỗi bước 10 km/h, nên người dùng chốt giữ CALIB, ghi đây là hạn chế đã
 biết, và để RAMP lộ hiện tượng này như một ca chấm báo cáo áp cho mọi bộ như nhau. Mọi bộ đều chọn tham số trên CALIB theo cùng quy tắc nên RAMP không thiên vị bộ nào. Tên gọi tắt cả bộ ca:
 DREWS = DRY, RAMP, SLIP, EDGE, WEAVE.
+3.2A. Bộ ca chấm DREWS v2 (chốt 2026-10-22, khung TESTCASE dựng theo Documents/Shared/KeHoach_DREWS_v2.txt; thay bộ năm ca DRY, RAMP, SLIP, WEAVE, EDGE của mục 3.2, từ nay gọi là DREWS v1; v1 giữ
+trong make_cases('DREWS_V1') và thư mục kết quả Cases/, để tái lập kết quả cũ). Lý do thay: bộ v1 có sáu điểm yếu. (1) DRY dùng đúng tốc độ (20-100 km/h) và mức giữ cua (0.1, 0.2, 0.3 g) của CALIB
+v2, nên chọn tham số và chấm điểm trên cùng điều kiện; (2) SLIP (mu 0.8 xuống 0.3 ở 0.3 g, 100 km/h) gần trùng bước mu của CALIB (0.8 xuống 0.35 ở 0.3 g, 60 km/h); (3) thời lượng lẻ và không đều
+(DRY 129 s, RAMP 308.6 s, SLIP 63 s, WEAVE 61 s), nên trọng số ngầm không đều; (4) RAMP, EDGE ghi 'chỉ báo cáo' còn ba ca kia 'chấm điểm' mà không có lý do; (5) cửa sổ chấm thừa kế từ ca cũ, không
+thiết kế cho từng câu hỏi; (6) chưa đo nặng tay, nhẹ tay theo thời gian, bão hòa và thời gian hồi phục.
+Nguyên tắc v2: năm ca, tên giữ nguyên (DRY, RAMP, SLIP, EDGE, WEAVE), MỖI CA ĐÚNG 60,000 s (lưới 1 ms, 60001 mẫu; tổng 300 s), cả năm ca đều chấm, EDGE ghi rõ là ngoài vùng thiết kế (trên 0.3 g);
+mỗi ca hỏi một câu gắn với một tình huống lái; tổ hợp (tốc độ, mức a_y, mu, tần số) nằm ngoài lưới CALIB v2 (riêng RAMP dùng 0.2 g, một mức của CALIB, nhưng với tốc độ đổi liên tục mà CALIB không
+có; SLIP, EDGE, WEAVE dùng vài tốc độ trùng lưới CALIB như kế hoạch 1.3-1.5 đã chọn, nhưng khác mức a_y, mu hoặc tần số); kích thích là góc vô-lăng vòng hở theo bảng góc ổn định như CALIB (a_y chỉ
+là nhãn của góc); không đánh lái sin dưới 40 km/h; đổi tốc độ 0.2 s cho mỗi km/h, tối thiểu 4 s; tải bám |a_y|/mu tối đa 0.75 ở cảnh có bước mu.
+Bảng năm ca (a_y > 0 là rẽ trái; cửa sổ đặt tên theo Tracking/CLAUDE.md; seed chấm 99995-99999, cùng cho mọi bộ):
+  DRY    60 s  mu 0.8. 2 s đi thẳng 25 km/h, rồi bốn khối 11 s ở 25, 45, 75, 95 km/h (đổi tốc độ 4, 6, 4 s giữa các khối). Mỗi khối: 0.15 g trái (vào 1 s, lắng 2 s, cửa sổ 1 s), về 0 trong 1.5 s,
+         0.25 g phải (cùng cấu trúc), về 0 trong 1.5 s. Cửa sổ v25a0p15l, v25a0p25r, ..., v95a0p25r (8). Câu hỏi: sai số tĩnh ở tốc độ và mức không dùng để chọn tham số. Chỉ tiêu chính: max |e_rel|.
+  RAMP   60 s  mu 0.8, giữ cua 0.2 g trái một chiều. 0-3 s đi thẳng 90 km/h; 3-4 s vào cua; 4-7 s giữ 90; 7-27 s giảm 90 xuống 40 km/h; 27-31 s giữ 40; 31-51 s tăng 40 lên 90; 51-58 s giữ 90; 58-60 s về 0.
+         Cửa sổ mid_h1 [5,7], mid_dn [7,27], mid_h2 [28,31], mid_up [31,51], mid_h3 [53,58]. Câu hỏi: bám khi giá trị đặt đổi liên tục theo tốc độ (đỉnh gia tốc dọc 1.1 m/s2 của đường (1 - cos)).
+  SLIP   60 s  ba cảnh (46 s) nối bằng đoạn đi thẳng (14 s). drop: 70 km/h, 0.2 g trái, mu 0.8 xuống 0.5 tại 6 s (tải bám 0.40); pud: 85 km/h, 0.15 g phải, vũng nước mu 0.2 trong 1 s tại 6 s rồi 0.8
+         (tải bám 0.75); rise: 55 km/h, 0.2 g trái, mu 0.4 lên 0.8 tại 6 s (tải bám 0.50 trước bước). Cửa sổ <cảnh>_pre [5,6], <cảnh>_in [6,8] (sau bước), <cảnh>_rec [6,12] (hồi phục). Câu hỏi: nhẹ tay khi mu
+         giảm, nặng tay và hồi phục khi mu tăng.
+  EDGE   60 s  mu 0.8, ngoài vùng thiết kế. e50: 50 km/h 0.35 g trái 5 s rồi 0.38 g 5 s; e80: 80 km/h phải, cùng cấu trúc; e65: 65 km/h vào cua nhanh tới 0.35 g trong 0.5 s (từ 2.5 s), giữ 4 s. Cửa sổ
+         v50a0p35l, v50a0p38l, v80a0p35r, v80a0p38r (1 s cuối mỗi bậc), v65in [2.5,4.5], v65a0p35l. Câu hỏi: hành vi gần giới hạn trợ lực, khi bão hòa.
+  WEAVE  60 s  ba cảnh (48 s) + đoạn đi thẳng (12 s). ctr: 100 km/h, mu 0.8, lái quanh tâm 0.05 g, 0.2 Hz, 4 chu kỳ (20 s); dlc: 80 km/h, mu 0.8, đổi làn kép 0.25 g, 0.6 Hz, 2 chu kỳ; mu3: 60 km/h,
+         mu 0.3, lượn 0.15 g, 0.75 Hz, 5 chu kỳ (6.67 s), tải bám 0.5. Cửa sổ ctr [3,22], dlc (đúng hai chu kỳ), mu3 (từ 0.5 s sau khi vào sin). Neo theo tinh thần ISO 13674-1 (lái quanh tâm) và ISO 3888
+         (đổi làn kép); References/ chưa có văn bản ISO nên KHÔNG trích số của chuẩn.
+Chỉ tiêu thêm (mục 2.2 của kế hoạch, run_cases.m, cột mới ở CUỐI bảng metrics, giữ nguyên các cột cũ; tính trên t >= 2 s từ T_s và T_d,ref thật; chỉ BÁO CÁO, không là cổng): MaxAbs_Ts_Nm = max
+|T_s|; MaxOver_Nm = max(|T_s| - |T_d,ref|); Heavy_s = thời gian |T_s| > 1.1 |T_d,ref| (nặng tay); MinRatio = min |T_s|/|T_d,ref|; Light_s = thời gian |T_s| < 0.9 |T_d,ref| (nhẹ tay); RevPeak_Nm =
+đỉnh T_a ngược dấu T_s (trợ lực ngược, cùng điều kiện |T_s| >= 0.5 N.m như Rev_pct); Sat_pct = % thời gian |T_a| >= 0.98 T_a,max; Recovery_s (cửa sổ có nhãn kết thúc _rec) = thời gian từ bước mu tới
+khi |e_T| < 10 % |T_d,ref| và giữ liên tục 1 s (NaN = không đạt trong cửa sổ, không đặt số). Lựa chọn khi cài (ghi trước khi chốt): MinRatio, Heavy_s, Light_s chỉ tính ở mẫu có |T_d,ref| > 0.5 N.m
+(dưới ngưỡng này tỉ số là nhiễu); MaxAbs_Ts_Nm và MaxOver_Nm tính trên mọi mẫu. Ngưỡng 10 % và 0.9 / 1.1 là ngưỡng người lái phân biệt được (cùng căn cứ với e_rel, Deborne 2014). Báo trung bình và
+độ lệch năm seed theo từng ca, không gộp thành một điểm tổng có trọng số; so theo cặp, chênh dưới 5 % hoặc dưới độ lệch giữa các seed thì coi là ngang nhau (mục 6.4). Chặn trên mô-men tay do
+AssistLimit dùng chung (|T_a| <= T_a,max) chỉ lập luận trong bài, không có cổng (nhật ký COMMON Lượt 207).
+Kiểm khả thi trước khi chốt (Model/Sim/script/check_drews.m, chạy với PID chỉ để vòng kín chạy được; ghi ở Result/Compare/DREWS_v2_check/): thời lượng đúng 60.000 s cả năm ca; ở mọi cửa sổ giữ (DRY,
+RAMP, SLIP, EDGE) trung bình a_y thực khác a_y đặt dưới 1 % (đo 0.0-0.9 %); đỉnh a_y thực trong cửa sổ có bước mu hay vào nhanh lệch tới +10.5 % (vũng nước, xe vọt khi mu thấp), +3.5 % (rise) và
+dưới 1 % ở các cửa sổ còn lại; tải bám lớn nhất của a_y đặt: DRY 0.31, RAMP 0.25, SLIP 0.75 (vũng nước), EDGE 0.475, WEAVE 0.50, đều dưới 0.86; a_y lớn nhất Plant ở 25 km/h là 0.31 g nên DRY 0.25 g
+dùng 81 % giới hạn Plant; góc vô-lăng lớn nhất 130 độ (DRY, 25 km/h, 0.25 g). TRUNG THỰC: ở hai cảnh sin nhanh, đỉnh a_y thực nhỏ hơn đỉnh đặt 11.7 % (dlc, 0.6 Hz) và 12.7 % (mu3, 0.75 Hz), vượt mức
+10 % của kế hoạch 1.6; nguyên nhân là động học xe (người lái vòng hở dùng bảng góc ổn định, a_y thật bị trễ ở tần số này), giống nhau cho mọi bộ, không phải lỗi dựng; không bù biên độ để khỏi chỉnh
+ca; a_y chỉ là nhãn của góc vô-lăng. Ở cảnh ctr biên độ 0.05 g đã cho T_d,ref đỉnh khoảng 1.7 N.m, lớn hơn vùng chết 0.3 N.m của Map nên cảnh này không đo riêng vùng chết.
+Giữ v1: make_cases('DREWS_V1'), run_cases(ctrl, seed, 'V1') ghi vào Cases/; mặc định (không tham số hoặc 'V2') là DREWS v2, ghi vào Cases_v2/ (result_dir(ctrl, 'CasesV2')); run_cases bản v2 không
+ghi vào Cases/. make_pair_comparisons, plot_compare_cases, make_paper_figures và reproduce_map gọi bản v1 tường minh. Kết quả DRY, SLIP, WEAVE, EDGE, RAMP v1 vẫn so được với nhau nhưng KHÔNG so được
+với v2. Khóa ca: Documents/Shared/DREWS_v2_LOCKED.txt (ngày giờ, mã băm SHA-256 của make_cases.m và run_cases.m); sau khi chốt không sửa ca; lỗi dựng phát hiện sau đó thì dừng, ghi nhật ký, và nếu
+sửa thì chạy lại cho cả ba bộ.
 3.3. Seed: mỗi bộ chọn tham số trên CALIB bằng MỘT seed local đầu dải của mình (Map 00000, PI và PID 10000, SMC 20000, MapPID 30000, MapPIDLag 50000, RL dải huấn luyện riêng chưa gán); chạy DRY,
 SLIP, WEAVE (và EDGE) riêng lẻ bằng cảm biến lý tưởng và seed local đó; khi so sánh nhiều bộ dùng seed chung 99999 (make_pair_comparisons) rồi xóa các file *_s99999.* do lệnh so sánh sinh ra trong
 thư mục Cases của từng bộ. RL: tập kịch bản huấn luyện phải tách rời khỏi CALIB và DRY, SLIP, WEAVE (kịch bản, tốc độ, mu, nhiễu khác), seed huấn luyện khác seed chấm. Với các điểm chung kết của
@@ -278,6 +317,11 @@ quả.
 ==============================================================================================================================================================================================
 NHẬT KÝ THAY ĐỔI QUY CHUẨN
 ==============================================================================================================================================================================================
+- 2026-10-22, DREWS v2 (người dùng chốt hướng trong nhật ký COMMON Lượt 208-210, khung TESTCASE dựng và chốt ca ngày 2026-10-22 trên nhánh auto/drews-v2): bộ năm ca chấm điểm DRY, RAMP, SLIP, EDGE,
+  WEAVE thay bằng bộ v2, mỗi ca đúng 60 s, điều kiện ngoài lưới CALIB v2, thêm chỉ tiêu nặng tay, nhẹ tay, trợ lực ngược, bão hòa, hồi phục (mục 3.2A). Lý do: sáu điểm yếu của bộ v1 (mục 3.2A). Đây
+  là lần đổi ca chấm TRƯỚC khi chạy bất kỳ bộ nào trên v2, nhưng SAU khi đã có kết quả DREWS v1 của Map, PID và các bộ khác; ca v2 không được chỉnh theo hướng làm bộ nào tốt hơn. Kết quả DREWS v1
+  (thư mục Cases/) giữ nguyên để tái lập và không so được với v2. Phải chạy lại DREWS (năm seed 99995-99999): mọi bộ có điểm chọn; PC chạy PID và Map, laptop chạy MapPID. Phần chọn tham số (CALIB
+  v2) không đổi.
 - 2026-10-17, phiên bản 6 (người dùng chốt trong phiên khung TESTCASE, sau khi bàn từng đoạn, Tracking/historychat_testcase.md Lượt 1-10): CALIB v1 (117 s, ba khối 20, 60, 100 km/h, bốn nhóm
   R) thay bằng CALIB v2 (140 s, chín khối 20-100 km/h bước 10, 68 cửa sổ; mục 3.1); R đổi từ trung bình đều bốn nhóm sang trung bình nhân ba nhóm static, dyn, mu với sàn 1 % mỗi nhóm (mục
   4.1); cổng e_rel lấy trên 26 cửa sổ (mục 4.4, 5.3). Lý do: (1) CALIB v1 không phân biệt được Kp (92 % trong 120 thiết kế tốt nhất của MapPIDOpt có Kp dưới 0.1, R và S trùng nhau, MapPID
