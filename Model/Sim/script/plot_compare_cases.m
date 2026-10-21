@@ -26,7 +26,7 @@ gridColor = [0.85 0.85 0.85];
 
 tag = strjoin(ctrlList, '_vs_');
 outDir = result_dir('Compare', tag);
-TC = make_cases();
+TC = make_cases('DREWS_V1');   % comparisons of the old set DREWS v1 (Cases/)
 for k = 1:numel(TC)
     S = TC(k);
     D = cell(1, numel(ctrlList));

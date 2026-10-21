@@ -21,6 +21,8 @@ function p = result_dir(varargin)
     % resume (cached rows) from v1 results; the v1 results stay untouched in Calib/ and are reached with the token 'CalibV1' (reproduction only).
     if numel(parts) >= 3 && strcmp(parts{1}, 'Controllers')
         if strcmp(parts{3}, 'Calib'), parts{3} = 'Calib_v2'; elseif strcmp(parts{3}, 'CalibV1'), parts{3} = 'Calib'; end
+        % DREWS v2 (2026-10-22): the token 'CasesV2' is Cases_v2 on disk; 'Cases' stays the folder of DREWS v1 and is never written by v2 runs
+        if strcmp(parts{3}, 'CasesV2'), parts{3} = 'Cases_v2'; end
     end
     root = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))), 'Result');   % this file is Model/common/
     p = fullfile(root, parts{:});
