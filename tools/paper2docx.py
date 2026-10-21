@@ -172,7 +172,7 @@ def bullet(doc, text):
     add_rich(p, text)
 
 
-def build(txt_path, docx_path):
+def build(txt_path, docx_path, through=None):
     lines = open(txt_path, encoding='utf-8').read().splitlines()
     doc = Document(TEMPLATE)
     sep = re.compile(r'^\s*(=|-){20,}\s*$')
@@ -192,6 +192,8 @@ def build(txt_path, docx_path):
             i += 1; continue
         if i == title_idx:
             add_rich(doc.add_paragraph(style='Title'), s); i += 1; continue
+        if h1.match(s) and not h2.match(s) and through is not None and int(s.split('.', 1)[0]) > through:
+            break
         if s in UNNUMBERED_H1 or (h1.match(s) and not h2.match(s) and len(s) < 100):
             hp = doc.add_paragraph(style='Heading 1'); add_rich(hp, s); in_refs = (s == 'References')
             if PAGE_BREAK_BEFORE and h1.match(s) and s.startswith('1.'):
@@ -232,4 +234,5 @@ if __name__ == '__main__':
     if sys.argv[1] == '--make-template':
         make_template(sys.argv[2])
     else:
-        build(sys.argv[1], sys.argv[2])
+        through = int(sys.argv[sys.argv.index('--through') + 1]) if '--through' in sys.argv else None
+        build(sys.argv[1], sys.argv[2], through)

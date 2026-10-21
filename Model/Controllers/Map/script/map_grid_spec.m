@@ -30,6 +30,9 @@ spec.coarse = true;
 spec.PMfin = 30;
 spec.GMfin = 2;
 spec.erelMax = 10;
+% Desktop-only selection profile: six isolated Simulink workers target about
+% 90% RAM use on the 31.86 GB host while retaining about a 10% reserve.
+spec.marginWorkers = 6;
 spec.toDesign = @(x) mapDesign(x, Ts0);
 spec.marginFcn = @(x) mapMargin(x, Cal, Ts0);
 spec.jsonPath = fullfile(modelDir, 'data', 'map.json');
@@ -44,7 +47,14 @@ end
 function M = mapMargin(x, Cal, Ts0)
 persistent mapWorkspaceLoaded
 if isempty(mapWorkspaceLoaded)
-    evalin('base', 'run(load_map_path)');
+    if evalin('base', 'exist(''load_map_path'', ''var'')')
+        loadMapPath = evalin('base', 'load_map_path');
+    else
+        loadMapPath = which('load_map.m');
+    end
+    assert(~isempty(loadMapPath), 'map_grid_spec:loadMap', 'load_map.m is not on the MATLAB path.');
+    assignin('base', 'Map_calibration_override', Cal);
+    evalin('base', sprintf('run(''%s'')', strrep(loadMapPath, '''', '''''')));
     mapWorkspaceLoaded = true;
 end
 d = mapDesign(x, Ts0);

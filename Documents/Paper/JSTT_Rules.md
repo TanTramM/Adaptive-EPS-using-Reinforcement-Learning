@@ -59,7 +59,7 @@ Template tải ngày 2026-10-18 có dấu vết của một template Elsevier c�
 
 | Nội dung | Submission checklist | Guide for Authors | Template đã tải | Quy tắc áp dụng cho file nộp |
 | --- | --- | --- | --- | --- |
-| Giãn dòng | Single spacing | Double spacing | Style thân bài khoảng 1.2 dòng | Dùng **single spacing** vì đây là checkbox bắt buộc ngay trong quy trình nộp. |
+| Giãn dòng | Single spacing | Double spacing | Style thân bài khoảng 1.2 dòng | Dùng **1.5 dòng** theo bản v5/v6 thầy đã phản hồi; nếu hệ thống nộp tự động báo lỗi checklist thì đổi riêng bản nộp sang single spacing. |
 | Cỡ chữ thân bài | 12 pt | 12 pt | Style `10.JSTT-Text` thực tế là Arial 11 pt | Dùng **12 pt**; tiêu đề và thành phần đặc biệt có thể theo style riêng. |
 | Số cột | Không nêu | Một cột | Một cột tới hết Abstract, sau đó hai cột | Dùng **một cột** cho bản nộp ban đầu; không cần bắt chước hai cột của template. |
 | Hình và bảng | Đặt trong bài tại vị trí phù hợp | Có đoạn yêu cầu hình trên trang riêng và bỏ placeholder | Cho phép đặt trực tiếp trong nội dung | Đặt hình và bảng **trong bài** tại vị trí phù hợp; đồng thời nộp file hình độ phân giải cao riêng. |
@@ -67,16 +67,23 @@ Template tải ngày 2026-10-18 có dấu vết của một template Elsevier c�
 
 Quy tắc ưu tiên thực hành là: **Submission checklist bắt buộc trong hệ thống nộp → yêu cầu nội dung và thư mục trong Guide → template để tham khảo style xuất bản → quy ước nội bộ của repository**. Nếu biên tập viên gửi một file hoặc chỉ dẫn mới cho chính đợt nộp, chỉ dẫn đó được ưu tiên cao nhất.
 
-Đối chiếu các file hiện có cho thấy `2026.10.13_Paper_Tan - v5-Huypt.docx` và `2026.10.13_Paper_Tan - v6-Huypt.docx` đều là A4, một cột, lề 2.54 cm. Vì vậy, **xét riêng bố cục cột và lề, định dạng v5/v6 dùng được cho submission**. Hai file đang dùng font mặc định Times New Roman 12 pt, nhưng Normal style có giãn dòng khoảng 1.5; khi tạo file nộp cần đổi giãn dòng thân bài sang single để khớp Submission checklist hiện hành.
+Đối chiếu các file hiện có cho thấy `2026.10.13_Paper_Tan - v5-Huypt.docx` và `2026.10.13_Paper_Tan - v6-Huypt.docx` đều là A4, một cột, lề 2.54 cm, Times New Roman 12 pt và giãn dòng khoảng 1.5. Đây là **chuẩn trình bày làm việc của bài này**, vì đã được thầy dùng để phản hồi bản thảo.
 
 ### 3.3. Yêu cầu file và trình bày còn lại
 
 - Checklist chấp nhận file OpenOffice, Microsoft Word hoặc RTF. Với bài này, dùng Microsoft Word `.docx`.
 - Giữ định dạng đơn giản; không dùng gạch chân thay cho chữ nghiêng, trừ địa chỉ URL.
-- Guide yêu cầu không dùng chức năng căn đều hai lề hoặc tự động ngắt từ. Vẫn dùng chữ đậm, chữ nghiêng, chỉ số dưới và chỉ số trên khi cần.
+- Bản v5/v6 của thầy căn đều hai lề cho thân bài; dùng căn đều hai lề trong generator. Không dùng tự động ngắt từ. Vẫn dùng chữ đậm, chữ nghiêng, chỉ số dưới và chỉ số trên khi cần.
 - Đánh số trang. Bản nộp ban đầu giữ bố cục một cột; chỉ chuyển sang hai cột nếu biên tập viên yêu cầu bản theo template hoặc camera-ready.
 - Với bảng có lưới, mỗi bảng chỉ dùng một lưới thống nhất, không tạo một lưới riêng cho từng hàng. Nếu không dùng lưới, căn cột bằng tab thay vì dấu cách.
 - Phải giữ và nộp file nguồn của hình, bảng và đồ họa chữ, kể cả khi các đối tượng đã được chèn trong bản thảo làm việc.
+
+### 3.4. Chuẩn generator theo v5
+
+- File chuẩn để đối chiếu là `2026.10.13_Paper_Tan - v5-Huypt.docx`; generator không dùng bố cục hai cột của `JSTT_Manuscript_template_EN.docx` cho bản nộp ban đầu.
+- Script chuẩn là `tools/paper2jstt_v5.py`. Nó đọc nguồn `.txt` theo cú pháp của `paper_jstt.txt`: title nằm giữa hai dòng `=`, `Abstract` và `Keywords:` là các khối riêng, tiêu đề là `1.` hoặc `1.1.`, phương trình là một dòng `(n)` kèm dòng LaTex tiếp theo, và hình dùng `[Fig. n. caption | path@width_cm]`.
+- Word sinh ra dùng A4, một cột, lề 2.54 cm, Times New Roman 12 pt, giãn dòng 1.5, căn đều hai lề cho thân bài và có số trang. Tiêu đề và công thức căn giữa; heading căn trái, đậm. Hình không có file nguồn sẽ hiện placeholder để bản nháp vẫn sinh được; phải thay bằng hình thật trước khi nộp.
+- Lệnh kiểm bản ba mục đầu: `C:/Users/Admin/anaconda3/python.exe tools/paper2jstt_v5.py Documents/Paper/paper_merged_v7.txt Documents/Paper/paper_v7_sections1-3.docx --through 3`.
 
 ## 4. Cấu trúc bài báo
 
@@ -237,7 +244,7 @@ Quy tắc ưu tiên thực hành là: **Submission checklist bắt buộc trong 
 ### Hình thức
 
 - [ ] English (US) hoặc English (UK) nhất quán trong nội dung; keywords dùng American spelling theo yêu cầu riêng.
-- [ ] File `.docx` A4 một cột như v5/v6, lề ít nhất 2.5 cm, thân bài 12 pt, single spacing và có số trang.
+- [ ] File `.docx` A4 một cột như v5/v6, lề ít nhất 2.5 cm, thân bài Times New Roman 12 pt, giãn dòng 1.5, căn đều hai lề và có số trang.
 - [ ] Các mục và tiểu mục được đánh số; Abstract không đánh số.
 - [ ] Trích dẫn dùng số trong ngoặc vuông theo thứ tự xuất hiện.
 - [ ] Mọi citation khớp hai chiều với References.

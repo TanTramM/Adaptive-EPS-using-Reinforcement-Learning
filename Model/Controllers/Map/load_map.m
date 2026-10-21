@@ -18,7 +18,13 @@ run(fullfile(modelDir, 'PRSM', 'Actuator', 'load_actuator.m'));
 J = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json')));
 assert(isfield(J, 'design'), 'data/map.json has no design yet - run select_map(true) (or set the field by hand)');
 
-Cal = calibrate_map_cached();
+% Parallel margin workers receive an immutable calibration struct from the
+% selector. Reusing it avoids several workers writing map.json concurrently.
+if exist('Map_calibration_override', 'var')
+    Cal = Map_calibration_override;
+else
+    Cal = calibrate_map_cached();
+end
 V = map_variables(Cal, J.design);
 fn = fieldnames(V);
 for i = 1:numel(fn)

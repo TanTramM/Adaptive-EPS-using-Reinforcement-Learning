@@ -1,0 +1,38 @@
+key,value
+pairs_total,"204"
+pairs_coarse,"169"
+pairs_fine_extra,"35"
+synthesis_failed,"55"
+linear_gate_failed,"0"
+simulated,"149"
+pass_e_rel,"22"
+pass_margin,"93"
+pass_e_rel_and_margin,"0"
+safe_and_margin,"93"
+worker1_done_line,"DONE worker 1/4: evaluated 186, simulated 131, feasible 22, best J 3.13185, fine layers 5, final h 0.0104167"
+centre_rules_worker1,"[grid2] centre rule R1 (6 candidates) -> K 9.65489, g_min 0.727827, J 3.32883 | [grid2] centre rule R1 (14 candidates) -> K 9.65489, g_min 0.717392, J 3.16603 | [grid2] centre rule R1 (16 candidates) -> K 8.37917, g_min 0.707107, J 3.13988 | [grid2] centre rule R1 (16 candidates) -> K 8.37917, g_min 0.707107, J 3.13988 | [grid2] centre rule R1 (21 candidates) -> K 8.99444, g_min 0.707107, J 3.13185 | [grid2] centre rule R1 (22 candidates) -> K 8.99444, g_min 0.707107, J 3.13185 | "
+chosen_K,"6.774553952"
+chosen_g_min,"0.7071067812"
+chosen_z,"33.50093752"
+chosen_p,"673.2661083"
+chosen_z1,"28.12757927"
+chosen_p1,"10.68848012"
+chosen_R_pct,"12.05278142"
+chosen_S_Nm,"0.4398394343"
+chosen_J,"5.301288562"
+chosen_TV,"123.1463414"
+chosen_erel_pct,"26.03960053"
+chosen_PM_deg,"45.48755748"
+chosen_GM,"5.239515321"
+chosen_HF,"51.7361485"
+chosen_ratio_gain,"1.929159835"
+chosen_ratio_delay,"1.000248537"
+chosen_label,"safe, fails e_rel"
+chosen_at_box_edge,"g_min=0.707"
+chosen_erel_window,"static_v30_apos0p30g"
+chosen_erel_signed_pct,"26.03960375"
+five_seed_n,"5"
+five_seed_J_mean,"5.313680972"
+five_seed_J_std,"0.01292357867"
+five_seed_erel_max_pct,"26.52462799"
+five_seed_erel_per_seed,"[26.525 26.193 26.215 25.913 26.028]"

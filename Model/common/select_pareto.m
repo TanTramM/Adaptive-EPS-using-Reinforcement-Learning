@@ -16,7 +16,8 @@ for i = 1:numel(files), P = [P; readtable(fullfile(files(i).folder, files(i).nam
 assert(~isempty(P), 'select_pareto:noData', 'No grid-search CSV files found for %s.', spec.name);
 P = P(P.seed == spec.seed0, :);
 [~, iu] = unique(round(table2array(P(:, spec.vn)), 10, 'significant'), 'rows', 'stable'); P = P(sort(iu), :);
-feas = P.simulated == 1 & P.c1 <= 0 & P.c2 <= 0 & P.c3 <= 0 & P.c4 <= 0 & ...
+% spec.erelMax = Inf (Map, PhuongPhap_TimThamSo.txt 14.5) drops the accuracy gate c4 and keeps the safety gates only.
+feas = P.simulated == 1 & P.c1 <= 0 & P.c2 <= 0 & P.c3 <= 0 & (P.c4 <= 0 | isinf(spec.erelMax)) & ...
     P.PM_deg >= spec.PMfin & P.GM >= spec.GMfin & isfinite(P.R_pct) & isfinite(P.S_Nm);
 F = P(feas, :); F.Jv = F.R_pct .* F.S_Nm;
 assert(~isempty(F), 'select_pareto:noFeasible', 'No grid point passes all gates.');
@@ -122,7 +123,8 @@ for i = 1:nR
         Jseed(i,k) = o.R * o.S; Eseed(i,k) = o.erel; Rseed(i,k) = o.R; Sseed(i,k) = o.S;
     end
 end
-chosenFrontRow = find(frontOrder == find(all(abs(table2array(front(:, spec.vn)) - x) <= 1e-9 .* max(1, abs(x)), 2), 1), 1);
+chosenFront = find(all(abs(table2array(front(:, spec.vn)) - x) <= 1e-9 .* max(1, abs(x)), 2), 1);   % empty when a calib_margin fallback is off the front
+if isempty(chosenFront), chosenFrontRow = []; else, chosenFrontRow = find(frontOrder == chosenFront, 1); end
 if isempty(chosenFrontRow)
     % A calib_margin fallback can be off the Pareto front; report it explicitly.
     chosenFrontRow = 1; Jseed(1,:) = NaN; Eseed(1,:) = NaN; Rseed(1,:) = NaN; Sseed(1,:) = NaN;
@@ -155,9 +157,11 @@ if writeJson
     J = jsondecode(fileread(spec.jsonPath));
     if isfield(J, 'design') && ~isfield(J, 'design_emax5'), J.design_emax5 = J.design; end
     q = d;
-    if isfield(q, 'Ts_ctrl'), q = rmfield(q, 'Ts_ctrl'); end
+    if isfield(q, 'Ts_ctrl') && ~(isfield(spec, 'keepTsCtrl') && spec.keepTsCtrl), q = rmfield(q, 'Ts_ctrl'); end   % PID drops it; Map's load_map needs it
     if isfield(q, 'Ki') && isfield(q, 'Kp'), q.Kaw = q.Ki / q.Kp; end
     q.rule = 'deterministic coarse-to-fine grid, feasible Pareto (R,S), J=R*S with 3% tie by maximum PM, e_max=10%, calib_margin; 2026-10-19';
+    if isfield(spec, 'ruleText'), q.rule = spec.ruleText; end
+    if isfield(spec, 'designNote'), q.x_design_note = spec.designNote; end
     q.CALIB_R_pct = chosen.R_pct; q.CALIB_S_Nm = chosen.S_Nm; q.CALIB_J = chosen.Jv;
     q.CALIB_erel_pct = chosen.erel_pct; q.PM_deg = chosen.PM_deg; q.GM = chosen.GM;
     q.CALIB_Jbar_5seed = mean(chosenJ); q.CALIB_sigmaJ_5seed = std(chosenJ); q.CALIB_erel_max_5seed = max(chosenE);

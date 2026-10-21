@@ -1,57 +1,19 @@
 1. Introduction
 
-Power steering reduces the effort required to turn a vehicle while retaining steering torque through which the driver perceives the steering response. Whereas hydraulic power steering supplies
-assistance through pressurized fluid, electric power steering (EPS) uses an electronically controlled motor, offering energy efficiency and flexibility in tuning the steering characteristics [1].
-In column-type EPS (C-EPS), the motor applies assistance to the steering column, which remains mechanically connected to the road wheels. The control objective therefore extends beyond making the
-steering wheel easy to turn: the assistance must also produce an appropriate steering effort as the driving conditions change.
+Power steering systems have evolved from hydraulic power steering (HPS) to electric power steering (EPS) to satisfy stringent demands for fuel efficiency, compact packaging, and programmable chassis control. Whereas HPS continuously draws engine power through a hydraulic pump, EPS uses an electronically controlled electric motor to supply on-demand assistance, eliminating parasitic losses and enabling software-tunable steering characteristics [1]. In column-type EPS (C-EPS), the motor applies assistance directly to the steering column, which remains mechanically coupled to the road wheels. Consequently, the primary control objective extends beyond merely reducing driver steering effort: the system must deliver an intuitive, progressive steering feel that faithfully communicates vehicle dynamic states and road interactions across varying driving conditions.
 
-A conventional EPS controller determines the basic motor assistance from a nonlinear map of measured torsion-bar torque and vehicle speed. A stabilizing compensator is used to accommodate the
-high assist gain and the nonlinear map characteristics [1]. Assist-map design can be organized around a desired relationship between steering effort and vehicle response, combined with the
-steady-state inverse characteristics of the chassis and steering mechanism [2]. This approach gives engineers a way to calculate and calibrate assistance for specified operating conditions.
-However, a map calibrated for one road condition does not necessarily reproduce the desired steering effort when the road reaction changes [3].
+In a conventional C-EPS architecture, motor assistance is scheduled by a static, nonlinear assist map indexed by measured torsion-bar torque and vehicle speed [1]. A dynamic compensator—typically a lead–lag network—is cascaded with the map to stabilize the column against mechanical resonance (~6.2 Hz) and attenuate high-frequency noise [1,2]. Such maps are calibrated for nominal dry-road conditions ($\mu \approx 0.8$) from steady-state vehicle models and empirical driver preferences [2]. Although the map responds to measured torsion-bar torque, it does not directly regulate the error with respect to a specified steering-torque reference. A decrease in tire–road friction reduces the available lateral force and can reduce the road-reaction moment transmitted to the steering column [3,4]. Consequently, a map calibrated for dry-road operation cannot, in general, preserve the desired torsion-bar torque after the road reaction changes. The resulting torque deficit is perceived as over-assist: an abnormally light steering response with reduced road feedback [3,5].
 
-This mismatch is particularly relevant on low-friction roads. Changes in tire lateral force and self-aligning moment can reduce the reaction torque transmitted to the steering mechanism, allowing
-the steering effort to become lower than intended [3,4]. The conventional map responds to the changed torque-sensor signal, but it does not explicitly regulate the error relative to a desired
-steering torque. Thus, the existence of torque feedback within the map does not by itself guarantee the desired effort. The resulting deviation motivates an explicit torque-tracking objective,
-while sensor noise and motor limitations require that any reduction in tracking error be assessed together with the additional torque fluctuations it produces.
+To mitigate over-assist, earlier research has predominantly adapted assistance characteristics to road conditions. Li and Xia [5] introduced neural-network-based road identification to adjust the assist curve, while Fan et al. [4] added a fuzzy compensation current based on estimated tire–road friction. Li et al. developed friction-dependent assist gains [6] and multi-map switching strategies that account for road adhesion and front-axle loads [3]. Advanced techniques, including fuzzy control under motor current saturation [10] and adaptive neuro-fuzzy control [11], have also been applied to EPS nonlinearities. These approaches depend on accurate real-time estimates of friction or axle loads; estimation errors caused by sensor noise, tire wear, or transient maneuvers can therefore degrade the scheduled assistance.
 
-Several studies compensate for road-dependent steering effort by modifying the assist characteristic. Li and Xia [5] used road identification based on a neural network to select assistance
-characteristics. Fan et al. [4] added a fuzzy compensation current determined from estimated tire-road friction and vehicle speed. Li et al. [6] developed adhesion-dependent assist coefficients
-and compensation currents, while a subsequent multi-map strategy incorporated both road adhesion and front-axle load [3]. These approaches demonstrate the importance of accounting for road
-conditions, but require friction information, and in the multi-map case axle-load information, in the assistance calculation. Their implementation therefore includes a means of supplying or
-estimating those quantities.
+An alternative paradigm directly regulates steering feel by formulating a closed-loop torque-tracking problem. Zhao et al. [7] used PID control to track motor-assistance commands, while Lee et al. [8] designed an adaptive sliding-mode controller to track a target steering torque synthesized from steering angle and vehicle speed. Lee et al. [9] decoupled steering-feel generation from feedback tracking, using estimated rack force to synthesize a target torque and linear feedback with a disturbance observer. Their study established an important torque-tracking framework, but its vehicle model and principal experimental validation did not address dynamic friction transitions with nonlinear tire-force saturation. This leaves a focused comparative question: under identical motor, sensor, and stability constraints, how do a calibrated assist map, direct PID torque feedback, and a parallel MapPID configuration respond to changing road friction? The hybrid configuration is treated here as a controller structure to be assessed, rather than as a presumed improvement over direct feedback.
 
-Other approaches modify the controller or regulate steering torque directly. Zhao et al. [7] dynamically corrected the steering-characteristic curve and used proportional-integral-derivative
-(PID) control to track the motor-assistance command. Lee et al. [8] instead tracked a target steering-wheel torque with adaptive sliding-mode control. Their target was obtained from vehicle-test
-data as a function of steering angle, steering angular velocity, and vehicle speed, and robustness was evaluated by varying the nominal rack force from 50% to 150%.
+This study compares three C-EPS architectures: a conventional assist map with lead–lag compensation (Map), a direct PID steering-torque feedback controller (PID), and their parallel hybrid combination (MapPID). The desired steering torque is defined by an empirical reference function of measured vehicle speed and lateral acceleration, adopted from published testing data [5], without requiring online road-friction or rack-force estimation. Because lateral acceleration varies with the vehicle response, the reference changes with the driving condition, including after a friction reduction. The three controllers are assessed on a nonlinear C-EPS model coupled with a single-track vehicle, Pacejka Magic Formula tires with slip-dependent pneumatic trail, motor delay, Coulomb friction, and quantized sensor noise.
 
-Lee et al. [9] subsequently separated steering-feel generation from steering-torque feedback. They generated a target torque from estimated rack force, designed a linear feedback controller for
-tracking, noise attenuation, and robust stability, and used a disturbance observer to suppress rack-force and driver-torque disturbances. Their simulations directly compared target-torque
-feedback with a conventional assist map under matched high-frequency attenuation, and parking tests on a production vehicle compared PID, lead-lag, and linear-quadratic-Gaussian feedback
-controllers. Therefore, target-torque feedback, explicit noise attenuation, and a direct comparison with a conventional map are established results rather than contributions of the present study.
-Related work has also addressed nonlinear EPS stabilization with motor-current constraints [10] and neural-fuzzy motor control under disturbance torque [11].
-
-The scope left open by these studies is narrower. Lee et al. [9] represented driving disturbance with a linear column-angle relation, generated the target from a model-based rack-force estimate,
-and validated the controllers in parking maneuvers; their study did not simulate a friction transition with nonlinear tire saturation. It also did not evaluate a controller in which the
-conventional map and target-torque feedback act in parallel. Desired-effort data indexed by vehicle speed and lateral acceleration are available in the literature [5]. Using measured lateral
-acceleration to select this reference relates the target to the vehicle's actual lateral response without estimating either friction coefficient or rack force. This reference remains condition
-dependent and does not prescribe constant steering effort when friction changes.
-
-The question considered here is therefore how a conventional assist map, direct torque feedback, and their parallel combination compare against this common reference when tire-road friction
-changes. The specific issues are how much of the reaction-torque change the map can attenuate, whether torque-error feedback improves tracking under the same actuator and sensor constraints, and
-whether retaining the map alongside the feedback changes the trade-off between tracking error and high-frequency assist torque.
-
-This study investigates these questions in a nonlinear C-EPS-vehicle simulation. Three controller structures are considered: an assist map with lead-lag compensation (Map), direct PID torque
-feedback, and a parallel combination of the map and PID torque-error feedback (MapPID). They are evaluated against the same torque reference with common motor dynamics, assistance limits, and
-sensor characteristics. Calibration is separated from the evaluation maneuvers, and the comparison includes both torque tracking and undesirable assist behavior.
-
-The contributions of this study are as follows:
-- A local steady-state analysis extends the known structural limitations of an assist map by quantifying its sensitivity to a change in road reaction and by contrasting that sensitivity with
-  integral torque-error feedback.
-- A common torque-regulation problem applies a published speed-and-lateral-acceleration reference to Map, PID, and their parallel combination, MapPID, without estimating the friction coefficient
-  or rack force.
-- A comparative simulation assessment uses a nonlinear tire-vehicle model, friction transitions, common motor and sensor constraints, calibration Pareto fronts, and separate evaluation maneuvers
-  to quantify tracking, high-frequency assist torque, and reverse assistance. It tests whether retaining the map provides a measurable benefit alongside torque-error feedback.
+The primary contributions of this study are as follows:
+- A local steady-state sensitivity analysis is derived to expose the finite disturbance sensitivity of a conventional assist map under road-reaction variations and to contrast it with integral error feedback, which eliminates the steady-state error when the actuator is unsaturated.
+- A common torque-tracking framework applies the lateral-acceleration-and-speed-dependent reference to Map, PID, and MapPID controllers without online tire–road-friction or rack-force estimation.
+- A controlled simulation protocol uses common feasibility constraints, Pareto-based calibration, and independent dynamic scenarios—dry cornering, friction drop, high-speed weave, and edge maneuvers—to quantify the trade-offs among torque-tracking accuracy, high-frequency assist chattering, and reverse-assistance behavior.
 
 References (local numbering for this draft)
 [1] D. Lee, K.-S. Kim, S. Kim (2018). Controller design of an electric power steering system. IEEE Transactions on Control Systems Technology, 26(2), 748-755. doi:10.1109/TCST.2017.2679062

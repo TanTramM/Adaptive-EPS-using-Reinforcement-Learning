@@ -1,0 +1,3 @@
+worker,classification,detail
+3,code_schema_repaired,"2026-10-21: resumed CSV key/string and logical/double schema mismatch caused tabular/vertcat after a completed candidate; checkpoint retained, runner normalized and retry permitted."
+supervisor,execution_recovered,"2026-10-21: original Start-Process supervisor process was absent while worker MATLAB processes remained; installed manifest-key recovery supervisor without terminating live workers."

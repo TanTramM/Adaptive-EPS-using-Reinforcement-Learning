@@ -3,7 +3,7 @@
 #   source tools/jobs/job_lib_patient.sh ; run_job_patient <tag> "<matlab expression>" "<ok marker in the log>" ["<failure marker in the log>"]
 # Why: other frames (and the user's own programs) share the 32 GB machine, and guard_ram.ps1 stops the newest MATLAB when free RAM falls below 3 GB. run_job gives up after 8 tries.
 # What this one does:
-#  - waits (no limit) until the memory headroom is at least START_GB (default 6: one MATLAB takes about 2.3 GB and the guard stops at 3 GB free) before every start;
+#  - waits (no limit) until the memory headroom is at least START_GB (default 4: one MATLAB takes about 2 GB and the guard stops at 2 GB free) before every start;
 #  - a MATLAB that ends WITHOUT the ok marker and WITHOUT a MATLAB error (killed by the guard, crash 0xffffffff, closed by hand) is not a failure of the job: wait with a growing pause
 #    (60 s, 120 s ... at most 10 min) and start again; the solvers resume from their checkpoint files and every evaluation is cached in a csv, so no work is lost;
 #  - a MATLAB that ends with a genuine MATLAB error (log has "Exit Status: 0x00000001" or the failure marker) counts as a real failure; after MAX_REAL_FAIL (default 3) of them the job stops
@@ -11,7 +11,7 @@
 #  - markers: <tag>_done.txt, <tag>_failed.txt; log of every try <tag>_try<k>.log; one status line in <tag>_status.txt (time, try, state) for monitoring. All in scratch/jobs (not committed).
 # NEVER kill MATLAB by name (other frames); the leftover process of a finished job is stopped by its unique -batch text (kill_job.ps1), as in run_job.
 source "$(dirname "${BASH_SOURCE[0]}")/job_lib.sh"
-START_GB=${PATIENT_START_GB:-6}
+START_GB=${PATIENT_START_GB:-4}
 MAX_REAL_FAIL=${MAX_REAL_FAIL:-3}
 
 status() { echo "$(date '+%Y-%m-%d %H:%M:%S') try=$2 $3" > "$S/${1}_status.txt"; }

@@ -1,0 +1,119 @@
+3. Control Strategy and Assist-Map Limitation
+
+This section presents the three electric power steering control architectures investigated in this study: conventional assist-map control with lead-lag compensation (Map), direct proportional-
+integral-derivative steering-torque feedback control (PID), and their parallel combination (MapPID). A steady-state sensitivity analysis quantifies the fundamental limitation of static assist-
+map control when tire-road friction changes, contrasting it with integral error feedback.
+
+3.1. Conventional Assist-Map Control with Lead-Lag Compensation
+
+The conventional controller follows the standard automotive architecture in which basic motor assistance is scheduled through a static two-dimensional map from measured torsion-bar torque and
+vehicle speed, followed by dynamic stabilizing compensation [1]. Under nominal dry-road conditions ($\mu=0.8$), the required assistance at each calibration breakpoint is determined from the
+static torque equilibrium of Eq. (15):
+  (20)  T_s,cal = T_ref(v, a_y)
+  [ T_{s,cal}=T_{ref}(v,a_y) ]
+  (21)  T_a,cal = T_r(v, a_y, 0.8) - T_ref(v, a_y)
+  [ T_{a,cal}=T_r(v,a_y,0.8)-T_{ref}(v,a_y) ]
+
+The nominal dry-road assist map is calibrated across 17 vehicle speeds from 20 to 100 km/h in increments of 5 km/h. At each speed, feasible lateral accelerations are evaluated in increments of
+0.005 g. The raw assistance is bounded by a symmetric torque deadband $T_{s0}=0.3$ N·m around straight-ahead driving to prevent motor chattering from sensor noise, and a maximum local slope
+limit $K_{max}$. At each calibration breakpoint, the allowable assist increment is constrained by $\bar{M}_k\le\bar{M}_{k-1}+K_{max}(|T_s|_k-|T_s|_{k-1})$, preserving nondecreasing assistance
+while preventing excessively steep transitions:
+  (22)  M(v, T_s) = sgn(T_s)*M_bar(v, |T_s|)
+  [ M(v,T_s)=\mathrm{sgn}(T_s)\bar{M}(v,|T_s|) ]
+\noindent where $\bar{M}(v, |T_s|)$ is the bounded monotonic assist characteristic for positive torque. The resulting characteristic is tabulated over measured steering torque from 0 to 5 N·m
+with linear interpolation across torque and vehicle speed.
+
+To stabilize the closed loop around the steering-column resonance (~6.2 Hz) while attenuating high-frequency noise amplification from the high assist gain, the static map output is processed by
+a linear lead-lag compensator $C_{map}(s)$ [1]:
+  (23)  u_map(s) = C_map(s)*M(v_m, T_s,m)
+  [ u_{map}(s)=C_{map}(s)M(v_m,T_{s,m}) ]
+  (24)  C_map(s) = ((s/z + 1)/(s/p + 1))*((s/z_1 + 1)/(s/p_1 + 1))
+  [ C_{map}(s)=\left(\dfrac{\frac{s}{z}+1}{\frac{s}{p}+1}\right)\left(\dfrac{\frac{s}{z_1}+1}{\frac{s}{p_1}+1}\right) ]
+\noindent where $z$ and $p$ are the zero and pole frequencies of the lead stage, and $z_1$ and $p_1$ are those of the lag stage. The lead stage provides phase advance around the column resonant
+frequency, while the lag stage provides high-frequency gain roll-off. Both stages maintain unity steady-state gain ($C_{map}(0)=1$) so that the calibrated static steering characteristics are
+preserved. The overall closed-loop signal flow of the assist-map controller is shown in Fig. 4.
+
+[Fig. 4. Closed-loop signal flow of the nonlinear C-EPS assist-map controller. | Figures/new/Fig_Map_loop.png@16.0]
+
+3.2. Steady-State Limitation of Assist-Map Control
+
+The structural limitation of the conventional assist map under friction variation can be evaluated through a local steady-state sensitivity analysis. At a constant vehicle speed and fixed lateral
+acceleration, column equilibrium under assist-map control requires
+  (25)  T_s + M(v, T_s) = T_r(v, a_y, mu)
+  [ T_s+M(v,T_s)=T_r(v,a_y,\mu) ]
+\noindent where the Coulomb friction term vanishes at steady state ($\dot\theta_2=0$) and $C_{map}(0)=1$. Linearizing Eq. (25) with respect to a change in road reaction torque $\Delta T_r$ yields
+  (26)  Delta T_s = Delta T_r/(1 + s_m)
+  [ \Delta T_s=\dfrac{\Delta T_r}{1+s_m} ]
+  (27)  s_m = dM(v, T_s)/dT_s
+  [ s_m=\dfrac{\partial M(v,T_s)}{\partial T_s} ]
+\noindent where $s_m$ denotes the local slope of the assistance map at the operating point.
+
+Equation (26) reveals that the change in sensed torsion-bar torque is attenuated only by the factor $1/(1+s_m)$. Because the target torque $T_{ref}(v, a_y)$ remains unchanged at fixed speed and
+lateral acceleration, the change in tracking error is identical to $\Delta T_s$:
+  (28)  Delta e_T = Delta T_r/(1 + s_m)
+  [ \Delta e_T=\dfrac{\Delta T_r}{1+s_m} ]
+
+When friction drops from dry ($\mu=0.8$) to wet or icy conditions ($\mu<0.8$), the road reaction $T_r$ decreases because of tire force saturation and pneumatic trail reduction. Because $s_m$ is
+strictly positive and finite ($s_m\le K_{max}$), $\Delta T_s$ is necessarily non-zero and has the same sign as $\Delta T_r$. Consequently, $T_s$ drops below the desired value, creating the
+over-assist phenomenon where the steering effort feels abnormally light. While increasing $K_{max}$ reduces $\Delta e_T$, it simultaneously raises the loop gain and amplifies sensor noise.
+Furthermore, the map cannot eliminate $\Delta e_T$ completely without an infinite assist slope. In contrast, any controller with integral action on $e_T$ enforces $\Delta e_T=0$ at steady state
+whenever the actuator is not saturated.
+
+3.3. PID Steering-Torque Feedback Control
+
+The PID controller addresses this structural limitation by directly regulating the torque-tracking error $e_T=T_{s,m}-T_{ref}(v_m, a_{y,m})$. To avoid setpoint derivative kick upon rapid changes
+in lateral acceleration or reference commands, the derivative action is placed on measured torsion-bar torque $T_{s,m}$ rather than the error signal, and is filtered by a first-order lag filter:
+  (29)  u_P = K_p*e_T
+  [ u_P=K_p e_T ]
+  (30)  u_I_dot = K_i*e_T + K_aw*Delta T_a
+  [ \dot{u}_I=K_i e_T+K_{aw}\Delta T_a ]
+  (31)  u_D(s) = (K_d*s/(T_f*s + 1))*T_s,m(s)
+  [ u_D(s)=\left(\dfrac{K_d s}{T_f s+1}\right)T_{s,m}(s) ]
+\noindent where $K_p$, $K_i$, and $K_d$ are the proportional, integral, and derivative gains, $T_f$ is the derivative filter time constant, and $K_{aw}$ is the anti-windup tracking gain.
+
+In Eq. (31), the derivative term is defined with a positive sign because an increasing measured torque $T_s$ indicates insufficient assistance in the column dynamic convention of Eq. (1),
+requiring an assist-torque increase to accelerate the column. The total unconstrained command is
+  (32)  T_a,cmd = u_P + u_I + u_D
+  [ T_{a,cmd}=u_P+u_I+u_D ]
+
+Actuator saturation is managed by back-calculation anti-windup. The difference between the bounded motor command $T_{a,lim}$ and the raw command $T_{a,cmd}$ is fed back to the integrator in
+Eq. (30):
+  (33)  Delta T_a = T_a,lim - T_a,cmd
+  [ \Delta T_a=T_{a,lim}-T_{a,cmd} ]
+  (34)  K_aw = K_i/K_p
+  [ K_{aw}=\dfrac{K_i}{K_p} ]
+
+This back-calculation discharges the integrator whenever the motor saturates at $T_{a,max}(v_m)$, ensuring rapid recovery when the error reverses. Figure 5 depicts the detailed signal flow of
+the PID torque-feedback architecture.
+
+[Fig. 5. Closed-loop signal flow of the nonlinear PID steering-torque controller. | Figures/new/Fig_PID_loop.png@16.0]
+
+3.4. Parallel Map-PID Control Structure
+
+To investigate whether retaining the established feedforward assist map offers advantages when combined with closed-loop error feedback, a hybrid parallel structure (MapPID) is formulated. As
+illustrated in Fig. 6, the assist command combines the feedforward assistance $u_{map}$ from the calibrated assist map and lead-lag compensator with the corrective feedback $u_{PID}$ from the
+PID controller:
+  (35)  T_a,cmd = u_map + u_PID
+  [ T_{a,cmd}=u_{map}+u_{PID} ]
+  (36)  u_PID = u_P + u_I + u_D
+  [ u_{PID}=u_P+u_I+u_D ]
+\noindent where $u_{map}$ is computed from Eq. (23) using the static map and compensator, and $u_{PID}$ is calculated from Eqs. (29)–(31).
+
+[Fig. 6. Closed-loop signal flow of the parallel MapPID controller. | Figures/new/Fig_MapPID_preview.png@16.0]
+
+In this configuration, the assist map acts as a model-based feedforward baseline providing the primary assistance required on dry roads, while the PID branch acts as a feedback trim that corrects
+for deviations caused by road-friction reductions, tire saturation, or transient column dynamics. Both branches share the common saturation limit:
+  (37)  T_a,lim = clip(T_a,cmd, -T_a,max(v_m), T_a,max(v_m))
+  [ T_{a,lim}=\mathrm{clip}(T_{a,cmd},-T_{a,max}(v_m),T_{a,max}(v_m)) ]
+
+Because both the assist map (with maximum slope $K_{max}$) and the proportional path $K_p$ contribute to the forward loop gain between sensed torque and total assist torque, the effective forward
+gain is bounded by $K_p+K_{max}$. To maintain proper closed-loop integrator discharge under actuator saturation without causing sluggish de-saturation, the back-calculation anti-windup gain is
+adjusted to
+  (38)  K_aw = K_i/(K_p + K_max)
+  [ K_{aw}=\dfrac{K_i}{K_p+K_{max}} ]
+
+When $K_{max}=0$, Eq. (38) reduces smoothly to the standard PID anti-windup rule $K_{aw}=K_i/K_p$. Conversely, if $K_p$ is small, the map slope prevents the anti-windup gain from becoming
+undefined. The resulting hybrid architecture combines the feedforward responsiveness of the assist map with the steady-state tracking precision of integral error feedback.
+
+References (local numbering for this draft)
+[1] D. Lee, K.-S. Kim, S. Kim (2018). Controller design of an electric power steering system. IEEE Transactions on Control Systems Technology, 26(2), 748–755. doi:10.1109/TCST.2017.2679062

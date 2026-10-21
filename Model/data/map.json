@@ -3118,6 +3118,36 @@
   "design": {
     "Ts_ctrl": 0.001,
     "Ts0": 0.3,
+    "Kmax": 6.77455395155,
+    "lead": {
+      "z": 33.50093752,
+      "p": 673.2661083
+    },
+    "lag": {
+      "z1": 28.12757927,
+      "p1": 10.68848012
+    },
+    "rule": "deterministic coarse (13x13) to fine grid on (K, g_min), feasible Pareto (R,S), J=R*S with 3% tie by maximum PM, calib_margin; 2026-10-21",
+    "x_design_note": "two-variable grid (K, g_min): safe, fails e_rel (every pair with e_rel <= 10 % fails calib_margin, gain x2 ratio about 3.6 > 2); chosen among the pairs passing the safety gates; 2026-10-21",
+    "CALIB_R_pct": 12.05278142,
+    "CALIB_S_Nm": 0.4398394343,
+    "CALIB_J": 5.301288561514351,
+    "CALIB_erel_pct": 26.03960053,
+    "PM_deg": 45.48755748,
+    "GM": 5.239515321,
+    "CALIB_Jbar_5seed": 5.3136809721442173,
+    "CALIB_sigmaJ_5seed": 0.012923578299033508,
+    "CALIB_erel_max_5seed": 26.524627985633426,
+    "margin_ratio_gain": 1.929159835,
+    "margin_ratio_delay": 1.000248537,
+    "n_grid_evaluations": 204,
+    "n_grid_simulations": 149,
+    "n_grid_feasible": 149,
+    "date": "2026-10-22 00:34:52"
+  },
+  "design_emax5": {
+    "Ts_ctrl": 0.001,
+    "Ts0": 0.3,
     "Kmax": 6,
     "g_min": 0.7,
     "lead": {

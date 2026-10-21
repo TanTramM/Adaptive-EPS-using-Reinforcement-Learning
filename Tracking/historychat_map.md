@@ -1,5 +1,15 @@
 # History_Chat (khung Map) - Lịch sử trò chuyện dự án Adaptive C-EPS bằng RL
 
+### Lượt 454 (2026-10-21) - Map2 Dense runner, checkpoint và phục hồi
+
+Theo KeHoach_Map2_Dense, đã tạo manifest Map2_Dense_v1 gồm 306 cặp Map2 và baseline legacy tại `Result/Controllers/Map/Calib_v2/TwoParamDense/`; giữ nguyên Map5/map.json/MapPID/DREWS. Preflight K=5, g=0.707106781187 đã tổng hợp hợp lệ và chạy đủ nominal seed0, nominal/gainx2/delay+1ms seed1; checkpoint ghi R0=23.6990 %, e_rel0=71.7933 %, ratio gain=0.91044, ratio delay=1.00098 (trượt e_rel, không bị giả định là crash). Tạo `run_map2_dense.m`, `finalize_map2_dense.m`, `tools/jobs/start_map2_dense.ps1`: worker ghi CSV riêng sau từng cặp hoàn chỉnh, retry đúng worker tối đa hai lần, theo dõi RAM/heartbeat và chỉ merge/chọn sau khi mọi worker DONE. Lỗi launcher đầu tiên do `Start-Process` tách biểu thức `-batch` chứa khoảng trắng khiến MATLAB thoát trước log/checkpoint; đã dừng riêng supervisor sở hữu các process đó, sửa quote `-batch`, khởi động lại và xác minh 5 MATLAB có CPU tăng liên tục, RAM trống khoảng 30--32 %. Không có task nào bị ghi rejection do lỗi launcher. Tự shutdown máy đã bị môi trường chặn vì rủi ro mất công việc ngoài phạm vi; không dùng workaround. Chưa có báo cáo cuối và chưa thay cổng.
+
+**BÀN GIAO MỚI 2026-10-21:** Người dùng giao khung Map thực hiện
+[KeHoach_Map2_Dense.md](../Documents/Notes/Controllers/KeHoach_Map2_Dense.md).
+Đọc toàn bộ kế hoạch khi nhận prompt để triển khai Map2 phủ rộng, đánh giá sáu
+ràng buộc và vận hành RAM80–90%. Chưa launch ở lượt lập kế hoạch; ghi chú tiếp
+nhận nằm gần cuối file. Chỉ dẫn Map5/watchdog cũ không tự mở lại cho đợt này.
+
 ## CÁCH DÙNG (dành cho phiên Claude mới)
 
 1. Đọc file này TRƯỚC KHI làm bất cứ việc gì, sau đó đọc `Tracking/CLAUDE.md` (quy tắc làm việc) và `Documents/Shared/QuyChuan.txt` (quy chuẩn thiết kế và đánh giá chung, bản 3 ngày 2026-10-10).
@@ -220,3 +230,238 @@ Kiểm tra mới nhất: Map grid đã hoàn tất; selector Pareto vẫn đang 
 
 ### Lượt 446 (2026-10-20) - Tự push Map và laptop tự tiếp tục S2 qua đêm
 Người dùng ủy quyền triển khai và push cơ chế tự bàn giao sau khi Map xong; laptop hiện chạy S1. Đã tạo ba script PowerShell: common kiểm Git/byte/hash/pick-json, publisher chờ Map pipeline DONE rồi kiểm cổng margin và năm file bàn giao, consumer chờ S1 nhả khóa và có summary/done rồi fetch nhánh riêng, giữ S1, nhận đúng Map và chạy S2 rồi Select. Publisher dùng index riêng/commit-tree nên không kéo các sửa bài báo hay index người dùng vào commit dữ liệu; không đổi HEAD khi tự publish. Consumer không merge toàn repo có kết quả S1, chỉ nhập payload đã xác minh, kiểm mã MATLAB không lệch, lưu commit nguồn và bản trước thay; có khóa chặn trùng, retry mạng, kiểm S1 summary không đổi, kiểm MapPID pick/JSON trước all.done. Đã cập nhật MAPPID_LAPTOP.md. Kiểm thử hai repo Git giả cục bộ PASS: push/fetch, giữ nguyên S1, thứ tự S2→Select, PNG không hỏng byte, all.done; không chạy MATLAB giả làm bằng chứng khoa học. Test tìm thấy và đã sửa giới hạn đường dẫn Windows. Muốn tự tiếp tục laptop phải bật watcher một lần; desktop không có quyền truy cập từ xa vào máy đó. Chưa thể đảm bảo xong sáng vì Map vẫn chưa qua chọn và thời gian S1/S2 phụ thuộc mô phỏng.
+
+### Lượt 447 (2026-10-20) - Chính sách RAM PC Map
+Người dùng yêu cầu dùng 90--95 % RAM, chừa khoảng 10 % buffer, chỉ PC này. Đo quyền hệ thống: máy có 31.86 GB, dùng 22.42 GB (70.4 %), còn 9.44 GB; MATLAB selector Map chỉ private 2.01 GB nhưng dùng 10.53 CPU-giây trong 10 giây và log tiến từ J-rank 108 lên 122. Nút thắt hiện tại là `select_pareto` kiểm `calib_margin` tuần tự để giữ thứ tự Pareto, không phải guard RAM; không chạy selector song song vì có thể sai thứ tự chọn/ghi chung cache. Guard đã kill ở 2 GB trống, cho phép dùng tới 93.7 % RAM. Đã đặt riêng `PATIENT_START_GB=2` trong `map_grid_pipeline.sh`, để các retry/launch Map PC được phép bắt đầu với cùng reserve 2 GB (6.3 %); laptop runner không bị đổi và vẫn giữ 6 GB. Không ép MATLAB cấp phát RAM vô ích vì không làm selector nhanh hơn và tăng rủi ro heap crash.
+### Lượt 448 (2026-10-20 02:05) - Tiến độ chọn Map
+Kiểm mới nhất: stage 2 selector Map vẫn chạy, watchdog báo HEALTHY với một MATLAB worker và pipeline lock còn hiệu lực; publisher tự bàn giao báo WAIT_MAP. Log đã tới J-rank 210; ứng viên mới vẫn bị `calib_margin` loại vì gain ratio khoảng 3.60 vượt ngưỡng 2.00. Chưa có Map pick, marker done/failed hay `map.json` mới. MATLAB đang tiếp tục mô phỏng, không treo và không có crash marker.
+
+
+### Watchdog Map (2026-10-20 03:25:09)
+Watchdog detected map_grid_select_failed.txt; it will restart the Map pipeline after the idle guard and preserve completed work.
+
+
+### Watchdog Map (2026-10-20 03:33:09)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 03:41:40)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 03:50:10)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 03:58:40)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:07:11)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:15:41)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:24:11)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:32:42)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:41:12)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:49:42)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 04:58:13)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:06:43)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:15:13)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:23:44)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:32:14)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:40:44)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:49:15)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 05:57:45)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:06:15)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:14:46)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:23:16)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:31:46)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:40:17)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:48:47)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 06:57:17)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:05:48)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:14:18)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:22:48)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:31:19)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:39:49)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:48:19)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 07:56:50)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:05:20)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:13:50)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:22:21)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:30:51)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:39:21)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:47:52)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 08:56:22)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 09:04:52)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 09:13:23)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 09:21:53)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 09:30:23)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+### Lượt 449 (2026-10-20 03:24) - Selector Map song song hoàn tất nhưng không có điểm qua margin
+Theo yêu cầu tăng tốc bằng RAM PC, đã tạo pool `calib_margin` độc lập, ban đầu ba rồi sáu worker; pool chạy được, worker dùng calibration override chỉ đọc để không ghi đè `map.json`. Phiên song song đi tới J-rank 467 và selector đã duyệt hết pool khả thi. Kết quả dừng có chủ ý với `select_pareto:noMargin`: không có thiết kế nào qua `calib_margin`; các điểm cuối gain ratio 3.001--3.136, vẫn cao hơn gate 2.00. `map_grid_select_failed.txt` được tạo lúc 03:24; không có pick hay JSON mới. Đây không phải thiếu RAM, treo, lỗi JSON hay lỗi pool; tăng song song chỉ rút thời gian kiểm, không thay đổi cổng/chọn. Watchdog đang idle và sẽ chỉ restart pipeline sau grace period, nhưng cùng dữ liệu sẽ lặp lại `noMargin`; cần chẩn đoán/phương án Map thay vì retry mù.
+### Lượt 450 (2026-10-20) - Vì sao Map cũ có điểm chọn nhưng grid mới không có
+Đối chiếu dữ liệu và lịch sử, không chạy lại mô phỏng: thiết kế đang lưu trong map.json là CALIB v1 ngày 2026-10-11, K=6, R=27.05394 %, e_rel=3.16677 %, margin gain=0.78119 và delay=1.00045. Khi tiếp nhận CALIB v2, Lượt 427-428 đã đo cùng thiết kế K=6 có R=14.45 %, e_rel khoảng 45 %, nên không còn qua chính xác. V2 dùng 140 s, 26 cửa sổ static và R trung bình nhân ba nhóm static/dyn/mu; vì calib_margin lấy R_gain/R_nom, đổi cách đo R cũng đổi phép kiểm dù ngưỡng 2 giữ nguyên. Bản surrogateopt v2 trước grid cũng chưa có lựa chọn hoàn tất: lần e_max 5 % dừng ở kiểm seed, lần e_max 10 % bị dừng khi đổi phương pháp. Cache hiện có 467 dòng ratio_gain hữu hạn, nhỏ nhất 3.001274; còn một dòng Inf/Inf chưa phân biệt được lỗi kỹ thuật với bất ổn. Vì vậy chỉ kết luận pool grid hiện tại chưa cho điểm được selector chấp nhận; chưa chứng minh Map không có nghiệm hoặc mọi rejection đều là vật lý. Lượt 449 đã kết luận loại trừ lỗi kỹ thuật quá chắc; cần tái lập cùng thiết kế và kiểm cache trước kết luận bản chất bộ Map.
+
+### Lượt 451 (2026-10-20) - Phân tích nguyên nhân và hướng tháo phụ thuộc MapPID
+Người dùng yêu cầu phân tích và đề xuất, chưa triển khai thay quy chuẩn/tìm lại. Đọc trực tiếp grid và cache: có 467 thiết kế đạt c1-c4; K=8.118--16, R danh định=6.531--7.891 %, e_rel=4.494--7.267 %, nên điểm mới không bị loại vì chính xác >10 %; thất bại là ratio_gain nhỏ nhất 3.001274. Điểm J tốt nhất: K=8.94427, z=107.7217, p/z=15.4949, z1=11.2228, p1/z1=0.603128, R=6.770565 %, S=0.4228494, e_rel=5.342145 %, J=2.862929. map_table dùng giới hạn độ dốc K; lead/lag có DC=1, nên hạn chế bám tĩnh do bảng/K/vùng chết không được xóa bằng đổi bù; cửa sổ static hữu hạn vẫn có thể chứa quá độ. calib_margin ratio đánh giá suy giảm bám chứ chưa tách sai lệch tĩnh khỏi dao động/mất ổn định. grid_search chọn tâm theo J danh định, chưa dùng margin nên không bảo đảm lấy mẫu đủ vùng robust. Đề xuất tái lập vài điểm cùng seed bằng phiên sạch, kiểm R từng nhóm và dạng tín hiệu, sau đó tìm lưới bổ sung có margin trong điều kiện chọn tâm nếu cần (đổi quy trình phải ghi nhận). Để tháo S2 nếu Map riêng không có nghiệm được xác minh: có thể đề xuất dùng Map danh định đạt c1-c4 làm điểm khởi tạo, công khai Map standalone chưa qua margin, bắt MapPID cuối qua toàn bộ cổng; đây là sửa điều kiện S2 mục 13.5 nên cần người dùng chốt, không tạo pick hay map.json cuối giả. Không thay mã/seed/cổng hay chạy lại MATLAB trong lượt phân tích.
+
+
+### Watchdog Map (2026-10-20 09:38:54)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+
+### Watchdog Map (2026-10-20 09:47:24)
+Watchdog restarted Map grid after an idle/failure condition; cached CSV/checkpoint data are retained.
+
+### Bàn giao theo yêu cầu người dùng (2026-10-21) - Đợt Map2 phủ rộng do khung Map thực hiện
+
+Người dùng yêu cầu khung Map tiếp nhận kế hoạch tại
+`Documents/Notes/Controllers/KeHoach_Map2_Dense.md`: đọc toàn bộ rồi triển khai
+và chạy trong phạm vi Map khi nhận prompt bàn giao. Lưới306 cặp (17x17 + hàngK6)
+và một baseline cực/zero Map cũ riêng, đánh giá nominal + cả hai stress kể cả
+điểm trượt e_rel, báo sáu mức vi phạm, chọn khả thi hoặc ghi ứng viên thoả hiệp
+minimax minh bạch. Giữ cổng, PRSM, CALIB và seed; RAM mục tiêu80–90%, reserve10%,
+retry/cache/lock theo kế hoạch. Không chạy MapPID hay DREWS. Bản ghi bàn giao này
+được thêm theo chỉ đạo trực tiếp, không phải kết quả chạy mới của khung Map.
+Khung Map tự ghi Lượt kế tiếp/trạng thái khi tiếp nhận; tại lúc bàn giao chưa
+khởi động đợt dense. Map bài báo K6 vừa kiểm lại seed0/1 đều qua margin nhưng
+e_rel45.06/45.45% trượt10%; chi tiết nguồn trong kế hoạch và MapPID Lượt56.
+
+### Lượt 455 (2026-10-21) - Khởi chạy Map2 Dense và kiểm soát phục hồi
+
+Đã đọc toàn bộ `KeHoach_Map2_Dense.md`, lịch sử Map và quy ước; chỉ chạy Map2 `(K,g_min)`, không chạy MapPID/DREWS và không ghi `map.json`. Manifest cố định gồm 306 điểm Map2 cộng baseline legacy đã được tạo tại `Result/Controllers/Map/Calib_v2/TwoParamDense`. Preflight điểm K=5, g_min=0.707106781187 hoàn tất đủ nominal seed0, nominal/gain x2/delay +1 ms seed1; checkpoint chứng minh đường chạy stress vẫn chạy sau khi e_rel trượt. Full run đang có năm MATLAB worker độc lập, mỗi worker ghi CSV riêng sau từng điểm hoàn chỉnh. Lỗi quote launcher ban đầu làm MATLAB thoát ngay đã được sửa trước khi có dữ liệu lưới; một worker sau đó mất process và supervisor đã khởi động lại đúng worker, không xóa cache. Cảnh báo algebraic loop khi delay=0 là cảnh báo Simulink đã biết, không phải rejection. RAM thực tế đang dùng khoảng 70 %, còn gần 30 % trống; không tạo tải giả chỉ để ép lên 90 % vì sẽ giảm độ ổn định. Đã mở rộng finalizer để xuất bảng synthesis/nominal/stress/constraints/Pareto/JSON/MAT, báo cáo Markdown và đo độc lập seed1--5 cho điểm chọn cùng tối đa bốn đại diện; mọi output vẫn chờ lưới hoàn tất mới được kết luận. `map.json` giữ nguyên.
+
+### Lượt 456 (2026-10-21) - Sửa checkpoint schema khi worker Map2 resume
+
+Trong khi giám sát Map2 Dense, worker 3 hoàn tất được điểm thứ nhất rồi dừng ở hàng kế tiếp với `tabular/vertcat`: CSV resume do `readtable` tạo `key` kiểu `string` và cờ kiểu `double`, còn `struct2table` của phép đo mới tạo `char`/`logical`. Đây là lỗi checkpoint/schema, không phải rejection hay lỗi mô phỏng; điểm đã xong vẫn giữ trong `Map2_Dense_measurements_w3.csv`. Đã sửa `run_map2_dense.m` để chuẩn hóa `key` và năm cờ trước mỗi lần nối bảng, ghi bằng chứng vào `Map2_Dense_execution_errors.csv`; retry kế tiếp sẽ đọc code mới và tiếp tục cùng phân vùng/cache. Không đổi gate, lưới, MapPID, DREWS hay `map.json`.
+
+### Lượt 457 (2026-10-21) - Thay supervisor Map2 bị mất bằng kiểm chứng manifest toàn cục
+
+Sau khi worker 3 resume thành công và checkpoint lên 17/307, kiểm tra process cho thấy supervisor gốc không còn sống dù bốn MATLAB vẫn tính và heartbeat guardian/postflight guardian còn sống. Vì supervisor cũ dùng handle process không phản ánh đúng child MATLAB, nếu để nguyên nó sẽ không gọi finalizer khi lưới xong. Đã thêm và chạy `tools/jobs/resume_map2_dense_supervisor.ps1`: không dừng/động vào MATLAB hiện có; mỗi 120 s đối chiếu toàn bộ key trong CSV với `Map2_Dense_manifest.csv`, ghi `verified/missing` vào status, và chỉ gọi finalizer khi đủ chính xác 307 key duy nhất. Trạng thái đầu: verified=17/307, missing=290. Guardian heartbeat hiện có vẫn phụ trách hồi phục worker stale; postflight vẫn xác minh output sau COMPLETE. Không đổi gate, dữ liệu, MapPID/DREWS/map.json.
+
+### Lượt 458 (2026-10-21) - Phục hồi song song 54 key Map2 Dense còn thiếu
+
+Lúc 10:45 kiểm chứng manifest cho thấy 253/307 key: w1=62, w3=61, w4=61, w5=61 đã xong, w2 chỉ 8/62 nên còn thiếu đúng 54 key. Hai recovery w2 trước đó dừng native ở lần thứ ba, guardian ghi `UNRESOLVED` theo giới hạn retry; không có bằng chứng rejection vật lý. Sau audit khi không còn MATLAB lưới khác, đã dừng chỉ các guardian cũ (không có worker sống), tạo `Map2_Dense_resume_manifest.csv` 54 key còn thiếu, mở rộng runner nhận manifest/output tag riêng, và chạy `watch_map2_dense_resume.ps1` với 5 lô rời 11/11/11/11/10 key. Mỗi lô checkpoint riêng `measurements_resume_w*.csv`; finalizer và supervisor manifest nay đọc cả checkpoint cũ + resume, chỉ chốt khi đủ 307 key duy nhất. Năm MATLAB mới đã khởi động đồng thời lúc 10:48. Không đổi lưới/gate/MapPID/DREWS/map.json.
+
+### Lượt 452 (2026-10-20) - Chẩn đoán vùng vận hành 80 % trước khi đổi Map
+Theo quyết định người dùng: giữ nguyên lưới/cache stress, không tăng K chỉ để cứu vùng biên. Đã tạm dừng watchdog Map PID 110340 vì nó restart selector noMargin mỗi 8 phút và có thể cạnh tranh CSV; không xóa dữ liệu. Thêm `analyze_map_operating_windows.m`, chỉ đọc thiết kế/cache và mô phỏng bốn ứng viên đại diện (low K 8.118, điểm J danh định K 8.944, điểm K9 finite-stress và minimum cached gain ratio K16) ở nominal/gain x2; không ghi map.json/pick hay đổi gate. Báo cáo chi tiết `Map_CALIB_window_diagnosis_s00000.csv` và tổng hợp cùng tên `_summary_` tại Map/Calib_v2. Vùng normal80 được khai báo trước khi đọc số: đường khô, 30--90 km/h, không có bước mu; 54/68 cửa sổ = 79.4 %, còn v20, v100, mu là boundary/robustness. Kết quả: điểm J danh định vẫn tốt nhất khi cân bằng error/smoothness trong normal80 (RMS e 1.302 N.m, S 0.423 N.m; K9 giảm RMS xuống 1.225 nhưng S tăng 0.859; K16 RMS 1.180 nhưng S 1.012). Khi gain x2, lỗi nổi bật nằm ngay normal80: static v30 a=0.1 g over-assist khoảng -26.5 đến -27.0 %, trans v80--90 a=0.1 g khoảng +26 %, không phải EDGE. Gain làm R toàn CALIB từ 6.77 lên 24.39 % ở điểm J leader (x3.60); tăng K đến 16 chỉ giảm chút các lỗi này, đồng thời tăng S gần 2.4 lần. Boundary v20 trans vẫn rất lớn ~130--135 % danh định, nhưng không phải lý do để ép K cao. Kết luận: bằng chứng hiện có ủng hộ giữ gain thấp-trung bình và sửa cơ chế bám/robustness ở mô-men nhỏ, không tăng K. Chưa có Map standalone qua calib_margin nên chưa tạo pick/map.json và chưa mở MapPID S2; bước tiếp cần một biến thể Map có feedback/bù sai lệch nhỏ hoặc quyết định dùng Map J-leader chỉ làm khởi tạo minh bạch cho MapPID, nhưng không thay chuẩn chọn ngầm.
+
+### Lượt 459 (2026-10-21) - Map hai biến (K, g_min) lưới 13 mức theo mục 14 PhuongPhap_TimThamSo: xong, thiết kế "an toàn, trượt e_rel"
+Làm đúng mục 14 (thiết kế mù: không dùng CALIB v1, K 6, Map5 grid, TwoParam, TwoParamDense; chỉ cache tuyến tính Map_plants.mat là hàm của Plant). Sao lưu trước ở Desktop/Adaptive-EPS_backup_2026-10-21_Map_truoc_grid2 (Calib_v2, map.json, grid_search gốc). Code mới (Model/Controllers/Map/script): map2_u2x, map2_x2u, map2_eval, map2_grid_spec (centerFcn R1/R2/R3, marginFcn đọc csv), run_map2_grid (bắt R3), select_map2_pareto, report_map2_grid, test_map2_grid; tools/jobs/map2_grid_pipeline.sh (4 worker, guard_ram.ps1 bật, không DREWS). Sửa dùng chung tương thích ngược PID: grid_search.m (spec.coarseLevels, spec.centerFcn tùy chọn, mặc định như cũ); select_pareto.m (erelMax = Inf bỏ cổng c4; ruleText, designNote, keepTsCtrl tùy chọn; sửa lỗi khi điểm chọn nằm ngoài mặt Pareto vì dự phòng margin). Kiểm bộ đánh giá tại K 6.687, g_min 0.7071: R 12.4208, S 0.43645, e_rel 28.185, ratio_gain 1.868 (khớp kỳ vọng, ratio_delay 3.38 nên trượt margin). Lưới chạy 12:25-17:31: 186 cặp (169 thô + 17 mịn thêm), 55 tổng hợp hỏng (K >= 12.8), 0 trượt tuyến tính, 131 mô phỏng, 22 qua e_rel, 77 qua margin, 0 qua cả hai. Quy tắc tâm: R1 ở cả 5 lớp mịn (tâm cuối K 8.99, g_min 0.7071, J 3.13, h cuối 0.0104). LỖI VÀ CÁCH SỬA: (1) test lần đầu ghi csv sai đường dẫn scratch (fileparts hai lớp), sửa một lớp; (2) select_pareto lỗi `frontOrder == []` khi điểm chọn ngoài mặt Pareto, sửa một dòng; (3) select_pareto bỏ Ts_ctrl khỏi map.json làm load_map hỏng, thêm spec.keepTsCtrl cho Map, khôi phục map.json từ bản sao lưu rồi ghi lại; (4) PHÁT HIỆN: ba dòng seed 0 của worker 1 ở K 9.65 (g_min 0.707, 0.794, 0.891) bị hỏng (S 1.49, 1.02, 7.26 so với 0.469, 0.526, 0.624 khi chạy lại trong tiến trình mới; e_rel giống hệt; margin 3.13, 6.74, 0.243 "đạt" sai so với 3.63 trượt). Nguyên nhân chưa rõ (dòng chạy chậm 400-460 s ở lớp thô, không có dấu hiệu RAM). Đã thay đúng ba dòng bằng giá trị chạy lại (bản gốc scratch/Map_CALIB_grid2_w1_before_fix.csv), không đổi tập qua e_rel. Chưa kiểm lại 128 dòng mô phỏng còn lại; các cặp K 5.48 lân cận biến thiên trơn nên khó hỏng. (5) KHOẢNG TRỐNG CỦA KẾ HOẠCH: R1 (14.4) không xét margin nên tâm lưới mịn rơi vào vùng K 8-11 (e_rel 5 %) trong đó cả 22 cặp đều trượt calib_margin (gain x2: tỉ số 3.6 > 2), nên lưới mịn không làm mịn vùng an toàn (K 5.5-7.3, chỉ có lưới thô). Chọn (14.5) vì vậy rơi vào nhánh erelMax = Inf (đã diễn giải "qua đủ cổng" = e_rel VÀ margin): thiết kế chọn K 5.4772, g_min 0.7492, lead (z 37.03, p 591.22), lag (z1 25.53, p1 11.75); R 16.366 %, S 0.4161, J 6.8095, TV 97.7, e_rel 57.87 % (cửa sổ static_v30_apos0p30g, dấu dương = thiếu trợ lực), PM 45.30, GM 5.66, HF 40.2, ratio_gain 1.354, ratio_delay 1.000; năm seed 1-5: J 6.8129 +- 0.0104, e_rel lớn nhất 58.19 %; không ở cận hộp (K, g_min nằm trong). Nhãn "an toàn, trượt e_rel" trong map.json design.x_design_note. load_map và test_map PASS ([Map] TEST PASS). Báo cáo: Result/Controllers/Map/Calib_v2/Grid2/Map_CALIB_grid2_report_s00000.csv, Map_CALIB_grid2_safe_s00000.png, Map_CALIB_pareto_s00000.png. Không chạy DREWS, MapPID, PID; không sửa PRSM, CALIB, gate; chưa commit. Việc chờ người dùng: (a) quyết định có làm mịn vùng an toàn bằng tâm R2 (cổng an toàn + margin, J nhỏ nhất) cho khoảng K 5.5-7.3 không (đổi quy tắc tâm sau khi thấy dữ liệu, nên chưa tự làm); (b) có kiểm lại toàn bộ 131 dòng mô phỏng trong tiến trình mới không; (c) chưa nén nhật ký (lần nén cuối Lượt 431, đã quá hạn).
+
+### Lượt 460 (2026-10-22) - Làm mịn lưới Map2 với tâm R2 (người dùng đồng ý) và hình đánh đổi e_rel / margin
+Người dùng thấy e_rel 57.9 % quá lớn (bản K 6 cũ chỉ 45 % trên CALIB v2) nên đồng ý bước 1 và 2, bàn cổng sau. ĐỔI QUY TẮC SAU KHI THẤY DỮ LIỆU (ghi trung thực, 2026-10-21 23:12): tâm lưới mịn đổi từ R1 sang R2 (cổng an toàn c1-c3 và pass_margin, J nhỏ nhất) vì R1 không xét margin nên lớp mịn đầu bị đặt ở K 8-11, nơi cả 22 cặp qua e_rel đều trượt calib_margin; cổng KHÔNG đổi. Cài: map2_grid_spec(centreRule), run_map2_grid(id, n, 'R2'), tools/jobs/map2_refine_r2_pipeline.sh (dùng lại mọi dòng csv, 4 worker, cùng guard_ram). Sao lưu trước: Desktop/Adaptive-EPS_backup_2026-10-21_Map_truoc_grid2/map_after_first_select_R1.json và Grid2_after_first_select_R1. Chạy 23:12-00:35; guard dừng MATLAB 8 lần ở 23:20-23:41 (RAM các khung khác), worker tự chạy lại, không mất dòng. Tâm theo R2 đi dần lên: K 5.477/0.749 (J 6.81) -> 6.311/0.738 -> 6.311/0.727 -> 6.311/0.717 -> 6.311/0.707 (J 5.92) -> 6.775/0.707 (J 5.30); 6 lớp mịn, h cuối 0.0208. Tổng 204 cặp (169 thô + 35 mịn thêm), 55 tổng hợp hỏng, 0 trượt tuyến tính, 149 mô phỏng, 22 qua e_rel, 93 qua margin, 0 qua cả hai (nên chọn vẫn theo nhánh erelMax = Inf, nhãn "an toàn, trượt e_rel"). THIẾT KẾ CHỌN MỚI (ghi đè map.json, bản trước trong thư mục sao lưu): K 6.7746, g_min 0.7071 (ở cận dưới hộp g_min), lead z 33.50 p 673.27, lag z1 28.13 p1 10.69 (lead z và lag giống Map K 6 cũ, chỉ p và K khác); CALIB seed 0: R 12.053 %, S 0.4398, J 5.301, TV 123.1, e_rel 26.04 % (static_v30_apos0p30g, dấu dương = thiếu trợ lực), PM 45.49, GM 5.24, HF 51.7, ratio_gain 1.929 (sát ngưỡng 2), ratio_delay 1.000; năm seed 1-5: J 5.3137 +- 0.0129, e_rel lớn nhất 26.52 % (26.53 26.19 26.22 25.91 26.03). load_map và test_map PASS. So với lần chọn đầu (K 5.477: R 16.37, e_rel 57.9, J 6.81) tốt hơn mọi mặt. Báo cáo cập nhật: Result/Controllers/Map/Calib_v2/Grid2/Map_CALIB_grid2_report_s00000.csv (trường centre_rules_worker1 chỉ ghi các lớp đầu của lần chạy R1), Map_CALIB_grid2_safe_s00000.png, Map_CALIB_pareto_s00000.png; hình mới tools/make_fig_map2_tradeoff.py -> Map_CALIB_grid2_tradeoff_s00000.png (K theo e_rel và theo ratio_gain, 149 cặp): e_rel <= 10 % chỉ khi K >= khoảng 7.8 nhưng ratio_gain 2.3-4.2, cả hai không thỏa cùng lúc. Lưu ý: ba dòng hỏng của worker 1 đã sửa ở Lượt 459; 146 dòng còn lại chưa chạy lại độc lập. Không chạy DREWS, MapPID, PID; chưa commit. Việc chờ: bàn cổng margin (ratio_gain tính trên R tương đối, phạt thiết kế tốt danh định; đổi cổng phải áp cho PID, MapPID, báo COMMON).

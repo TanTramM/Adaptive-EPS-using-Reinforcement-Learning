@@ -1,0 +1,55 @@
+KẾ HOẠCH DREWS v2 (bộ năm ca chấm điểm mới; người dùng chốt hướng 2026-10-22, khung TESTCASE dựng và kiểm; khung COMMON viết kế hoạch này)
+===========================================================================================================================================================================================
+
+0. Mục đích, nguyên tắc
+Bộ DREWS cũ (v1: DRY, RAMP, SLIP, EDGE, WEAVE dựng từ các đoạn của TC1-TC6) có sáu điểm yếu: (1) DRY dùng đúng tốc độ (20-100 km/h bước 20 hoặc 10) và mức giữ cua (0.1, 0.2, 0.3 g) của CALIB
+v2, nên chọn tham số và chấm điểm trên cùng điều kiện; (2) SLIP (mu 0.8 xuống 0.3 ở 0.3 g, 100 km/h) gần trùng bước mu của CALIB (0.8 xuống 0.35 ở 0.3 g, 60 km/h); (3) thời lượng lẻ và không
+đều (DRY 129 s, SLIP 63 s, WEAVE 61 s), nên trọng số ngầm không đều; (4) RAMP, EDGE "chỉ báo cáo" còn ba ca kia "chấm điểm" mà không có lý do; (5) cửa sổ chấm thừa kế từ ca cũ, không thiết
+kế cho từng câu hỏi; (6) chưa đo nặng tay, nhẹ tay theo thời gian, bão hòa và thời gian hồi phục.
+Nguyên tắc của DREWS v2. (a) Năm ca, tên giữ nguyên (DRY, RAMP, SLIP, EDGE, WEAVE), MỖI CA ĐÚNG 60,000 s (tổng 300 s); cả năm ca đều chấm; EDGE ghi rõ là ngoài vùng thiết kế (trên 0.3 g).
+(b) Mọi điều kiện NẰM NGOÀI lưới của CALIB v2: tốc độ không thuộc {20, 30, ..., 100}; mức giữ cua không thuộc {0.1, 0.2, 0.3} (trừ khi có lý do ghi rõ); mu không bằng 0.8 hoặc 0.35 ở cảnh có
+bước mu; tần số đánh lái không bằng 0.5 và 1 Hz. (c) Mỗi ca hỏi MỘT câu gắn với một tình huống lái thật, và cả bộ phủ đều điểm yếu của Map, PID, MapPID (không ca nào chỉ nhắm một bộ). (d)
+Giữ giới hạn mô hình đã đo ở CALIB: 20 km/h xe chỉ đạt khoảng 0.2 g; không đánh lái hình sin dưới 40 km/h (người lái vòng hở phải xoay 80-140 độ); đổi tốc độ không nhanh hơn 0.2 s mỗi km/h
+(ít nhất 4 s); tải bám không quá khoảng 90 %; trong cảnh có bước mu thì mức dùng bám a_y/mu không quá khoảng 0.86. (e) CHỐT TRƯỚC khi chạy bất kỳ bộ nào: ghi ngày chốt vào QuyChuan; sau khi
+thấy kết quả không sửa ca (sửa vì lỗi dựng, ví dụ người lái vòng hở không theo nổi, thì ghi trung thực lý do và chạy lại cho CẢ BA bộ). (f) Giữ bộ cũ làm "DREWS v1" để tái lập bài báo cũ
+(đổi tên thư mục kết quả, mã gọi bằng tham số), giống cách đã làm với CALIB v1.
+
+1. Năm ca (đề xuất; khung TESTCASE chỉnh thời gian từng đoạn cho khớp đúng 60,000 s, kiểm bằng mô phỏng rồi chốt)
+1.1. DRY - độ chính xác tĩnh ở tốc độ và mức không dùng để chọn tham số. Đường khô (mu 0.8). Bốn khối tốc độ 25, 45, 75, 95 km/h theo thứ tự đó. Mỗi khối: giữ cua 0.15 g trái (4 s: vào 1 s,
+lắng 2 s, cửa sổ chấm 1 s), về 0 trong 1.5 s, giữ cua 0.25 g phải (4 s, cùng cấu trúc), về 0 trong 1.5 s (11 s mỗi khối). Giữa hai khối đi thẳng đổi tốc độ (4, 6, 4 s). Đầu ca đi thẳng 2 s ở
+25 km/h. Tổng khoảng 2 + 44 + 14 = 60 s. Cửa sổ: dry_v25a0p15l, dry_v25a0p25r, ... theo quy tắc đặt tên của Tracking/CLAUDE.md (hậu tố l/r là chiều).
+1.2. RAMP - bám khi giá trị đặt đổi liên tục theo tốc độ. Đường khô, giữ cua 0.2 g (một chiều). 0-3 s đi thẳng 90 km/h; 3-4 s vào cua 0.2 g; 4-7 s giữ 90 km/h; 7-27 s giảm tốc 90 xuống 40
+km/h đều; 27-31 s giữ 40 km/h; 31-51 s tăng tốc 40 lên 90 km/h đều; 51-58 s giữ 90 km/h; 58-60 s về 0. Cửa sổ chấm: hai đoạn đổi tốc độ (dn, up), ba đoạn giữ.
+1.3. SLIP - nhẹ tay khi mu giảm, nặng tay và hồi phục khi mu tăng. Ba cảnh nối bằng đoạn đi thẳng. (a) 70 km/h, 0.2 g trái, mu 0.8 xuống 0.5 giữ 6 s; (b) 85 km/h, 0.15 g phải, vũng nước mu
+0.2 trong 1 s rồi về 0.8; (c) 55 km/h, 0.2 g trái, mu 0.4 rồi tăng lên 0.8 giữ 8 s. Kiểm tải bám: 0.2/0.5 = 0.40, 0.15/0.2 = 0.75, 0.2/0.4 = 0.50 (đều dưới 0.86). Cửa sổ: mỗi bước mu có cửa
+sổ sau bước (2 s) và cửa sổ hồi phục (tới 6 s).
+1.4. EDGE - gần giới hạn trợ lực, khi bão hòa (ngoài vùng thiết kế). Đường khô. (a) 50 km/h: 0.35 g trái 5 s rồi 0.38 g 5 s; (b) 80 km/h: 0.35 g phải 5 s rồi 0.38 g 5 s; (c) 65 km/h: vào cua
+nhanh tới 0.35 g trong 0.5 s (đánh lái gấp), giữ 4 s. Kiểm a_y,max của Plant tại 50, 65, 80 km/h đủ lớn (ref.json: 0.8 g).
+1.5. WEAVE - ồn và cảm giác quanh tâm, trễ pha khi lái nhanh, lái liên tục. (a) 100 km/h, lái nhẹ quanh tâm biên độ 0.05 g tần số 0.2 Hz, 4 chu kỳ (20 s), mu 0.8; (b) 80 km/h, đổi làn kép:
+hai xung 0.25 g tần số 0.6 Hz (8 s kể cả vào và ra), mu 0.8; (c) 60 km/h, mu 0.3, lượn biên độ 0.15 g tần số 0.75 Hz, 5 chu kỳ (6,7 s). Cần kiểm: biên độ 0.05 g tạo T_d,ref nhỏ so với vùng
+chết 0.3 N.m của Map (đây là điểm kiểm Map, không phải lỗi dựng). Neo "theo tinh thần ISO 13674-1 (lái quanh tâm) và ISO 3888 (đổi làn kép)"; References/ chưa có văn bản ISO nên KHÔNG trích
+số của chuẩn.
+1.6. Khung TESTCASE kiểm trước khi chốt: người lái vòng hở (theta1 theo bảng góc ổn định) theo được mọi đoạn (không trượt bão hòa ngoài ý, không quá tải bám), a_y thực đạt mức đặt trong 10
+%; tổng thời lượng mỗi ca đúng 60,000 s (thêm đoạn đi thẳng đệm ở cuối nếu thiếu).
+
+2. Chỉ tiêu (mỗi ca, mỗi seed 99995-99999; báo trung bình và độ lệch; không gộp thành một điểm tổng có trọng số)
+2.1. Đã có, giữ nguyên: RMS e_T, MaxAbs e_T, trung bình e_T có dấu theo phần trăm T_d,ref từng cửa sổ, RMS T_a, S (lọc cao qua 5 Hz), TV, đỉnh |T_a| theo phần trăm T_a,max, trợ lực ngược (Rev_pct).
+2.2. Thêm (đều từ T_s thật, T_d,ref thật, bỏ 2 s đầu ca): (a) nặng tay: max |T_s|, max(|T_s| - |T_d,ref|), thời gian |T_s| > 1.1 |T_d,ref|; (b) nhẹ tay: min(|T_s| / |T_d,ref|) khi |T_d,ref|
+> 0.5 N.m, thời gian |T_s| < 0.9 |T_d,ref|; (c) trợ lực ngược: tỉ lệ thời gian và đỉnh T_a ngược dấu T_s; (d) bão hòa: tỉ lệ thời gian |T_a| >= 0.98 T_a,max; (e) hồi phục (SLIP): thời gian
+từ bước mu tới khi |e_T| < 10 % T_d,ref và giữ liên tục 1 s (nếu không đạt trong cửa sổ thì ghi không đạt, không đặt số). Ngưỡng 10 % và 0.9 / 1.1 là ngưỡng người lái phân biệt được (cùng
+căn cứ với e_rel, Deborne 2014), tất cả chỉ BÁO CÁO, không là cổng.
+2.3. Cách so sánh: so theo cặp, chênh dưới 5 % hoặc dưới độ lệch giữa các seed thì coi là ngang nhau, không nói bộ nào hơn. Chặn trên mô-men tay do AssistLimit dùng chung (|T_a| <= T_a,max):
+chỉ lập luận trong bài, không có cổng và không có phép kiểm tắt trợ lực (người dùng chốt 2026-10-22, nhật ký COMMON Lượt 207); số chưa gồm quán tính khi đánh lái nhanh, bán kính vô-lăng
+0.18-0.19 m là giả định, R79 là phép thử tốc độ thấp, chưa đọc bản gốc R79 và QCVN 09:2024.
+
+3. Việc của khung TESTCASE (theo thứ tự)
+3.1. Đọc Tracking/CLAUDE.md, nhật ký testcase (trạng thái và lượt cuối), nhật ký COMMON Lượt 186-208, QuyChuan.txt mục ca thử, Model/Sim/script/make_cases.m, run_cases.m, tài liệu này.
+3.2. Giữ bản cũ: đổi make_cases('DREWS') cũ thành make_cases('DREWS_V1') (hoặc tham số tương đương), thư mục kết quả cũ Cases giữ nguyên; thư mục mới Result/Controllers/<Ctrl>/Cases_v2/ (hàm
+result_dir có khóa 'CasesV2'); không ghi vào Cases cũ.
+3.3. Viết bản dựng DREWS v2 theo mục 1 (ca, cửa sổ, tên theo quy tắc), kiểm 1.6 bằng mô phỏng KHÔNG cần bộ điều khiển thật (dùng Model_PID với PID đã chọn chỉ để chạy được; mục đích kiểm
+người lái và tải bám). Điều chỉnh thời gian đoạn để đúng 60,000 s. Không điều chỉnh theo hướng làm một bộ nào trông tốt hơn.
+3.4. Thêm chỉ tiêu mục 2.2 vào run_cases.m (cột mới trong bảng metrics, giữ nguyên cột cũ).
+3.5. Ghi QuyChuan.txt (mục ca thử, nhật ký thay đổi): ngày chốt, bảng năm ca, bảng chỉ tiêu; ghi trung thực rằng bộ v1 có sáu điểm yếu (mục 0) và v2 thay thế.
+3.6. Khi người dùng bảo mới chạy: run_cases cho PID, Map, MapPID với năm seed 99995-99999 (tất cả bộ cùng seed). KHÔNG chạy cho bộ nào khi ca chưa chốt. Không chạy MapPID khi khung MapPID
+chưa chọn xong thiết kế.
+3.7. Báo: bảng năm ca (tên, thời lượng, cảnh, cửa sổ), kết quả kiểm khả thi (tải bám lớn nhất từng cảnh, a_y đạt so với a_y đặt), danh sách file đã sửa, và việc còn treo. Không commit.

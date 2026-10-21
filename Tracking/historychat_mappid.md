@@ -99,3 +99,26 @@ Lượt54 là tiến triển thật: Map2 grid hoàn tất, pushabade76, tự k�
 Kết thúc cùng lượt55: MapSelect đã ghi đủ22 rejection, nominal/gain hữu hạn; ratio thấp nhất3.3468654041824(K8.11800214941,g_min0.719310665304). Có assertNoMargin lúc11:02:07 rồi nativeheap trong cleanup. Đã sửa select_pareto không mởpool khi toàn bộ feasiblepool đã có rejectioncache. Native-retry client lên11:03:09, đọc lại đúng22cache không mởpool, báoNoMargin sạchExit1; supervisor dừngBLOCKED11:03:29, không loopMATLAB vôích. Kiểm đối chiếuF22/cache22/uncovered0. Thêm report_mappid_six_map.m, chạy auditPASSExit0:38eval/31sim/22nominal/0margin, tạo joinedCSV và search_report.json có standalone_selected=false, không viết standardJSON/pick. BestdanhđịnhJ3.110294338 tạiK8.52112777691,g_min0.707106781187,R6.78071676%,S0.45869699Nm,e_rel5.24823596%,ratio_gain3.59543512. Các báo cáo là bằng chứng review, không phải đầu vàoS2 hợp lệ theo chínhsách cũ.
 
 Timer11:01:21 SYNC OK, vẫn sống16080; rootMapPID77976 đãthoát. Đã gửi asyncquestion xin chốt thayđiềukiệnkhởitạo: dùngMap2danhđịnh chỉlàminitializerS2, MapPIDcuốivẫnbắtqua tấtcảgate; hoặcgiữMap2phảiquamargin. Chưa nhậntrảlời nên chưa chạynhánhphụthuộc; không tự coi goalhoànthành, không đánhblocked ở lần đầu. Việcđãlàm trong lượt55 là tiếntriển thật: hoàn tấtmargin,audit,fixpoolcache và nénlịch sử.
+
+### Lượt 56 (2026-10-21) - Kiểm chứng Map bài báo trên CALIB v2: qua margin, trượt e_rel
+
+Theo yêu cầu người dùng, đã dừng toàn bộ pipeline MapPID để bàn phương pháp; timer sync PID16080 cũng đã dừng. Phép kiểm riêng `scratch/mappid_legacy_map_margin.m` chạy nguyên thiết kế đang trong `Model/data/map.json`: K=6, lead z=33.50094 p=600.10835, lag z1=28.12758 p1=10.68848. Không ghi map.json, selected JSON hay CSV chọn. Trên CALIB v2, seed0: R=14.44863%, S=0.4176564 Nm, J=6.03456, e_rel=45.05513%, ratio gain=1.575013, delay=1.000121, margin PASS. Seed1: R=14.47581%, S=0.4173285 Nm, J=6.04117, e_rel=45.44615%, ratio gain=1.572182, delay=1.000146, margin PASS. So với CALIB v1 trong map.json (R=27.05394%, S=0.2492401, J=6.74293, e_rel=3.16677%, gain=0.78119, delay=1.00045), Map cũ không mất gain/delay margin; CALIB v2 làm lộ sai số xác lập ở các cửa sổ mới, nên không hợp lệ dưới c4=e_rel<=10%.
+
+Lỗi harness đầu: sau seed0 đã gọi trường `nominal.PM`/`nominal.GM` không tồn tại trong struct của `calib_run`, MATLAB exit1 trước seed1 và chưa ghi report; số seed0 trước lỗi là hợp lệ vì calib_margin đã hoàn tất. Đã bỏ hai trường không tồn tại, chạy lại đủ hai seed, ghi `scratch/mappid_legacy_map_margin.json` và `.mat`; không coi lỗi harness là rejection vật lý. Kết luận phương pháp: Map bài báo cũ thật sự dùng outer pair (K,g_min) và inner lead-lag tương tự Map2, nhưng lưới Map2 mới có coarse K={5,7.368,10.858,16}, không có K=6; đồng thời mọi điểm Map2 qua c4 hiện tập trung K~8--9 nên failure22/22 không bác kết quả K6 cũ về gain margin. Chưa khởi động S1/S2 sáu biến lại; cần chốt profile Map2 mở rộng/chứa baseline và xử lý c4 trước khi chọn Map/S2.
+
+### Lượt 57 (2026-10-21) - Bàn giao kế hoạch Map2 dense cho khung Map, chưa chạy
+
+Người dùng yêu cầu viết kế hoạch vào phạm vi khung Map, cung cấp prompt để
+khung Map triển khai ngay và giữ RAM80–90%. Đã tạo
+`Documents/Notes/Controllers/KeHoach_Map2_Dense.md` và thêm chỉ dẫn bàn giao
+đầu/cuối `Tracking/historychat_map.md` theo chính yêu cầu này; bảo toàn các
+thay đổi Map đang dirty, không ghi đè nhật ký/CSV cũ. Kế hoạch306 cặp (289 lưới
+toàn miền +17 mứcg_min tạiK6), baseline cực/zero cũ riêng, giữ innerlaw/PRSM/
+CALIB/seed/gate. Đo đủ nominal/gain/delay kể cả e_rel trượt, không fail-fast
+delay; cache và phân loại executionerror riêng. Nếu có nghiệm chọn J/PM trên
+pool qua đủgate; nếu không, công bố Pareto sáu mức vi phạm và ứng viên thoả
+hiệp theo Vmax,Vsum,J trong pool ổn định hữu hạn, không hợp thức hoá thành
+Map đạtchuẩn. Ghi deliverables, provenance, report5seed, reserve10% và worker
+recovery; không yêu cầu sửa sharedcode đổi gate hay auto mở MapPID/DREWS.
+Chưa chạy MATLAB, chưa commit/push, giữ pipeline MapPID dừng để người dùng
+chuyển sang khung Map thực hiện.

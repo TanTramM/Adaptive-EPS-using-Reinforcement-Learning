@@ -345,7 +345,7 @@ D. Chấm: load_pid; run_scoring_seeds('PID', 99995:99999).
 E. Ước lượng (35 s mỗi mô phỏng, giả sử khoảng 3/4 số điểm qua sàng lọc): khoảng 250-750 lần đánh giá, khoảng 2-7 giờ cho một MATLAB, khoảng 1-2 giờ với ba tiến trình. Đây là ước lượng, ghi số thật vào nhật ký.
 F. Báo: số điểm thô, số lưới mịn và h cuối, số mô phỏng, số điểm qua cổng, thiết kế chọn (Kp, Ki, Kd, Tf), R, S, J, PM, GM, e_rel lớn nhất và cửa sổ của nó, kết quả năm seed (13.1.D.5), biến nào nằm ở đầu hộp (u = 0 hay 1; Tf sát 1 ms là chu kỳ điều khiển, không mở được), hình Pareto.
 
-13.4. Map (khung Map; 5 biến; seed tìm 00000, seed kiểm 00001-00005)
+13.4. Map (khung Map; 5 biến; seed tìm 00000, seed kiểm 00001-00005) [ĐÃ THAY bằng mục 14 ngày 2026-10-21: Map hai biến K, g_min, lưới thô 13 mức; phần dưới chỉ giữ làm hồ sơ]
 A. Làm 13.2. Sửa cận dưới của K: 7 thành 5, ở Model/Controllers/Map/script/map_u2x.m dòng 8 và map_x2u.m dòng 6 (hai file phải giống nhau), sửa chú thích đầu map_u2x.m. Cơ sở: cận 7 suy ra từ cổng 5 %; đo cũ e_rel 45 % ở K 6, và lần thử với hộp 0.1-16 không có điểm khả thi nào trong 250 lần, nên dưới 5 gần như chắc chắn không qua cổng 10 %.
 B. Quét: spec name 'Map', n 5, u2x @map_u2x, evalFcn @map_opt_eval, seed 0, tag 'grid', free 1:5, coarse true, hStart 1/6. Lưới thô 4^5 = 1024 điểm; mỗi lưới mịn tối đa 243 điểm. Dùng grid_search.m và select_pareto.m của 13.1, không viết lại. KHÔNG dùng select_map.m, select_map_multiseed.m, run_calib_sweep.m, sweep_leadlag.m (cách cũ).
 C. Chọn và D. Chấm: như PID, với 'Map' và load_map.
@@ -366,3 +366,92 @@ F. Báo như Map và PID, thêm: nhánh Map có bị tắt không (K = 0), PID c
 
 13.6. Sau khi cả ba bộ xong (khung COMMON)
 So mặt Pareto của ba bộ trên cùng hình (QuyChuan: kết luận chính là so cả mặt Pareto); so cặp Map với PID, Map với MapPID, PID với MapPID trên seed 99995-99999 theo (18) (make_pair_comparisons); báo số điểm đã đánh giá, số mô phỏng thật và số điểm qua cổng của từng bộ (cùng quy tắc lưới, nên khác nhau là do cơ chế); độ nhạy: thiết kế chọn của mỗi bộ có qua e_max 5 % không. Số liệu cũ (lưới tay của bài báo, surrogateopt) không dẫn trong bài; phần phương pháp và kết quả của bài báo chỉ viết lại khi đã có đủ ba bộ.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+14. MAP HAI BIẾN (K, g_min) TRÊN LƯỚI THÔ 13 MỨC, CÙNG PHƯƠNG PHÁP QUÉT VỚI PID (người dùng chốt 2026-10-21, THAY mục 13.4; khung Map đọc mục này rồi làm đúng theo thứ tự)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+14.0. Lý do và nguyên tắc
+Người dùng chốt 2026-10-21 (nhật ký COMMON Lượt 186-196): Map phải được thiết kế như kỹ sư hiệu chỉnh một chiếc xe mới, không biết gì trước: KHÔNG dùng bất kỳ kết quả nào của CALIB v1 hay
+của các lần chạy trước (Map K 6 trong map.json, lưới Map5 'grid', TwoParam, TwoParamDense 17 x 17, hàng K = 6, baseline_legacy, cận K 5-16). Map giữ HAI biến quét (K, g_min) như bài báo;
+lead-lag bên trong vẫn tổng hợp bằng design_leadlag. Map và PID dùng CÙNG một phương pháp lấy điểm: grid_search.m, thang log trên một hộp rộng đặt theo ý nghĩa vật lý, lưới thô các mức u đều
+nhau, lưới mịn ba mức quanh tâm, cùng quy tắc chọn tâm và cùng select_pareto. PID quét bốn biến nên nhiều công sức hơn Map một chút; điều này được chấp nhận và báo số biến của mỗi bộ trong
+bài. PID KHÔNG chạy lại (kết quả 2026-10-19 giữ nguyên).
+Bốn ràng buộc giữ nguyên cho mọi bộ, chia hai loại. Cổng AN TOÀN: PM >= 30 độ và GM >= 2 trên 68 mô hình tuyến tính, độ lợi khâu lag >= 0.707 tại 2 Hz, calib_margin (R không tăng quá 2 lần
+khi độ lợi motor x2 hoặc thêm trễ 1 ms). Cổng CHẤT LƯỢNG: e_rel <= 10 % trên 26 cửa sổ static. Nếu Map không có điểm nào qua cổng chất lượng thì chọn trong các điểm qua đủ cổng an toàn và
+báo thẳng là trượt e_rel (do cấu trúc không tích phân); không bao giờ chọn điểm trượt cổng an toàn.
+
+14.1. Biến và hộp (đặt trước, không dựa kết quả)
+- K: 1 đến 30, thang log: K = 10^(log10(1) + u (log10(30) - log10(1))) = 30^u. Cùng độ rộng với hộp Kp của PID (1e-3 đến 30 là 4.5 bậc; ở đây 1.5 bậc vì K là độ dốc bản đồ, đơn vị N.m/N.m,
+  dưới 1 là trợ lực nhỏ hơn mô-men tay).
+- g_min: 0.70711 đến 1, thang log: g_min = 10^(log10(1/sqrt(2)) + u (0 - log10(1/sqrt(2)))). Cận dưới là ràng buộc độ lợi 0.707 tại 2 Hz (Nguyen 2025), cận trên 1 là tắt lag (u = 1 thì
+  useLag = false, chỉ còn lead).
+- Ts0 (vùng chết) đọc map.json design.Ts0 (0.3 N.m, tham số cấu trúc, không quét); đặc tính tĩnh đọc map.json calibration qua calibrate_map_cached (sinh từ ref.json và plant_limits.json,
+  không phải kết quả CALIB).
+- Lead-lag bên trong: design_leadlag(Gj, w, K, g_min < 1, [g_min 12.57]) với 68 mô hình (17 tốc độ x 4 điểm làm việc), cận và lưới bên trong giữ nguyên như hiện có (z 5-500, p/z 1.2-300, p
+  <= 3142, z1 8-120, p1/z1 0.1-0.9, p1 >= 3; PM >= 45, GM >= 2 với bốn độ dốc). Đây là luật thiết kế, không phải kết quả.
+
+14.2. Đánh giá một cặp (viết Model/Controllers/Map/script/map2_eval.m, dạng map2_eval(x, seed, csvFile) với x = [K, g_min])
+1. Tổng hợp lead-lag. Nếu D.ok = 0: ghi một dòng simulated = 0, synth_ok = 0, J = Inf, c1 = c2 = c3 = c4 = Inf, không mô phỏng.
+2. Tính ràng buộc tuyến tính ngoài trên 68 mô hình: c1 = 30 - PM, c2 = 2 - GM, c3 = 0.70711 - lagGain2Hz (lagGain2Hz = |(1 + j 12.57/z1)/(1 + j 12.57/p1)|, bằng 1 khi tắt lag). Nếu một trong
+   ba > 0: ghi dòng simulated = 0, không mô phỏng.
+3. Mô phỏng CALIB v2 seed 0 (calib_run('Model_Map', 0, vars)): R, S, TV, e_rel lớn nhất, rev. Ghi J = R x S (luôn hữu hạn khi đã mô phỏng, KHÁC PID ở chỗ không đặt J = Inf khi trượt e_rel;
+   cột c4 = e_rel - 10 đã mang thông tin cổng).
+4. calib_margin('Model_Map', 1, vars) (seed 1, như map_grid_spec hiện có): ghi ratio_gain, ratio_delay, pass_margin. Gain trượt thì calib_margin bỏ phép trễ (ratio_delay = NaN), chấp nhận.
+   Lý do đo margin ở mọi điểm đã mô phỏng: quy tắc chọn tâm R2 và chọn dự phòng (14.4, 14.5) cần biết điểm nào an toàn; PID không cần vì PID có điểm qua đủ cổng ngay ở lưới thô.
+5. Simulink.sdi.clear sau mỗi mô phỏng. Nạp load_map và Map_calibration_override một lần mỗi phiên MATLAB (như mapMargin trong map_grid_spec.m).
+- Cột csv, theo thứ tự: K, g_min, seed, J, R_pct, S_Nm, TV, erel_pct, rev_pct, PM_deg, GM, HF, lagGain2Hz, simulated, c1, c2, c3, c4, synth_ok, z, p, z1, p1, ratio_gain, ratio_delay,
+  pass_margin, seconds. Hai cột đầu là biến (grid_search và select_pareto đọc theo spec.vn = {'K','g_min'}).
+
+14.3. Lưới
+- Lưới thô 13 mức mỗi biến: u = 0, 1/12, 2/12, ..., 1 (13 x 13 = 169 cặp). Lý do viết trong bài: cùng bậc ngân sách lưới thô với PID (4^4 = 256 điểm; Map 13^2 = 169; 7 mức cho 49, 25 mức cho
+  625); lưới 13 mức chứa lưới 4 và 7 mức (lồng nhau). KHÔNG viện dẫn dữ liệu của các lần chạy trước để biện hộ con số này.
+- Lưới mịn: makeLocalGrid hiện có (tâm cộng trừ h mỗi biến, 3 x 3 = 9 điểm), hStart = 1/24 (bằng nửa bước lưới thô, CÙNG quy tắc với PID: hStart 1/6 bằng nửa bước 1/3), tâm không đổi thì h
+  chia đôi, dừng khi h < 0.02 hoặc đủ 6 lớp.
+- Sửa Model/common/grid_search.m cho tương thích ngược (PID không đổi hành vi): thêm trường tùy chọn spec.coarseLevels (mặc định [0 1/3 2/3 1]) và spec.centerFcn (mặc định là bestCenter hiện
+  có). Kiểm: gọi grid_search với spec PID trên csv PID đã có (mọi điểm đã có trong csv nên không mô phỏng lại) phải in đúng tâm và số liệu cũ; nếu không chắc thì chỉ đọc lại code, KHÔNG chạy lại PID.
+
+14.4. Tâm lưới mịn (spec.centerFcn của Map, viết ở cuối map2_grid_spec.m)
+- R1 (giống PID): trong các điểm simulated = 1, c1, c2, c3, c4 <= 0, J hữu hạn: lấy J nhỏ nhất.
+- R2 (chỉ khi R1 rỗng): trong các điểm simulated = 1, c1, c2, c3 <= 0, pass_margin = 1: lấy J nhỏ nhất.
+- R3 (khi R1 và R2 đều rỗng): dừng, ghi báo cáo vô nghiệm (số cặp tổng hợp hỏng, trượt tuyến tính, trượt margin, ratio_gain nhỏ nhất và cặp đạt nó), không chạy lưới mịn, không chọn, báo người dùng.
+- Ghi vào log mỗi lớp: quy tắc nào được dùng (R1 hay R2) và tâm.
+
+14.5. Chọn (select_pareto.m hiện có, không viết lại)
+- Nếu có điểm thỏa R1: select_pareto với spec.erelMax = 10 (y như PID).
+- Nếu không: select_pareto với spec.erelMax = Inf (chọn trong các điểm qua cổng an toàn tuyến tính; calib_margin xét theo thứ tự J như PID), gắn nhãn "an toàn, trượt e_rel" trong báo cáo và
+  trong map.json (trường x_design_note).
+- spec.marginFcn của Map2 ĐỌC kết quả margin đã ghi trong csv của điểm đó (không mô phỏng lại); chỉ chạy calib_margin thật nếu điểm không có trong csv. Hòa 3 % thì lấy PM lớn hơn (đã có
+  trong select_pareto).
+- Năm seed 1-5 chỉ báo cáo (select_pareto đã có bước pareto_check). writeJson = true chỉ sau khi sao lưu map.json (14.7); spec.toDesign trả struct design giống mapDesign trong map_grid_spec.m
+  (Ts_ctrl, Ts0, Kmax, lead.z, lead.p, lag.z1, lag.p1; lag tắt thì z1 = p1). Sau khi ghi: load_map rồi test_map phải PASS.
+
+14.6. Tên, thư mục, seed
+- spec.name 'Map', spec.vn {'K','g_min'}, spec.n 2, spec.u2x @map2_u2x, spec.x2u @map2_x2u (viết mới, hai file khớp nhau theo 14.1), spec.evalFcn @map2_eval, spec.seed 0, spec.seed0 0,
+  spec.seeds 1:5, spec.tag 'grid2', spec.free 1:2, spec.u0 [0.5 0.5], spec.coarse true, spec.coarseLevels (0:12)/12, spec.hStart 1/24, PMfin 30, GMfin 2.
+- spec.outDir = fullfile(result_dir('Map', 'Calib'), 'Grid2'): thư mục RIÊNG, vì select_pareto đọc mọi file Map_CALIB_*_w*_s00000.csv trong outDir và sẽ lẫn với lưới Map5 cũ nếu để chung.
+- Seed: tìm 00000, margin 00001, báo cáo 00001-00005. KHÔNG chạy DREWS (người dùng sẽ làm DREWS mới sau, 2026-10-21).
+
+14.7. Chuẩn bị
+1. Đọc Tracking/CLAUDE.md, nhật ký khung Map (TRẠNG THÁI và lượt cuối), mục này. COMMON đã dừng mọi MATLAB và tiến trình giám sát lúc 2026-10-21 (Lượt 188); kiểm lại không còn tiến trình nào
+   trước khi chạy.
+2. Sao lưu ra C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-21_Map_truoc_grid2/: toàn bộ Result/Controllers/Map/Calib_v2 và Model/data/map.json. KHÔNG xóa kết quả cũ (giữ làm hồ sơ),
+   không dùng chúng làm cache hay để chọn.
+3. Kiểm bộ đánh giá (chỉ để bắt lỗi code, không vào lưới): chạy map2_eval cho K = 6.687403049764, g_min = 0.707106781187, ghi ra scratch/map2_eval_check.csv (KHÔNG ghi vào Grid2). Kỳ vọng
+   (Map2 dense, cùng luật và cùng CALIB v2): R khoảng 12.42 %, S khoảng 0.4365, e_rel khoảng 28.2 %, ratio_gain khoảng 1.87. Lệch quá 1 % thì dừng, tìm lỗi.
+4. Kiểm map2_u2x(map2_x2u(x)) = x và 13 mức K, g_min in ra đúng hộp.
+
+14.8. Chạy (viết tools/jobs/map2_grid_pipeline.sh theo mẫu grid_pipeline.sh và job_lib_patient.sh)
+- Bước: check (14.7.3) -> các worker run_map2_grid(id, n) -> select (14.5) -> báo cáo năm seed -> load_map; test_map. KHÔNG chạy run_scoring_seeds (DREWS làm sau). Dấu xong ở scratch/jobs/map2_*; chạy tiếp
+  được khi bị dừng (csv từng worker, bỏ qua điểm đã có).
+- Số MATLAB: 3; được lên tối đa 5 nếu guard_ram.ps1 giữ RAM dưới 90 %. TEMP và TMP = D:/MatlabTemp. Lỗi heap khi thoát MATLAB vô hại nếu csv đã ghi; lỗi thực thi (không phải từ chối vật lý)
+  ghi riêng, chạy lại điểm đó, không coi là trượt cổng.
+- Ước lượng (chưa đo): 169 cặp thô, K lớn tổng hợp hỏng nhiều (rẻ, không mô phỏng); mỗi cặp mô phỏng tối đa 4 lần (khoảng 440 s); lưới mịn tối đa khoảng 3 lớp x 9. Khoảng 4-6 giờ với 3
+  MATLAB, 3-4 giờ với 5. Ghi số thật vào nhật ký.
+
+14.9. Báo cáo (nhật ký khung Map và một file Result/Controllers/Map/Calib_v2/Grid2/Map_CALIB_grid2_report_s00000.csv)
+- Số cặp: thô, mịn, tổng hợp hỏng, trượt tuyến tính, đã mô phỏng, qua e_rel, qua margin, qua cả hai. Quy tắc tâm đã dùng ở mỗi lớp (R1, R2), h cuối.
+- Thiết kế chọn: K, g_min, z, p, z1, p1; R, S, J, TV, e_rel lớn nhất và cửa sổ của nó, PM, GM, HF, ratio_gain, ratio_delay; năm seed (trung bình, độ lệch, e_rel lớn nhất); có nằm ở đầu hộp
+  không (K = 1 hay 30, g_min = 0.707 hay 1); nhãn đạt đủ cổng hay "an toàn, trượt e_rel".
+- Hình Pareto (R, S) của các điểm an toàn, tô màu theo e_rel.
+- KHÔNG làm: không chạy MapPID, không sửa PRSM, CALIB, gate hay PID, không dùng csv cũ để chọn. Xong thì báo người dùng và dừng.

@@ -493,4 +493,8 @@ def patch_headers(path):
 
 
 if __name__ == '__main__':
-    build(sys.argv[1], sys.argv[2])
+    # The historical two-column template generator is retained above for reference.
+    # Submission drafts follow the v5/v6 one-column JSTT layout.
+    import paper2docx
+    limit = int(sys.argv[sys.argv.index('--through') + 1]) if '--through' in sys.argv else None
+    paper2docx.build(sys.argv[1], sys.argv[2], limit)

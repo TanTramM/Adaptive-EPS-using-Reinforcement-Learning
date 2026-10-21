@@ -15,19 +15,23 @@ maxFine = 6;
 h = spec.hStart;
 fineCount = 0;
 seenX = zeros(0, spec.n);       % completed layers only; prevents a cross-worker race at layer boundaries
+% Optional spec fields (defaults reproduce the original PID behaviour): coarseLevels = u levels of the coarse grid,
+% centerFcn = @(T, spec) -> x of the fine-grid centre (T = rows of the finished layers).
+coarseLevels = [0 1/3 2/3 1];
+if isfield(spec, 'coarseLevels'), coarseLevels = spec.coarseLevels(:)'; end
 
 center = u0;
 if spec.coarse
-    U = makeGrid(u0, free, [0 1/3 2/3 1]);
+    U = makeGrid(u0, free, coarseLevels);
     runLayer(U, 'coarse', NaN);
-    center = bestCenter(rowsForPoints(readRunRows(), seenX));
+    center = pickCenter(rowsForPoints(readRunRows(), seenX));
 end
 while fineCount < maxFine && h >= 0.02
     oldCenter = center;
     U = makeLocalGrid(oldCenter, free, h);
     fineCount = fineCount + 1;
     runLayer(U, sprintf('fine%d', fineCount), h);
-    center = bestCenter(rowsForPoints(readRunRows(), seenX));
+    center = pickCenter(rowsForPoints(readRunRows(), seenX));
     if sameU(center, oldCenter), h = h / 2; end
 end
 
@@ -78,6 +82,14 @@ fprintf('[%s] DONE worker %d/%d: evaluated %d, simulated %d, feasible %d, best J
         if ~isempty(T)
             [~, ia] = unique(round(table2array(T(:, 1:spec.n)), 10, 'significant'), 'rows', 'stable');
             T = T(sort(ia), :);
+        end
+    end
+
+    function c = pickCenter(T)
+        if isfield(spec, 'centerFcn') && ~isempty(spec.centerFcn)
+            c = min(max(spec.x2u(spec.centerFcn(T, spec)), 0), 1);
+        else
+            c = bestCenter(T);
         end
     end
 
