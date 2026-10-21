@@ -122,3 +122,11 @@ Map đạtchuẩn. Ghi deliverables, provenance, report5seed, reserve10% và wor
 recovery; không yêu cầu sửa sharedcode đổi gate hay auto mở MapPID/DREWS.
 Chưa chạy MATLAB, chưa commit/push, giữ pipeline MapPID dừng để người dùng
 chuyển sang khung Map thực hiện.
+
+### Lượt 58 (2026-10-22) - Cắm PID vào Map khóa (PhuongPhap mục 15): lưới, chọn, D, C xong trên laptop; nhánh auto/mappid-plug
+
+Đã dừng/không có tiến trình MapPID cũ; làm trên nhánh auto/mappid-plug. Mã mới (Model/Controllers/MapPID/script): mappid_plug_u0 (kiểm vòng x->u->x của Map khóa, sai lệch < 1e-9), run_mappid_plug, select_mappid_plug, check_mappid_plug, run_mappid_plug_dc; pipeline tools/jobs/mappid_plug_pipeline.sh. job_lib.sh và job_lib_patient.sh thêm biến MATLAB_TEMP (mặc định vẫn D:\MatlabTemp; laptop không có ổ D nên dùng C:\MatlabTemp). 4 worker, guard_ram.ps1 chạy suốt.
+
+Kết quả (outDir Calib_v2/PlugPlay, tag P1B1, seed 30000): 256 điểm thô + 6 lớp mịn = 598 đánh giá, 211 mô phỏng, 182 đạt cổng, 38 Pareto; thiết kế chọn Kp 1.4835, Ki 111.32, Kd 0.07126, Tf 2.489 ms, Kaw 13.48; R 2.4215 %, S 0.7926, J 1.919, TV 239, e_rel 1.10 % (năm seed lớn nhất 1.61 %), PM 35.4, GM 2.63, HF 81.9, margin gain/delay 0.736/1.016; J năm seed 2.100 +- 0.144. So với CALIB: Map J 5.30 (e_rel 26 %), PID đứng một mình J 2.486. mappid.json đã ghi (bản cũ ở design_pre_plug và Desktop/Adaptive-EPS_backup_2026-10-22_MapPID_truoc_plug); load_mappid và test_mappid PASS. D (PID của pid.json trên Map khóa): J 2.167, e_rel 1.11 %, PM 31.8, GM 2.21, qua margin. C (khối PID chọn, ba Map Grid2 K 5.477/6.311/8.994): J 1.935/1.927/1.941, e_rel ~1.1 %, đều qua margin; J gần như không đổi theo Map (lưu ý: ở đầu hộp, khối PID chi phối). Báo cáo: MapPID_CALIB_plug_report_s30000.csv.
+
+Lỗi và cách sửa: run_mappid_plug_dc lấy nhầm đầu ra đầu của mappid_plug_u0 (u0 chín phần tử thay vì xMap) nên D lỗi "x must have nine entries" ba lần; sửa dùng [~, xMap], chạy lại D và C (các bước đã xong được bỏ qua nhờ marker). Không có lỗi native hay thiếu RAM. Còn treo: DREWS v2 (chờ origin/auto/drews-v2 có DREWS_v2_LOCKED.txt).
