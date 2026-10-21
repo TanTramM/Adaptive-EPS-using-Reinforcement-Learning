@@ -352,7 +352,7 @@ C. Chọn và D. Chấm: như PID, với 'Map' và load_map.
 E. Ước lượng: khoảng 1000-2500 lần đánh giá, khoảng 8-20 giờ cho một MATLAB, khoảng 3-7 giờ với ba tiến trình.
 F. Báo như PID, thêm: K chọn so với cận 5, lead hay lag có bị tắt (p/z = 1, p1/z1 = 1), e_rel ở cửa sổ static_v20_apos0p18g (lần trước 4.55-5.76 %, chỗ Map kẹt ở cổng 5 %).
 
-13.5. MapPID (khung MapPID; 9 biến = khối A gồm K, z, p/z, z1, p1/z1 và khối B gồm Kp, Ki, Kd, Tf; seed tìm 30000, seed kiểm 30001-30005)
+13.5. MapPID (khung MapPID; 9 biến = khối A gồm K, z, p/z, z1, p1/z1 và khối B gồm Kp, Ki, Kd, Tf; seed tìm 30000, seed kiểm 30001-30005) [ĐÃ THAY bằng mục 15 ngày 2026-10-22; phần dưới chỉ giữ làm hồ sơ]
 A. Làm 13.2. Bắt đầu khi PID và Map đã xong bước chọn (cần hai thiết kế đó).
 B. Quét luân phiên theo khối từ HAI điểm xuất phát (mỗi lần quét một khối là một lần gọi grid_search với free = khối đó, các biến còn lại khóa ở u0):
  - S1 "xuất phát từ PID": u0 khối B = pid_x2u của thiết kế PID đã chọn; khối A tắt nhánh Map: u K = 0, u z = 0.5, u p/z = 0, u z1 = 0.5, u p1/z1 = 1. Thứ tự: quét khối A (coarse true, hStart 1/6, tag 'S1A1'), rồi khối B với khối A khóa ở kết quả (coarse true, tag 'S1B1'), rồi khối A (coarse false, hStart 1/12, tag 'S1A2'), rồi khối B (coarse false, hStart 1/12, tag 'S1B2'), cứ thế.
@@ -455,3 +455,59 @@ báo thẳng là trượt e_rel (do cấu trúc không tích phân); không bao 
   không (K = 1 hay 30, g_min = 0.707 hay 1); nhãn đạt đủ cổng hay "an toàn, trượt e_rel".
 - Hình Pareto (R, S) của các điểm an toàn, tô màu theo e_rel.
 - KHÔNG làm: không chạy MapPID, không sửa PRSM, CALIB, gate hay PID, không dùng csv cũ để chọn. Xong thì báo người dùng và dừng.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+15. MAPPID "CẮM PID VÀO MAP CÓ SẴN" (phương án A, bước đầu của quét luân phiên; người dùng chốt 2026-10-22; khung MapPID chạy trên LAPTOP qua đêm; thay mục 13.5)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+15.0. Câu hỏi và nguyên tắc
+Câu hỏi của bài: một Map có sẵn (đã chọn ở mục 14, an toàn nhưng trượt e_rel) được cắm thêm một vòng PID bám T_d,ref thì đạt gì so với Map đứng một mình và PID đứng một mình. Khối Map (5
+tham số) KHÓA đúng bằng map.json design hiện hành (K 6.77455395155, lead z 33.50093752 p 673.2661083, lag z1 28.12757927 p1 10.68848012, Ts0 0.3; ghi 2026-10-22 00:34 bởi khung Map, nhật ký
+Map Lượt 460). Chỉ quét khối PID 4 biến (Kp, Ki, Kd, Tf) bằng ĐÚNG phương pháp và hộp của PID (grid_search.m, lưới thô 4 mức, hStart 1/6, tâm R1 như PID, select_pareto erelMax 10, hòa 3 %
+lấy PM lớn hơn, calib_margin theo thứ tự J). Đủ bốn cổng (PM >= 30, GM >= 2, lag >= 0.707 tại 2 Hz, e_rel <= 10 %, calib_margin). Đây là bước 1 của quét luân phiên khối (mục 13.5, xuất phát
+S2); các bước sau (khóa PID, quét lại khối Map) chưa làm đêm nay. Không dùng kết quả MapPID cũ nào (S1, S2, sáu biến, surrogateopt) làm cache, tâm hay để chọn.
+
+15.1. Biến, hộp, seed
+- x = [K, z, p/z, z1, p1/z1, Kp, Ki, Kd, Tf] của mappid_eval (Kaw = Ki/(Kp + K), quy ước sẵn có). Năm biến đầu cố định = map.json design (p/z = p/z của lead, p1/z1 = p1/z1 của lag); spec.free = 6:9.
+- Hộp khối PID: đúng hộp trong mappid_u2x (Kp 1e-3-30 log, Ki 0.1-2000 log, Kd 0 hoặc 1e-4-2 log, Tf 1-79.6 ms log) = hộp của PID đứng một mình.
+- Kiểm trước: mappid_u2x(u0) phải trả đúng năm tham số Map của map.json (sai lệch tương đối < 1e-9); nếu không thì dừng, sửa, ghi nhật ký.
+- Seed: tìm 30000, margin 30001, báo cáo 30001-30005, DREWS v2 99995-99999.
+
+15.2. Thư mục và mã
+- outDir = fullfile(result_dir('MapPID', 'Calib'), 'PlugPlay') (thư mục RIÊNG: Calib_v2 gốc còn csv S1A1... của lần cũ, select_pareto đọc mọi file MapPID_CALIB_*_w*_s30000.csv trong outDir).
+- Viết run_mappid_plug(workerId, nWorkers): spec như run_mappid_grid nhưng name 'MapPID', tag 'P1B1', free 6:9, u0 từ map.json design (không dùng file pick của Map vì Map ghi ở Calib_v2/Grid2),
+coarse true, hStart 1/6, seed 30000. Viết select_mappid_plug(writeJson): như select_mappid_pareto (marginGate, toDesign giữ Kaw = Ki/(Kp + K)) với outDir PlugPlay, bỏ phần báo hai vùng
+S1/S2. Ghi mappid.json chỉ sau khi sao lưu bản cũ ra Desktop/Adaptive-EPS_backup_2026-10-22_MapPID_truoc_plug/; sau đó load_mappid và test_mappid phải PASS.
+- Không sửa grid_search.m, select_pareto.m, mappid_eval.m, PRSM, CALIB, gate. Nếu buộc phải sửa dùng chung thì phải tương thích ngược và ghi nhật ký.
+
+15.3. Thứ tự chạy (pipeline tools/jobs/mappid_plug_pipeline.sh theo mẫu grid_pipeline.sh, job_lib_patient.sh)
+1. check: kiểm 15.1 và chạy mappid_eval một điểm (Map khóa, PID = pid.json design) ghi ra scratch, không ghi vào PlugPlay.
+2. grid: các worker run_mappid_plug(id, n). Lưới thô 4^4 = 256 điểm, lưới mịn tối đa 6 lớp x 81 điểm.
+3. select: select_mappid_plug(true) (năm seed 30001-30005 chỉ báo cáo).
+4. D, mốc không chỉnh: x = [Map khóa, Kp Ki Kd Tf của pid.json design]; mappid_eval seed 30000 + calib_margin seed 30001; ghi Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_plugD_s30000.csv
+(có thể trượt cổng; đó là kết quả, không sửa).
+5. C, cắm vào Map khác không chỉnh lại: giữ khối PID của thiết kế vừa chọn, thay khối Map bằng ba Map lấy từ Result/Controllers/Map/Calib_v2/Grid2 (dòng an toàn đã mô phỏng): K 5.4772 g_min
+0.7492 (lần chọn đầu), K gần 6.31 g_min 0.7071, và một cặp qua e_rel nhưng trượt margin (J nhỏ nhất trong nhóm đó); lấy z, p, z1, p1 đúng từ csv. Mỗi Map: mappid_eval seed 30000 + calib_margin
+seed 30001; ghi MapPID_CALIB_plugC_s30000.csv; không chọn lại.
+6. DREWS v2 cho MapPID (mục 15.5).
+Dấu xong mỗi bước ở scratch/jobs/mappid_plug_*; chạy tiếp được khi bị dừng (csv từng worker, bỏ qua điểm đã có).
+
+15.4. Vận hành không người (laptop 32 GB, người dùng đi ngủ)
+- Số worker: 4; guard_ram.ps1 (giữ 10 % RAM trống) chạy suốt; job_lib_patient.sh chờ RAM và tự chạy lại worker bị guard dừng hoặc chết. TEMP và TMP = D:/MatlabTemp nếu có ổ D, không thì một
+thư mục tạm trên ổ có nhiều chỗ trống nhất; Simulink.sdi.clear sau mỗi mô phỏng.
+- Tự sửa lỗi: lỗi thực thi (heap native khi thoát, lỗi đọc csv đang ghi, mất worker) thì chạy lại đúng điểm hoặc worker, không coi là trượt cổng; lỗi mã thì sửa đúng chỗ rồi chạy tiếp, ghi
+lỗi và cách sửa vào historychat_mappid.md. Mỗi khoảng 30 phút kiểm tiến độ (số điểm csv tăng, MATLAB sống, RAM), nếu đứng yên quá 45 phút thì dừng worker đó và chạy lại.
+- Điều kiện dừng thật: không có điểm nào qua đủ cổng sau lưới thô và mịn (báo, không nới cổng); mã dùng chung cần đổi theo cách không tương thích ngược; RAM không đủ cho 1 worker. Khi đó ghi
+nhật ký, commit, push, dừng.
+- Không đổi cổng, hộp, quy tắc chọn sau khi thấy số.
+
+15.5. DREWS v2 cho MapPID và đồng bộ với PC
+- PC chạy khung TESTCASE (Documents/Shared/KeHoach_DREWS_v2.txt); khi ca đã chốt, PC push nhánh auto/drews-v2 có file Documents/Shared/DREWS_v2_LOCKED.txt.
+- Laptop làm trên nhánh auto/mappid-plug. Sau bước 5: cứ 15 phút git fetch origin; khi origin/auto/drews-v2 có DREWS_v2_LOCKED.txt thì git merge origin/auto/drews-v2 (các file khác nhau,
+không mong có xung đột; có xung đột thì KHÔNG tự giải quyết trong Model/Sim, dừng và báo), rồi load_mappid; run_cases v2 cho 'MapPID' với seed 99995-99999 (đúng lệnh mà KeHoach_DREWS_v2 mục
+3.6 và QuyChuan ghi). Chờ tối đa 8 giờ; quá thì bỏ bước này, ghi nhật ký.
+- Cuối cùng (và sau mỗi mốc lớn: xong lưới, xong chọn): commit các file mã, json, csv, png kết quả và nhật ký lên nhánh auto/mappid-plug rồi push. Không push lên main; người dùng gộp buổi sáng.
+
+15.6. Báo (nhật ký khung MapPID và Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_plug_report_s30000.csv)
+Số điểm thô, mịn, mô phỏng, qua cổng; thiết kế chọn (Kp, Ki, Kd, Tf, Kaw), R, S, J, TV, e_rel lớn nhất và cửa sổ, PM, GM, HF, ratio_gain, ratio_delay; năm seed; biến ở đầu hộp; so với Map (J
+5.30, e_rel 26.0 %) và PID (J 2.486, e_rel 2.18 %) trên CALIB; kết quả D và C; DREWS v2 xong chưa.

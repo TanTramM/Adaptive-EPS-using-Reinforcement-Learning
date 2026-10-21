@@ -50,6 +50,17 @@ result_dir có khóa 'CasesV2'); không ghi vào Cases cũ.
 người lái và tải bám). Điều chỉnh thời gian đoạn để đúng 60,000 s. Không điều chỉnh theo hướng làm một bộ nào trông tốt hơn.
 3.4. Thêm chỉ tiêu mục 2.2 vào run_cases.m (cột mới trong bảng metrics, giữ nguyên cột cũ).
 3.5. Ghi QuyChuan.txt (mục ca thử, nhật ký thay đổi): ngày chốt, bảng năm ca, bảng chỉ tiêu; ghi trung thực rằng bộ v1 có sáu điểm yếu (mục 0) và v2 thay thế.
-3.6. Khi người dùng bảo mới chạy: run_cases cho PID, Map, MapPID với năm seed 99995-99999 (tất cả bộ cùng seed). KHÔNG chạy cho bộ nào khi ca chưa chốt. Không chạy MapPID khi khung MapPID
+3.6. (Người dùng đã cho phép, xem mục 4.) Chạy: run_cases cho PID, Map, MapPID với năm seed 99995-99999 (tất cả bộ cùng seed). KHÔNG chạy cho bộ nào khi ca chưa chốt. Không chạy MapPID khi khung MapPID
 chưa chọn xong thiết kế.
 3.7. Báo: bảng năm ca (tên, thời lượng, cảnh, cửa sổ), kết quả kiểm khả thi (tải bám lớn nhất từng cảnh, a_y đạt so với a_y đặt), danh sách file đã sửa, và việc còn treo. Không commit.
+
+4. Vận hành qua đêm trên PC (người dùng chốt 2026-10-22: PC chạy TESTCASE, laptop chạy MapPID; mục này THAY đoạn "chỉ chạy khi người dùng bảo" của 3.6)
+4.1. Người dùng đã cho phép chạy luôn sau khi chốt ca. Thứ tự: 3.1-3.5, chốt ca (ghi ngày giờ chốt vào QuyChuan và vào Documents/Shared/DREWS_v2_LOCKED.txt: ngày giờ, danh sách năm ca, thời
+lượng, mã băm SHA-256 của make_cases.m và run_cases.m), commit và push NGAY lên nhánh auto/drews-v2 (laptop chờ file này để chạy MapPID), rồi mới chạy bộ điều khiển.
+4.2. Sau khi chốt: run_cases v2 cho 'PID' (load_pid) và 'Map' (load_map), năm seed 99995-99999, kết quả ở Result/Controllers/<Ctrl>/Cases_v2. MapPID do laptop chạy (PhuongPhap_TimThamSo mục
+15.5); PC không chạy MapPID. Không sửa ca sau khi đã chốt; nếu phát hiện lỗi dựng sau khi chốt thì dừng, ghi nhật ký, push, không tự sửa.
+4.3. Không người trông: tối đa 3 MATLAB; guard_ram.ps1 (giữ 10 % RAM trống) chạy suốt; job_lib_patient.sh chờ RAM và tự chạy lại; TEMP và TMP = D:/MatlabTemp; Simulink.sdi.clear sau mỗi mô
+phỏng. Lỗi thực thi (heap native khi thoát, mất MATLAB) thì chạy lại đúng seed hoặc ca, không coi là kết quả; lỗi mã thì sửa đúng chỗ rồi chạy tiếp; mỗi lỗi và cách sửa ghi vào
+historychat_testcase.md. Mỗi khoảng 30 phút kiểm tiến độ; đứng yên quá 45 phút thì dừng và chạy lại phần đó.
+4.4. Cuối cùng (và sau mỗi mốc: chốt ca, xong PID, xong Map): commit mã, QuyChuan, kết quả Cases_v2, nhật ký lên nhánh auto/drews-v2 và push. Không push lên main; người dùng gộp buổi sáng.
+4.5. Báo: bảng năm ca, kiểm khả thi, bảng chỉ tiêu theo ca cho PID và Map (trung bình và độ lệch năm seed), file đã sửa, việc còn treo.
