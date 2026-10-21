@@ -31,4 +31,4 @@ D_erel_pct,1.106
 C_first_pick_J,1.93484
 C_K6p31_J,1.92658
 C_K8p99_J,1.94142
-DREWS_v2,pending
+DREWS_v2,done seeds 99995-99999 -> Result/Controllers/MapPID/Cases_v2; summary Result/Compare/DREWS_v2_summary/DREWS_v2_MapPID_summary.csv
