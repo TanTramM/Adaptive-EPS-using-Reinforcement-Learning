@@ -12,7 +12,7 @@ addpath(modelDir); setup_paths;
 outDir = fullfile(result_dir('MapPID', 'Calib'), 'PlugPlay');
 if ~exist(outDir, 'dir'), mkdir(outDir); end
 outFile = fullfile(outDir, sprintf('MapPID_CALIB_plug%s_s30000.csv', stage));
-xMap = mappid_plug_u0(modelDir);
+[~, xMap] = mappid_plug_u0(modelDir);
 Cal = calibrate_map_cached();
 Jm = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))); Ts0 = Jm.design.Ts0;
 loadFile = strrep(fullfile(modelDir, 'Controllers', 'MapPID', 'load_mappid.m'), '\', '/');
