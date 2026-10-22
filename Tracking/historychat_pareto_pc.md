@@ -20,3 +20,7 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - Mã: runPhase chia theo vị trí trong danh sách pha và bỏ qua điểm đủ năm seed; bandInfo (sigma trung vị trên pha 1, luật loại trội vững); cột in_set; kiểm độ nhạy trong 'front'. Lỗi mã sửa: A.valid dùng [R;S] so với simulated sai kích thước (chưa từng chạy trước đó).
 - Dừng pipeline cũ (4 worker, lệnh run mặc định hai pha) bằng cách dừng đúng tiến trình pareto_pc_pipeline và các MATLAB 'run' của nó; công việc nằm trong csv. Pipeline mới tools/jobs/pareto_pc_pipeline.sh (PARETO_NW=6): pha 1 cho PID rồi Map, pha 2 theo dải, rồi các vòng margin và front.
 - Laptop: pha 2 MapPID xong 15:51 (211 điểm x 5 seed); còn margin.
+
+### Lượt 4 - Cập nhật 22:58: laptop chưa nhận phần Map, PC tự chạy id 7-10 (2026-10-22)
+- Pipeline PC (id 1-6 trên 10 worker, dừng sau pha 1) từ 18:17: 5 trong 6 worker xong, worker 4 chạy lại 16 lần (heap corruption sau vài đánh giá, vẫn tiến). Map pha 1 mới khoảng 59 trên 75 điểm đủ năm seed; PID pha 1 xong. Laptop không có file Map_w7..w10 trên nhánh nên chưa nhận prompt: vị trí 7-10 (mod 10) chưa ai chạy.
+- PC khởi động thêm id 7-10 (PARETO_NAME=pcD, dừng sau pha 1) để khỏi chờ. Nếu laptop bắt đầu sau này, nó trùng việc (không hỏng kết quả, chỉ phí).
