@@ -3,7 +3,7 @@
 #   stage 1: phase 1 for PID then Map; stage 2: phase 2 (points inside the noise band); stage 3: rounds of 'margin' + 'front' until no margin is pending.
 # NW workers (default 6: the Map evaluations are slow and the CPU is mostly idle). Safe to restart: complete points are skipped, every evaluation is cached in the csv of its worker,
 # finished stages leave scratch/jobs/<tag>_done.txt.
-export MATLAB_TEMP='D:\MatlabTemp'
+export MATLAB_TEMP="${MATLAB_TEMP:-D:\\MatlabTemp}"
 source "$(dirname "${BASH_SOURCE[0]}")/job_lib_patient.sh"
 NW=${PARETO_NW:-6}                      # total number of workers across ALL machines (positions are partitioned mod NW)
 IDS=${PARETO_IDS:-$(seq -s ' ' 1 $NW)}   # worker ids run by THIS machine, e.g. '1 2 3 4 5 6' on the PC and '7 8 9 10' on the laptop
