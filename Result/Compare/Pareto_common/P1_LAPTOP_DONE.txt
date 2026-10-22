@@ -1,0 +1,1 @@
+Laptop phase 1 (Map, PID; workers 7-10 of 10) done 2026-10-22 23:33. Data rows: Map w7 20, w8 15, w9 15, w10 20 (total 70); PID w7-w10: no new rows (points already complete from the PC). Execution restarts (tries >1): 4

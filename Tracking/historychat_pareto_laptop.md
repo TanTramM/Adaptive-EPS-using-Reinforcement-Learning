@@ -30,3 +30,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 ### Lượt 7 - Việc mới: chạy giúp PC pha 1 Map/PID (worker 7-10 trên 10) (2026-10-22)
 - git fetch + merge origin/auto/pareto-common: fast-forward tới 500874a, không xung đột (bản sửa dòng 162 đã có sẵn từ lần merge nhánh laptop trước).
 - Sửa môi trường tối thiểu: tools/jobs/pareto_pc_pipeline.sh dòng 6 ép MATLAB_TEMP='D:\MatlabTemp' (laptop không có ổ D) nên đổi thành ${MATLAB_TEMP:-D:\MatlabTemp}; PC không bị ảnh hưởng. Bật guard_ram.ps1; chạy lapC (PARETO_NW=10, ids 7-10, dừng sau p1).
+
+### Lượt 8 - Xong pha 1 Map/PID (worker 7-10), P1_LAPTOP_DONE (2026-10-22 23:33)
+- lapC xong sau 5 giờ 20 phút (18:13-23:33). Map: 70 dòng dữ liệu (w7 20, w8 15, w9 15, w10 20); PID: không có dòng mới (các điểm đã đủ từ PC). 4 lần MATLAB tự chạy lại (có heap corruption 0xc0000374 ở w7), không tính trượt cổng. Tạo P1_LAPTOP_DONE.txt, commit, push; chờ P2_GO.txt trên origin/auto/pareto-common bằng script nền.
