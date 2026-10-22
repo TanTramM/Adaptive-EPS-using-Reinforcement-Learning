@@ -1,0 +1,1 @@
+MapPID phase 1 done 2026-10-22 12:38: 38 points x 5 seeds (190 simulations), 4 workers, 4 restarts after execution errors (duplicate rows, removed by the reader)
