@@ -28,3 +28,10 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - Việc kế: chờ worker 4 PC xong và P1_LAPTOP_DONE.txt, gộp csv hai máy, tạo P2_GO.txt, pha 2 cả hai máy.
 - 23:10: người dùng cần giải phóng máy: đã dừng pipeline pcC và MATLAB worker 4 (công việc nằm trong csv). Chạy lại: PARETO_NW=10 PARETO_IDS="4" PARETO_STOP_AFTER=p1 PARETO_NAME=pcE bash tools/jobs/pareto_pc_pipeline.sh (guard_ram.ps1 vẫn chạy).
 - 23:15: người dùng đã restart máy xong, chạy lại worker 4 (PARETO_NAME=pcE, dừng sau pha 1).
+
+### Lượt 5 - Pha 1, pha 2 xong cả hai máy; kiểm tra và lập kế hoạch margin (2026-10-23, 02:10)
+- Pha 1 xong 00:46 (gộp nhánh laptop, chỉ xung đột ở 4 file đánh dấu, lấy bản laptop), P2_GO 00:40, pha 2 xong 02:02 (laptop P2_LAPTOP_DONE). Commit 3877408 đã push; nhánh laptop đã nằm trong nhánh PC.
+- Lệnh margin 02:05 bị người dùng từ chối giữa chừng: commit và push đã chạy, pipeline pcG kịp chạy lại pha 1 với NW=6 (không điểm mới, chỉ ghi đè 10 file *_phase1_done.txt) rồi dừng, không có MATLAB nào còn chạy. Đã trả 10 file đánh dấu về bản commit.
+- 'front' lúc 02:10: MapPID xong (mặt an toàn 48, mặt đủ cổng 48, 1 điểm trượt margin). Map: 80 điểm trong tập, 17 qua e_rel, margin chờ 72 (mặt đủ cổng 12 nằm trong 72). PID: 105 trong tập, 60 qua e_rel, margin chờ 35 (22 nằm trong 35).
+- Ước lượng margin (3 lần mô phỏng mỗi điểm, thời gian lấy từ cột seconds): Map 34.6 giờ CPU, trong đó điểm R0 <= 20 % chỉ 4.8 giờ (25 điểm), 38 điểm có R0 > 50 % chiếm phần lớn; PID 1.6 giờ.
+- Nhận xét: điểm có R > 20 % không thể trội hơn điểm có R <= 20 %, nên bảng ở bảy mức R (2.5-20 %) chỉ cần margin của các điểm mặt có R <= 20 %; đuôi R > 20 % chỉ ảnh hưởng hình. Đề xuất chạy margin theo thứ tự R tăng dần (không đổi luật), chờ người dùng duyệt kế hoạch chia hai máy.
