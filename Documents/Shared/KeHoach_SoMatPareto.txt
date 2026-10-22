@@ -1,4 +1,4 @@
-KẾ HOẠCH SO SÁNH MẶT PARETO BA BỘ (Map, PID, MapPID) TRÊN CALIB V2 BẰNG NĂM SEED CHUNG (người dùng chốt 2026-10-22; chạy trên PC; khung COMMON viết kế hoạch)
+KẾ HOẠCH SO SÁNH MẶT PARETO BA BỘ (Map, PID, MapPID) TRÊN CALIB V2 BẰNG NĂM SEED CHUNG (người dùng chốt 2026-10-22; chạy song song PC và laptop, xem mục 3; khung COMMON viết kế hoạch)
 =====================================================================================================================================================================
 
 0. Mục đích và nguyên tắc
@@ -42,3 +42,23 @@ native, mất worker) thì chạy lại đúng điểm, không coi là trượt 
 lại worker đó.
 2.5. Commit và push nhánh auto/pareto-common sau mỗi mốc (xong mã và kiểm, xong pha 1, xong pha 2, xong hình). Không push main. Khi xong pha 1 báo hình sơ bộ; khi xong pha 2 báo kết luận theo 0(f).
 2.6. Báo: số điểm từng bộ (dự tuyển, loại ở seed chung, trên mặt, trượt margin), bảng 0(f), hình, kết luận theo từng khoảng R, giới hạn (lưới, seed), việc còn treo.
+
+3. Chia hai máy (người dùng chốt 2026-10-22: chạy song song trên PC và laptop, mỗi máy một khung chat MỚI; mục này thay phần "chạy trên PC" ở 2.4-2.5 về việc ai làm gì)
+3.1. Chia theo bộ điều khiển (không chia theo chỉ số điểm, để hai máy không phải khớp thứ tự): PC chạy Map (93 điểm) và PID (114 điểm), tổng 207; laptop chạy MapPID (182 điểm). Khối lượng
+gần bằng nhau. Mỗi máy 4 MATLAB, mỗi máy chạy pha 1 (điểm trên mặt ở seed tìm) của bộ mình trước rồi pha 2.
+3.2. Mã chung do PC viết DUY NHẤT một lần: PC làm 2.1-2.3 (compare_pareto_common.m nhận tham số danh sách bộ, ví dụ compare_pareto_common('run', {'Map','PID'}, workerId, nWorkers) và
+compare_pareto_common('run', {'MapPID'}, ...), lệnh 'front' tính mặt từ các csv đã có; make_fig_pareto_common.py), kiểm 2.3 cho cả ba bộ (với MapPID chỉ kiểm, không chạy hàng loạt), rồi
+commit và push nhánh auto/pareto-common kèm file Result/Compare/Pareto_common/CODE_READY.txt (ngày giờ, mã băm SHA-256 của compare_pareto_common.m). Sau đó PC mới chạy Map và PID.
+3.3. Laptop KHÔNG viết mã so sánh. Laptop: git fetch origin mỗi 5 phút (tối đa 3 giờ) cho tới khi origin/auto/pareto-common có CODE_READY.txt; tạo nhánh auto/pareto-common-laptop từ
+origin/auto/pareto-common; chạy compare_pareto_common('run', {'MapPID'}, id, 4). Nếu mã lỗi trên laptop: sửa tối thiểu đúng chỗ, ghi rõ trong nhật ký và commit message, không đổi quy tắc
+0(a)-0(g). Quá 3 giờ chưa có CODE_READY.txt thì dừng, ghi nhật ký, báo.
+3.4. Tên file kết quả không trùng giữa hai máy: mỗi worker ghi Result/Compare/Pareto_common/ParetoCommon_<Ctrl>_w<id>_s99990-s99994.csv (Ctrl là Map, PID hoặc MapPID), nên khi gộp hai nhánh
+không xung đột.
+3.5. Laptop commit và push nhánh auto/pareto-common-laptop sau mỗi mốc (xong pha 1, xong pha 2) và tạo Result/Compare/Pareto_common/MAPPID_DONE.txt khi xong pha 2 (số điểm, số mô phỏng, số
+lỗi thực thi).
+3.6. PC sau khi xong Map và PID: git fetch origin mỗi 10 phút (tối đa 8 giờ) cho tới khi origin/auto/pareto-common-laptop có MAPPID_DONE.txt; git merge origin/auto/pareto-common-laptop vào
+auto/pareto-common (chỉ khác file kết quả MapPID và nhật ký; nếu xung đột ở mã thì KHÔNG tự giải quyết, dừng và báo); chạy calib_margin cho các điểm trên mặt của MapPID nếu laptop chưa làm
+(quy tắc 0(e)); rồi lệnh 'front' cho cả ba bộ, hình và bảng 0(f); commit và push. Quá 8 giờ thì làm mặt cho Map và PID, ghi rõ "thiếu MapPID".
+3.7. Khi pha 1 của cả hai máy xong (PC thấy file pha 1 của laptop trên nhánh laptop), PC vẽ hình sơ bộ (ghi "sơ bộ") và push; không cần chờ pha 2.
+3.8. Nhật ký: mỗi khung mới ghi vào Tracking/historychat_pareto_pc.md và Tracking/historychat_pareto_laptop.md (tạo mới; đầu file ghi vai và tài liệu này); không ghi vào nhật ký khung khác.
+Không push main; người dùng gộp sau.
