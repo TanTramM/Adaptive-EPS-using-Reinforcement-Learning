@@ -40,13 +40,15 @@ dựng tập (b), pha 1 trước, chia điểm theo chỉ số trong từng bộ
 riêng), 'front' (tính hai mặt cho các bộ có dữ liệu, ghi csv báo cáo) và tools/make_fig_pareto_common.py (hai hình và hai bảng); (3) kiểm trước khi chạy hàng loạt: tập (b) đúng 149, 168, 211
 điểm; chạy lại điểm đã chọn của mỗi bộ ở seed tìm khớp csv (R, S sai lệch tương đối dưới 1e-6); MapPID dùng đúng năm tham số Map của map.json; (4) commit và push NGAY nhánh auto/pareto-common
 kèm Result/Compare/Pareto_common/CODE_READY.txt (ngày giờ, SHA-256 của compare_pareto_common.m); (5) chạy 'run' cho {'Map','PID'} với 4 worker, rồi 'margin' cho {'Map','PID'}; (6) khi thấy
-trên origin/auto/pareto-common-laptop file PHASE1_DONE.txt thì gộp và vẽ hình sơ bộ, push; (7) chờ MAPPID_DONE.txt trên origin/auto/pareto-common-laptop (fetch mỗi 10 phút, tối đa 8 giờ),
+trên origin/auto/pareto-common-laptop file PHASE1_DONE.txt thì gộp và vẽ hình sơ bộ, push; (7) chờ MAPPID_DONE.txt trên origin/auto/pareto-common-laptop bằng SCRIPT NỀN (run_in_background,
+git fetch mỗi 10 phút, thoát khi có file hoặc sau 8 giờ; không chờ bằng cách kết thúc lượt),
 git merge (chỉ khác file kết quả MapPID và nhật ký laptop; xung đột ở mã thì KHÔNG tự giải quyết, dừng và báo), chạy 'margin' cho MapPID nếu laptop chưa xong, rồi 'front' cho cả ba bộ, hình
 và bảng, commit, push. Quá 8 giờ thì làm cho Map và PID, ghi "thiếu MapPID".
-2.3. Laptop (khung PARETO-LAPTOP): KHÔNG viết mã so sánh; git fetch origin mỗi 5 phút (tối đa 3 giờ) tới khi origin/auto/pareto-common có CODE_READY.txt; tạo nhánh auto/pareto-common-laptop
+2.3. Laptop (khung PARETO-LAPTOP): KHÔNG viết mã so sánh; chờ PC bằng SCRIPT NỀN (run_in_background; vòng lặp git fetch origin mỗi 5 phút, thoát khi origin/auto/pareto-common có CODE_READY.txt,
+tối đa 5 giờ), không chờ bằng cách kết thúc lượt; trong lúc chờ kiểm môi trường (MATLAB chạy, mappid_eval khớp điểm đã chọn ở seed tìm, RAM); tạo nhánh auto/pareto-common-laptop
 từ origin/auto/pareto-common; chạy 'run' cho {'MapPID'} với 4 worker; xong pha 1 thì tạo Result/Compare/Pareto_common/PHASE1_DONE.txt, commit, push; xong pha 2 thì chạy 'margin' cho
 {'MapPID'}, tạo MAPPID_DONE.txt (số điểm, số mô phỏng, số lỗi thực thi), commit, push. Mã lỗi trên laptop thì sửa tối thiểu đúng chỗ, ghi rõ trong nhật ký và commit message, không đổi quy
-tắc mục 0. Quá 3 giờ chưa có CODE_READY.txt thì dừng, ghi nhật ký, báo.
+tắc mục 0. Quá 5 giờ chưa có CODE_READY.txt thì dừng, ghi nhật ký, báo.
 2.4. Tên file không trùng giữa hai máy: Result/Compare/Pareto_common/ParetoCommon_<Ctrl>_w<id>_s99990-s99994.csv cho 'run', ParetoCommon_<Ctrl>_margin_s99990.csv cho 'margin',
 ParetoCommon_fronts_*.csv, ParetoCommon_table_*.csv, ParetoCommon_safe.png, ParetoCommon_full.png cho 'front' (chỉ PC ghi).
 2.5. Vận hành không người (cả hai máy): 4 MATLAB; tools/jobs/guard_ram.ps1 giữ 10 % RAM trống suốt thời gian chạy; tools/jobs/job_lib_patient.sh tự chạy lại; TEMP và TMP: PC D:/MatlabTemp,

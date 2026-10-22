@@ -1161,3 +1161,6 @@ GHI TRƯỚC KHI TRẢ LỜI. Chỉ tư vấn, không sửa file. Căn cứ: bui
 
 ### Lượt 219 - [common_1] Dán cùng lúc hai prompt: laptop có tự chờ PC không (2026-10-22)
 - Trả lời: được, vì prompt laptop đã có vòng chờ git fetch 5 phút tối đa 3 giờ; nhưng một phiên Claude có thể kết thúc lượt khi chờ nên phải dặn chờ bằng script nền (until-loop git fetch, chạy run_in_background, thoát khi có CODE_READY.txt thì phiên được gọi lại), không chờ bằng cách nghỉ giữa các lượt. Đề xuất sửa prompt: thời gian chờ 5 giờ, laptop dùng thời gian chờ kiểm môi trường (MATLAB chạy được, mappid_eval khớp điểm đã chọn); cùng cơ chế nền cho PC chờ laptop (8 giờ). Phương án dự phòng: nếu sáng mai thấy phiên đứng yên, dán "tiếp tục" vào khung đó (trạng thái nằm ở git và nhật ký).
+
+### Lượt 220 - [common_1] Chốt cơ chế chờ bằng script nền vào KeHoach_SoMatPareto.txt (2.2 bước 7, 2.3) và đưa bản prompt đầy đủ cho hai máy (2026-10-22)
+- Sửa: laptop chờ CODE_READY.txt bằng script nền tối đa 5 giờ (thay 3), kiểm môi trường trong lúc chờ; PC chờ MAPPID_DONE.txt bằng script nền tối đa 8 giờ. Người dùng dán hai prompt cùng lúc rồi đi làm, xem kết quả buổi chiều. Commit, push main.
