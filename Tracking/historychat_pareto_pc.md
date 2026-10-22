@@ -27,3 +27,4 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - Sửa lúc 23:08: laptop thực ra ĐANG chạy id 7-10 (người dùng đưa trạng thái: worker 8 và 9 xong, worker 7 và 10 còn vài điểm Map, còn khoảng 20-60 phút); nhánh laptop chưa push csv tiến độ nên PC không thấy. Đã dừng pcD (id 7-10 trên PC, mới chạy chưa tới 10 phút, không ghi dòng nào) chỉ bằng đúng PID của nó, giữ pcC (id 1-6). Bài học: không kết luận laptop chưa chạy chỉ vì thiếu file trên nhánh; hỏi người dùng trước khi nhân đôi việc.
 - Việc kế: chờ worker 4 PC xong và P1_LAPTOP_DONE.txt, gộp csv hai máy, tạo P2_GO.txt, pha 2 cả hai máy.
 - 23:10: người dùng cần giải phóng máy: đã dừng pipeline pcC và MATLAB worker 4 (công việc nằm trong csv). Chạy lại: PARETO_NW=10 PARETO_IDS="4" PARETO_STOP_AFTER=p1 PARETO_NAME=pcE bash tools/jobs/pareto_pc_pipeline.sh (guard_ram.ps1 vẫn chạy).
+- 23:15: người dùng đã restart máy xong, chạy lại worker 4 (PARETO_NAME=pcE, dừng sau pha 1).
