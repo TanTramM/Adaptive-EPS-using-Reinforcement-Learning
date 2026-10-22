@@ -76,3 +76,8 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 
 ### Lượt 14 - P2 xong; laptop L1 xong; gộp (2026-10-23, 04:16)
 - P2 (đuôi Map, id 1-6 trên 10) xong 04:15 (14 phút, mô phỏng margin nhanh hơn ước lượng nhiều). Laptop: MT_LAPTOP_DONE (17 điểm, 17 pass, ghi giờ laptop 03:08). Gộp origin/auto/pareto-common-laptop.
+
+### Lượt 15 - P3, P4: margin xong, chọn thiết kế cuối, ghi json (2026-10-23, 04:40)
+- P3: gộp origin/auto/pareto-common-laptop sạch (chỉ csv margin w7-w10); pcP3 (6 worker) hội tụ vòng 1 (04:15-04:18). 'front': pending 0 cả hai mặt cho ba bộ. Số liệu: Map 149 ứng viên, 80 trong tập, 17 qua e_rel, mặt an toàn 58 (20 trượt margin), mặt đủ cổng RỖNG (cả 17 điểm qua e_rel đều trượt margin); PID 168/105/60, mặt an toàn 35, đủ cổng 22, 0 trượt; MapPID 211/118/117, an toàn 48, đủ cổng 48, 1 trượt.
+- P4 (select, ghi json): Map = mặt an toàn, nhãn "safe, fails e_rel", K 6.77455395, g_min 0.707106781 (TRÙNG điểm tạm cũ), R_tb 12.07 S_tb 0.4397 J 5.308; PID = mặt đủ cổng, Kp 3.50257675 Ki 111.317364 Kd 0.108116388 Tf 0.00120006484, R_tb 3.00 S_tb 0.847 J 2.539 (điểm tạm cũ khác ở Tf 0.00144: ở seed chung không ổn định, R=Inf ở 3 trong 5 seed, J 18.6, không nằm trên mặt nào); MapPID = mặt đủ cổng, Kp 1.48352279 Ki 73.68063 Kd 0.0469733968 Tf 0.0020740482, R_tb 2.729 S_tb 0.7656 J 2.0895 (điểm tạm cũ J 2.112, hơn 1 %, cùng trên mặt). Sao lưu json ra Desktop/Adaptive-EPS_backup_2026-10-23_json_truoc_pareto; design cũ trong design_pre_pareto. load + test PASS: Map, PID, MapPID.
+- Sửa mã: in báo cáo khi mặt kia rỗng (hàm iff). Lỗi quy trình: gọi test bằng ${c^^} sai tên thư mục (Map/MapPID) và dấu gạch ngược: dùng scratch/p4_test.m.

@@ -444,7 +444,7 @@ for c = 1:numel(ctrls)
     Tsel = [Tsel; s]; %#ok<AGROW>
     fprintf('[%s] final: face %s %s | R_tb %.5g S_tb %.5g J %.5g PM %.2f | design %s\n', name, face, note, A.Rtb(k), A.Stb(k), J(k), A.PM(k), dstr(k));
     fprintf('[%s]   old temp point: R_tb %.5g S_tb %.5g J %.5g, on safe front %d, on full front %d | other face min J %.5g | old 5%% rule on this face: R_tb %.5g S_tb %.5g\n', ...
-        name, A.Rtb(ko), A.Stb(ko), J(ko), frS(ko), frF(ko), J(max(kOther, 1)), A.Rtb(kRule), A.Stb(kRule));
+        name, A.Rtb(ko), A.Stb(ko), J(ko), frS(ko), frF(ko), iff(kOther > 0, J(max(kOther, 1))), A.Rtb(kRule), A.Stb(kRule));
     res.(name) = struct('x', table2array(A(k, S.vn)), 'row', A(k, :), 'face', face, 'note', note);
 end
 writetable(Tsel, fullfile(outDir, 'ParetoCommon_select.csv')); writetable(Trep, fullfile(outDir, 'ParetoCommon_select_report.csv'));
@@ -489,4 +489,9 @@ J.design = q;
 fid = fopen(jsonPath, 'w'); assert(fid >= 0, 'Cannot write %s', jsonPath);
 fprintf(fid, '%s', jsonencode(J, 'PrettyPrint', true)); fclose(fid);
 fprintf('[%s] design written to %s\n', name, jsonPath);
+end
+
+function v = iff(c, x)
+%IFF Value x when c, NaN otherwise (console report of an empty front).
+if c, v = x; else, v = NaN; end
 end
