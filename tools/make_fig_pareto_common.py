@@ -51,6 +51,14 @@ for mode in ['safe', 'full']:
                 rows.append(dict(ctrl=c, R_level=lv, S_min=sub.loc[i, 'Stb'], S_sd=sub.loc[i, 'Ssd'], R_tb=sub.loc[i, 'Rtb'], erel_max=sub.loc[i, 'erel_max']))
             else:
                 rows.append(dict(ctrl=c, R_level=lv, S_min=np.nan, S_sd=np.nan, R_tb=np.nan, erel_max=np.nan))
+    sel_f = os.path.join(out, 'ParetoCommon_select.csv')
+    if os.path.exists(sel_f):
+        sel = pd.read_csv(sel_f)
+        for _, r in sel.iterrows():
+            if r['face_used'] == mode:
+                ax.scatter([r['Rtb']], [r['Stb']], marker='*', s=170, color=color[r['ctrl']], edgecolors='k', linewidths=0.8, zorder=5, label=f"{r['ctrl']} final design")
+            elif mode == 'safe':
+                ax.scatter([r['Rtb']], [r['Stb']], marker='*', s=110, color=color[r['ctrl']], edgecolors='k', linewidths=0.8, zorder=5, label=f"{r['ctrl']} final design (full front)")
     ax.set_xscale('log'); ax.set_yscale('log')
     ax.set_xlabel('R, five-seed mean (%)'); ax.set_ylabel('S, five-seed mean (N.m)')
     t = titles[mode] + ', seeds 99990-99994'
