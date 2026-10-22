@@ -43,3 +43,7 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 
 ### Lượt 7 - Giải thích hai lựa chọn của kế hoạch margin (2026-10-23)
 - Người dùng hỏi hai lựa chọn là gì, lợi hại, nên chọn cái nào. Trả lời: (1) thêm tùy chọn sắp theo R và giới hạn R vào lệnh 'margin' (chỉ đổi thứ tự và phạm vi, luật không đổi; bảng R <= 20 % chính thức sau khoảng 1 giờ); (2) có chạy đuôi Map R > 20 % (47 điểm, ~30 giờ CPU) hay không. Gợi ý: làm (1); (2) chạy sau khi đã có bảng, trên cả hai máy nếu laptop rảnh, không thì PC chạy một mình qua đêm. Chưa chạy gì, chờ người dùng chốt.
+
+### Lượt 8 - Đề xuất lọc e_rel trước khi chạy margin (2026-10-23)
+- Người dùng hỏi có lọc e_rel trước để bớt điểm Map phải kiểm margin không. Đo từ dữ liệu: mặt đủ cổng chỉ chứa điểm qua e_rel nên margin của điểm trượt e_rel không bao giờ ảnh hưởng mặt đủ cổng. Số điểm qua e_rel: Map 17/80 trong tập (tối đa 1.9 giờ CPU, trong đó 12 điểm mặt 1.3 giờ), PID 60/105 (2.9 giờ, 22 điểm mặt 1.2 giờ). Mặt an toàn của Map (72 điểm, 34.6 giờ) gồm phần lớn điểm trượt e_rel. Điểm Map đã chọn (e_rel 26 %) chỉ nằm trên mặt an toàn, không nằm trên mặt đủ cổng.
+- Đề xuất: sắp thứ tự, không bỏ: (1) margin cho điểm qua e_rel (mặt đủ cổng, kết luận chính); (2) mặt an toàn Map R <= 20 % (25 điểm); (3) đuôi R > 20 % nếu còn thời gian. Chờ người dùng chốt.
