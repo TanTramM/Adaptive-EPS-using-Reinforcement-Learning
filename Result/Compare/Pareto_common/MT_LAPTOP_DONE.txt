@@ -1,0 +1,3 @@
+Laptop L1 (Map tail margin, ids 7-10 of 10, List = ParetoCommon_Map_tail_list.csv, 47 points) done 2026-10-23 03:08 (start 2026-10-23 02:58:26, M_GO merged 02:58)
+Points per worker (pass): w7 5 (5), w8 4 (4), w9 4 (4), w10 4 (4)  -> 17 points, 17 pass, 0 fail
+Execution restarts: 0; code errors: 0. The other 30 points (ids 1-6) belong to the PC.

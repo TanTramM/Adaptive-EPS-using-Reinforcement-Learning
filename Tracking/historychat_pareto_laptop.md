@@ -42,3 +42,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 
 ### Lượt 11 - Việc mới: bước L1 (margin đuôi Map, id 7-10 của 10) (2026-10-23 02:55)
 - Đã gộp origin/auto/pareto-common (sạch, chưa có M_GO.txt). Đọc KeHoachMatlab.txt mục 10-11. Script nền scratch/laptop_L1.sh: fetch mỗi 5 phút tới M_GO.txt (hạn 08:00), gộp, kiểm guard_ram và tail_list, chạy 4 worker lapM_w7..w10 bằng job_lib_patient (cách nhau 60 s), commit và push csv margin w7-w10 mỗi 30 phút. Không sửa mã.
+
+### Lượt 12 - Xong L1: margin đuôi Map (id 7-10) (2026-10-23 03:08)
+- M_GO.txt có lúc 02:58 (PC: P0 xong, 47 điểm đuôi Map); gộp sạch, guard_ram đang chạy. 4 worker lapM_w7..w10 chạy 02:58-03:08 (khoảng 10 phút, mỗi calib_margin nhanh). Phần laptop = các vị trí 7-10 của 10 trong danh sách 47 điểm: w7 5, w8 4, w9 4, w10 4 = 17 điểm, 17 pass (gain x2 và trễ +1 ms đều PASS), 0 lần MATLAB chạy lại, 0 lỗi mã. 30 điểm còn lại là phần id 1-6 của PC. Tạo MT_LAPTOP_DONE.txt, commit, push.
