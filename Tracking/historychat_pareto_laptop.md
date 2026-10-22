@@ -26,3 +26,7 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 ### Lượt 6 - Xong margin, MAPPID_DONE (2026-10-22 17:05)
 - Lỗi mã: vòng margin round 1 thất bại cả 4 worker (3 lần thật): compare_pareto_common.m dòng 162 (aggregate) tính all(isfinite([e.R_pct; e.S_Nm]) & e.simulated == 1) với kích thước 10x1 và 5x1. Sửa tối thiểu thành isfinite(e.R_pct) & isfinite(e.S_Nm) & e.simulated == 1 (cùng ý nghĩa). Lệnh 'front' của PC dính cùng lỗi nếu chưa sửa: PC lấy bản sửa khi gộp. Quy tắc mục 0 không đổi.
 - Margin: 3 vòng (treo 40 -> 8 -> 0), 71 mô phỏng calib_margin, không có Inf. MapPID: 211 điểm, qua e_rel 181, mặt an toàn 48, mặt đủ cổng 48, trượt margin 1. 1126 mô phỏng, 11 lần MATLAB tự khởi động lại (không tính là trượt cổng).
+
+### Lượt 7 - Việc mới: chạy giúp PC pha 1 Map/PID (worker 7-10 trên 10) (2026-10-22)
+- git fetch + merge origin/auto/pareto-common: fast-forward tới 500874a, không xung đột (bản sửa dòng 162 đã có sẵn từ lần merge nhánh laptop trước).
+- Sửa môi trường tối thiểu: tools/jobs/pareto_pc_pipeline.sh dòng 6 ép MATLAB_TEMP='D:\MatlabTemp' (laptop không có ổ D) nên đổi thành ${MATLAB_TEMP:-D:\MatlabTemp}; PC không bị ảnh hưởng. Bật guard_ram.ps1; chạy lapC (PARETO_NW=10, ids 7-10, dừng sau p1).
