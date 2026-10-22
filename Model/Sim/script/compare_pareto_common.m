@@ -159,7 +159,7 @@ if ~isempty(E)
         A.nseeds(i) = height(e);
         if height(e) == numel(seeds)
             A.Rtb(i) = mean(e.R_pct); A.Stb(i) = mean(e.S_Nm); A.TVtb(i) = mean(e.TV); A.Rsd(i) = std(e.R_pct); A.Ssd(i) = std(e.S_Nm); A.erel_max(i) = max(e.erel_pct);
-            A.valid(i) = all(isfinite([e.R_pct; e.S_Nm]) & e.simulated == 1);
+            A.valid(i) = all(isfinite(e.R_pct) & isfinite(e.S_Nm) & e.simulated == 1);
         end
     end
 end

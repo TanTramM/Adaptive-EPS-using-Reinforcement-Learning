@@ -1,0 +1,7 @@
+MapPID done 2026-10-22 17:05 (laptop, branch auto/pareto-common-laptop)
+Points: 211 candidates (38 phase 1 + 173 phase 2), seeds 99990-99994
+Simulations: 1055 (CALIB v2) + 71 calib_margin = 1126; 4 workers
+Execution errors (MATLAB process ended without error text, restarted by job_lib_patient, work resumed from csv, not counted as gate failures): 11 restarts (phase 1: 1, phase 2: 5, margin: 5)
+Code fix (one line, compare_pareto_common.m line 162, aggregate): A.valid used all(isfinite([e.R_pct; e.S_Nm]) & e.simulated == 1), a 10x1 vs 5x1 size error; now isfinite(e.R_pct) & isfinite(e.S_Nm) & e.simulated == 1. Same meaning; the PC branch needs it for 'front'.
+Result of 'front' (MapPID): live 211, pass e_rel 181 (30 fail), safe front 48, full front 48, margin fails 1, pending 0
+Margin rounds: 3 (pending 40 -> 8 -> 0); no Inf ratios
