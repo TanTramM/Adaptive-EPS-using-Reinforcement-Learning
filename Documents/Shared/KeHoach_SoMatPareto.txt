@@ -65,3 +65,11 @@ Lý do: đo thật cho thấy một đánh giá Map mất 100-570 s (K nhỏ ch�
 năm seed chung. Một điểm pha 2 p bị LOẠI khỏi tập khi có điểm pha 1 f trội vững: R0_f x (1 + 3 sigma_R) <= R0_p và S0_f x (1 + 3 sigma_S) <= S0_p (R0, S0 ở seed tìm); còn lại thì nằm trong tập. Điểm bị loại được ghi trong csv (cột in_set), không giấu.
 (A2) Mọi quy tắc khác của mục 0 giữ nguyên (năm seed, cổng, hai mặt, margin chỉ cho điểm trên mặt, lặp loại). Mặt tính trên tập (A1). Kiểm độ nhạy: 'front' in số điểm mặt thay đổi nếu dùng MỌI điểm đã đánh giá thay vì chỉ tập (A1).
 (A3) MapPID: laptop đã chạy đủ 211 điểm x 5 seed; PC áp cùng luật (A1) cho MapPID khi tính mặt (phần dữ liệu thừa dùng cho kiểm độ nhạy). Số worker của PC tăng lên 6 (CPU mới dùng 38 %); mã chia việc theo vị trí điểm trong danh sách pha và bỏ qua điểm đã đủ năm seed.
+
+
+4. SỬA ĐỔI B (người dùng chốt 2026-10-23 03:10, khung PARETO-PC ghi): thiết kế cuối chọn trên mặt đo ở seed chung
+(B1) Thay mục 0(g) phần "KHÔNG đổi điểm đã chọn": ba điểm trong map.json, pid.json, mappid.json là điểm chọn TẠM ở seed tìm riêng; ý định của người dùng từ đầu là chạy hết các phần chọn tham số
+rồi mới chọn. Sau khi margin xong, thiết kế cuối của mỗi bộ chọn trên mặt đo ở năm seed chung theo quy tắc cơ học viết trước ở Documents/Shared/KeHoachMatlab.txt mục 10.1 (mặt đủ cổng nếu không
+rỗng, không thì mặt an toàn có nhãn; J = R_tb x S_tb nhỏ nhất; hòa 3 % lấy PM lớn nhất), ghi json có sao lưu, rồi chạy DREWS v2 trên thiết kế cuối.
+(B2) Mọi quy tắc khác giữ nguyên (cổng, hộp, lưới, tập dự tuyển, Sửa đổi A, hai mặt, margin lặp loại; không thêm điểm ngoài lưới). Kế hoạch chạy hai máy và prompt: KeHoachMatlab.txt mục 10 và 11.
+

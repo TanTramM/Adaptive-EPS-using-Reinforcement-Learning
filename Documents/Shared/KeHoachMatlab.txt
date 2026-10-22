@@ -2,7 +2,8 @@ KẾ HOẠCH VÀ NHẬT KÝ CHẠY MATLAB: TÌM THAM SỐ VÀ SO MẶT PARETO C�
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0. Cách dùng file này
 Dành cho khung chat mới và cho người dùng khi dọn file. Phần 1-2 cho cái nhìn tổng; phần 3 là phương pháp đang dùng (hiện hành); phần 4 là từng giai đoạn đã chạy, kết quả, mã và dữ liệu; phần 5 là
-bảng mã và script đang dùng; phần 6 là phân công khung và máy; phần 7 là tiến độ hiện tại và việc còn lại; phần 8 là danh sách dọn dẹp (ĐỀ XUẤT, chưa xóa gì); phần 9 là các bẫy đã gặp.
+bảng mã và script đang dùng; phần 6 là phân công khung và máy; phần 7 là tiến độ hiện tại và việc còn lại; phần 8 là danh sách dọn dẹp (ĐỀ XUẤT, chưa xóa gì); phần 9 là các bẫy đã gặp; phần 10 là
+KẾ HOẠCH HAI MÁY ĐANG CHẠY (2026-10-23: margin, chọn thiết kế cuối, DREWS v2); phần 11 là prompt cho hai khung chat mới.
 Quy tắc đọc: nếu file này mâu thuẫn với Documents/Shared/QuyChuan.txt thì QuyChuan.txt ưu tiên. Nhật ký từng khung nằm ở Tracking/historychat_*.md (khung COMMON ghi quyết định, các khung kia ghi
 việc đã làm). Mục "PhuongPhap_TimThamSo.txt" có các mục 1-12 CŨ (surrogateopt, không còn dùng) và các mục 13-15 hiện hành; mục 16 của file đó (so mặt Pareto bằng seed chung) CHƯA viết, nội dung
 nằm ở phần 3-4 của file này.
@@ -25,6 +26,8 @@ còn kiểm margin cho Map và PID rồi vẽ hình, bảng, báo cáo). Kiểm 
 - 2026-10-22 ngày: khung COMMON viết kế hoạch so mặt Pareto bằng seed chung (KeHoach_SoMatPareto.txt bản 2); PC và laptop chạy song song (khung PARETO-PC, PARETO-LAPTOP).
 - 2026-10-22 16:30: Sửa đổi A (tập đánh giá theo dải nhiễu) để rút thời gian vì Map quá chậm.
 - 2026-10-23 00:46: pha 1 xong cả hai máy; 02:02: pha 2 xong cả hai máy. Việc kế: margin cho Map và PID.
+- 2026-10-23 03:10: người dùng chốt: thiết kế cuối chọn trên mặt đo ở seed chung sau margin (điểm trong json chỉ là điểm tạm), rồi DREWS v2 trên thiết kế cuối; chạy hai máy theo mục 10, xong trước
+  19:00.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 3. Phương pháp hiện hành
 3.1. Đánh giá MỘT thiết kế trên CALIB v2 (mọi bộ dùng cùng khung)
@@ -137,7 +140,8 @@ còn kiểm margin cho Map và PID rồi vẽ hình, bảng, báo cáo). Kiểm 
 - Thời gian thực tế đã chạy: PC 4-6 worker, pha 1 từ 22/10 chiều tới 23/10 00:46 (bị chậm vì Map), pha 2 từ 00:46 tới 02:02.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 7. Tiến độ hiện tại và việc còn lại (2026-10-23 02:30)
-7.1. Xong: mã so mặt (kiểm 2.3 PASS), pha 1, pha 2 cả ba bộ, gộp hai nhánh, MapPID xong hẳn (kể cả margin). Commit 3877408 và commit ghi nhật ký Lượt 5 đã push lên auto/pareto-common.
+7.1. Xong: mã so mặt (kiểm 2.3 PASS), pha 1, pha 2 cả ba bộ, gộp hai nhánh, MapPID xong hẳn (kể cả margin). Commit 3877408 và commit ghi nhật ký Lượt 5 đã push lên auto/pareto-common. Lúc
+02:17-02:40 một lần chạy margin ngoài ý muốn (pipeline pcG) đã bị dừng và dọn sạch theo yêu cầu người dùng (nhật ký PARETO-PC Lượt 9); margin của Map và PID CHƯA chạy.
 7.2. Chưa xong:
 - Margin cho Map (72 điểm trên mặt an toàn; 12 điểm trên mặt đủ cổng nằm trong số đó) và PID (35 điểm; 22 điểm đủ cổng nằm trong số đó). Mỗi điểm ba lần mô phỏng. Ước lượng theo thời gian đã đo:
   Map 34.6 giờ CPU (điểm có R0 <= 20 %: 25 điểm, 4.8 giờ; điểm R0 > 20 %: 47 điểm, ~30 giờ; riêng 38 điểm có R0 > 50 %), PID 1.6 giờ. Sau mỗi vòng, điểm trượt bị loại và điểm mới lên mặt cần margin
@@ -146,7 +150,7 @@ còn kiểm margin cho Map và PID rồi vẽ hình, bảng, báo cáo). Kiểm 
   treo).
 - Viết mục 16 vào PhuongPhap_TimThamSo.txt; sửa dòng 6 và mục 13.6 của file đó trỏ tới mục 14-16, đánh dấu Hình 1 và Bảng 1 của file đó là luồng surrogateopt cũ; xem lại hình
   Fig_search_flow_grid.png sau khi sửa chữ. Không sinh lại .docx nếu chưa được bảo.
-7.3. KẾ HOẠCH CHẠY MARGIN (ĐỀ XUẤT, chờ người dùng duyệt hai điểm: có thêm tùy chọn sắp theo R và giới hạn R vào lệnh 'margin' không; có chạy M2 trên cả hai máy không)
+7.3. KẾ HOẠCH CHẠY MARGIN (bản đề xuất 02:30, ĐÃ THAY bằng mục 10; giữ làm hồ sơ)
 Nhận xét: điểm có R > 20 % không thể trội hơn điểm có R <= 20 % (muốn trội phải có R nhỏ hơn hoặc bằng), nên bảng ở bảy mức R 2.5-20 % chỉ cần margin của các điểm mặt có R <= 20 %; đuôi R > 20 %
 chỉ ảnh hưởng phần phải của hình.
 | Giai đoạn | PC | Laptop | Thời gian ước tính |
@@ -209,4 +213,82 @@ Documents/Notes/Controllers/KeHoach_Map2_Dense.md đã bị mục 14 thay.
 - Map chậm hơn MapPID dù MapPID chứa Map: vòng Map đứng một mình ở K thấp kém ổn định, PID ổn định hóa MapPID; đừng kết luận từ thời gian mô phỏng về chất lượng.
 - Mọi lần mô phỏng phải gọi Simulink.sdi.clear và đặt TEMP trên ổ D, nếu không file *.dmr làm đầy ổ C.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Hết. Cập nhật khi có thay đổi: ghi vào phần 7 và thêm một dòng vào phần 2.
+10. KẾ HOẠCH HAI MÁY 2026-10-23 (người dùng chốt 02:55-03:10): margin, CHỌN THIẾT KẾ CUỐI trên mặt đo ở seed chung, ghi json, DREWS v2; xong trước 19:00 ngày 23/10
+10.0. Quyết định của người dùng (thay mục 0(g) của KeHoach_SoMatPareto.txt, xem "Sửa đổi B" ở cuối file đó)
+- Ý định từ đầu: chạy hết các phần chọn tham số rồi mới chọn. Ba điểm hiện có trong map.json, pid.json, mappid.json là điểm chọn TẠM ở seed tìm riêng của từng bộ, KHÔNG phải điểm cuối. Ràng buộc
+  "không đổi điểm đã chọn" do khung COMMON viết trong kế hoạch so mặt; người dùng không chốt khóa. Từ nay: thiết kế cuối của mỗi bộ chọn trên mặt đo ở năm seed chung 99990-99994 (sau margin), rồi
+  DREWS v2 chạy trên thiết kế cuối đó.
+- Không đổi: cổng (PM >= 30 độ, GM >= 2, lag >= 0.707 tại 2 Hz, e_rel <= 10 %, calib_margin), hộp, lưới, tập dự tuyển, luật dải nhiễu (Sửa đổi A), hai mặt, margin lặp loại, ca CALIB v2 và DREWS v2
+  đã khóa, PRSM. Không thêm điểm ngoài lưới.
+10.1. Quy tắc chọn thiết kế cuối (viết TRƯỚC khi có kết quả margin; cơ học, giống nhau cho ba bộ)
+1. Chờ mọi margin xong ('front' báo pending 0 cho cả hai mặt của bộ đó).
+2. Mặt dùng để chọn: MẶT ĐỦ CỔNG nếu còn ít nhất một điểm; nếu rỗng (mọi điểm qua e_rel trượt margin hay không có) thì MẶT AN TOÀN, gắn nhãn "an toàn, trượt e_rel" trong json (trường
+x_design_note) và báo cáo, như cách Map đã được chọn ở mục 14 của PhuongPhap_TimThamSo.txt.
+3. Trên mặt đó lấy J = R_tb x S_tb nhỏ nhất (R_tb, S_tb trung bình năm seed). Hòa: các điểm có J <= 1.03 J_min coi là ngang nhau, lấy điểm có PM tuyến tính lớn nhất (cột PM_deg trong csv đánh giá,
+không phụ thuộc seed).
+4. Báo độ nhạy (không đổi điểm chọn): điểm J nhỏ nhất của mặt kia (an toàn hoặc đủ cổng), điểm tạm cũ của bộ đó nằm ở đâu trên mặt mới (R_tb, S_tb, J, có trên mặt không), và chọn theo quy tắc cũ
+pick_by_tolerance nếu dễ tính.
+5. Ghi json: sao lưu ba file ra C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-23_json_truoc_pareto/; giữ bản cũ trong trường design_pre_pareto; ghi design mới bằng ĐÚNG hàm dựng struct đã có
+của bộ đó (Map: toDesign trong map2_grid_spec.m hoặc select_map2_pareto.m; PID: select_pareto.m spec PID; MapPID: select_mappid_plug.m), không tự đặt cấu trúc mới; thêm trường CALIB_common_Rtb,
+CALIB_common_Stb, CALIB_common_J, rule. Sau khi ghi: load_<ctrl> rồi test_<ctrl> phải PASS (Map: load_map; test_map. PID: load_pid; test_pid. MapPID: load_mappid; test_mappid).
+6. Giới hạn ghi trung thực: MapPID đã quét với khối Map khóa bằng Map tạm cũ (K 6.77); nếu Map cuối khác điểm cũ thì MapPID cuối vẫn mang khối Map cũ (không quét lại, không đủ thời gian); câu chữ
+"cắm PID vào Map có sẵn" trong bài phải nói rõ Map nào.
+10.2. Mã phải sửa trước khi chạy (khung PC làm ở bước P0; mã dở dang CHƯA commit đang nằm trong thư mục làm việc của PC)
+- compare_pareto_common('margin', ctrls, id, n, 'Mode', 'full'|'safe'|'both', 'Rmax', r, 'Rmin', r, 'List', file): Mode chọn mặt có điểm chờ; Rmax, Rmin giới hạn theo R_tb; List = csv cố định các
+  điểm cần chạy (bỏ qua tính pending, chỉ bỏ điểm đã có kết quả margin trong csv của chính máy đó); thứ tự R_tb tăng dần; chia việc theo vị trí mod n. 'Mode' và 'Rmax' đã viết dở (chưa chạy thử);
+  thêm 'Rmin', 'List'.
+- compare_pareto_common('taillist', {'Map'}, 20): ghi Result/Compare/Pareto_common/ParetoCommon_Map_tail_list.csv = các điểm Map đang chờ margin trên mặt an toàn có R_tb > 20 (lúc ghi), để hai máy
+  chia CÙNG một danh sách.
+- compare_pareto_common('select', ctrls[, writeJson]): áp 10.1, ghi ParetoCommon_select.csv và ParetoCommon_select_report.csv, writeJson = true mới ghi json (sau sao lưu).
+- tools/jobs/pareto_pc_pipeline.sh: đã thêm (chưa commit) PARETO_SKIP_RUN=1 (bỏ pha 1-2), PARETO_MARGIN_ARGS, điều kiện hội tụ theo phạm vi. Có thể viết một script mới
+  tools/jobs/pareto_night_pc.sh cho chuỗi bước P1-P6 thay vì vá tiếp.
+- Kiểm trước khi chạy: gọi khô margin với 'Rmax', 0 (phải in 0 điểm, không mô phỏng), gọi 'front' (số phải giống lúc 02:10: Map pending 72/12, PID 35/22, MapPID xong), 'taillist' (khoảng 47 điểm),
+  'select' với writeJson = false trên MapPID (đã xong margin) để kiểm mã chọn; ghi số vào nhật ký.
+10.3. Chia việc và tín hiệu đồng bộ (file trong Result/Compare/Pareto_common/, đẩy qua git)
+| Bước | Máy | Việc | Ước lượng | Tín hiệu khi xong |
+| P0 | PC | mã 10.2, kiểm khô, taillist, commit, push | 30-45 phút | M_GO.txt (push) |
+| L1 | laptop | chờ M_GO.txt; gộp origin/auto/pareto-common; margin đuôi Map: compare_pareto_common('margin',{'Map'},id,10,'List',tail) với id 7-10; push csv mỗi 30 phút | ~3 giờ | MT_LAPTOP_DONE.txt (push) |
+| P1 | PC | margin phạm vi gần: Mode full cho PID và Map; Map Mode safe Rmax 20; PID Mode both; lặp vòng (margin rồi front) tới khi phạm vi này hết chờ | 1-1.5 giờ | commit, push bảng tạm |
+| P2 | PC | margin đuôi Map cùng List, id 1-6 của 10 | ~3 giờ | — |
+| P3 | PC | chờ MT_LAPTOP_DONE.txt (tối đa 2 giờ sau khi P2 xong); gộp origin/auto/pareto-common-laptop (chỉ csv w7-w10; xung đột ở MÃ thì dừng và báo); vòng margin cuối phạm vi đầy đủ tới khi 'front' báo pending 0 (điểm laptop chưa làm thì PC tự làm) | 0.5-2 giờ | PARETO_MARGIN_DONE.txt |
+| P4 | PC | front, select (writeJson true), load và test PASS, commit, push | 30 phút | SELECT_DONE.txt |
+| P5 | PC | DREWS v2 thiết kế cuối: với bộ có design đổi, sao lưu rồi chuyển Cases_v2 cũ của bộ đó vào Cases_v2/pre_pareto/; load_<ctrl>; run_scoring_seeds('<Ctrl>', 99995:99999) (ba bộ song song, mỗi bộ ~15 phút); tools/summarize_drews_v2.py | 30-60 phút | DREWS_FINAL_DONE.txt |
+| P6 | PC | tools/make_fig_pareto_common.py (hai hình, hai bảng), báo cáo mục 2.7 + kết quả chọn + DREWS, mục 16 PhuongPhap_TimThamSo.txt, cập nhật phần 7 file này, commit, push | 30-45 phút | FINAL_DONE.txt |
+- Mốc dự kiến: P0 xong ~04:00; L1 ~04:15-07:15; P1 ~04:00-05:30; P2 ~05:30-08:30; P3 ~08:30-09:30; P4 ~10:00; P5 ~11:00; P6 ~11:45. Dư khoảng 7 giờ so với mốc 19:00.
+- Vì sao chia như vậy: vòng margin lặp cần dữ liệu của cả hai máy ở mỗi vòng, đồng bộ git giữa đêm không ai trông là điểm dễ hỏng, nên mọi vòng lặp do PC làm; laptop chỉ nhận một khối việc cố
+  định, độc lập (đuôi Map, ~30 giờ CPU, chia 6/4 theo số worker) và không cần đợi kết quả của PC. Laptop chết giữa chừng thì PC tự làm nốt ở P3 (chỉ chậm hơn, không sai).
+- File csv margin theo id worker (w1-w6 trên PC, w7-w10 trên laptop) nên gộp hai nhánh không đụng nhau. Laptop không sửa mã; nếu laptop thấy lỗi mã thì ghi nhật ký, push, dừng.
+10.4. Quy tắc vận hành (cả hai máy)
+- Chạy nền bằng tools/jobs/job_lib_patient.sh (tự chạy lại MATLAB chết, lỗi heap 0xc0000374 là thường); guard_ram.ps1 phải đang chạy; MATLAB -softwareopengl, TEMP và TMP = D:/MatlabTemp (laptop: ổ
+  nhiều chỗ trống nhất nếu không có D:); Simulink.sdi.clear sau mỗi mô phỏng (hàm đã làm).
+- Chờ bằng script nền và Monitor, không kết thúc lượt để chờ. Kiểm tiến độ khoảng 30 phút một lần: số dòng csv tăng, MATLAB sống, RAM; đứng yên quá 45 phút (Map một điểm có thể mất ~45 phút: ba mô
+  phỏng x ~15 phút, nên lấy 60 phút cho Map) thì dừng ĐÚNG worker đó theo PID rồi chạy lại.
+- Trước khi báo "đã dừng" phải kiểm CẢ tiến trình bash của pipeline lẫn MATLAB (bài học Lượt 9). Không kill MATLAB theo tên (có MATLAB của VS Code và khung khác); kill bằng script .ps1 theo PID
+  hoặc theo dòng lệnh chứa compare_pareto_common.
+- Lỗi thực thi (heap, mất worker, csv đang ghi) thì chạy lại đúng điểm, không coi là trượt cổng; lỗi mã thì sửa đúng chỗ, chạy tiếp, ghi lỗi và cách sửa vào nhật ký. Dừng thật khi: xung đột mã lúc
+  gộp nhánh; mã dùng chung phải đổi không tương thích ngược; RAM không đủ một worker; test_<ctrl> FAIL sau khi ghi json (khi đó trả json về bản sao lưu, ghi nhật ký, dừng).
+- git: chỉ add đúng đường dẫn (thư mục làm việc có thay đổi của khung khác: Tracking/CLAUDE.md, historychat_common.md, historychat_map.md, các file tools/jobs bị xóa; KHÔNG đụng). Không push main.
+  Commit và push sau mỗi bước P và mỗi 30-60 phút khi đang chạy dài. Ghi nhật ký TRƯỚC khi commit.
+- Nhật ký: PC ghi Tracking/historychat_pareto_pc.md, laptop ghi Tracking/historychat_pareto_laptop.md, mỗi bước một mục Lượt (giờ bắt đầu, giờ xong, số điểm, lỗi).
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11. PROMPT CHO HAI KHUNG CHAT MỚI (dán nguyên văn; mỗi máy một khung)
+11.1. PC (dán vào khung chat mới trên PC):
+Bạn là khung PARETO-PC (máy PC, Windows, MATLAB R2023a), làm tự động trên nhánh auto/pareto-common, người dùng đang ngủ. Đọc theo thứ tự: Tracking/CLAUDE.md; Documents/Shared/KeHoachMatlab.txt
+(toàn bộ, đặc biệt mục 10 và 11); vài lượt cuối của Tracking/historychat_pareto_pc.md. Làm đúng các bước P0 đến P6 của mục 10.3 theo quy tắc 10.1, 10.2 và 10.4, không hỏi lại người dùng. Mã margin
+dở dang (Mode, Rmax) đang nằm chưa commit trong compare_pareto_common.m và pareto_pc_pipeline.sh: đọc, hoàn thiện, kiểm khô rồi mới commit. Sau P0 push file M_GO.txt để laptop bắt đầu. Không đổi
+cổng, hộp, lưới, tập dự tuyển, luật dải nhiễu; không thêm điểm ngoài lưới; không sửa PRSM, CALIB, DREWS đã khóa; không push main; gộp nhánh laptop mà xung đột ở mã thì dừng và báo. Chờ bằng script
+nền, không kết thúc lượt để chờ. Mỗi lỗi và cách sửa ghi vào Tracking/historychat_pareto_pc.md. Xong P6 thì viết báo cáo cuối trong câu trả lời: thiết kế cuối của ba bộ (tham số, R_tb, S_tb, J,
+mặt dùng để chọn, nhãn), so với điểm tạm cũ, số điểm từng loại (ứng viên, trong tập, qua e_rel, trên mặt an toàn, trên mặt đủ cổng, trượt margin), hai bảng S theo mức R, đường dẫn hai hình, kết
+quả DREWS v2 tóm tắt, giới hạn (mục 10.1.6), việc còn treo; rồi dừng.
+11.2. Laptop (dán vào khung chat mới trên laptop):
+Bạn là khung PARETO-LAPTOP (máy laptop, MATLAB R2023a), làm tự động, người dùng đang ngủ. Trên nhánh auto/pareto-common-laptop: git fetch origin rồi gộp origin/auto/pareto-common (xung đột ở mã
+thì dừng và báo). Đọc Tracking/CLAUDE.md, Documents/Shared/KeHoachMatlab.txt mục 10 và 11 (bản mới nhất sau khi gộp), vài lượt cuối của Tracking/historychat_pareto_laptop.md. Việc của bạn chỉ là
+bước L1 của mục 10.3: dùng script nền cứ 5 phút git fetch origin, khi origin/auto/pareto-common có Result/Compare/Pareto_common/M_GO.txt thì gộp nhánh đó vào nhánh laptop, kiểm guard_ram.ps1 đang
+chạy và có ParetoCommon_Map_tail_list.csv, rồi chạy bốn worker nền bằng tools/jobs/job_lib_patient.sh:
+compare_pareto_common('margin',{'Map'},id,10,'List',fullfile(result_dir('Compare','Pareto_common'),'ParetoCommon_Map_tail_list.csv')) với id 7, 8, 9, 10 (cách nhau 60 s). Cứ 30 phút commit các
+file ParetoCommon_Map_margin_w7..w10_s99990.csv và nhật ký rồi push nhánh laptop. Khi cả bốn worker xong: tạo MT_LAPTOP_DONE.txt (giờ, số điểm mỗi worker, số pass), commit, push, ghi nhật ký,
+dừng. Không sửa mã (gặp lỗi mã thì ghi nhật ký, push, dừng); không chạy select, DREWS hay vòng margin nào khác; không push main; không kill MATLAB theo tên. Chờ bằng script nền, không kết thúc
+lượt để chờ; nếu tới 08:00 vẫn chưa thấy M_GO.txt thì ghi nhật ký, push, dừng. Mỗi lỗi và cách sửa ghi vào Tracking/historychat_pareto_laptop.md. Cuối cùng báo: giờ bắt đầu, giờ xong, số điểm đã
+chạy, số pass, lỗi đã gặp.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hết. Cập nhật khi có thay đổi: ghi vào phần 7 (hoặc 10) và thêm một dòng vào phần 2.
