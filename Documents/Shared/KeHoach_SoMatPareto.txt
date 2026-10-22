@@ -58,3 +58,10 @@ chạy tiếp. Cứ khoảng 30 phút kiểm tiến độ; đứng yên quá 45 
 ký khung khác. Commit và push nhánh của mình sau mỗi mốc; không push main.
 2.7. Báo (PC): số điểm từng bộ (dự tuyển, qua e_rel ở seed chung, trên mặt an toàn, trên mặt đủ cổng, trượt margin), hai bảng, hai hình, kết luận theo QuyChuan 6.3 cho từng khoảng R, giới
 hạn (lưới, seed), việc còn treo.
+
+3. SỬA ĐỔI A (người dùng chốt 2026-10-22 lúc 15:30, khung PARETO-PC ghi; áp dụng cho CẢ BA bộ như nhau, viết trước khi có kết quả pha 2)
+Lý do: đo thật cho thấy một đánh giá Map mất 100-570 s (K nhỏ chậm nhất), PID khoảng 10 s, MapPID khoảng 47 s; đánh giá toàn bộ 528 điểm x 5 seed không kịp trong ngày. Nhiễu seed của Map rất nhỏ (R, S lệch khoảng 0.3 %), nên đánh giá mọi điểm là không cần.
+(A1) Tập đánh giá của mỗi bộ = pha 1 (mặt Pareto của tập dự tuyển ở seed tìm) cộng các điểm pha 2 nằm trong dải nhiễu của mặt đó. sigma_R, sigma_S của bộ = trung vị trên các điểm pha 1 của (độ lệch chuẩn / trung bình) của R và S qua
+năm seed chung. Một điểm pha 2 p bị LOẠI khỏi tập khi có điểm pha 1 f trội vững: R0_f x (1 + 3 sigma_R) <= R0_p và S0_f x (1 + 3 sigma_S) <= S0_p (R0, S0 ở seed tìm); còn lại thì nằm trong tập. Điểm bị loại được ghi trong csv (cột in_set), không giấu.
+(A2) Mọi quy tắc khác của mục 0 giữ nguyên (năm seed, cổng, hai mặt, margin chỉ cho điểm trên mặt, lặp loại). Mặt tính trên tập (A1). Kiểm độ nhạy: 'front' in số điểm mặt thay đổi nếu dùng MỌI điểm đã đánh giá thay vì chỉ tập (A1).
+(A3) MapPID: laptop đã chạy đủ 211 điểm x 5 seed; PC áp cùng luật (A1) cho MapPID khi tính mặt (phần dữ liệu thừa dùng cho kiểm độ nhạy). Số worker của PC tăng lên 6 (CPU mới dùng 38 %); mã chia việc theo vị trí điểm trong danh sách pha và bỏ qua điểm đã đủ năm seed.

@@ -112,21 +112,29 @@ end
 
 % ---------------------------------------------------------------- run
 function runPhase(name, phase, workerId, nWorkers, seeds, outDir)
-S = ctrlSpec(name); C = candidates(name);
-idx = find(C.phase == phase);
-mine = idx(mod((1:numel(idx)) - 1, nWorkers) == workerId - 1);
+%RUNPHASE Points of one phase, partitioned by their POSITION in the full phase list (stable when workers restart or nWorkers changes), complete points skipped.
+%   Phase 2 runs only the points inside the noise band of the search-seed front (amendment A of 2026-10-22, see bandInfo) and needs phase 1 complete.
+S = ctrlSpec(name); A = aggregate(name, seeds, outDir);
+idx = find(A.phase == phase);
+if phase == 2
+    assert(all(A.complete(A.phase == 1)), 'compare_pareto_common:phase1', 'Phase 1 of %s is not complete: phase 2 needs its noise estimate.', name);
+    idx = idx(A.in_set(idx));
+end
+pos = 1:numel(idx);
+mine = idx(mod(pos - 1, nWorkers) == workerId - 1);
+mine = mine(~A.complete(mine));
 csv = fullfile(outDir, sprintf('ParetoCommon_%s_w%d_s99990-s99994.csv', name, workerId));
-fprintf('[%s] phase %d worker %d/%d: %d of %d points\n', name, phase, workerId, nWorkers, numel(mine), numel(idx));
+fprintf('[%s] phase %d worker %d/%d: %d points to do (of %d in the phase set)%s', name, phase, workerId, nWorkers, numel(mine), numel(idx), char(10));
 for k = 1:numel(mine)
-    x = table2array(C(mine(k), S.vn));
+    x = table2array(A(mine(k), S.vn));
     for s = seeds
         o = S.eval(x, s, csv);
-        if ~o.cached, fprintf('[%s] ph%d w%d %d/%d seed %d: R %.4g S %.4g erel %.4g\n', name, phase, workerId, k, numel(mine), s, o.R, o.S, o.erel); end
+        if ~o.cached, fprintf('[%s] ph%d w%d %d/%d seed %d: R %.4g S %.4g erel %.4g%s', name, phase, workerId, k, numel(mine), s, o.R, o.S, o.erel, char(10)); end
     end
 end
 marker = fullfile(outDir, sprintf('ParetoCommon_%s_w%d_phase%d_done.txt', name, workerId, phase));
-fid = fopen(marker, 'w'); fprintf(fid, '%s phase %d worker %d/%d done, %d points, %s\n', name, phase, workerId, nWorkers, numel(mine), char(datetime('now'))); fclose(fid);
-fprintf('[%s] phase %d worker %d done\n', name, phase, workerId);
+fid = fopen(marker, 'w'); fprintf(fid, '%s phase %d worker %d/%d done, %d points, %s%s', name, phase, workerId, nWorkers, numel(mine), char(datetime('now')), char(10)); fclose(fid);
+fprintf('[%s] phase %d worker %d done%s', name, phase, workerId, char(10));
 end
 
 % ---------------------------------------------------------------- post-processing 0(d), 0(e)
@@ -159,14 +167,33 @@ if ~isempty(E)
         A.nseeds(i) = height(e);
         if height(e) == numel(seeds)
             A.Rtb(i) = mean(e.R_pct); A.Stb(i) = mean(e.S_Nm); A.TVtb(i) = mean(e.TV); A.Rsd(i) = std(e.R_pct); A.Ssd(i) = std(e.S_Nm); A.erel_max(i) = max(e.erel_pct);
-            A.valid(i) = all(isfinite([e.R_pct; e.S_Nm]) & e.simulated == 1);
+            A.valid(i) = all(isfinite(e.R_pct) & isfinite(e.S_Nm) & e.simulated == 1);
         end
     end
 end
 A.complete = A.nseeds == numel(seeds);
 A.pass_erel = A.erel_max <= 10;                                        % 0(d): same definition for every controller
-A.alive_safe = A.complete & A.valid;                                   % 0(e)(i): linear gates (candidacy) and, below, calib_margin
+[A.in_set, A.sigR, A.sigS] = bandInfo(A);
+A.alive_safe_all = A.complete & A.valid;                               % every evaluated point (sensitivity check only)
+A.alive_full_all = A.alive_safe_all & A.pass_erel;
+A.alive_safe = A.alive_safe_all & A.in_set;                            % 0(e)(i): linear gates (candidacy), noise-band set (amendment A) and, below, calib_margin
 A.alive_full = A.alive_safe & A.pass_erel;                             % 0(e)(ii): plus e_rel
+end
+
+function [inSet, sigR, sigS] = bandInfo(A)
+%BANDINFO Amendment A (2026-10-22), one mechanical rule for every controller, fixed before the phase-2 results.
+%   sigR, sigS = median over the phase-1 points (front of the candidate set at the search seed) of std/mean of R and S over the five common seeds, per controller.
+%   A phase-2 point is inside the set unless some phase-1 point f dominates it robustly: R0_f*(1+3*sigR) <= R0_p and S0_f*(1+3*sigS) <= S0_p.
+%   Phase-1 points are always inside. Until every phase-1 point has its five seeds the noise is unknown: only phase 1 is inside.
+n = height(A); inSet = A.phase == 1; sigR = nan(n, 1); sigS = nan(n, 1);
+p1 = A.phase == 1;
+if ~all(A.complete(p1)), return; end
+sR = median(A.Rsd(p1) ./ A.Rtb(p1)); sS = median(A.Ssd(p1) ./ A.Stb(p1)); sigR(:) = sR; sigS(:) = sS;
+F = A(p1, :);
+for i = find(~p1)'
+    robust = F.R0 * (1 + 3 * sR) <= A.R0(i) & F.S0 * (1 + 3 * sS) <= A.S0(i);
+    inSet(i) = ~any(robust);
+end
 end
 
 function F = paretoMask(R, S, alive)
@@ -226,6 +253,14 @@ for c = 1:numel(ctrls)
             G.(mode) = [G.(mode); sortrows(g, 'Rtb')];
         end
     end
+    % sensitivity of the set rule: fronts over EVERY evaluated point versus the band set (pending margins count as front)
+    for m = 1:2
+        mode = modes{m};
+        [fa, ~, pa] = frontOf(A, A.(['alive_' mode '_all'])); [fs, ~, ps] = frontOf(A, A.(['alive_' mode]));
+        r.(['nFrontAllEval_' mode]) = nnz(fa | pa); r.(['nFrontDiff_' mode]) = nnz((fa | pa) ~= (fs | ps));
+    end
+    fprintf('[%s] band set: %d of %d candidates inside (sigR %.2g, sigS %.2g); front over all evaluated points differs in %d (safe) / %d (full) points%s', ...
+        name, nnz(A.in_set), n, A.sigR(1), A.sigS(1), r.nFrontDiff_safe, r.nFrontDiff_full, char(10));
     writetable(A, fullfile(outDir, sprintf('ParetoCommon_%s_points_s99990-s99994.csv', name)));
     fprintf('[%s] candidates %d | incomplete %d | invalid %d | live %d | pass e_rel %d | safe: front %d, margin fails %d, pending %d | full: front %d, margin fails %d, pending %d\n', ...
         name, n, r.nIncomplete, r.nInvalid, r.nAliveSafe, r.nPassErel, r.nFront_safe, r.nMarginFail_safe, r.nPending_safe, r.nFront_full, r.nMarginFail_full, r.nPending_full);
