@@ -69,3 +69,7 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - Kiểm khô: margin Rmax 0 in "0 of 0" (không mô phỏng); front: Map pending 72/12, PID 35/22, MapPID xong (48/48, 1 trượt): đúng số lúc 02:10; taillist 47 điểm (R_tb 28.7-118.6); select khô trên MapPID chạy được (mặt đủ cổng, J 2.0895, điểm tạm cũ J 2.112 nằm trên cả hai mặt). Lần chạy MATLAB thứ hai in "Heap corruption" khi thoát sau khi ghi xong (vô hại, đã biết).
 - Lỗi quy trình: heredoc `<<'EOF'` chứa chuỗi MATLAB bị shell làm hỏng: viết script vá bằng công cụ Write.
 - Bật guard_ram.ps1. Push M_GO.txt cho laptop.
+
+### Lượt 13 - P1 xong (2026-10-23, 04:02)
+- Chuỗi tools/jobs/pareto_night_pc.sh (6 worker, id 1-6): pcP1a (PID và Map, Mode full) 03:03-03:41, hội tụ sau 4 vòng; pcP1b (Map, safe, Rmax 20) 03:41-03:54, 3 vòng; pcP1c (PID, both) 03:54-04:02. Nhanh hơn ước lượng 1-1.5 giờ. Guard RAM dừng MATLAB 3 lần lúc khởi động (RAM 5 GB trống với 6 MATLAB), worker tự chạy lại, không mất kết quả. Cảnh báo "transport delay ... algebraic loop" của Model_PID là quen thuộc, vô hại.
+- P2 (đuôi Map, List, id 1-6 trên 10) bắt đầu 04:02.
