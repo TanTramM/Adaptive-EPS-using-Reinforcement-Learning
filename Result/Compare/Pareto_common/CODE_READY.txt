@@ -1,0 +1,6 @@
+CODE_READY 2026-10-22 11:56:25
+compare_pareto_common.m SHA-256: 7102adf6333efa53af2c3ec2b1fe8e8e9f67ae2ae13726e2650e28615b9364a9
+Check 2.3 PASS: candidates Map 149, PID 168, MapPID 211; chosen points reproduced at search seed (rel < 1e-6); MapPID Map block = map.json.
+Phase 1 sizes (front of the candidate set at the search seed): Map 75, PID 46, MapPID 38.
+Commands: compare_pareto_common(run|margin|front|status|candidates|check, ctrls, workerId, nWorkers)
+Laptop: compare_pareto_common(run, {MapPID}, id, 4) then margin; margin csv per worker: ParetoCommon_<Ctrl>_margin_w<id>_s99990.csv (plan 2.4 names one file; per-worker avoids concurrent appends)
