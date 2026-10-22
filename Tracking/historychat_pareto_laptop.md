@@ -33,3 +33,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 
 ### Lượt 8 - Xong pha 1 Map/PID (worker 7-10), P1_LAPTOP_DONE (2026-10-22 23:33)
 - lapC xong sau 5 giờ 20 phút (18:13-23:33). Map: 70 dòng dữ liệu (w7 20, w8 15, w9 15, w10 20); PID: không có dòng mới (các điểm đã đủ từ PC). 4 lần MATLAB tự chạy lại (có heap corruption 0xc0000374 ở w7), không tính trượt cổng. Tạo P1_LAPTOP_DONE.txt, commit, push; chờ P2_GO.txt trên origin/auto/pareto-common bằng script nền.
+
+### Lượt 9 - P2_GO, bắt đầu pha 2 (2026-10-23 00:40)
+- PC tạo P2_GO.txt (commit 14a9885) lúc 00:38 sau khi gộp pha 1 hai máy. Merge origin/auto/pareto-common vào nhánh laptop sạch, không xung đột mã. Chạy lapD (PARETO_NW=10, ids 7-10, dừng sau p2); guard_ram.ps1 vẫn chạy.
