@@ -36,3 +36,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 
 ### Lượt 9 - P2_GO, bắt đầu pha 2 (2026-10-23 00:40)
 - PC tạo P2_GO.txt (commit 14a9885) lúc 00:38 sau khi gộp pha 1 hai máy. Merge origin/auto/pareto-common vào nhánh laptop sạch, không xung đột mã. Chạy lapD (PARETO_NW=10, ids 7-10, dừng sau p2); guard_ram.ps1 vẫn chạy.
+
+### Lượt 10 - Xong pha 2 (worker 7-10), P2_LAPTOP_DONE (2026-10-23 01:11)
+- lapD xong sau 33 phút (00:38-01:11): tập pha 2 gồm PID 59 điểm, Map 5 điểm (Map mọi worker 7-10 không có điểm riêng), phần của laptop là các vị trí 7-10 mod 10. Tạo P2_LAPTOP_DONE.txt, commit, push. Theo lệnh: dừng, báo.
