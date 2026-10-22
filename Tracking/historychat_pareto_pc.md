@@ -35,3 +35,8 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - 'front' lúc 02:10: MapPID xong (mặt an toàn 48, mặt đủ cổng 48, 1 điểm trượt margin). Map: 80 điểm trong tập, 17 qua e_rel, margin chờ 72 (mặt đủ cổng 12 nằm trong 72). PID: 105 trong tập, 60 qua e_rel, margin chờ 35 (22 nằm trong 35).
 - Ước lượng margin (3 lần mô phỏng mỗi điểm, thời gian lấy từ cột seconds): Map 34.6 giờ CPU, trong đó điểm R0 <= 20 % chỉ 4.8 giờ (25 điểm), 38 điểm có R0 > 50 % chiếm phần lớn; PID 1.6 giờ.
 - Nhận xét: điểm có R > 20 % không thể trội hơn điểm có R <= 20 %, nên bảng ở bảy mức R (2.5-20 %) chỉ cần margin của các điểm mặt có R <= 20 %; đuôi R > 20 % chỉ ảnh hưởng hình. Đề xuất chạy margin theo thứ tự R tăng dần (không đổi luật), chờ người dùng duyệt kế hoạch chia hai máy.
+
+### Lượt 6 - Viết Documents/Shared/KeHoachMatlab.txt (2026-10-23, 02:40)
+- Người dùng yêu cầu một file tổng hợp: kế hoạch chạy từ đầu, đã chạy gì, dùng file và script nào, mô tả đủ chi tiết để khung chat mới đọc là hiểu, danh sách dọn dẹp, phân công hai máy, tiến độ. Đã tạo Documents/Shared/KeHoachMatlab.txt (9 phần: cách dùng, tổng quan, dòng thời gian, phương pháp hiện hành, từng giai đoạn kèm kết quả, bảng mã, phân công, tiến độ và kế hoạch margin, dọn dẹp, bẫy đã gặp).
+- Phần dọn dẹp chỉ là ĐỀ XUẤT: phân loại theo kết quả grep xem file nào còn được file khác gọi; chưa xóa gì. Khung và máy của Linear, Map ghi "—" vì nhật ký đọc được không nêu.
+- Chưa làm: mục 16 của PhuongPhap_TimThamSo.txt; chờ người dùng duyệt kế hoạch margin M1/M2.

@@ -1,0 +1,212 @@
+KẾ HOẠCH VÀ NHẬT KÝ CHẠY MATLAB: TÌM THAM SỐ VÀ SO MẶT PARETO CỦA MAP, PID, MAPPID TRÊN CALIB V2 (tổng hợp 2026-10-23 02:30, khung PARETO-PC; đọc file này là hiểu toàn bộ việc đã làm)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0. Cách dùng file này
+Dành cho khung chat mới và cho người dùng khi dọn file. Phần 1-2 cho cái nhìn tổng; phần 3 là phương pháp đang dùng (hiện hành); phần 4 là từng giai đoạn đã chạy, kết quả, mã và dữ liệu; phần 5 là
+bảng mã và script đang dùng; phần 6 là phân công khung và máy; phần 7 là tiến độ hiện tại và việc còn lại; phần 8 là danh sách dọn dẹp (ĐỀ XUẤT, chưa xóa gì); phần 9 là các bẫy đã gặp.
+Quy tắc đọc: nếu file này mâu thuẫn với Documents/Shared/QuyChuan.txt thì QuyChuan.txt ưu tiên. Nhật ký từng khung nằm ở Tracking/historychat_*.md (khung COMMON ghi quyết định, các khung kia ghi
+việc đã làm). Mục "PhuongPhap_TimThamSo.txt" có các mục 1-12 CŨ (surrogateopt, không còn dùng) và các mục 13-15 hiện hành; mục 16 của file đó (so mặt Pareto bằng seed chung) CHƯA viết, nội dung
+nằm ở phần 3-4 của file này.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Tổng quan trong một đoạn
+Bài toán: chọn tham số cho ba bộ điều khiển trợ lực lái điện (Map = bản đồ trợ lực có khâu lead-lag, PID, MapPID = Map cộng một vòng PID bám mô-men đặt) trên ca thiết kế CALIB v2 (140 s), rồi so
+MẶT PARETO của ba bộ (R = sai số bám RMS tính theo %, S = độ ồn mô-men trợ lực tính bằng N·m) thay vì so một điểm. Việc chia hai giai đoạn: (A) tìm tham số trên lưới ở seed riêng của từng bộ và
+chọn một điểm (đã xong, điểm đã khóa trong map.json, pid.json, mappid.json); (B) đánh giá lại TẬP DỰ TUYỂN của cả ba bộ trên năm seed chung 99990-99994 để so mặt công bằng (pha 1 và pha 2 đã xong;
+còn kiểm margin cho Map và PID rồi vẽ hình, bảng, báo cáo). Kiểm trên bộ DREWS v2 (năm ca chấm) chỉ để báo cáo điểm đã chọn.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Dòng thời gian (ngày giờ theo nhật ký các khung)
+- 2026-10-17: ca CALIB v2 (140 s, chín khối tốc độ 20-100 km/h) thay CALIB v1; kết quả CALIB v1 giữ ở thư mục Calib/ chỉ để tái lập bài báo cũ. QuyChuan v6.
+- 2026-10-18: kế hoạch surrogateopt (tìm toàn cục, nhóm top 20, chọn trên 5 seed) với e_max 10 %; NGÀY 2026-10-19 người dùng BỎ surrogateopt và patternsearch, chuyển sang quét lưới thuần
+  (PhuongPhap_TimThamSo mục 13).
+- 2026-10-19 đến 10-20: PID chạy lưới 4 biến (Kp, Ki, Kd, Tf), chọn trên mặt Pareto, ghi pid.json design. Xong.
+- 2026-10-21: người dùng chốt Map chỉ còn HAI biến (K, g_min) trên lưới thô 13 mức (mục 14), không dùng bất kỳ kết quả cũ nào; chạy lưới Grid2; chọn K 6.77, g_min gần 0.707 (an toàn nhưng trượt
+  e_rel); ghi map.json design (2026-10-21/22).
+- 2026-10-22 đêm: MapPID "cắm PID vào Map có sẵn" (mục 15): khối Map khóa bằng map.json design, chỉ quét 4 biến PID; chạy trên laptop; ghi mappid.json design (2026-10-22). Cùng đêm khung TESTCASE
+  khóa DREWS v2 (01:12).
+- 2026-10-22 ngày: khung COMMON viết kế hoạch so mặt Pareto bằng seed chung (KeHoach_SoMatPareto.txt bản 2); PC và laptop chạy song song (khung PARETO-PC, PARETO-LAPTOP).
+- 2026-10-22 16:30: Sửa đổi A (tập đánh giá theo dải nhiễu) để rút thời gian vì Map quá chậm.
+- 2026-10-23 00:46: pha 1 xong cả hai máy; 02:02: pha 2 xong cả hai máy. Việc kế: margin cho Map và PID.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Phương pháp hiện hành
+3.1. Đánh giá MỘT thiết kế trên CALIB v2 (mọi bộ dùng cùng khung)
+- Sàng lọc tuyến tính trên 68 mô hình (17 tốc độ x 4 điểm làm việc): c1 = 30 - PM (PM >= 30 độ), c2 = 2 - GM (GM >= 2), c3 = 0.70711 - độ lợi khâu lag tại 2 Hz (>= 0.707). Trượt một trong ba thì
+  không mô phỏng (simulated = 0).
+- Mô phỏng Simulink 140 s (calib_run) ra R, S, TV (tổng biến thiên), e_rel lớn nhất trên 26 cửa sổ static; c4 = e_rel - 10 (cổng chất lượng e_rel <= 10 %). J = R x S chỉ dùng để chọn điểm ở seed tìm.
+- calib_margin: nhân độ lợi motor x2 và cộng trễ 1 ms, R không được tăng quá 2 lần (ratio_gain, ratio_delay <= 2); đây là cổng AN TOÀN đo bằng mô phỏng, tốn ba lần mô phỏng mỗi điểm.
+- Solver Simulink biến bước, MaxStep 0.002, RelTol 1e-6 (build_closed_loop.m dòng 89). Tốc độ đo được: Map 100-570 s mỗi lần (tới ~900 s ở K thấp và R lớn), PID khoảng 10 s, MapPID khoảng 47 s.
+  Map chậm vì vòng kín Map ở K thấp kém ổn định, solver chia bước nhỏ (nghi do rung và zero-crossing; CHƯA profile). KHÔNG đổi solver sang bước cố định vì sẽ đổi toàn bộ kết quả đã khóa.
+3.2. Tìm tham số (giai đoạn A, seed tìm riêng: Map 00000, PID 10000, MapPID 30000)
+- Quét lưới: lưới thô rồi lưới mịn lặp ba mức quanh tâm, bước nửa bước thô và giảm một nửa tới khi h < 0.02 (hoặc 6 lớp); Model/common/grid_search.m. Chọn trên mặt Pareto bằng
+  Model/common/select_pareto.m: pool = điểm qua mọi cổng, lấy mặt (R, S), chọn J = R x S nhỏ nhất, hòa 3 % thì PM lớn hơn, rồi calib_margin theo thứ tự J.
+- PID: 4 biến Kp 1e-3-30, Ki 0.1-2000, Kd 0 hoặc 1e-4-2, Tf 1-79.6 ms (thang log), lưới thô 4 mức mỗi biến (256 điểm).
+- Map: 2 biến K 1-30 (log) và g_min 0.70711-1 (log, g_min = 1 tắt lag), lưới thô 13 mức mỗi biến (169 cặp); lead-lag bên trong tổng hợp bằng design_leadlag. Cổng AN TOÀN bắt buộc; cổng e_rel thì
+  nếu không điểm nào qua thì chọn trong điểm an toàn và gắn nhãn "an toàn, trượt e_rel".
+- MapPID: khối Map khóa = map.json design, quét 4 biến khối PID bằng đúng hộp và lưới của PID (mục 15).
+3.3. So mặt Pareto bằng năm seed chung 99990-99994 (giai đoạn B, KeHoach_SoMatPareto.txt bản 2 + Sửa đổi A)
+- Lý do: mặt của mỗi bộ vẽ ở seed riêng; S phụ thuộc nhiễu cảm biến nên một phần chênh lệch giữa các mặt có thể do seed. Phải đánh giá lại cả ba bộ trên CÙNG năm seed. Chỉ dùng CALIB v2; không
+  dùng DREWS; điểm đã khóa không đổi.
+- Tập dự tuyển CHUNG cho ba bộ: mọi điểm simulated = 1 và c1, c2, c3 <= 0 từ csv lưới của chính bộ đó (bỏ dòng trùng): Map 149, PID 168, MapPID 211 (tổng 528). Không lọc e_rel hay margin ở bước
+  này (áp ở bước sau, giống nhau cho cả ba).
+- Pha 1: mặt của tập dự tuyển ở seed tìm (Map 75, PID 46, MapPID 38 điểm) đánh giá trên cả 5 seed. Pha 2 (Sửa đổi A): các điểm còn lại chỉ đánh giá nếu nằm TRONG dải nhiễu: sigma_R, sigma_S của
+  mỗi bộ = trung vị trên các điểm pha 1 của (độ lệch chuẩn / trung bình) qua 5 seed; điểm p bị loại nếu có điểm f ở pha 1 với R0_f (1 + 3 sigma_R) <= R0_p và S0_f (1 + 3 sigma_S) <= S0_p. Đo được:
+  Map sigma_R 0.00016, sigma_S 0.00076; PID 0.011 và 0.002; MapPID 0.011 và 0.0024. Điểm trong tập: Map 80/149, PID 105/168, MapPID 118/211. Kiểm độ nhạy: mặt tính trên MỌI điểm đã đánh giá khác mặt
+  tính trên tập dải 0 điểm (cả mặt an toàn lẫn đủ cổng) với cả ba bộ.
+- Mỗi điểm cho R_tb, S_tb, TV_tb (trung bình 5 seed), độ lệch giữa seed, e_rel lớn nhất; pass_e_rel khi e_rel lớn nhất <= 10 %.
+- Hai mặt mỗi bộ: MẶT AN TOÀN = tập trong dải qua cổng tuyến tính và margin; MẶT ĐỦ CỔNG = thêm e_rel <= 10 % (kết luận chính). Margin chỉ chạy cho điểm TRÊN mặt, ở seed 99990, lặp: loại điểm
+  trượt, tính lại mặt, chạy margin cho điểm mới lên mặt, cho tới khi hết chờ.
+- Sản phẩm: hai hình (an toàn, đủ cổng; log-log R_tb theo S_tb), hai bảng S nhỏ nhất ở các mức R 2.5, 3, 4, 6, 10, 14, 20 % (S chênh trong 5 % hoặc trong độ lệch giữa seed = hòa), kết luận theo
+  từng dải R (QuyChuan 6.3), nêu giới hạn.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. Các giai đoạn đã chạy: kết quả, mã, dữ liệu
+4.1. PID lưới (xong, 2026-10-19/20)
+- Mã: Model/Controllers/PID/script/{pid_grid_spec, run_pid_grid, select_pid_grid (xem phần 8), pid_u2x, pid_x2u}; hàm đánh giá dùng chung với PIDLag: Model/Controllers/PIDLag/script/pidlag_eval.m
+  (gọi pidlag_eval('PID', x, seed, csv)); Model/common/grid_search.m, select_pareto.m. Pipeline tools/jobs/grid_pipeline.sh.
+- Dữ liệu: Result/Controllers/PID/Calib_v2/PID_CALIB_grid_w1..w3_s10000.csv, PID_CALIB_pareto_s10000.csv/.png, PID_CALIB_pick_s10000.csv, PID_CALIB_pareto_check_s10001-s10005.csv.
+- Điểm chọn (pid.json design): Kp 3.5026, Ki 111.32, Kd 0.10812, Tf 1.440 ms, Kaw 31.78; CALIB seed 10000: R 2.92 %, S 0.850 N·m, J 2.486, e_rel 2.18 %, PM 48.5 độ, GM 3.83; 5 seed J 2.488 ±
+  0.081. Bản cũ giữ ở design_emax5 và design_grid (hồ sơ).
+4.2. Map hai biến (xong, 2026-10-21/22)
+- Mã: Model/Controllers/Map/script/{map2_eval, map2_grid_spec, map2_u2x, map2_x2u, run_map2_grid, select_map2_pareto, map_params, design_leadlag, calibrate_map_cached, map_variables, load_map};
+  pipeline tools/jobs/map2_grid_pipeline.sh.
+- Dữ liệu: Result/Controllers/Map/Calib_v2/Grid2/ (Map_CALIB_grid2_w1..w4_s00000.csv, _report_, _safe_.png, _tradeoff_.png, Map_CALIB_pareto/pick/pareto_check...). Báo cáo: 204 cặp (169 thô + 35
+  mịn), 55 tổng hợp hỏng, 149 mô phỏng, 22 qua e_rel, 93 qua margin, 0 qua cả hai.
+- Điểm chọn (map.json design): K 6.7746, g_min gần 0.7071, lead z 33.50 p 673.27, lag z1 28.13 p1 10.69, Ts0 0.3; CALIB: R 12.05 %, S 0.440, J 5.30, e_rel 26.0 % (TRƯỢT e_rel; nhãn "an toàn, trượt
+  e_rel"; mọi cặp qua e_rel đều trượt margin, ratio_gain khoảng 3.6 > 2). Bản cũ ở design_emax5.
+4.3. MapPID "cắm PID vào Map" (xong, 2026-10-22, chạy trên laptop, nhánh auto/mappid-plug)
+- Mã: Model/Controllers/MapPID/script/{mappid_eval, mappid_u2x, mappid_x2u, mappid_variables, mappid_plug_u0, run_mappid_plug, run_mappid_plug_dc, select_mappid_plug, check_mappid_plug}; pipeline
+  tools/jobs/mappid_plug_pipeline.sh.
+- Dữ liệu: Result/Controllers/MapPID/Calib_v2/PlugPlay/ (MapPID_CALIB_P1B1_w1..w4_s30000.csv, _pareto_, _pick_, _plug_report_, _plugD_ = PID đứng một mình cắm vào Map khóa không chỉnh lại, _plugC_
+  = ba Map khác cắm cùng PID). Báo cáo: 256 điểm thô, 598 điểm đã đánh giá, 211 mô phỏng, 182 qua cổng, 38 trên mặt.
+- Điểm chọn (mappid.json design): Map khóa như trên; Kp 1.4835, Ki 111.32, Kd 0.07126, Tf 2.489 ms, Kaw 13.48; CALIB: R 2.42 %, S 0.793, J 1.919. Bản cũ (sáu biến, nhiều khối) ở design_pre_plug.
+4.4. DREWS v2 (khung TESTCASE khóa 2026-10-22 01:12; chỉ báo cáo)
+- Năm ca DRY, RAMP, SLIP, EDGE, WEAVE, mỗi ca 60 s, seed 99995-99999 (Documents/Shared/KeHoach_DREWS_v2.txt, DREWS_v2_LOCKED.txt; mã Model/Sim/script/make_cases.m, run_cases.m, test_drews.m,
+  check_drews.m; SHA-256 hai file chính ghi trong DREWS_v2_LOCKED.txt, KHÔNG sửa).
+- Dữ liệu: Result/Controllers/{Map,PID,MapPID}/Cases_v2 (55 file mỗi bộ), tóm tắt Result/Compare/DREWS_v2_summary/DREWS_v2_<Ctrl>_summary.csv (tools/summarize_drews_v2.py). Số liệu DREWS v2 CHƯA
+  được kiểm lại trong tài liệu này.
+4.5. So mặt Pareto bằng seed chung (đang làm; khung PARETO-PC và PARETO-LAPTOP)
+- Mã: Model/Sim/script/compare_pareto_common.m (lệnh 'candidates', 'check', 'run', 'margin', 'front', 'status'); tools/jobs/pareto_pc_pipeline.sh (PC), pareto_laptop_pipeline.sh (laptop);
+  tools/make_fig_pareto_common.py (hai hình, hai bảng; chưa chạy trên dữ liệu cuối).
+- Dữ liệu: Result/Compare/Pareto_common/ gồm ParetoCommon_<Ctrl>_w<id>_s99990-s99994.csv (đánh giá từng worker), ParetoCommon_<Ctrl>_margin_w<id>_s99990.csv (margin, chưa có cho Map và PID),
+  ParetoCommon_<Ctrl>_points_s99990-s99994.csv (tổng hợp mỗi điểm), ParetoCommon_fronts_safe.csv và _full.csv, các file đánh dấu *_phase1_done.txt, *_phase2_done.txt, P2_GO.txt, P1_LAPTOP_DONE.txt,
+  P2_LAPTOP_DONE.txt, PHASE1_DONE.txt, MAPPID_DONE.txt, CODE_READY.txt.
+- Kết quả đến 02:10 ngày 23/10 (lệnh front):
+| Bộ | Ứng viên | Trong dải | Qua e_rel | Mặt an toàn | Mặt đủ cổng | Trượt margin | Margin chờ |
+| Map | 149 | 80 | 17 | 72 chờ margin | 12 chờ margin | chưa biết | 72 điểm (gồm 12) |
+| PID | 168 | 105 | 60 | 35 chờ margin | 22 chờ margin | chưa biết | 35 điểm (gồm 22) |
+| MapPID | 211 | 118 | 117 | 48 | 48 | 1 | 0 (xong) |
+- S nhỏ nhất theo mức R (mặt an toàn, CHƯA qua margin với Map và PID, chỉ để tham khảo, có thể đổi): R <= 2.5 %: PID 1.306, MapPID 0.831, Map không có điểm; R <= 3 %: PID 0.847, MapPID 0.745; R <=
+  4 %: 0.732 và 0.661; R <= 6 %: 0.643 và 0.642 (hòa); R <= 10 %: Map 0.444, PID 0.643, MapPID 0.568; R <= 14 %: Map 0.429, PID 0.514, MapPID 0.439; R <= 20 %: Map 0.404, PID 0.440, MapPID 0.439.
+  Mặt đủ cổng: Map chỉ 12 điểm, S nhỏ nhất 0.454 (từ R <= 10 % trở lên); PID và MapPID như trên tới R <= 14 %. Kết luận tạm: MapPID êm hơn PID rõ ở R nhỏ (<= 4 %), hòa ở khoảng 6 %; Map chỉ cạnh
+  tranh ở R từ khoảng 10 % trở lên và gần như không qua e_rel. CHỜ margin mới chốt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. Mã và script (hiện hành và hồ sơ)
+5.1. Khung chạy chung
+- Model/Sim/script/: calib_run.m (chạy CALIB v2 ra R, S, TV, e_rel), calib_score.m, calib_block_scores.m, calib_margin.m, calib_bangbang.m (chỉ báo cáo), gates_fcn.m (+ Gates.mdl),
+  build_closed_loop.m, make_cases.m, run_cases.m, test_calib.m, test_gates.m, test_drews.m, check_drews.m, run_scoring_seeds.m, make_pair_comparisons.m, plot_compare_cases.m,
+  compare_pareto_common.m.
+- Model/common/: grid_search.m, select_pareto.m, pick_by_balance.m (quy tắc J cũ của QuyChuan 6.2), pick_by_tolerance.m, result_dir.m, sensor_noise_vars.m, save_run_results.m.
+5.2. Chạy nền và giám sát (tools/jobs)
+- job_lib_patient.sh (hiện hành): chờ đủ RAM rồi mở MATLAB, tự chạy lại worker khi bị dừng; guard_ram.ps1 giữ 10 % RAM trống bằng cách dừng worker khi thiếu; MATLAB mở với -softwareopengl,
+  TEMP/TMP = D:/MatlabTemp, Simulink.sdi.clear sau mỗi mô phỏng. Lỗi heap corruption (0xc0000374) khi thoát MATLAB là THƯỜNG, vô hại khi csv đã ghi; worker tự khởi động lại.
+- Pipeline hiện hành: grid_pipeline.sh (PID), map2_grid_pipeline.sh (Map), mappid_plug_pipeline.sh (MapPID), drews_v2_pipeline.sh (DREWS v2), pareto_pc_pipeline.sh và pareto_laptop_pipeline.sh (so
+  mặt). Biến môi trường pareto_pc_pipeline: PARETO_NW (tổng worker mọi máy), PARETO_IDS (id chạy ở máy này), PARETO_STOP_AFTER (p1 hoặc p2), PARETO_NAME (tên lần chạy, file trạng thái ở
+  scratch/jobs/<tên>_*).
+- Cách chia việc: các điểm xếp theo thứ tự cố định (phase rồi R0), worker k nhận vị trí k mod NW; điểm đã đủ 5 seed thì bỏ qua; mỗi worker ghi csv riêng nên chạy lại bỏ qua phần đã có.
+5.3. Chia mã theo bộ (Model/Controllers/<Ctrl>/script)
+- Map: map2_eval.m (đánh giá), map2_grid_spec.m, map2_u2x.m, map2_x2u.m, run_map2_grid.m, select_map2_pareto.m, design_leadlag.m, calibrate_map_cached.m, map_variables.m, map_params.m,
+  map_margins.m, map_plant_lin.m, map_steady_state.m, test_map.m, test_map2_grid.m.
+- PID: pid_grid_spec.m, pid_u2x.m, pid_x2u.m, run_pid_grid.m, test_pid.m; hàm đánh giá pidlag_eval.m và pidlag_variables.m nằm ở Model/Controllers/PIDLag/script (dùng chung).
+- MapPID: mappid_eval.m, mappid_u2x.m, mappid_x2u.m, mappid_variables.m, mappid_plug_u0.m, run_mappid_plug.m, select_mappid_plug.m, mappid_margins.m, mappid_plants.m, test_mappid.m.
+5.4. Tài liệu và nhật ký
+- Documents/Shared: QuyChuan.txt (bắt buộc), PhuongPhap_TimThamSo.txt (mục 13-15 hiện hành), KeHoach_SoMatPareto.txt (bản 2 và Sửa đổi A), KeHoach_DREWS_v2.txt, DREWS_v2_LOCKED.txt,
+  KeHoach_ChonNhieuSeed.txt (CŨ, thời surrogateopt).
+- Tracking/historychat_{common, linear (PID), map, mappid, testcase, pareto_pc, pareto_laptop}.md; Tracking/CLAUDE.md. Hình phương pháp hiện hành: Figures/new/Fig_search_flow_grid.png (.drawio,
+  .pdf; sinh bằng tools/make_fig_search_flow_grid.py); Fig_search_flow.png là luồng surrogateopt CŨ.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. Phân công khung chat và máy
+| Khung | Máy | Nhánh git | Việc |
+| COMMON | PC | main hoặc auto/pareto-common (ghi kế hoạch) | quy chuẩn, kế hoạch (KeHoach_SoMatPareto bản 2), ghi quyết định |
+| Linear (PID) | — | — | PID lưới 4 biến (xong) |
+| Map | — | — | Map hai biến Grid2 (xong) |
+| MapPID | laptop | auto/mappid-plug | cắm PID vào Map (xong) |
+| TESTCASE | PC | auto/drews-v2 | khóa DREWS v2 (xong 01:12 ngày 22/10) |
+| PARETO-PC | PC | auto/pareto-common | mã compare_pareto_common, pha 1-2 Map/PID/MapPID, margin, hình, báo cáo |
+| PARETO-LAPTOP | laptop | auto/pareto-common-laptop | MapPID pha 1-2 và worker 7-10 cho Map và PID |
+- Phân việc pha 1 và pha 2: tổng 10 worker; PC id 1-6, laptop id 7-10 (MapPID chỉ 4 worker, ids 1-4, chạy trước ở laptop). Hai máy đồng bộ qua git: PC gộp origin/auto/pareto-common-laptop, tạo
+  P2_GO.txt, laptop chờ file đó. Gộp nhánh mà xung đột ở MÃ thì dừng và báo, không tự giải quyết (đã gặp 4 file đánh dấu *_phase1_done.txt, không phải mã, lấy bản laptop).
+- Ràng buộc cứng của khung PARETO: không đổi điểm đã chọn, cổng, hộp, lưới, quy tắc mục 0; không thêm điểm ngoài lưới; không dùng DREWS; không sửa PRSM, CALIB, ca DREWS đã khóa; không push main;
+  commit và push sau mỗi mốc; mỗi lỗi mã ghi vào Tracking/historychat_pareto_pc.md.
+- Thời gian thực tế đã chạy: PC 4-6 worker, pha 1 từ 22/10 chiều tới 23/10 00:46 (bị chậm vì Map), pha 2 từ 00:46 tới 02:02.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. Tiến độ hiện tại và việc còn lại (2026-10-23 02:30)
+7.1. Xong: mã so mặt (kiểm 2.3 PASS), pha 1, pha 2 cả ba bộ, gộp hai nhánh, MapPID xong hẳn (kể cả margin). Commit 3877408 và commit ghi nhật ký Lượt 5 đã push lên auto/pareto-common.
+7.2. Chưa xong:
+- Margin cho Map (72 điểm trên mặt an toàn; 12 điểm trên mặt đủ cổng nằm trong số đó) và PID (35 điểm; 22 điểm đủ cổng nằm trong số đó). Mỗi điểm ba lần mô phỏng. Ước lượng theo thời gian đã đo:
+  Map 34.6 giờ CPU (điểm có R0 <= 20 %: 25 điểm, 4.8 giờ; điểm R0 > 20 %: 47 điểm, ~30 giờ; riêng 38 điểm có R0 > 50 %), PID 1.6 giờ. Sau mỗi vòng, điểm trượt bị loại và điểm mới lên mặt cần margin
+  tiếp.
+- Lệnh 'front' cuối, chạy tools/make_fig_pareto_common.py (hai hình, hai bảng), báo cáo cuối theo mục 2.7 của kế hoạch (số điểm từng loại, hai bảng, hai hình, kết luận theo dải R, giới hạn, việc
+  treo).
+- Viết mục 16 vào PhuongPhap_TimThamSo.txt; sửa dòng 6 và mục 13.6 của file đó trỏ tới mục 14-16, đánh dấu Hình 1 và Bảng 1 của file đó là luồng surrogateopt cũ; xem lại hình
+  Fig_search_flow_grid.png sau khi sửa chữ. Không sinh lại .docx nếu chưa được bảo.
+7.3. KẾ HOẠCH CHẠY MARGIN (ĐỀ XUẤT, chờ người dùng duyệt hai điểm: có thêm tùy chọn sắp theo R và giới hạn R vào lệnh 'margin' không; có chạy M2 trên cả hai máy không)
+Nhận xét: điểm có R > 20 % không thể trội hơn điểm có R <= 20 % (muốn trội phải có R nhỏ hơn hoặc bằng), nên bảng ở bảy mức R 2.5-20 % chỉ cần margin của các điểm mặt có R <= 20 %; đuôi R > 20 %
+chỉ ảnh hưởng phần phải của hình.
+| Giai đoạn | PC | Laptop | Thời gian ước tính |
+| M1: margin Map R <= 20 % và toàn bộ PID | 6 worker, tools/jobs/pareto_pc_pipeline.sh (vòng margin + front lặp) | không cần | khoảng 1 giờ gồm các vòng lặp |
+| Ra bảng | front, bảng chính thức, hình tạm, mục 16 | — | khoảng 20 phút |
+| M2: đuôi Map R > 20 % (47 điểm) | worker 1-6 của 10 | worker 7-10 của 10, sau khi PC push M_GO.txt | khoảng 3.5-4.5 giờ (10 MATLAB) |
+| Kết thúc | gộp csv laptop, vòng margin còn lại, front, hai hình cuối, báo cáo 2.7 | dừng | khoảng 30 phút |
+- Nếu bỏ M2: hình chỉ vẽ mặt tới R = 20 %, ghi rõ "đuôi R > 20 % chưa kiểm margin"; bảng không đổi.
+- Điều kiện dừng thật: lỗi mã dùng chung cần đổi không tương thích ngược; xung đột mã khi gộp nhánh laptop; RAM không đủ một worker. Lỗi thực thi (heap, mất worker, đọc csv đang ghi) thì chạy lại
+  đúng điểm.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8. Dọn dẹp (ĐỀ XUẤT; chưa xóa gì; sao lưu ra C:/Users/Admin/Desktop/Adaptive-EPS_backup_<ngày>_<mô tả> trước khi xóa theo Tracking/CLAUDE.md; kiểm bằng git ls-files xem file có trong git không)
+Cách phân loại: ĐANG DÙNG = có trong phần 4-5; HỒ SƠ = giữ vì bài báo hoặc luận văn có thể cần, không dùng để chọn; CÓ THỂ DỌN = không file nào còn gọi (kết quả grep trên Model và tools; "không ai
+gọi" cũng đúng với script chạy tay, nên xem thêm cột ghi chú) và thuộc phương pháp đã bị bỏ.
+8.1. Script mã Map (Model/Controllers/Map/script)
+- ĐANG DÙNG: phần 5.3.
+- HỒ SƠ (phương pháp cũ của bài báo Map-PI-PID, CALIB v1): calibrate_map.m, map_eval.m, map_grid_spec.m, run_map_grid.m, select_map.m, select_map_multiseed.m, select_map_pareto.m, sweep_leadlag.m,
+  run_calib_sweep.m, refine_map.m, optimize_map.m, map_opt_eval.m, map_opt_margins.m, map_opt_plants.m.
+- CÓ THỂ DỌN (không ai gọi): analyze_map_operating_windows.m, plot_calibration.m, prepare_map2_dense_resume.m, report_map2_grid.m, reproduce_map.m, test_calibration.m, test_leadlag_design.m,
+  test_step2.m; và nhóm Map2 dense (đã bị mục 14 thay): prepare_map2_dense.m, run_map2_dense.m, finalize_map2_dense.m, report_map2_dense.m, plot_step2.m.
+8.2. Script mã PID
+- ĐANG DÙNG: phần 5.3. HỒ SƠ: optimize_pid.m, run_pid_sweep.m, select_pid.m, select_pid_pareto.m, scan_pid_stability.m (lần surrogateopt và quét cũ). CÓ THỂ DỌN: refine_pid.m, select_pid_grid.m
+  (không ai gọi; kiểm run_pid_grid.m không gọi trước khi xóa).
+- Thư mục Model/Controllers/PIDLag chỉ còn hàm đánh giá dùng chung: GIỮ pidlag_eval.m, pidlag_variables.m, pidlag_u2x.m, pidlag_x2u.m, pidlag_margins.m; build_pidlag.m, optimize_pidlag.m,
+  refine_pidlag.m, select_pidlag.m, test_pidlag.m thuộc bộ PIDLag không có trong bài, CÓ THỂ DỌN sau khi kiểm không bộ nào còn dùng.
+8.3. Script mã MapPID
+- ĐANG DÙNG: phần 5.3. CÓ THỂ DỌN (không ai gọi, thuộc phương pháp sáu biến hoặc luân phiên khối đã bị mục 15 thay): check_mappid_loop.m, compare_mappid.m, plot_mappid_pareto.m,
+  report_mappid_six_map.m, robust_mappid.m, run_mappid_cases.m, scan_mappid_screen.m, test_mappid_margins.m, test_mappid_six_selector.m, tune_mappid_linear.m; HỒ SƠ: run_mappid_six.m,
+  run_mappid_grid.m, select_mappid.m, select_mappid_pareto.m, optimize_mappid.m, refine_mappid.m, mappid_grid_start.m, mappid_grid_best.m.
+8.4. Pipeline và script giám sát trong tools/jobs
+- ĐANG DÙNG: job_lib_patient.sh, guard_ram.ps1, kill_job.ps1, grid_pipeline.sh, map2_grid_pipeline.sh, mappid_plug_pipeline.sh, drews_v2_pipeline.sh, pareto_pc_pipeline.sh,
+  pareto_laptop_pipeline.sh, headroom.ps1.
+- CÓ THỂ DỌN (pipeline của phương pháp đã bỏ): map_opt_pipeline.sh, mapopt_pipeline.sh, mapopt_run2.sh, pid_opt_pipeline.sh, mappid_pipeline.sh, map_grid_pipeline.sh, mappid_grid_pipeline.sh,
+  drews5_pipeline.sh (DREWS v1), map2_refine_r2_pipeline.sh, job_lib.sh (bản không "patient"), wait_mappid_grid_prereqs.sh, continue_mappid_overnight.ps1, publish_map_when_ready.ps1,
+  resume_map2_dense_supervisor.ps1, start_map2_dense.ps1, verify_map2_dense_completion.ps1, watch_map2_dense_heartbeat.ps1, watch_map2_dense_resume.ps1, watch_map_grid.ps1,
+  watch_mappid_s2_after_map.ps1, start_mappid_six.ps1, sync_mappid_six.ps1, run_mappid_laptop_worker.ps1, start_mappid_laptop.ps1, map_handoff_common.ps1, MAPPID_LAPTOP.md, MAPPID_SIX.md,
+  ram_log.csv. (Kiểm start_mappid_laptop.ps1 và run_mappid_laptop_worker.ps1 vì đêm 22/10 laptop có thể còn dùng.)
+8.5. Kết quả (Result/Controllers) và dữ liệu
+- Thư mục thuộc bộ không có trong bài (Map-PID-MapPID): Result/Controllers/{ISMC, SMC, SMC_KI, PI, PIDLag, MapPIDLag, MapOpt} (dung lượng: MapOpt 77 MB, PI 60 MB, MapPIDLag 24 MB, PIDLag 23 MB,
+  ISMC 10 MB) và Model/data/{ismc, smc, pi, pidlag, mapopt, mappidlag}.json, Model/Controllers tương ứng: HỒ SƠ hoặc CÓ THỂ DỌN theo quyết định của người dùng (khung SMC và MapSMC vẫn có nhật ký
+  riêng; hỏi trước).
+- Trong Map: Calib_v2/Map_CALIB_grid_w1..w5_s00000.csv (lưới 5 biến cũ), TwoParam/, TwoParamDense/, Map_CALIB_window_diagnosis*, Map_CALIB_margin_failures/inflight: HỒ SƠ của các lần chạy trước,
+  mục 14 cấm dùng làm cache. Trong MapPID: Calib_v2/MapPID_CALIB_S1A1/S1A2/S1B1_w*.csv (quét luân phiên cũ): HỒ SƠ, không dùng. Thư mục Calib/ (CALIB v1) của cả ba bộ: HỒ SƠ.
+- Result/Compare: các thư mục Map_vs_PI, Map_vs_PID, PI_vs_PID, Map_vs_PI_vs_PID(_vs_MapPID) và so sánh SMC là kết quả bài báo CŨ (DREWS v1, CALIB v1); Pareto_common và DREWS_v2_* là hiện hành.
+- Trường design_emax5, design_grid, design_pre_plug trong ba json: HỒ SƠ (giữ).
+8.6. scratch/ (không commit; có thể dọn tự do sau khi sao lưu): scratch/jobs/pc*_* (trạng thái các lần chạy pcA đến pcG), scratch/patch_a.py, patch_b.py, fixfig.py, sync_p2.sh, prelim.py,
+kill_pcd.ps1, các file *_before_fix, diag_*, map2_*check*.csv, hf_*, intro_review.
+8.7. Tài liệu: KeHoach_ChonNhieuSeed.txt và mục 5-8, 11 của PhuongPhap_TimThamSo.txt (surrogateopt) là CŨ; Figures/new/Fig_search_flow.* là luồng cũ.
+Documents/Notes/Controllers/KeHoach_Map2_Dense.md đã bị mục 14 thay.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9. Bẫy đã gặp (đừng lặp lại)
+- Git: `git branch -f` làm mồ côi commit kế hoạch; phục hồi bằng `git merge --ff-only <sha>`. Nhiều khung dùng chung thư mục làm việc nên chỉ `git add` đúng đường dẫn, không `git add -A` toàn repo.
+- Không nhân đôi việc của máy kia chỉ vì thiếu file trên nhánh (laptop chưa push csv tiến độ); hỏi người dùng trước khi khởi động worker trùng id.
+- Lệnh kill theo tên tiến trình từng giết cả shell của chính mình vì dòng lệnh chứa chuỗi cần khớp: viết script .ps1 rồi gọi, kill theo PID. KHÔNG kill MATLAB theo tên (có khung khác đang chạy).
+- Shell/heredoc biến `\n` trong fprintf của MATLAB thành xuống dòng thật: sửa bằng công cụ Edit, không dùng heredoc cho mã có `\n`.
+- Chạy kiểm cả ba bộ trong MỘT MATLAB gây heap corruption: chạy từng bộ.
+- Đặt placeholder "ID" trong pipeline bị thay luôn trong chữ "PID" (lỗi "Unknown controller P1"): dùng @W@.
+- pareto_pc_pipeline.sh khi chạy lại luôn bắt đầu bằng stage p1; chạy lại với NW khác sẽ ghi đè các file *_phase1_done.txt (chỉ là dấu, không mất dữ liệu): trả lại bằng `git checkout --
+  Result/Compare/Pareto_common/*_phase1_done.txt`.
+- Map chậm hơn MapPID dù MapPID chứa Map: vòng Map đứng một mình ở K thấp kém ổn định, PID ổn định hóa MapPID; đừng kết luận từ thời gian mô phỏng về chất lượng.
+- Mọi lần mô phỏng phải gọi Simulink.sdi.clear và đặt TEMP trên ổ D, nếu không file *.dmr làm đầy ổ C.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hết. Cập nhật khi có thay đổi: ghi vào phần 7 và thêm một dòng vào phần 2.
