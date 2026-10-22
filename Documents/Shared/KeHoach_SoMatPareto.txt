@@ -73,3 +73,6 @@ rồi mới chọn. Sau khi margin xong, thiết kế cuối của mỗi bộ ch
 rỗng, không thì mặt an toàn có nhãn; J = R_tb x S_tb nhỏ nhất; hòa 3 % lấy PM lớn nhất), ghi json có sao lưu, rồi chạy DREWS v2 trên thiết kế cuối.
 (B2) Mọi quy tắc khác giữ nguyên (cổng, hộp, lưới, tập dự tuyển, Sửa đổi A, hai mặt, margin lặp loại; không thêm điểm ngoài lưới). Kế hoạch chạy hai máy và prompt: KeHoachMatlab.txt mục 10 và 11.
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+KẾT QUẢ (2026-10-23, khung PARETO-PC): mục 2.7 đã làm; số điểm, hai bảng S theo mức R, hai hình, thiết kế cuối chọn theo Sửa đổi B và DREWS v2 nằm ở mục 16 của PhuongPhap_TimThamSo.txt và
+Result/Compare/Pareto_common/ (ParetoCommon_select.csv).

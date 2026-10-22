@@ -139,7 +139,8 @@ còn kiểm margin cho Map và PID rồi vẽ hình, bảng, báo cáo). Kiểm 
   commit và push sau mỗi mốc; mỗi lỗi mã ghi vào Tracking/historychat_pareto_pc.md.
 - Thời gian thực tế đã chạy: PC 4-6 worker, pha 1 từ 22/10 chiều tới 23/10 00:46 (bị chậm vì Map), pha 2 từ 00:46 tới 02:02.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-7. Tiến độ hiện tại và việc còn lại (2026-10-23 02:30)
+7.0. CẬP NHẬT 2026-10-23 04:45 (khung PARETO-PC): P0-P6 của mục 10.3 đã xong trước 05:00 (margin chạy nhanh hơn ước lượng nhiều: Map đuôi 47 điểm mất chưa tới 15 phút). Margin hoàn tất, ba thiết kế cuối đã chọn theo 10.1 và ghi vào map.json, pid.json, mappid.json (load và test PASS), DREWS v2 chạy lại cho PID và MapPID. Kết quả đầy đủ: mục 16 của PhuongPhap_TimThamSo.txt và Result/Compare/Pareto_common/ParetoCommon_select*.csv. Mục 7.1-7.3 dưới đây là hồ sơ lúc 02:30, không còn là việc chờ làm.
+7. Tiến độ hiện tại và việc còn lại (hồ sơ lúc 2026-10-23 02:30)
 7.1. Xong: mã so mặt (kiểm 2.3 PASS), pha 1, pha 2 cả ba bộ, gộp hai nhánh, MapPID xong hẳn (kể cả margin). Commit 3877408 và commit ghi nhật ký Lượt 5 đã push lên auto/pareto-common. Lúc
 02:17-02:40 một lần chạy margin ngoài ý muốn (pipeline pcG) đã bị dừng và dọn sạch theo yêu cầu người dùng (nhật ký PARETO-PC Lượt 9); margin của Map và PID CHƯA chạy.
 7.2. Chưa xong:

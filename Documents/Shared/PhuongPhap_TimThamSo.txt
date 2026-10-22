@@ -511,3 +511,38 @@ không mong có xung đột; có xung đột thì KHÔNG tự giải quyết tro
 15.6. Báo (nhật ký khung MapPID và Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_plug_report_s30000.csv)
 Số điểm thô, mịn, mô phỏng, qua cổng; thiết kế chọn (Kp, Ki, Kd, Tf, Kaw), R, S, J, TV, e_rel lớn nhất và cửa sổ, PM, GM, HF, ratio_gain, ratio_delay; năm seed; biến ở đầu hộp; so với Map (J
 5.30, e_rel 26.0 %) và PID (J 2.486, e_rel 2.18 %) trên CALIB; kết quả D và C; DREWS v2 xong chưa.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+16. THIẾT KẾ CUỐI CHỌN TRÊN MẶT ĐO Ở NĂM SEED CHUNG 99990-99994 (khung PARETO-PC, 2026-10-23; quy tắc ở KeHoachMatlab.txt mục 10.1, viết trước khi có kết quả margin)
+Quy tắc (cơ học, giống nhau cho ba bộ): chờ mọi margin xong; dùng mặt đủ cổng nếu còn điểm, nếu rỗng thì dùng mặt an toàn và gắn nhãn "safe, fails e_rel"; trên mặt đó lấy J = R_tb x S_tb nhỏ
+nhất (trung bình năm seed), các điểm có J không quá 1.03 J_min coi là hòa và lấy điểm có biên pha tuyến tính PM lớn nhất. Cổng, hộp, lưới, tập dự tuyển, luật dải nhiễu không đổi. Mã:
+compare_pareto_common('select'); kết quả: Result/Compare/Pareto_common/ParetoCommon_select.csv và ParetoCommon_select_report.csv.
+
+Số điểm (ứng viên / trong tập theo dải nhiễu / qua e_rel / trên mặt an toàn / trên mặt đủ cổng / trượt margin ở mặt an toàn và đủ cổng): Map 149 / 80 / 17 / 58 / 0 / 20 và 17; PID 168 / 105
+/ 60 / 35 / 22 / 0 và 0; MapPID 211 / 118 / 117 / 48 / 48 / 1 và 1. Mặt đủ cổng của Map RỖNG: cả 17 điểm qua e_rel đều trượt calib_margin (nhân đôi độ lợi làm R tăng quá 2 lần), nên Map được
+chọn trên mặt an toàn, đúng như đã làm ở mục 14.
+
+Thiết kế cuối. Map (mặt an toàn, nhãn "safe, fails e_rel"): K 6.77455395, g_min 0.707106781, R_tb 12.07 %, S_tb 0.4397 N.m, J 5.308, e_rel lớn nhất 26.2 %; TRÙNG điểm tạm cũ. PID (mặt đủ
+cổng): Kp 3.50257675, Ki 111.317364, Kd 0.108116388, Tf 0.00120006484, R_tb 3.00 %, S_tb 0.847 N.m, J 2.539, PM 50.5 độ. MapPID (mặt đủ cổng): khối Map khóa như Map, Kp 1.48352279, Ki
+73.68063, Kd 0.0469733968, Tf 0.0020740482, R_tb 2.729 %, S_tb 0.7656 N.m, J 2.0895, PM 39.5 độ.
+
+So với điểm tạm cũ: MapPID tạm cũ có J 2.112 (R_tb 2.664, S_tb 0.7927), nằm trên cả hai mặt, kém điểm mới 1 % (dưới ngưỡng hòa 5 %); PID tạm cũ (Tf 0.00144) KHÔNG ổn định ở seed chung (R vô
+hạn ở 3 trên 5 seed, J 18.6, không nằm trên mặt nào) nên được thay bằng điểm cùng Kp, Ki, Kd nhưng Tf 0.0012. Độ nhạy: quy tắc cũ 5 % trên mặt đủ cổng chọn PID R_tb 2.39, S_tb 1.31 và MapPID
+R_tb 2.47, S_tb 0.831.
+
+S nhỏ nhất của mặt theo mức R (N.m; ngoặc: bộ có S thấp nhất, "~" là hòa dưới 5 % hoặc dưới độ lệch giữa các seed). Mặt đủ cổng, R_tb tối đa 2.5 / 3 / 4 / 6 / 10 / 14 / 20 %: Map không có
+điểm ở mọi mức; PID 1.306 / 0.847 / 0.732 / 0.643 / 0.643 / 0.514 / 0.440; MapPID 0.831 / 0.745 / 0.661 / 0.642 / 0.568 / 0.439 / 0.439; bộ thấp nhất: MapPID, MapPID, MapPID, MapPID ~ PID,
+MapPID, MapPID, MapPID ~ PID. Mặt an toàn: Map chỉ có điểm từ R_tb 14 % trở lên (0.429 ở mức 14, 0.404 ở mức 20; các điểm này đều trượt e_rel), còn PID và MapPID như trên.
+
+Kết luận theo QuyChuan 6.3: trong vùng R_tb tới 14 % MapPID nằm dưới PID (êm hơn 10-36 % ở các mức 2.5-4, 10 và 14 %), hòa ở khoảng R 6 %; Map không có điểm nào đạt cổng e_rel nên không so
+được trên mặt đủ cổng; trên mặt an toàn Map êm hơn ở R_tb từ 14 % nhưng R_tb khi đó đã gấp 4-5 lần hai bộ kia và e_rel vượt 10 %. Hình: Result/Compare/Pareto_common/ParetoCommon_safe.png và
+ParetoCommon_full.png (sao = thiết kế cuối); bảng: ParetoCommon_table_safe.csv và ParetoCommon_table_full.csv.
+
+DREWS v2 trên thiết kế cuối (năm seed chấm 99995-99999, RMS e_T tổng ca DRY / SLIP / WEAVE, N.m): Map 1.163 / 0.501 / 1.452; PID 0.308 / 0.074 / 0.184; MapPID 0.317 / 0.081 / 0.223; S (N.m):
+Map 0.200 / 0.187 / 0.245; PID 0.647 / 0.558 / 1.055; MapPID 0.406 / 0.366 / 0.631. Map có e_rel +14.9 % ở DRY v25a0p25r và +23 đến +47 % ở EDGE 0.35-0.38 g (đúng nhãn trượt e_rel). Chỉ báo
+cáo, không là cổng. Bản cũ của PID và MapPID nằm ở Result/Controllers/<Ctrl>/Cases_v2/pre_pareto/ (Map không đổi).
+
+Giới hạn (ghi trung thực): (1) margin chỉ đo ở seed 99990 (calib_margin một seed); (2) MapPID đã được quét với khối Map khóa bằng Map tạm cũ; vì Map cuối TRÙNG điểm đó nên MapPID cuối vẫn là
+"cắm PID vào đúng Map cuối", nhưng PID chưa được chỉnh lại cùng Map (không quét luân phiên); (3) thiết kế chọn trên năm seed chung nên R_tb, S_tb có sai số lấy mẫu (độ lệch giữa seed: Rsd
+0.03-0.09 %, Ssd 0.002-0.004); (4) chỉ các điểm trong lưới và tập dự tuyển đã khóa, không có điểm ngoài lưới; (5) ca DREWS chỉ báo cáo; (6) Map thất bại cổng e_rel và calib_margin ở mọi điểm
+qua e_rel, nên kết luận về Map là kết luận trên mặt an toàn.
