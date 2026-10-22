@@ -19,3 +19,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 
 ### Lượt 4 - Xong pha 1 (2026-10-22 12:38)
 - Pha 1 MapPID: 38 điểm x 5 seed = 190 mô phỏng, 4 worker, khoảng 43 phút (khoảng 50 s/mô phỏng khi chạy 4 song song). Worker 4 bị dừng một lần (try 2 lúc 12:07, job_lib_patient tự chạy lại); csv có 194 dòng dữ liệu, 4 dòng trùng do chạy lại, hàm đọc bỏ trùng. Tạo PHASE1_DONE.txt, commit, push; chạy pha 2 (173 điểm).
+
+### Lượt 5 - Xong pha 2, bắt đầu margin (2026-10-22 15:51)
+- Pha 2: 173 điểm x 5 seed xong lúc 15:50 (khoảng 3 giờ 10 phút). Tổng csv: 1055 dòng dữ liệu = 211 điểm x 5 seed, đủ. Chạy margin (vòng margin + front tới khi không còn điểm treo).
