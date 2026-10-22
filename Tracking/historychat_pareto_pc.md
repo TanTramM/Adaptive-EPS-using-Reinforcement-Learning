@@ -40,3 +40,6 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 - Người dùng yêu cầu một file tổng hợp: kế hoạch chạy từ đầu, đã chạy gì, dùng file và script nào, mô tả đủ chi tiết để khung chat mới đọc là hiểu, danh sách dọn dẹp, phân công hai máy, tiến độ. Đã tạo Documents/Shared/KeHoachMatlab.txt (9 phần: cách dùng, tổng quan, dòng thời gian, phương pháp hiện hành, từng giai đoạn kèm kết quả, bảng mã, phân công, tiến độ và kế hoạch margin, dọn dẹp, bẫy đã gặp).
 - Phần dọn dẹp chỉ là ĐỀ XUẤT: phân loại theo kết quả grep xem file nào còn được file khác gọi; chưa xóa gì. Khung và máy của Linear, Map ghi "—" vì nhật ký đọc được không nêu.
 - Chưa làm: mục 16 của PhuongPhap_TimThamSo.txt; chờ người dùng duyệt kế hoạch margin M1/M2.
+
+### Lượt 7 - Giải thích hai lựa chọn của kế hoạch margin (2026-10-23)
+- Người dùng hỏi hai lựa chọn là gì, lợi hại, nên chọn cái nào. Trả lời: (1) thêm tùy chọn sắp theo R và giới hạn R vào lệnh 'margin' (chỉ đổi thứ tự và phạm vi, luật không đổi; bảng R <= 20 % chính thức sau khoảng 1 giờ); (2) có chạy đuôi Map R > 20 % (47 điểm, ~30 giờ CPU) hay không. Gợi ý: làm (1); (2) chạy sau khi đã có bảng, trên cả hai máy nếu laptop rảnh, không thì PC chạy một mình qua đêm. Chưa chạy gì, chờ người dùng chốt.
