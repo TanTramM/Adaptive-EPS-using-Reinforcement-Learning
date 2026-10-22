@@ -39,3 +39,6 @@ Vai: khung chạy trên laptop (32 GB), chạy pha 1 và pha 2 và margin cho Ma
 
 ### Lượt 10 - Xong pha 2 (worker 7-10), P2_LAPTOP_DONE (2026-10-23 01:11)
 - lapD xong sau 33 phút (00:38-01:11): tập pha 2 gồm PID 59 điểm, Map 5 điểm (Map mọi worker 7-10 không có điểm riêng), phần của laptop là các vị trí 7-10 mod 10. Tạo P2_LAPTOP_DONE.txt, commit, push. Theo lệnh: dừng, báo.
+
+### Lượt 11 - Việc mới: bước L1 (margin đuôi Map, id 7-10 của 10) (2026-10-23 02:55)
+- Đã gộp origin/auto/pareto-common (sạch, chưa có M_GO.txt). Đọc KeHoachMatlab.txt mục 10-11. Script nền scratch/laptop_L1.sh: fetch mỗi 5 phút tới M_GO.txt (hạn 08:00), gộp, kiểm guard_ram và tail_list, chạy 4 worker lapM_w7..w10 bằng job_lib_patient (cách nhau 60 s), commit và push csv margin w7-w10 mỗi 30 phút. Không sửa mã.
