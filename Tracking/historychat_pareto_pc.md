@@ -73,3 +73,6 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 ### Lượt 13 - P1 xong (2026-10-23, 04:02)
 - Chuỗi tools/jobs/pareto_night_pc.sh (6 worker, id 1-6): pcP1a (PID và Map, Mode full) 03:03-03:41, hội tụ sau 4 vòng; pcP1b (Map, safe, Rmax 20) 03:41-03:54, 3 vòng; pcP1c (PID, both) 03:54-04:02. Nhanh hơn ước lượng 1-1.5 giờ. Guard RAM dừng MATLAB 3 lần lúc khởi động (RAM 5 GB trống với 6 MATLAB), worker tự chạy lại, không mất kết quả. Cảnh báo "transport delay ... algebraic loop" của Model_PID là quen thuộc, vô hại.
 - P2 (đuôi Map, List, id 1-6 trên 10) bắt đầu 04:02.
+
+### Lượt 14 - P2 xong; laptop L1 xong; gộp (2026-10-23, 04:16)
+- P2 (đuôi Map, id 1-6 trên 10) xong 04:15 (14 phút, mô phỏng margin nhanh hơn ước lượng nhiều). Laptop: MT_LAPTOP_DONE (17 điểm, 17 pass, ghi giờ laptop 03:08). Gộp origin/auto/pareto-common-laptop.
