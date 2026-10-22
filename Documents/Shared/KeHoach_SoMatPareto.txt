@@ -1,64 +1,58 @@
-KẾ HOẠCH SO SÁNH MẶT PARETO BA BỘ (Map, PID, MapPID) TRÊN CALIB V2 BẰNG NĂM SEED CHUNG (người dùng chốt 2026-10-22; chạy song song PC và laptop, xem mục 3; khung COMMON viết kế hoạch)
+KẾ HOẠCH SO SÁNH MẶT PARETO BA BỘ (Map, PID, MapPID) TRÊN CALIB V2 BẰNG NĂM SEED CHUNG (bản 2, 2026-10-22; chạy song song PC và laptop; khung COMMON viết kế hoạch)
 =====================================================================================================================================================================
 
-0. Mục đích và nguyên tắc
-Mặt Pareto (R, S) của mỗi bộ hiện được vẽ ở seed tìm riêng của bộ đó (Map 00000, PID 10000, MapPID 30000). S phụ thuộc nhiễu cảm biến, nên một phần chênh lệch giữa các mặt có thể do seed chứ
-không do bộ. Kế hoạch này đánh giá lại TẬP ĐIỂM DỰ TUYỂN của cả ba bộ trên CÙNG năm seed chung rồi so mặt Pareto của từng bộ. Chỉ dùng CALIB v2 (ca thiết kế), KHÔNG dùng DREWS (DREWS chỉ để
-kiểm các điểm đã chọn, người dùng chốt 2026-10-22). Điểm đã chọn của ba bộ giữ nguyên, không chọn lại; kết quả này chỉ dùng để so mặt.
-Seed chung: 99990-99994 (người dùng chốt 2026-10-22: lấy ngược tiếp từ dải chấm điểm 99995-99999; dùng cho CALIB, không phải ca DREWS nên không trùng việc). Ghi vào Tracking/CLAUDE.md phần seed.
-Quy tắc viết trước, cơ học, giống nhau cho cả ba bộ, không chọn tay:
+Bản 2 thay bản 1 (commit fa93734 và d32eef8). Lý do (người dùng chỉ ra, nhật ký COMMON Lượt 217): bản 1 lấy tập dự tuyển của Map theo cổng tuyến tính và margin, còn của PID và MapPID theo
+cổng tuyến tính và e_rel, tức hai bộ lọc khác nhau. QuyChuan mục 5 và 6.2-6.3 quy định cổng chung cho mọi bộ và so cả mặt Pareto, nên bản 2 dùng MỘT bộ lọc cho cả ba bộ.
+
+0. Mục đích và quy tắc (viết trước khi chạy, cơ học, giống nhau cho cả ba bộ)
+Mặt Pareto (R, S) của mỗi bộ hiện được vẽ ở seed tìm riêng (Map 00000, PID 10000, MapPID 30000); S phụ thuộc nhiễu cảm biến, nên một phần chênh lệch giữa các mặt có thể do seed. Kế hoạch này
+đánh giá lại tập dự tuyển của cả ba bộ trên CÙNG năm seed rồi so mặt. Chỉ dùng CALIB v2 (ca thiết kế); KHÔNG dùng DREWS (DREWS chỉ để kiểm điểm đã chọn). Điểm đã chọn của ba bộ giữ nguyên;
+kết quả chỉ để so mặt.
+Seed chung: 99990-99994 (người dùng chốt; đã ghi ở Tracking/CLAUDE.md). Seed kiểm margin: 99990.
 (a) Nguồn: csv lưới của chính bộ đó ở seed tìm: Map Result/Controllers/Map/Calib_v2/Grid2/Map_CALIB_grid2_w*_s00000.csv; PID Result/Controllers/PID/Calib_v2/PID_CALIB_grid_w*_s10000.csv;
-MapPID Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_P1B1_w*_s30000.csv. Bỏ dòng trùng theo biến thiết kế.
-(b) Tập dự tuyển = TOÀN BỘ điểm đã mô phỏng qua đúng bộ cổng mà bộ đó dùng để chọn, tính ở seed tìm: PID và MapPID: simulated = 1 và c1, c2, c3, c4 <= 0 (114 và 182 điểm); Map: simulated =
-1, c1, c2, c3 <= 0 và pass_margin = 1 (93 điểm; Map không có điểm nào qua e_rel, đây là luật Map đã dùng để chọn, nhãn "an toàn, trượt e_rel"). Tổng 389 điểm. Lý do dùng toàn bộ tập mà không
-chỉ mặt Pareto ở seed tìm: một điểm không nằm trên mặt ở seed tìm vẫn có thể vào mặt ở seed chung khi chênh lệch nằm trong nhiễu seed (độ lệch J giữa năm seed: Map 0.2 %, PID 3 %, MapPID 7
-%), nên cắt tập theo mặt ở seed tìm làm kết luận phụ thuộc vào đúng seed mà ta muốn loại bỏ.
-(c) Với mỗi điểm: chạy CALIB v2 ở 5 seed chung bằng hàm đánh giá sẵn có (Map: map2_eval(x, seed, csv) với x = [K, g_min]; PID: pidlag_eval('PID', x, seed, csv); MapPID: mappid_eval(x, seed,
-csv) với x chín biến, Map khóa = map.json design, PID = bốn biến của điểm). Lấy R, S, TV, e_rel của từng seed; R_tb, S_tb là trung bình năm seed; e_rel_max là lớn nhất năm seed.
-(d) Cổng ở seed chung: tập dự tuyển giữ điểm có e_rel_max <= 10 % (PID, MapPID) và PM, GM, lag của seed tìm (không đổi, tuyến tính); Map không áp e_rel. Điểm nào không qua ở seed chung thì
-loại khỏi mặt và ghi vào csv báo cáo (không giấu).
-(e) Mặt Pareto của mỗi bộ = các điểm không bị điểm nào khác của CÙNG bộ trội (R_tb và S_tb đều không lớn hơn, một trong hai nhỏ hơn). Sau đó chạy calib_margin (gấp đôi độ lợi motor, thêm trễ
-1 ms) ở seed 99990 trên các điểm của mặt: điểm trượt thì loại và tính lại mặt, lặp tới khi mọi điểm trên mặt qua margin (cổng đã áp cho cả ba bộ khi chọn; Map đã qua ở seed tìm).
-(f) So sánh: vẽ ba mặt trên cùng một hình (R_tb theo trục hoành, S_tb theo trục tung), đánh dấu Map riêng "trượt e_rel". Bảng: ở các mức R 2.5, 3, 4, 6, 10, 14 %, S nhỏ nhất của mỗi bộ trong
-số điểm có R_tb không vượt mức đó. Hai mức S chênh dưới 5 % hoặc dưới độ lệch giữa seed thì coi là ngang nhau (quy tắc chung của QuyChuan), không nói bộ nào hơn. Kết luận theo QuyChuan: mặt
-nào nằm hẳn dưới, hoặc cắt nhau thì báo điểm cắt.
-(g) KHÔNG đổi điểm đã chọn (map.json, pid.json, mappid.json), KHÔNG đổi cổng, KHÔNG thêm điểm ngoài lưới. Ghi trung thực: chỉ so được các điểm đã nằm trong lưới đã quét.
+MapPID Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_P1B1_w*_s30000.csv. Bỏ dòng trùng theo biến thiết kế (Map: K, g_min; PID và MapPID: Kp, Ki, Kd, Tf).
+(b) Tập dự tuyển CHUNG cho mọi bộ = mọi điểm có simulated = 1 và c1, c2, c3 <= 0 (cổng tuyến tính: PM >= 30 độ, GM >= 2 trên 68 mô hình, độ lợi khâu lọc >= 0.707 tại 2 Hz). Không lọc e_rel,
+không lọc margin ở bước này (cả hai được áp ở (e) cho mọi bộ như nhau). Số điểm: Map 149, PID 168, MapPID 211, tổng 528. Lý do lấy toàn bộ, không cắt theo mặt ở seed tìm: một điểm sát mặt có
+thể đổi hạng khi đổi seed (độ lệch J giữa năm seed: Map 0.2 %, PID 3 %, MapPID 7 %), cắt theo mặt ở seed tìm làm kết luận phụ thuộc đúng nhiễu seed mà ta muốn loại.
+(c) Mỗi điểm: chạy CALIB v2 ở 5 seed chung bằng hàm đánh giá sẵn có (Map: map2_eval(x, seed, csv) với x = [K, g_min]; PID: pidlag_eval('PID', x, seed, csv); MapPID: mappid_eval(x, seed, csv)
+với x chín biến, năm biến Map = map.json design qua mappid_plug_u0, bốn biến PID của điểm). Ghi R, S, TV, e_rel của từng seed; R_tb, S_tb = trung bình năm seed; e_rel_max = lớn nhất năm seed.
+(d) Cờ cổng ở seed chung, cùng định nghĩa cho mọi bộ: pass_lin (giữ từ seed tìm, tuyến tính nên không đổi), pass_erel = (e_rel_max <= 10 %), pass_margin = calib_margin ở seed 99990 (tỉ số R
+khi gấp đôi độ lợi motor và khi thêm trễ 1 ms đều <= 2, như QuyChuan 5.2). pass_margin chỉ tính cho điểm cần ở bước (e), không tính cho mọi điểm.
+(e) Hai mặt cho MỖI bộ, cùng bộ lọc: (i) MẶT AN TOÀN: Pareto (R_tb, S_tb) trong các điểm pass_lin và pass_margin; (ii) MẶT ĐỦ CỔNG (theo QuyChuan, là kết luận chính): Pareto trong các điểm
+pass_lin, pass_erel và pass_margin. Cách tính margin không cần chạy cho mọi điểm: lấy mặt của tập chưa lọc margin, chạy calib_margin cho các điểm của mặt chưa có cờ, loại điểm trượt, tính
+lại mặt, lặp tới khi mọi điểm của mặt có pass_margin = 1. Làm riêng cho mặt (i) và mặt (ii). Map có thể rỗng ở mặt (ii) (ở seed tìm không điểm nào qua cả hai); nếu rỗng thì ghi rõ, không nới cổng.
+(f) So sánh: hai hình, mỗi hình ba mặt chồng nhau (trục hoành R_tb, trục tung S_tb): hình 1 mặt an toàn, hình 2 mặt đủ cổng. Ở hình 1 tô các điểm trượt e_rel bằng ký hiệu rỗng để người đọc
+không hiểu nhầm vùng Map êm là đạt. Bảng cho mỗi hình: ở các mức R 2.5, 3, 4, 6, 10, 14, 20 %, S nhỏ nhất của mỗi bộ trong các điểm của mặt có R_tb không vượt mức đó. Hai mức S chênh dưới 5
+% hoặc dưới độ lệch giữa seed thì coi là ngang nhau (QuyChuan), không nói bộ nào hơn. Kết luận theo QuyChuan 6.3: mặt nằm hẳn dưới, hoặc cắt nhau thì báo điểm cắt, dải không chồng thì nói
+không so được.
+(g) KHÔNG đổi điểm đã chọn (map.json, pid.json, mappid.json), KHÔNG đổi cổng, hộp, lưới, KHÔNG thêm điểm ngoài lưới. Giới hạn ghi trung thực: chỉ so các điểm đã nằm trong lưới đã quét; mỗi
+bộ có số điểm lưới khác nhau do số biến (Map 2, PID 4, MapPID 4 biến PID với Map khóa).
 
-1. Thứ tự chạy (hai pha, kết quả sớm trước)
-Pha 1: 117 điểm trên mặt Pareto ở seed tìm (Map 49, PID 30, MapPID 38; mặt tính theo (a) và (b), ở seed tìm). Pha 2: 272 điểm dự tuyển còn lại. Mặt cuối (e) tính trên TOÀN BỘ 389 điểm; pha 1
-chỉ để có kết quả sớm và hình sơ bộ (ghi rõ "sơ bộ, chưa đủ"). Ước lượng chưa đo: 389 điểm x 5 seed là khoảng 1945 mô phỏng cộng khoảng 240 mô phỏng margin; mỗi mô phỏng 25-35 s; khoảng 5-7
-giờ với 4 MATLAB, pha 1 khoảng 1.5-2 giờ.
+1. Hai pha (kết quả sớm trước)
+Pha 1: các điểm trên mặt Pareto ở SEED TÌM của tập dự tuyển (b), không lọc e_rel và margin (số điểm do mã tính, ghi vào nhật ký). Pha 2: các điểm dự tuyển còn lại. Mặt cuối (e) tính trên
+TOÀN BỘ 528 điểm; hình pha 1 ghi rõ "sơ bộ". Ước lượng chưa đo: 528 x 5 = 2640 mô phỏng cộng khoảng 300 mô phỏng margin, mỗi mô phỏng 25-35 s; chia hai máy, mỗi máy 4 MATLAB, khoảng 4-5 giờ mỗi máy.
 
-2. Việc phải làm (khung chạy trên PC)
-2.1. Đọc Tracking/CLAUDE.md, nhật ký của khung mình, Tracking/historychat_common.md Lượt 211-215, tài liệu này, QuyChuan.txt, các hàm đánh giá ở mục 0(c) và Model/common/select_pareto.m (lấy
-cách gọi calib_margin và nạp workspace mô hình).
-2.2. Viết Model/Sim/script/compare_pareto_common.m (đọc csv lưới, dựng tập dự tuyển theo 0(b), chạy theo 0(c) có chia worker theo chỉ số điểm, ghi csv riêng từng worker để chạy tiếp được,
-tính mặt theo 0(e), ghi báo cáo) và tools/make_fig_pareto_common.py (hình và bảng 0(f)). Kết quả ở Result/Compare/Pareto_common/: ParetoCommon_<Ctrl>_points_s99990-s99994.csv (mọi điểm, mọi
-chỉ số, cờ cổng), ParetoCommon_fronts.csv, ParetoCommon_table.csv, ParetoCommon_fronts.png.
-2.3. Kiểm trước khi chạy hàng loạt: (i) tập dự tuyển đúng 93, 114, 182 điểm; (ii) chạy lại điểm đã chọn của mỗi bộ ở seed tìm bằng hàm đánh giá và khớp với csv (R, S sai lệch dưới 1e-6 tương
-đối; hàm có cache theo (x, seed)); (iii) MapPID dùng đúng năm tham số Map của map.json design (mappid_plug_u0 đã có kiểm này).
-2.4. Chạy 4 MATLAB; tools/jobs/guard_ram.ps1 giữ 10 % RAM trống; tools/jobs/job_lib_patient.sh tự chạy lại; TEMP và TMP trên ổ có chỗ; Simulink.sdi.clear sau mỗi mô phỏng. Lỗi thực thi (heap
-native, mất worker) thì chạy lại đúng điểm, không coi là trượt cổng; lỗi mã thì sửa đúng chỗ rồi chạy tiếp, ghi nhật ký. Cứ khoảng 30 phút kiểm tiến độ; đứng yên quá 45 phút thì dừng và chạy
-lại worker đó.
-2.5. Commit và push nhánh auto/pareto-common sau mỗi mốc (xong mã và kiểm, xong pha 1, xong pha 2, xong hình). Không push main. Khi xong pha 1 báo hình sơ bộ; khi xong pha 2 báo kết luận theo 0(f).
-2.6. Báo: số điểm từng bộ (dự tuyển, loại ở seed chung, trên mặt, trượt margin), bảng 0(f), hình, kết luận theo từng khoảng R, giới hạn (lưới, seed), việc còn treo.
-
-3. Chia hai máy (người dùng chốt 2026-10-22: chạy song song trên PC và laptop, mỗi máy một khung chat MỚI; mục này thay phần "chạy trên PC" ở 2.4-2.5 về việc ai làm gì)
-3.1. Chia theo bộ điều khiển (không chia theo chỉ số điểm, để hai máy không phải khớp thứ tự): PC chạy Map (93 điểm) và PID (114 điểm), tổng 207; laptop chạy MapPID (182 điểm). Khối lượng
-gần bằng nhau. Mỗi máy 4 MATLAB, mỗi máy chạy pha 1 (điểm trên mặt ở seed tìm) của bộ mình trước rồi pha 2.
-3.2. Mã chung do PC viết DUY NHẤT một lần: PC làm 2.1-2.3 (compare_pareto_common.m nhận tham số danh sách bộ, ví dụ compare_pareto_common('run', {'Map','PID'}, workerId, nWorkers) và
-compare_pareto_common('run', {'MapPID'}, ...), lệnh 'front' tính mặt từ các csv đã có; make_fig_pareto_common.py), kiểm 2.3 cho cả ba bộ (với MapPID chỉ kiểm, không chạy hàng loạt), rồi
-commit và push nhánh auto/pareto-common kèm file Result/Compare/Pareto_common/CODE_READY.txt (ngày giờ, mã băm SHA-256 của compare_pareto_common.m). Sau đó PC mới chạy Map và PID.
-3.3. Laptop KHÔNG viết mã so sánh. Laptop: git fetch origin mỗi 5 phút (tối đa 3 giờ) cho tới khi origin/auto/pareto-common có CODE_READY.txt; tạo nhánh auto/pareto-common-laptop từ
-origin/auto/pareto-common; chạy compare_pareto_common('run', {'MapPID'}, id, 4). Nếu mã lỗi trên laptop: sửa tối thiểu đúng chỗ, ghi rõ trong nhật ký và commit message, không đổi quy tắc
-0(a)-0(g). Quá 3 giờ chưa có CODE_READY.txt thì dừng, ghi nhật ký, báo.
-3.4. Tên file kết quả không trùng giữa hai máy: mỗi worker ghi Result/Compare/Pareto_common/ParetoCommon_<Ctrl>_w<id>_s99990-s99994.csv (Ctrl là Map, PID hoặc MapPID), nên khi gộp hai nhánh
-không xung đột.
-3.5. Laptop commit và push nhánh auto/pareto-common-laptop sau mỗi mốc (xong pha 1, xong pha 2) và tạo Result/Compare/Pareto_common/MAPPID_DONE.txt khi xong pha 2 (số điểm, số mô phỏng, số
-lỗi thực thi).
-3.6. PC sau khi xong Map và PID: git fetch origin mỗi 10 phút (tối đa 8 giờ) cho tới khi origin/auto/pareto-common-laptop có MAPPID_DONE.txt; git merge origin/auto/pareto-common-laptop vào
-auto/pareto-common (chỉ khác file kết quả MapPID và nhật ký; nếu xung đột ở mã thì KHÔNG tự giải quyết, dừng và báo); chạy calib_margin cho các điểm trên mặt của MapPID nếu laptop chưa làm
-(quy tắc 0(e)); rồi lệnh 'front' cho cả ba bộ, hình và bảng 0(f); commit và push. Quá 8 giờ thì làm mặt cho Map và PID, ghi rõ "thiếu MapPID".
-3.7. Khi pha 1 của cả hai máy xong (PC thấy file pha 1 của laptop trên nhánh laptop), PC vẽ hình sơ bộ (ghi "sơ bộ") và push; không cần chờ pha 2.
-3.8. Nhật ký: mỗi khung mới ghi vào Tracking/historychat_pareto_pc.md và Tracking/historychat_pareto_laptop.md (tạo mới; đầu file ghi vai và tài liệu này); không ghi vào nhật ký khung khác.
-Không push main; người dùng gộp sau.
+2. Việc của từng máy (mỗi máy một khung chat MỚI)
+2.1. Chia theo bộ: PC chạy Map (149) và PID (168), tổng 317; laptop chạy MapPID (211). PC nặng hơn một chút nhưng laptop phải chờ mã của PC.
+2.2. PC (khung PARETO-PC), theo thứ tự: (1) đọc Tracking/CLAUDE.md, Tracking/historychat_common.md Lượt 211-218, tài liệu này, QuyChuan.txt, Model/common/select_pareto.m (cách nạp workspace
+và gọi calib_margin), map2_eval.m, pidlag_eval.m, mappid_eval.m, mappid_plug_u0.m; (2) viết Model/Sim/script/compare_pareto_common.m với các lệnh: 'run' (danh sách bộ, workerId, nWorkers;
+dựng tập (b), pha 1 trước, chia điểm theo chỉ số trong từng bộ, ghi csv từng worker, chạy tiếp được), 'margin' (danh sách bộ; chạy calib_margin theo (e) cho các điểm cần, ghi csv margin
+riêng), 'front' (tính hai mặt cho các bộ có dữ liệu, ghi csv báo cáo) và tools/make_fig_pareto_common.py (hai hình và hai bảng); (3) kiểm trước khi chạy hàng loạt: tập (b) đúng 149, 168, 211
+điểm; chạy lại điểm đã chọn của mỗi bộ ở seed tìm khớp csv (R, S sai lệch tương đối dưới 1e-6); MapPID dùng đúng năm tham số Map của map.json; (4) commit và push NGAY nhánh auto/pareto-common
+kèm Result/Compare/Pareto_common/CODE_READY.txt (ngày giờ, SHA-256 của compare_pareto_common.m); (5) chạy 'run' cho {'Map','PID'} với 4 worker, rồi 'margin' cho {'Map','PID'}; (6) khi thấy
+trên origin/auto/pareto-common-laptop file PHASE1_DONE.txt thì gộp và vẽ hình sơ bộ, push; (7) chờ MAPPID_DONE.txt trên origin/auto/pareto-common-laptop (fetch mỗi 10 phút, tối đa 8 giờ),
+git merge (chỉ khác file kết quả MapPID và nhật ký laptop; xung đột ở mã thì KHÔNG tự giải quyết, dừng và báo), chạy 'margin' cho MapPID nếu laptop chưa xong, rồi 'front' cho cả ba bộ, hình
+và bảng, commit, push. Quá 8 giờ thì làm cho Map và PID, ghi "thiếu MapPID".
+2.3. Laptop (khung PARETO-LAPTOP): KHÔNG viết mã so sánh; git fetch origin mỗi 5 phút (tối đa 3 giờ) tới khi origin/auto/pareto-common có CODE_READY.txt; tạo nhánh auto/pareto-common-laptop
+từ origin/auto/pareto-common; chạy 'run' cho {'MapPID'} với 4 worker; xong pha 1 thì tạo Result/Compare/Pareto_common/PHASE1_DONE.txt, commit, push; xong pha 2 thì chạy 'margin' cho
+{'MapPID'}, tạo MAPPID_DONE.txt (số điểm, số mô phỏng, số lỗi thực thi), commit, push. Mã lỗi trên laptop thì sửa tối thiểu đúng chỗ, ghi rõ trong nhật ký và commit message, không đổi quy
+tắc mục 0. Quá 3 giờ chưa có CODE_READY.txt thì dừng, ghi nhật ký, báo.
+2.4. Tên file không trùng giữa hai máy: Result/Compare/Pareto_common/ParetoCommon_<Ctrl>_w<id>_s99990-s99994.csv cho 'run', ParetoCommon_<Ctrl>_margin_s99990.csv cho 'margin',
+ParetoCommon_fronts_*.csv, ParetoCommon_table_*.csv, ParetoCommon_safe.png, ParetoCommon_full.png cho 'front' (chỉ PC ghi).
+2.5. Vận hành không người (cả hai máy): 4 MATLAB; tools/jobs/guard_ram.ps1 giữ 10 % RAM trống suốt thời gian chạy; tools/jobs/job_lib_patient.sh tự chạy lại; TEMP và TMP: PC D:/MatlabTemp,
+laptop C:\MatlabTemp (MATLAB_TEMP); Simulink.sdi.clear sau mỗi mô phỏng. Lỗi thực thi (heap native, mất worker) thì chạy lại đúng điểm, không coi là trượt cổng; lỗi mã thì sửa đúng chỗ rồi
+chạy tiếp. Cứ khoảng 30 phút kiểm tiến độ; đứng yên quá 45 phút thì dừng và chạy lại worker đó.
+2.6. Nhật ký: Tracking/historychat_pareto_pc.md và Tracking/historychat_pareto_laptop.md (tạo mới, đầu file ghi vai và tài liệu này), ghi mỗi lượt kể cả lỗi và cách sửa; không ghi vào nhật
+ký khung khác. Commit và push nhánh của mình sau mỗi mốc; không push main.
+2.7. Báo (PC): số điểm từng bộ (dự tuyển, qua e_rel ở seed chung, trên mặt an toàn, trên mặt đủ cổng, trượt margin), hai bảng, hai hình, kết luận theo QuyChuan 6.3 cho từng khoảng R, giới
+hạn (lưới, seed), việc còn treo.
