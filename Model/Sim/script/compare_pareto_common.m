@@ -6,7 +6,14 @@ function out = compare_pareto_common(cmd, ctrls, varargin)
 %   compare_pareto_common('check', ctrls)                          checks of 2.3: counts, chosen point reproduced at its search seed, MapPID locked Map block
 %   compare_pareto_common('run', ctrls, workerId, nWorkers[, phases])   phase 1 = candidates on the search-seed front, phase 2 = the rest (default [1 2]);
 %                                                                  each worker takes the points with mod(k-1, nWorkers) == workerId-1 inside a phase
-%   compare_pareto_common('margin', ctrls, workerId, nWorkers)     calib_margin (seed 99990) for the current front points that have no margin result yet (0(e))
+%   compare_pareto_common('margin', ctrls, workerId, nWorkers[, 'Mode', m, 'Rmax', r])   calib_margin (seed 99990) for the current front points that have no margin result yet (0(e));
+%                                                                  Mode 'full' | 'safe' | 'both' (default) picks which front's pending points are run, Rmax (default Inf) skips points with R_tb above it;
+%                                                                  the points are run in order of increasing R_tb. Order and scope only: the rule 0(e) and the front are unchanged;
+%                                                                  'Rmin' skips points with R_tb below it; 'List' = csv (design columns) of fixed points to run instead of the pending ones (points that already
+%                                                                  have a margin result are skipped, the split mod nWorkers is by position in the file)
+%   compare_pareto_common('taillist', {'Map'}, rThreshold)         writes ParetoCommon_Map_tail_list.csv: safe-front points pending margin with R_tb > rThreshold (both machines split the same list)
+%   compare_pareto_common('select', ctrls[, writeJson])            KeHoachMatlab.txt 10.1: final design on the margin-checked fronts; writes ParetoCommon_select.csv and _select_report.csv;
+%                                                                  writeJson = true also backs up and rewrites data/<ctrl>.json (design_pre_pareto keeps the old design)
 %   compare_pareto_common('front', ctrls)                          pure post-processing: 0(d), 0(e); writes points csv and ParetoCommon_fronts.csv; reports pending margins
 %   compare_pareto_common('status', ctrls)                         progress counts
 %   ctrls: cell array of 'Map', 'PID', 'MapPID'. Results in Result/Compare/Pareto_common/. Every evaluation is cached in the csv of its worker (resumable).
@@ -38,7 +45,15 @@ switch lower(cmd)
         end
     case 'margin'
         workerId = varargin{1}; nWorkers = varargin{2};
-        for c = 1:numel(ctrls), runMargins(ctrls{c}, workerId, nWorkers, seeds, outDir); end
+        opt = struct('Mode', 'both', 'Rmax', Inf, 'Rmin', 0, 'List', '');
+        for k = 3:2:numel(varargin), opt.(varargin{k}) = varargin{k + 1}; end
+        for c = 1:numel(ctrls), runMargins(ctrls{c}, workerId, nWorkers, seeds, outDir, opt); end
+    case 'taillist'
+        thr = 20; if ~isempty(varargin), thr = varargin{1}; end
+        for c = 1:numel(ctrls), writeTailList(ctrls{c}, thr, seeds, outDir); end
+    case 'select'
+        wj = false; if ~isempty(varargin), wj = logical(varargin{1}); end
+        out = selectFinal(ctrls, seeds, outDir, wj);
     case 'front'
         out = buildFronts(ctrls, seeds, outDir);
     case 'status'
@@ -159,14 +174,14 @@ function A = aggregate(name, seeds, outDir)
 %AGGREGATE One row per candidate: five-seed means, e_rel_max, gate flags (rule 0(c), 0(d)); margin columns left to the caller.
 S = ctrlSpec(name); C = candidates(name); E = readEvals(name, seeds, outDir);
 n = height(C);
-A = C; A.Rtb = nan(n, 1); A.Stb = A.Rtb; A.TVtb = A.Rtb; A.Rsd = A.Rtb; A.Ssd = A.Rtb; A.erel_max = A.Rtb; A.nseeds = zeros(n, 1); A.valid = false(n, 1);
+A = C; A.Rtb = nan(n, 1); A.Stb = A.Rtb; A.TVtb = A.Rtb; A.Rsd = A.Rtb; A.Ssd = A.Rtb; A.erel_max = A.Rtb; A.PM = A.Rtb; A.GM = A.Rtb; A.nseeds = zeros(n, 1); A.valid = false(n, 1);
 if ~isempty(E)
     kc = keyOf(table2array(C(:, S.vn))); ke = keyOf(table2array(E(:, S.vn)));
     for i = 1:n
         e = E(ke == kc(i), :);
         A.nseeds(i) = height(e);
         if height(e) == numel(seeds)
-            A.Rtb(i) = mean(e.R_pct); A.Stb(i) = mean(e.S_Nm); A.TVtb(i) = mean(e.TV); A.Rsd(i) = std(e.R_pct); A.Ssd(i) = std(e.S_Nm); A.erel_max(i) = max(e.erel_pct);
+            A.Rtb(i) = mean(e.R_pct); A.Stb(i) = mean(e.S_Nm); A.TVtb(i) = mean(e.TV); A.Rsd(i) = std(e.R_pct); A.Ssd(i) = std(e.S_Nm); A.erel_max(i) = max(e.erel_pct); A.PM(i) = e.PM_deg(1); A.GM(i) = e.GM(1);   % linear margins do not depend on the seed
             A.valid(i) = all(isfinite(e.R_pct) & isfinite(e.S_Nm) & e.simulated == 1);
         end
     end
@@ -274,16 +289,27 @@ fprintf('front: %d margin results still pending\n', allPending);
 end
 
 % ---------------------------------------------------------------- margin 0(e)
-function runMargins(name, workerId, nWorkers, seeds, outDir)
+function runMargins(name, workerId, nWorkers, seeds, outDir, opt)
 S = ctrlSpec(name);
 A = withMargins(aggregate(name, seeds, outDir), name, S, outDir);
 need = false(height(A), 1);
-for m = {'safe', 'full'}
+modes = {'safe', 'full'}; if ~strcmp(opt.Mode, 'both'), modes = {opt.Mode}; end
+for m = modes
     [~, ~, pending] = frontOf(A, A.(['alive_' m{1}]));
     need = need | pending;
 end
-todo = find(need);
-mine = todo(mod((1:numel(todo)) - 1, nWorkers) == workerId - 1);
+if ~isempty(opt.List)
+    % fixed list: the split is by position in the file (stable while results arrive); points that already have a margin result are dropped afterwards
+    L = readtable(opt.List); kl = keyOf(table2array(L(:, S.vn))); kc = keyOf(table2array(A(:, S.vn)));
+    lst = zeros(numel(kl), 1);
+    for i = 1:numel(kl), j = find(kc == kl(i), 1); assert(~isempty(j), 'compare_pareto_common:list', 'List point %d is not a candidate of %s', i, name); lst(i) = j; end
+    lst = lst(mod((1:numel(lst))' - 1, nWorkers) == workerId - 1);
+    todo = lst(~A.margin_done(lst) & A.Rtb(lst) <= opt.Rmax & A.Rtb(lst) >= opt.Rmin);
+else
+    todo = find(need & A.Rtb <= opt.Rmax & A.Rtb >= opt.Rmin);
+end
+[~, ord] = sort(A.Rtb(todo)); todo = todo(ord);   % increasing R_tb: the cheap, low-R points first
+if isempty(opt.List), mine = todo(mod((1:numel(todo)) - 1, nWorkers) == workerId - 1); else, mine = todo; end
 fprintf('[%s] margin worker %d/%d: %d of %d pending front points\n', name, workerId, nWorkers, numel(mine), numel(todo));
 csv = fullfile(outDir, sprintf('ParetoCommon_%s_margin_w%d_s99990.csv', name, workerId));
 for k = 1:numel(mine)
@@ -369,4 +395,98 @@ for c = 1:numel(ctrls)
     end
 end
 if ok, fprintf('[compare_pareto_common] CHECK PASS\n'); else, fprintf('[compare_pareto_common] CHECK FAIL\n'); end
+end
+
+% ---------------------------------------------------------------- tail list and final selection (KeHoachMatlab.txt 10.1, 10.2)
+function writeTailList(name, thr, seeds, outDir)
+%WRITETAILLIST Safe-front points that still wait for calib_margin and have R_tb above thr, in increasing R_tb: the fixed list both machines split.
+S = ctrlSpec(name); A = withMargins(aggregate(name, seeds, outDir), name, S, outDir);
+[~, ~, pending] = frontOf(A, A.alive_safe);
+T = A(pending & A.Rtb > thr, :); T = sortrows(T, 'Rtb');
+L = T(:, [S.vn, {'Rtb', 'Stb'}]);
+f = fullfile(outDir, sprintf('ParetoCommon_%s_tail_list.csv', name)); writetable(L, f);
+fprintf('[%s] tail list: %d points with R_tb > %g (pending safe-front margins) written to %s\n', name, height(L), thr, f);
+end
+
+function k = pickJ(A, mask)
+%PICKJ Rule 10.1.3: smallest J = R_tb x S_tb on the mask; points within 3 % of it tie, the largest linear PM wins.
+idx = find(mask); J = A.Rtb .* A.Stb;
+if isempty(idx), k = 0; return; end
+tie = idx(J(idx) <= 1.03 * min(J(idx)));
+[~, q] = max(A.PM(tie)); k = tie(q);
+end
+
+function res = selectFinal(ctrls, seeds, outDir, writeJson)
+scriptDir = fileparts(mfilename('fullpath')); modelDir = fileparts(fileparts(scriptDir));
+Tsel = table(); Trep = table(); res = struct();
+for c = 1:numel(ctrls)
+    name = ctrls{c}; S = ctrlSpec(name);
+    A = withMargins(aggregate(name, seeds, outDir), name, S, outDir); n = height(A);
+    [frS, mfS, pS] = frontOf(A, A.alive_safe); [frF, mfF, pF] = frontOf(A, A.alive_full);
+    assert(~any(pS) && ~any(pF), 'compare_pareto_common:pending', '[%s] %d safe and %d full front points still wait for calib_margin', name, nnz(pS), nnz(pF));
+    if any(frF), face = 'full'; mask = frF; other = frS; note = ''; else, face = 'safe'; mask = frS; other = frF; note = 'safe, fails e_rel'; end
+    k = pickJ(A, mask); assert(k > 0, 'compare_pareto_common:empty', '[%s] both fronts are empty', name);
+    J = A.Rtb .* A.Stb;
+    dstr = @(i) join(string(arrayfun(@(v) sprintf('%.9g', v), table2array(A(i, S.vn)), 'UniformOutput', false)), ';');
+    Pk = readtable(S.pickFile); xo = table2array(Pk(Pk.chosen == 1, S.vn)); ko = find(keyOf(table2array(A(:, S.vn))) == keyOf(xo), 1);
+    kOther = pickJ(A, other);
+    ir = find(mask); kRule = ir(pick_by_tolerance(A.Rtb(ir), A.Stb(ir), true(numel(ir), 1), 0.05)); kRule = kRule(1);
+    kinds = {'chosen', 'min_J_other_face', 'old_temp_point', 'old_rule_5pct'}; ks = [k, kOther, ko, kRule];
+    for q = 1:4
+        i = ks(q); if isempty(i) || i == 0, continue; end
+        r = table(string(name), string(kinds{q}), string(face), A.Rtb(i), A.Stb(i), J(i), A.PM(i), frS(i), frF(i), A.in_set(i), A.pass_erel(i), dstr(i), ...
+            'VariableNames', {'ctrl', 'kind', 'face_used', 'Rtb', 'Stb', 'J', 'PM_deg', 'on_safe_front', 'on_full_front', 'in_set', 'pass_erel', 'design'});
+        Trep = [Trep; r]; %#ok<AGROW>
+    end
+    s = table(string(name), string(face), string(note), n, nnz(A.in_set), nnz(A.alive_full), nnz(frS), nnz(frF), nnz(mfS), nnz(mfF), A.Rtb(k), A.Stb(k), J(k), A.Rsd(k), A.Ssd(k), A.erel_max(k), A.PM(k), A.GM(k), ...
+        A.ratio_gain(k), A.ratio_delay(k), dstr(k), 'VariableNames', {'ctrl', 'face_used', 'label', 'n_cand', 'n_in_set', 'n_pass_erel', 'n_front_safe', 'n_front_full', ...
+        'n_margin_fail_safe', 'n_margin_fail_full', 'Rtb', 'Stb', 'J', 'Rsd', 'Ssd', 'erel_max', 'PM_deg', 'GM', 'ratio_gain', 'ratio_delay', 'design'});
+    Tsel = [Tsel; s]; %#ok<AGROW>
+    fprintf('[%s] final: face %s %s | R_tb %.5g S_tb %.5g J %.5g PM %.2f | design %s\n', name, face, note, A.Rtb(k), A.Stb(k), J(k), A.PM(k), dstr(k));
+    fprintf('[%s]   old temp point: R_tb %.5g S_tb %.5g J %.5g, on safe front %d, on full front %d | other face min J %.5g | old 5%% rule on this face: R_tb %.5g S_tb %.5g\n', ...
+        name, A.Rtb(ko), A.Stb(ko), J(ko), frS(ko), frF(ko), J(max(kOther, 1)), A.Rtb(kRule), A.Stb(kRule));
+    res.(name) = struct('x', table2array(A(k, S.vn)), 'row', A(k, :), 'face', face, 'note', note);
+end
+writetable(Tsel, fullfile(outDir, 'ParetoCommon_select.csv')); writetable(Trep, fullfile(outDir, 'ParetoCommon_select_report.csv'));
+if writeJson
+    bdir = 'C:/Users/Admin/Desktop/Adaptive-EPS_backup_2026-10-23_json_truoc_pareto';
+    if ~exist(bdir, 'dir'), mkdir(bdir); end
+    for c = 1:numel(ctrls)
+        jf = fullfile(modelDir, 'data', [lower(ctrls{c}) '.json']);
+        if ~exist(fullfile(bdir, [lower(ctrls{c}) '.json']), 'file'), copyfile(jf, bdir); end
+    end
+    for c = 1:numel(ctrls), writeDesignJson(ctrls{c}, res.(ctrls{c}), modelDir); end
+end
+end
+
+function d = designOf(name, x, modelDir)
+%DESIGNOF Design struct built by the function each controller already uses for its own selection.
+switch name
+    case 'Map',    sp = map2_grid_spec(); d = sp.toDesign(x);
+    case 'PID',    sp = pid_grid_spec(); d = sp.toDesign(x);
+    case 'MapPID'
+        Ts0 = jsondecode(fileread(fullfile(modelDir, 'data', 'map.json'))).design.Ts0;
+        d = struct('Ts_ctrl', 1e-3, 'Ts0', Ts0, 'Kmax', x(1), 'lead', struct('z', x(2), 'p', x(2) * x(3)), ...
+            'lag', struct('z1', x(4), 'p1', x(4) * x(5)), 'Kp', x(6), 'Ki', x(7), 'Kd', x(8), 'Tf', x(9));
+end
+end
+
+function writeDesignJson(name, r, modelDir)
+jsonPath = fullfile(modelDir, 'data', [lower(name) '.json']);
+q = designOf(name, r.x, modelDir); a = r.row;
+if ~strcmp(name, 'Map'), q = rmfield(q, 'Ts_ctrl'); end          % Map's load_map needs Ts_ctrl in the design
+if strcmp(name, 'PID'), q.Kaw = q.Ki / q.Kp; end
+if strcmp(name, 'MapPID'), q.Kaw = q.Ki / (q.Kp + q.Kmax); end
+q.rule = 'final design on the common-seed (99990-99994) margin-checked front: J = R_tb x S_tb minimum, 3 % tie by maximum PM; KeHoachMatlab.txt 10.1; 2026-10-23';
+if ~isempty(r.note), q.x_design_note = r.note; end
+q.CALIB_common_Rtb = a.Rtb; q.CALIB_common_Stb = a.Stb; q.CALIB_common_J = a.Rtb * a.Stb; q.CALIB_common_erel_max = a.erel_max; q.CALIB_common_face = r.face;
+q.CALIB_R_pct = a.R0; q.CALIB_S_Nm = a.S0; q.CALIB_J = a.R0 * a.S0; q.CALIB_erel_pct = a.erel0;   % scores at the controller's own search seed
+q.PM_deg = a.PM; q.GM = a.GM; q.margin_ratio_gain = a.ratio_gain; q.margin_ratio_delay = a.ratio_delay;
+q.date = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
+J = jsondecode(fileread(jsonPath));
+if isfield(J, 'design') && ~isfield(J, 'design_pre_pareto'), J.design_pre_pareto = J.design; end
+J.design = q;
+fid = fopen(jsonPath, 'w'); assert(fid >= 0, 'Cannot write %s', jsonPath);
+fprintf(fid, '%s', jsonencode(J, 'PrettyPrint', true)); fclose(fid);
+fprintf('[%s] design written to %s\n', name, jsonPath);
 end
