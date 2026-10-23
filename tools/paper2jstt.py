@@ -1,13 +1,14 @@
 """Build the journal manuscript (JSTT, University of Transport Technology) from Documents/Paper/paper_jstt*.txt on the journal's own Word template.
 
-Usage:  python tools/paper2jstt.py Documents/Paper/paper_jstt_v1.txt Documents/Paper/paper_jstt_v1.docx
+Usage:  python tools/paper2jstt.py Documents/Paper/paper.txt Documents/Paper/paper_jstt.docx          (two-column journal template)
+        python tools/paper2jstt.py Documents/Paper/paper.txt Documents/Paper/paper.docx --v5     (one-column v5/v6 layout, same as paper2docx.py)
 
 The template is References/JSTT_Manuscript_template_EN.docx: first-page banner and the title block (a floating table: title, authors, affiliations, Article
 info, Abstract, Keywords), then a two-column body (Arial 11 pt, styles '10.JSTT-Text', '4.JSST-1storder-head', '4.1JSTT-2ndorder-head',
 'JSTT-acknowledgement', 'JSTT-table-caption', 'JSTT-figure-caption', 'EndNote Bibliography'). Headings are numbered by their styles, so the numbers of the .txt
 are removed. Wide objects (figures, tables, long equations) sit in one-column continuous sections between two-column text. Equations are Word equations
-numbered at the right margin; tables have no vertical rules; figures come from Figures/v5_Huypt (PNG 300 dpi; the vector PDF and 1000 dpi TIFF copies
-for the submission are in Figures/JSTT).
+numbered at the right margin; tables have no vertical rules; figures come from the paths written in the .txt; Fig_Column and Fig_Tire_force sit inside one column, the others span
+the page.
 
 Author data are filled from the AUTHORS block below; what the authors still have to supply is written in square brackets.
 """
@@ -33,19 +34,25 @@ from txt2docx import REPO_ROOT, latex_to_omath
 TEMPLATE = os.path.join(REPO_ROOT, 'References', 'JSTT_Manuscript_template_EN.docx')
 COL_W = 8.4                         # [cm] width of one column
 TEXT_W = 17.4                       # [cm] text width of the template (page 21 cm, margins 1.83 and 1.70 cm)
-MAX_FIG_H = 12.0                    # [cm]
+MAX_FIG_H = 17.0                    # [cm] tallest picture of a full-width figure (caption excluded)
+COL_FIGS = ('Fig_Column', 'Fig_Tire_force')   # figures narrow enough to sit inside one column
 FLOW = bool(os.environ.get('JSTT_FLOW'))   # no pictures, no one-column blocks: tables stay inside the column, text runs on column after column
-WIDE_EQ = set()                     # every display equation fits one column (long ones are broken into rows in the .txt)
+WIDE_EQ = set()
+EQ_BREAK = {
+    7: r'F_{yi}=D_i\sin\!\brack{C\tan^{-1}\!\paren{B_i\alpha_i-E\paren{B_i\alpha_i-\tan^{-1}(B_i\alpha_i)}}}\\ i\in\{f,r\}',
+    41: r'T_{a,max}(v)=\max_{a_y}\paren{T_r(v,a_y,0.8)-T_{ref}(v,a_y)}+T_f\\ 0\le a_y\le a_{y,lim}(v)',
+    43: r'u_I[k+1]=u_I[k]+T_cK_ie_T[k]\\ \quad+T_cK_{aw}\paren{T_{a,lim}[k]-T_{a,cmd}[k]}',
+}                       # equation number -> latex broken into rows with \\ (only for the two-column layout; paper.txt keeps one row)
 UNNUMBERED_H = ('Acknowledgments', 'Author contributions', 'Conflict of Interest', 'Declaration of Generative AI', 'References')
 
-AUTHORS = [('Tran Minh Tan', '1,*'), ('Phung Thanh Huy', '1')]
+AUTHORS = [('Minh Tan Tram', '1,*'), ('Thanh Huy Phung', '1')]
 AFFILIATION = ('1', 'Ho Chi Minh City University of Technology (HCMUT), Vietnam National University Ho Chi Minh City (VNU-HCM), '
                     '[address, city, postcode], Vietnam')
-CORRESPONDING = 'Tran Minh Tan'
+CORRESPONDING = 'Minh Tan Tram'
 EMAIL = '[e-mail to be added]'
-ABBREVIATIONS = ('Abbreviations: C-EPS, column-type electric power steering; EPS, electric power steering; PI, proportional–integral; '
-                 'PID, proportional–integral–derivative; RMS, root mean square; CALIB, calibration scenario; DRY, dry-road scenario; '
-                 'SLIP, friction-change scenario; WEAVE, continuous-steering scenario; RAMP, speed-ramp scenario; EDGE, high-lateral-acceleration scenario. '
+ABBREVIATIONS = ('Abbreviations: C-EPS, column-type electric power steering; EPS, electric power steering; '
+                 'PID, proportional–integral–derivative; RMS, root mean square; CALIB, calibration scenario; STEADY, held-turn scenario; '
+                 'SLIP, friction-change scenario; WEAVE, continuous-steering scenario. '
                  'Units: lateral acceleration in g (1 g = 9.81 m/s²); speed in km/h (1 km/h = 0.278 m/s).')
 
 
@@ -271,12 +278,47 @@ def add_figure(doc, caption, path, wide=True):
         file_, _, wcm = spec.partition('@')
         full = os.path.join(REPO_ROOT, file_.strip())
         w, h = Image.open(full).size
-        width = float(wcm) if wcm else (min(TEXT_W, MAX_FIG_H * w / h) if wide else min(COL_W, 20.0 * w / h))
-        width = min(width, TEXT_W)
+        width = float(wcm) if wcm else TEXT_W
+        width = min(width, TEXT_W, MAX_FIG_H * w / h) if wide else min(width, COL_W)
         items.append((full, width, width * h / w, label.strip()))
     total_w = max(i[1] for i in items) if len(items) == 1 else TEXT_W if wide else COL_W
     box = doc.add_paragraph(style='0.đánh dấu hình'); box.paragraph_format.keep_with_next = True
     box.add_run()._r.append(figure_group(doc, items, caption, total_w))
+
+
+def to_top_float(drawing):
+    """turn the inline group of a full-width figure into a floating object at the top of the page, text above and below (both columns)"""
+    from docx.oxml import parse_xml
+    inline = drawing.find(qn('wp:inline'))
+    _group_id[0] += 1
+    anchor = parse_xml(
+        f'<wp:anchor {NS_DECL} distT="0" distB="180000" distL="0" distR="0" simplePos="0" relativeHeight="{251658240 + _group_id[0]}" '
+        f'behindDoc="0" locked="0" layoutInCell="1" allowOverlap="0"><wp:simplePos x="0" y="0"/>'
+        f'<wp:positionH relativeFrom="margin"><wp:align>center</wp:align></wp:positionH>'
+        f'<wp:positionV relativeFrom="margin"><wp:align>top</wp:align></wp:positionV></wp:anchor>')
+    for tag in ('wp:extent', 'wp:effectExtent'):
+        anchor.append(inline.find(qn(tag)))
+    anchor.append(parse_xml(f'<wp:wrapTopAndBottom {NS_DECL}/>'))
+    for tag in ('wp:docPr', 'wp:cNvGraphicFramePr', 'a:graphic'):
+        anchor.append(inline.find(qn(tag)))
+    drawing.replace(inline, anchor)
+    return drawing
+
+
+def add_float_figure(doc, caption, path):
+    """full-width figure floated to the top of the page; anchored to the last text paragraph so that it adds no empty line"""
+    items = []
+    for part in [p.strip() for p in path.split(' ; ')]:
+        spec, _, label = part.partition('|')
+        file_, _, wcm = spec.partition('@')
+        full = os.path.join(REPO_ROOT, file_.strip())
+        w, h = Image.open(full).size
+        width = min(float(wcm) if wcm else TEXT_W, TEXT_W, MAX_FIG_H * w / h)
+        items.append((full, width, width * h / w, label.strip()))
+    total_w = max(i[1] for i in items) if len(items) == 1 else TEXT_W
+    paras = [p for p in doc.paragraphs if p.style.name == '10.JSTT-Text' and p.text.strip()]
+    host = paras[-1]
+    host.add_run()._r.append(to_top_float(figure_group(doc, items, caption, total_w)))
 
 
 def add_figure_placeholder(doc, caption, path):
@@ -288,7 +330,23 @@ def add_figure_placeholder(doc, caption, path):
     add_text(doc, 'JSTT-figure-caption', caption, size=9, bold=True)
 
 
-def add_table(doc, caption, rows):
+def table_width(rows):
+    """(natural, minimum) width [cm] of a table set in 9 pt (same estimate as add_table); the minimum wraps every cell at its longest word"""
+    plain = lambda x: re.sub(r'\$(.+?)\$', lambda q: 'x' * max(2, len(q.group(1)) // 3), x)
+    ncol = max(len(r) for r in rows)
+    cells = lambda ci: [plain(r[ci]) for r in rows if ci < len(r)]
+    nat = sum(0.17 * max(len(c) for c in cells(ci)) + 0.45 for ci in range(ncol))
+    low = sum(0.17 * max(len(w) for c in cells(ci) for w in (c.split() or [''])) + 0.45 for ci in range(ncol))
+    return nat, low
+
+
+def table_is_wide(rows):
+    """a table goes into one column when its cells can wrap to the column width without becoming too tall"""
+    nat, low = table_width(rows)
+    return not (low <= COL_W and nat <= 1.6 * COL_W)
+
+
+def add_table(doc, caption, rows, wide=True):
     cap = add_text(doc, 'JSTT-table-caption', caption, size=9, bold=True)
     cap.paragraph_format.keep_with_next = True
     ncol = max(len(r) for r in rows)
@@ -299,7 +357,7 @@ def add_table(doc, caption, rows):
     cmw = (lambda n: 0.135 * n + 0.2) if dense else (lambda n: 0.17 * n + 0.45)
     lo = [cmw(max(len(w) for c in col(ci) for w in (c.split() or ['']))) for ci in range(ncol)]
     hi = [max(lo[ci], cmw(max(len(c) for c in col(ci)))) for ci in range(ncol)]
-    tw = COL_W if FLOW else TEXT_W
+    tw = TEXT_W if wide and not FLOW else COL_W
     if sum(hi) <= tw:
         widths = hi
     else:
@@ -380,13 +438,13 @@ def parse(lines):
         mf = figcap.match(raw)
         if mf:
             cap, _, path = mf.group(1).partition(' | ')
-            blocks.append({'kind': 'fig', 'caption': cap.strip(), 'path': path.strip(), 'wide': (not FLOW) and '_col.' not in path.split(' ; ')[0]}); i += 1; continue
+            blocks.append({'kind': 'fig', 'caption': cap.strip(), 'path': path.strip(), 'wide': (not FLOW) and not any(k + '.' in path.split(' ; ')[0] for k in COL_FIGS)}); i += 1; continue
         mt = tabcap.match(raw)
         if mt and i + 1 < len(lines) and ' | ' in lines[i + 1]:
             rows = []; j = i + 1
             while j < len(lines) and ' | ' in lines[j]:
                 rows.append([c.strip() for c in lines[j].strip().split(' | ')]); j += 1
-            blocks.append({'kind': 'tab', 'caption': mt.group(1), 'rows': rows, 'wide': not FLOW}); i = j; continue
+            blocks.append({'kind': 'tab', 'caption': mt.group(1), 'rows': rows, 'wide': (not FLOW) and table_is_wide(rows)}); i = j; continue
         if s.startswith('- '):
             blocks.append({'kind': 'bullet', 'text': s[2:]}); i += 1; continue
         if re.match(r'^\[\d+\]\.', s):
@@ -415,16 +473,20 @@ def build(txt_path, docx_path):
             body.remove(ch)
     body.append(keep_sect)
     fill_front(doc, front['title'], front['abstract'], front['keywords'])
-    add_text(doc, '10.JSTT-Text', ABBREVIATIONS, indent0=True, size=8, italic=True)
+    add_text(doc, '10.JSTT-Text', ABBREVIATIONS, indent0=True, size=8, italic=True)     # stays on page 1 under the abstract
     lay = Layout(doc)
+    first_h1 = True
     i = 0
     while i < len(blocks):
         b = blocks[i]
-        wide = b.get('wide', False)
+        wide = b.get('wide', False) and b['kind'] != 'fig'        # full-width figures float, they need no one-column section
         lay.to(1 if wide else 2)
         k = b['kind']
         if k == 'h1':
-            add_text(doc, '4.JSST-1storder-head', b['text'])
+            h = add_text(doc, '4.JSST-1storder-head', b['text'])
+            if first_h1:
+                h.paragraph_format.page_break_before = True      # page 1 = title block, abstract, abbreviations; the Introduction starts page 2
+                first_h1 = False
         elif k == 'h2':
             add_text(doc, '4.1JSTT-2ndorder-head', b['text'])
         elif k == 'uh':
@@ -434,17 +496,20 @@ def build(txt_path, docx_path):
         elif k == 'bullet':
             add_text(doc, 'JSTT-bulletlist', b['text'])
         elif k == 'eq':
-            jstt_equation(doc, b['latex'], b['n'])
+            jstt_equation(doc, EQ_BREAK.get(b['n'], b['latex']), b['n'])
         elif k == 'fig':
             if FLOW:
                 add_figure_placeholder(doc, b['caption'], b['path'])
+            elif b['wide']:
+                add_float_figure(doc, b['caption'], b['path'])
             else:
                 add_figure(doc, b['caption'], b['path'], wide=b['wide'])
         elif k == 'tab':
-            add_table(doc, b['caption'], b['rows'])
+            add_table(doc, b['caption'], b['rows'], wide=b['wide'])
         elif k == 'ref':
             add_reference(doc, b['text'])
         i += 1
+    lay.to(1)                                             # a continuous break after the references balances the two columns of the last page
     last = body.findall(qn('w:sectPr'))[-1]
     strip_title_pg(last) if lay.breaks else None
     doc.save(docx_path)
@@ -474,7 +539,7 @@ def patch_headers(path):
                 elif t == ' All page':
                     t = 'page'
                 elif t == 'Author':
-                    t = 'Tran'
+                    t = 'Tram'
                 elif t == '. et al':
                     t = ' et al.'
                 elif t == '. ':
@@ -493,8 +558,10 @@ def patch_headers(path):
 
 
 if __name__ == '__main__':
-    # The historical two-column template generator is retained above for reference.
-    # Submission drafts follow the v5/v6 one-column JSTT layout.
-    import paper2docx
-    limit = int(sys.argv[sys.argv.index('--through') + 1]) if '--through' in sys.argv else None
-    paper2docx.build(sys.argv[1], sys.argv[2], limit)
+    # default: two-column journal template (JSTT); --v5: the one-column v5/v6 layout of paper2docx.py
+    if '--v5' in sys.argv:
+        import paper2docx
+        limit = int(sys.argv[sys.argv.index('--through') + 1]) if '--through' in sys.argv else None
+        paper2docx.build(sys.argv[1], sys.argv[2], limit)
+    else:
+        build(sys.argv[1], sys.argv[2])

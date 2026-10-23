@@ -41,7 +41,7 @@ TEMPLATE = os.path.join(REPO_ROOT, 'tools', 'journal_template.docx')
 TEXT_W = 21.0 - 2 * 2.54          # A4 width minus the advisor's margins [cm]
 MAX_FIG_H = 15.0                  # [cm]
 INDENT = Cm(1.27)                 # 720 twips, the advisor's first-line indent
-PAGE_BREAK_BEFORE = True          # page break before "1. Introduction": the title page holds the title, the Abstract and the keywords only
+PAGE_BREAK_BEFORE = True          # page break before every numbered main section (1. Introduction ... 6. Conclusions); the title page holds the title, authors, Abstract and keywords only
 EQ_PT = 10                       # display equations and their numbers [pt] (advisor: HTML Code style, 10 pt)
 BULLET_NUM_ID = '4'
 UNNUMBERED_H1 = ('Abstract', 'Acknowledgements', 'Acknowledgments', 'Author contributions', 'Declaration of Generative AI', 'Conflict of Interest', 'References')
@@ -113,6 +113,24 @@ def _textbox_xml(nid, x, y, w, h):
             f'<wps:bodyPr rot="0" vert="horz" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="t" anchorCtr="0"><a:noAutofit/></wps:bodyPr></wps:wsp>')
 
 
+def caption_lines(text, width_cm):
+    """number of lines the caption takes in 12 pt Times italic at the given width, from the real glyph widths (greedy word wrap, 3 % safety)"""
+    try:
+        from PIL import ImageFont
+        font = ImageFont.truetype('C:/Windows/Fonts/timesi.ttf', 120)          # 120 px stand for 12 pt: 1 px = 0.1 pt = 0.003528 cm
+        cm = lambda t: font.getlength(t) * 0.003528
+    except Exception:
+        cm = lambda t: 0.21 * len(t)
+    lines, cur = 1, ''
+    for w in text.split():
+        trial = (cur + ' ' + w).strip()
+        if cm(trial) > 0.97 * width_cm and cur:
+            lines += 1; cur = w
+        else:
+            cur = trial
+    return lines
+
+
 def figure_group(doc, items, caption):
     """ONE inline drawing group = the picture(s) + a borderless text box with the caption (and, for several pictures, a small text box with each panel
     label). Picture and caption are one object, so they cannot drift apart when the author reformats the text.
@@ -141,9 +159,8 @@ def figure_group(doc, items, caption):
             shapes.append(_textbox_xml(n0 + k, 0, y, cw, lh)); boxes.append((label, False))
             y += lh + gap
     plain = re.sub(r'\$[^$]*\$', 'xx', caption)
-    per_line = max(10, int(TEXT_W / 0.20))                 # characters of 12 pt Times (italic) per line, with margin
-    lines = -(-len(plain) // per_line)
-    cap_h = emu(0.25 + 0.62 * lines)
+    lines = caption_lines(plain, TEXT_W)
+    cap_h = emu(0.2 + 0.50 * lines)                         # 12 pt Times at single spacing is about 0.49 cm per line; 0.2 cm spare
     k += 1
     shapes.append(_textbox_xml(n0 + k, 0, y, cw, cap_h)); boxes.append((caption, True))
     total_h = y + cap_h
@@ -219,6 +236,7 @@ def table(doc, caption, rows):
             cell = t.rows[ri].cells[ci]; cell.width = Cm(widths[ci]); p = cell.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER if (ri == 0 or centred[ci]) else WD_ALIGN_PARAGRAPH.LEFT
             add_rich(p, rw[ci] if ci < len(rw) else '', bold=(ri == 0))
+            p.paragraph_format.line_spacing = 1.0          # single spacing inside tables (the text keeps 1.5)
     keep_table_together(t)
     doc.add_paragraph()
 
@@ -230,6 +248,38 @@ def bullet(doc, text):
     numPr.append(ilvl); numPr.append(numId); pPr.append(numPr)
     add_rich(p, text)
 
+
+
+# Title-page data required by the journal (JSTT guide for authors: given and family name, full postal address with country, corresponding author marked * with e-mail)
+AUTHORS = [('Minh Tan Tram', '1,*'), ('Thanh Huy Phung', '1')]
+AFFILIATION = ('1', 'Ho Chi Minh City University of Technology (HCMUT), Vietnam National University Ho Chi Minh City (VNU-HCM), '
+                    '268 Ly Thuong Kiet Street, Ho Chi Minh City, Vietnam')
+CORRESPONDING = '*Corresponding author: Minh Tan Tram, e-mail: tmtan.sdh241@hcmut.edu.vn'
+EMAILS = 'Thanh Huy Phung, e-mail: huypt@hcmut.edu.vn'
+
+
+def front_matter(doc):
+    """author line, affiliation and corresponding author, centred under the title"""
+    def centred(parts, italic=False, size=None):
+        par = doc.add_paragraph()
+        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        par.paragraph_format.first_line_indent = Cm(0)
+        for text, sup in parts:
+            r = par.add_run(text); r.italic = italic or None
+            if sup:
+                r.font.superscript = True
+            if size:
+                r.font.size = Pt(size)
+        return par
+    parts = []
+    for k, (name, aff) in enumerate(AUTHORS):
+        parts += [(name, False), (aff, True)]
+        if k < len(AUTHORS) - 1:
+            parts.append((', ', False))
+    centred(parts)
+    centred([(AFFILIATION[0], True), (AFFILIATION[1], False)], italic=True, size=11)
+    centred([(CORRESPONDING, False)], size=11)
+    centred([(EMAILS, False)], size=11)
 
 def build(txt_path, docx_path, through=None):
     lines = open(txt_path, encoding='utf-8').read().splitlines()
@@ -250,13 +300,13 @@ def build(txt_path, docx_path, through=None):
         if not s or sep.match(raw):
             i += 1; continue
         if i == title_idx:
-            add_rich(doc.add_paragraph(style='Title'), s); i += 1; continue
+            add_rich(doc.add_paragraph(style='Title'), s); front_matter(doc); i += 1; continue
         if h1.match(s) and not h2.match(s) and through is not None and int(s.split('.', 1)[0]) > through:
             break
         if s in UNNUMBERED_H1 or (h1.match(s) and not h2.match(s) and len(s) < 100):
             hp = doc.add_paragraph(style='Heading 1'); add_rich(hp, s); in_refs = (s == 'References')
-            if PAGE_BREAK_BEFORE and h1.match(s) and s.startswith('1.'):
-                hp.paragraph_format.page_break_before = True              # title and Abstract stay alone on the first page
+            if PAGE_BREAK_BEFORE and (h1.match(s) or s in ('Acknowledgments', 'Acknowledgements', 'References')):
+                hp.paragraph_format.page_break_before = True              # every numbered section and the reference list start a new page
             i += 1; continue
         if h2.match(s) and len(s) < 120:
             add_rich(doc.add_paragraph(style='Heading 2'), s); i += 1; continue

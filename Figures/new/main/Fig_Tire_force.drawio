@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="fig">
-        <mxGraphModel dx="803" dy="724" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="690" background="light-dark(#ffffff, #121212)" math="1" shadow="0">
+        <mxGraphModel dx="1275" dy="675" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="690" background="light-dark(#ffffff, #121212)" math="1" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -10,7 +10,7 @@
                         <mxPoint x="1030" y="355" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="c4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=14;fontFamily=Times New Roman;" value="vehicle `x` direction" vertex="1">
+                <mxCell id="c4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=14;fontFamily=Times New Roman;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;vehicle `x` direction&lt;/font&gt;" vertex="1">
                     <mxGeometry height="26" width="190" x="820" y="317" as="geometry"/>
                 </mxCell>
                 <mxCell id="c5" edge="1" parent="1" style="endArrow=none;startArrow=none;endFill=1;startFill=1;html=1;rounded=0;strokeColor=#777777;strokeWidth=1.3;dashed=1;" value="">
@@ -69,8 +69,8 @@
                         <mxPoint x="502.505" y="361.831" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="c14" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=14;fontFamily=Times New Roman;" value="front tire (top view)" vertex="1">
-                    <mxGeometry height="26" width="209" x="265.5" y="522" as="geometry"/>
+                <mxCell id="c14" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=18;fontFamily=Times New Roman;" value="Front tire (top view)" vertex="1">
+                    <mxGeometry height="26" width="209" x="310" y="142" as="geometry"/>
                 </mxCell>
                 <mxCell id="c15" edge="1" parent="1" style="endArrow=block;startArrow=none;endFill=1;startFill=1;html=1;rounded=0;strokeColor=#222222;strokeWidth=2.2;" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -149,8 +149,8 @@
                 <mxCell id="c23" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#222222;fontSize=18;fontFamily=Times New Roman;" value="`alpha_f`" vertex="1">
                     <mxGeometry height="32" width="80" x="600" y="207" as="geometry"/>
                 </mxCell>
-                <mxCell id="c24" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=13;fontStyle=2;fontFamily=Times New Roman;" value="Angles and geometry are schematic and not to scale." vertex="1">
-                    <mxGeometry height="25" width="467" x="70" y="585.68" as="geometry"/>
+                <mxCell id="c24" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontColor=#777777;fontSize=13;fontStyle=2;fontFamily=Times New Roman;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Angles and geometry are schematic and not to scale.&lt;/font&gt;" vertex="1">
+                    <mxGeometry height="25" width="237" x="40" y="300" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

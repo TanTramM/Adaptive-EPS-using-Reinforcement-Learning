@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Figures of Section 5 (evaluation on the SSW scenarios) of the paper, readable in black and white.
 
+  (Fig_SSW_noise_bw.png now comes from make_fig_noise_alt.py; the nine-chart version below is kept only as 'noise' on request)
   Fig_SSW_noise_bw.png     assist-torque noise in a held turn (STEADY, 65 km/h, 0.25 g, seed 99987, 1 ms signals):
                            (a)-(c) T_a minus its 5 Hz low-pass part for Map, PID, MapPID on one common scale,
                            (d) amplitude spectrum of T_a over the hold, band above 5 Hz shaded.
@@ -213,7 +214,7 @@ def fig_lane():
 
 
 if __name__ == '__main__':
-    which = sys.argv[1:] or ['windows', 'noise', 'lane']
+    which = sys.argv[1:] or ['windows', 'lane']        # the noise figure (Fig. 9) is drawn by tools/make_fig_noise_alt.py
     if 'windows' in which:
         fig_windows()
     if 'noise' in which:
