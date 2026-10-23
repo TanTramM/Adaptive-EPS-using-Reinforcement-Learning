@@ -10,11 +10,12 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 - laptop: chạy song song phần việc chia cho nó (MapPID, một nửa Map và PID khi so mặt Pareto chung), thường đẩy lên nhánh phụ rồi gộp.
 - Commit trước 2026-10-22 chưa ghi máy (hiện "?"): lúc đó làm trên một máy; từ nay mọi commit có tag [PC] hoặc [laptop] ở đầu (tools/sync_repo.sh tự thêm).
 
-## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 111 commit)
+## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 112 commit)
 
 
-### 2026-10-23 (? 2, PC 16, laptop 7)
+### 2026-10-23 (? 2, PC 17, laptop 7)
 
+- 16:27 a98784b [PC] SSW (STEADY, SLIP, WEAVE) run on three controllers, SLIP v4, DREWS v3 plan and lock, repo_history and sync tools, cleanup of old scripts
 - 12:13 2672ac7 [PC] DREWS v3 rerun on the final designs: summary tables and black-and-white figures
 - 10:37 3403405 [PC] DREWS v2 all three controllers: combined long csv
 - 04:36 3cc28d2 [PC] Pareto common PC: P6 report, figures, section 16, final done
