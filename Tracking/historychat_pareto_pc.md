@@ -89,3 +89,6 @@ Tài liệu kế hoạch: Documents/Shared/KeHoach_SoMatPareto.txt (BẢN 2). Nh
 ### Lượt 17 - P6 xong (2026-10-23, 04:50)
 - make_fig_pareto_common.py (thêm sao = thiết kế cuối) cho ParetoCommon_safe.png, ParetoCommon_full.png, hai bảng csv; viết mục 16 vào Documents/Shared/PhuongPhap_TimThamSo.txt (quy tắc, số điểm, thiết kế cuối, so điểm cũ, hai bảng S theo mức R, kết luận, DREWS, giới hạn); trỏ kết quả từ KeHoach_SoMatPareto.txt; thêm mục 7.0 vào KeHoachMatlab.txt. FINAL_DONE.txt. Chưa sửa dòng 6 và mục 13.6 của PhuongPhap_TimThamSo.txt (trỏ tới mục 14-16) và chưa xem lại Fig_search_flow_grid: còn treo.
 - Toàn bộ P0-P6 xong khoảng 2 giờ sau M_GO, dư nhiều so với mốc 19:00.
+
+### Lượt 18 - DREWS v2 cho cả ba bộ, gộp csv (2026-10-23, 10:40)
+- Người dùng muốn DREWS cho cả ba bộ lưu csv để vẽ. Chạy lại Map (design không đổi; bản cũ chuyển vào Cases_v2/pre_rerun/) bằng tools/jobs/drews_map_pc.sh: kết quả giống hệt bản cũ (summary Map không đổi). Viết tools/combine_drews_v2.py: gộp 15 file metrics (3 bộ x 5 seed 99995-99999) thành Result/Compare/DREWS_v2_summary/DREWS_v2_all_runs.csv (540 dòng, cột Ctrl, Seed, Case, Window + chỉ tiêu).
