@@ -50,7 +50,7 @@ GREEK = {'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': '
          'theta': 'θ', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ', 'pi': 'π', 'rho': 'ρ',
          'sigma': 'σ', 'tau': 'τ', 'phi': 'φ', 'varphi': 'φ', 'psi': 'ψ', 'omega': 'ω', 'Delta': 'Δ',
          'Omega': 'Ω', 'Sigma': 'Σ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Gamma': 'Γ', 'Theta': 'Θ'}
-SYMBOLS = {'le': '≤', 'leq': '≤', 'ge': '≥', 'geq': '≥', 'approx': '≈', 'cdot': '·', 'times': '×',
+SYMBOLS = {'ne': '≠', 'le': '≤', 'leq': '≤', 'ge': '≥', 'geq': '≥', 'approx': '≈', 'cdot': '·', 'times': '×',
            'Leftrightarrow': '⇔', 'Rightarrow': '⇒', 'rightarrow': '→', 'to': '→', 'infty': '∞',
            'partial': '∂', 'circ': '°', 'pm': '±', 'neq': '≠', 'sum': '∑', 'in': '∈', 'ldots': '…',
            'dots': '…', 'cdots': '⋯'}
@@ -168,10 +168,10 @@ class Parser:
         if val in ('frac', 'dfrac', 'tfrac'):
             num = self.frac_arg(); den = self.frac_arg()
             f = m('f'); n = msub(f, 'num'); n.extend(num); d = msub(f, 'den'); d.extend(den); return f
-        if val in ('dot', 'ddot', 'hat', 'bar', 'tilde'):
+        if val in ('dot', 'ddot', 'hat', 'widehat', 'bar', 'tilde'):
             arg = self.group_or_atom()
             acc = m('acc'); pr = msub(acc, 'accPr'); c = msub(pr, 'chr')
-            c.set('{%s}val' % M_NS, {'dot': '̇', 'ddot': '̈', 'hat': '̂', 'bar': '̅',
+            c.set('{%s}val' % M_NS, {'dot': '̇', 'ddot': '̈', 'hat': '̂', 'widehat': '̂', 'bar': '̅',
                                      'tilde': '̃'}[val])
             e = msub(acc, 'e'); e.extend(arg); return acc
         if val == 'sqrt':

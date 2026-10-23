@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Pareto figure of the controller selection, readable in black and white, without special symbols for the selected design.
+"""Pareto figure of the controller selection (Section 4 of the paper), readable in black and white, without special symbols for the selected design.
 
   Fig_Pareto_J_bw.png
-    (a) (R, S) plane with iso-J curves (R*S = const, thin grey hyperbolas) behind the three Pareto fronts. The selected design is the point of the
-        front that touches the lowest iso-J curve; it is named by a text label with a leader line, not by a special marker.
-        Map points are drawn open because they fail the static-accuracy gate (safe front); PID and MapPID are drawn on the gate-passing front.
-    (b) J = R*S along each front against R, with a ring on every point within 3 % of the minimum (the tie set of the selection rule).
+    One (R, S) panel, R on a log axis from 2 to 130 % so that the whole Map front is visible next to the PID and MapPID fronts.
+    Thin grey hyperbolas are iso-J curves (J = R*S = const). Light grey dots are all candidates of the noise-band set; the lines are the fronts the
+    designs are selected from: Map on the stability-only front (open circles, every point fails the static-accuracy gate), PID and MapPID on the
+    front that passes every gate. The selected design (smallest J, ties within 3 % resolved by the largest phase margin) is ringed and labelled.
 
 Sources: Result/Compare/Pareto_common/ParetoCommon_<Ctrl>_points_s99990-s99994.csv, ParetoCommon_select.csv
 Usage:   C:/Users/Admin/anaconda3/python.exe -I tools/make_fig_pareto_bw.py   (from the repo root)
@@ -27,85 +27,59 @@ plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Times New Roman'], 
                      'mathtext.fontset': 'stix', 'axes.grid': False, 'xtick.direction': 'in', 'ytick.direction': 'in'})
 
 STYLE = {
-    'Map':    dict(c='0.45', ls=':',  m='o', ms=4.0, lw=1.4, fill='w'),     # open: fails the static-accuracy gate
+    'Map':    dict(c='0.40', ls=':',  m='o', ms=3.8, lw=1.3, fill='w'),     # open: fails the static-accuracy gate
     'PID':    dict(c='0.10', ls='--', m='s', ms=3.6, lw=1.0, fill='w'),
-    'MapPID': dict(c='0.00', ls='-',  m='^', ms=4.4, lw=1.2, fill='k'),
+    'MapPID': dict(c='0.00', ls='-',  m='^', ms=4.2, lw=1.2, fill='k'),
 }
 FACE = {'Map': 'safe', 'PID': 'full', 'MapPID': 'full'}      # front each design is selected from (select.csv, face_used)
-TIE = 1.03                                                   # tie band of the selection rule
+XMIN, XMAX, YMAX = 2, 130, 1.5
 
 
 def load(ctrl):
     d = pd.read_csv(os.path.join(PC, 'ParetoCommon_%s_points_s99990-s99994.csv' % ctrl))
-    d = d[d.in_set == 1].copy()
-    d['J'] = d.Rtb * d.Stb
-    return d
+    return d[d.in_set == 1].copy()
 
 
 def main():
     sel = pd.read_csv(os.path.join(PC, 'ParetoCommon_select.csv')).set_index('ctrl')
-    fig, axs = plt.subplots(1, 2, figsize=(6.3, 3.0), gridspec_kw=dict(width_ratios=[1.25, 1]))
-    ax, bx = axs
-    # ---------------------------------------------------------------- (a) iso-J curves + fronts
-    XMAX = 16
-    rr = np.logspace(np.log10(2), np.log10(XMAX), 200)
-    for J in (1.5, 2, 3, 5, 7, 10):
-        ax.plot(rr, J / rr, color='0.78', lw=0.6, zorder=1)
-        if J <= 2:                                   # label on the curve, right part of the panel
-            xl = 11.6 if J == 1.5 else 8.2
-            ax.text(xl, J / xl + 0.010, 'J = %g' % J, fontsize=6.5, color='0.40', ha='left', va='bottom', zorder=1)
-        else:                                        # label just below the top edge, right of the curve
-            ax.text(J / 1.30 + 0.05, 1.30, 'J = %g' % J, fontsize=6.5, color='0.40', ha='left', va='bottom', zorder=1)
+    fig, ax = plt.subplots(figsize=(6.3, 3.3))
+    # iso-J curves, labelled where they leave the top edge (no data there)
+    rr = np.logspace(np.log10(XMIN), np.log10(XMAX), 300)
+    for J in (2, 3, 5, 10, 20, 50):
+        ax.plot(rr, J / rr, color='0.80', lw=0.6, zorder=1)
+        xl = J / (YMAX - 0.10)
+        if xl * 1.04 > XMIN * 1.05:
+            ax.text(xl * 1.04, YMAX - 0.10, '$J$ = %g' % J, fontsize=7, color='0.40', ha='left', va='center', zorder=1)
+        else:                                        # the curve leaves through the left edge: label it below the curve, in the empty lower region
+            ax.text(6.2, J / 6.2 - 0.06, '$J$ = %g' % J, fontsize=7, color='0.40', ha='left', va='center', zorder=1)
     for c in ('Map', 'PID', 'MapPID'):
         s = STYLE[c]
         d = load(c)
-        ax.plot(d.Rtb, d.Stb, ls='none', marker='o', ms=1.8, mfc='0.6', mec='none', alpha=0.45, zorder=2)
+        ax.plot(d.Rtb, d.Stb, ls='none', marker='o', ms=1.8, mfc='0.65', mec='none', zorder=2)
         f = d[d['front_' + FACE[c]] == 1].sort_values('Rtb')
         ax.plot(f.Rtb, f.Stb, ls=s['ls'], color=s['c'], lw=s['lw'], marker=s['m'], ms=s['ms'], mfc=s['fill'], mec=s['c'], mew=0.8, zorder=3)
-    lab = {'Map': ('Map\n$J$ = %.2f' % sel.loc['Map', 'J'], (28, 0.62)),
-           'PID': ('PID\n$J$ = %.2f' % sel.loc['PID', 'J'], (6.5, 1.20)),
-           'MapPID': ('MapPID\n$J$ = %.2f' % sel.loc['MapPID', 'J'], (2.15, 0.45))}
-    for c in ('Map', 'PID', 'MapPID'):
+    # selected designs: ring + label with a leader line, labels placed in empty regions
+    lab = {'MapPID': (2.15, 0.30), 'PID': (4.6, 1.12), 'Map': (24, 0.78)}
+    for c in ('MapPID', 'PID', 'Map'):
         x, y = sel.loc[c, 'Rtb'], sel.loc[c, 'Stb']
-        txt, xy = lab[c]
-        ax.annotate(txt, xy=(x, y), xytext=xy, fontsize=7.5, ha='left', va='center',
-                    arrowprops=dict(arrowstyle='-', color='k', lw=0.6, shrinkA=1, shrinkB=2), zorder=6)
-        ax.plot([x], [y], ls='none', marker='o', ms=7.5, mfc='none', mec='k', mew=0.7, zorder=6)
+        txt = '%s\n$R$ = %.2f %%, $S$ = %.2f N·m' % (c, x, y)
+        ax.annotate(txt, xy=(x, y), xytext=lab[c], fontsize=7.5, ha='left', va='center',
+                    arrowprops=dict(arrowstyle='-', color='k', lw=0.6, shrinkA=1, shrinkB=3.5), zorder=6)
+        ax.plot([x], [y], ls='none', marker='o', ms=8, mfc='none', mec='k', mew=0.8, zorder=6)
     ax.set_xscale('log')
-    ax.set_xlim(2, XMAX)
-    ax.set_ylim(0, 1.45)
-    ax.set_xticks([2, 3, 5, 10])
-    ax.set_xticklabels(['2', '3', '5', '10'])
+    ax.set_xlim(XMIN, XMAX)
+    ax.set_ylim(0, YMAX)
+    ax.set_xticks([2, 3, 5, 10, 20, 50, 100])
+    ax.set_xticklabels(['2', '3', '5', '10', '20', '50', '100'])
     ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlabel('$R$ (%)')
     ax.set_ylabel('$S$ (N·m)')
-    ax.set_title('(a) Fronts and iso-$J$ curves (zoom)', fontsize=9)
-    # ---------------------------------------------------------------- (b) J along the fronts
-    for c in ('Map', 'PID', 'MapPID'):
-        s = STYLE[c]
-        d = load(c)
-        f = d[d['front_' + FACE[c]] == 1].sort_values('Rtb')
-        bx.plot(f.Rtb, f.J, ls=s['ls'], color=s['c'], lw=s['lw'], marker=s['m'], ms=s['ms'], mfc=s['fill'], mec=s['c'], mew=0.8, zorder=3)
-        tie = f[f.J <= TIE * f.J.min()]
-        bx.plot(tie.Rtb, tie.J, ls='none', marker='o', ms=6.5, mfc='none', mec='0.25', mew=0.6, zorder=4)
-    bx.set_xscale('log')
-    bx.set_yscale('log')
-    bx.set_xlim(2, 130)
-    bx.set_ylim(1.5, 45)
-    bx.set_xticks([2, 5, 10, 20, 50, 100])
-    bx.set_xticklabels(['2', '5', '10', '20', '50', '100'])
-    bx.set_yticks([2, 3, 5, 10, 20, 40])
-    bx.set_yticklabels(['2', '3', '5', '10', '20', '40'])
-    bx.grid(True, which='major', color='0.88', lw=0.4)
-    bx.set_xlabel('$R$ (%)')
-    bx.set_ylabel('$J = R\\cdot S$')
-    bx.set_title('(b) $J$ along each front', fontsize=9)
     h = [Line2D([], [], color=STYLE[c]['c'], ls=STYLE[c]['ls'], lw=STYLE[c]['lw'], marker=STYLE[c]['m'], ms=STYLE[c]['ms'],
                 mfc=STYLE[c]['fill'], mec=STYLE[c]['c'], mew=0.8, label=n)
-         for c, n in (('Map', 'Map (fails accuracy gate)'), ('PID', 'PID'), ('MapPID', 'MapPID'))]
-    h.append(Line2D([], [], ls='none', marker='o', ms=7, mfc='none', mec='0.25', mew=0.7, label='within 3% of minimum $J$'))
-    fig.legend(handles=h, loc='lower center', ncol=4, frameon=False, fontsize=7.5, handlelength=2.2, columnspacing=1.2)
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+         for c, n in (('Map', 'Map, stability-only front'), ('PID', 'PID, all-gates front'), ('MapPID', 'MapPID, all-gates front'))]
+    h.append(Line2D([], [], ls='none', marker='o', ms=1.8, mfc='0.65', mec='none', label='candidates'))
+    ax.legend(handles=h, loc='upper right', bbox_to_anchor=(1.0, 0.86), frameon=False, fontsize=7.5, handlelength=2.4)
+    fig.tight_layout()
     p = os.path.join(OUT, 'Fig_Pareto_J_bw.png')
     fig.savefig(p, dpi=300)
     plt.close(fig)

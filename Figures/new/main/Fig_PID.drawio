@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="fig">
-        <mxGraphModel dx="648" dy="-873" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3210" pageHeight="1450" background="light-dark(#ffffff, #121212)" math="1" shadow="0">
+        <mxGraphModel dx="680" dy="-717" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3210" pageHeight="1450" background="light-dark(#ffffff, #121212)" math="1" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -166,7 +166,7 @@
                         <mxPoint x="950" y="1690" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="OmJjtn2S25yP7ZoNR1yh-57" parent="1" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.8;fontColor=#222222;fontSize=20;fontFamily=Times New Roman;" value="Derivative (D)&lt;br&gt;`((K_ds)/(T_fs+1))T_(s,m)`" vertex="1">
+                <mxCell id="OmJjtn2S25yP7ZoNR1yh-57" parent="1" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.8;fontColor=#222222;fontSize=20;fontFamily=Times New Roman;" value="Derivative (D)&lt;br&gt;`((K_ds)/(\tau_fs+1))T_(s,m)`" vertex="1">
                     <mxGeometry height="80" width="200" x="840" y="1920" as="geometry"/>
                 </mxCell>
                 <mxCell id="OmJjtn2S25yP7ZoNR1yh-58" edge="1" parent="1" style="endArrow=block;startArrow=none;endFill=1;startFill=1;html=1;rounded=0;strokeColor=#222222;strokeWidth=1.8;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="OmJjtn2S25yP7ZoNR1yh-57" value="">
