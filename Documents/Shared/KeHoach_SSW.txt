@@ -1,0 +1,107 @@
+KẾ HOẠCH BỘ CA CHẤM SSW (STEADY, SLIP, WEAVE) - thay năm ca DREWS bằng ba ca, mỗi ca 100 s
+==============================================================================================================================================================================================
+Người dùng chốt: 2026-10-23 (khung COMMON, Lượt 236 và 238 [common_1] của Tracking/historychat_common.md). Code: Model/Sim/script/make_cases.m, gọi make_cases('SSW'). Kết quả:
+Result/Controllers/<Ctrl>/Cases_ssw/
+(chỉ csv, không png; người dùng tự vẽ hình). Bảng cửa sổ: Result/Compare/SSW_summary/SSW_windows.csv.
+
+0. VÌ SAO CÓ SSW (đọc trước)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- DREWS v3 (năm ca DRY, RAMP, SLIP, EDGE, WEAVE, mỗi ca 100 s, 53 cửa sổ, chốt 11:34 cùng ngày, Documents/Shared/KeHoach_DREWS_v3.txt) cho cùng một thứ bậc ở cả năm ca (trung bình năm seed
+99995-99999, cả ca): Map có S thấp nhất nhưng R gấp 4-8 lần; PID có R thấp nhất nhưng S cao nhất; MapPID có R gần bằng PID (cao hơn khoảng 10 %), S thấp hơn PID 35-55 %, J = R x S tốt nhất ở
+cả năm ca. Năm ca kể cùng một câu chuyện nên người dùng thấy nhiều; gộp còn ba ca, mỗi ca trả lời một câu hỏi.
+- J của DREWS v3 (Map / PID / MapPID, N.m^2): DRY 0.191 / 0.065 / 0.048; EDGE 0.122 / 0.070 / 0.048; RAMP 0.088 / 0.032 / 0.026; SLIP 0.076 / 0.036 / 0.027; WEAVE 0.481 / 0.205 / 0.172.
+- Thử SLIP v4 trước đó (make_cases('SLIP_V4'), Result/Controllers/<Ctrl>/Cases_slip4/, Result/Compare/SLIP_v4_summary/, Figures/new/main/matlab/Fig_SLIP4_*.png): người dùng muốn thấy rõ mất
+bám như v1 (pud_in của v1: Map -86.8 % T_d,ref). Kết quả năm seed: sai số xác lập do mu của Map tăng theo mức dùng bám, trần khoảng -14 % kể cả khi lốp trước trượt hẳn (vệt bánh khí nén về 0
+nhưng còn caster e_c 0.023 m trong e_p0 0.048 m, và độ dốc map nén phần thay đổi T_r còn khoảng 1/(1 + s_m)); PID và MapPID trong +-0.5 %. Cảnh chuyển làn qua vũng nước kiểu v1 cho Map -86.7
+% (tái lập v1) nhưng cùng pha trên đường khô Map đã -76.6 % (PID -1.3 %): phần lớn con số đó là sai số động của Map khi đánh lái nhanh, phần do mu khoảng -10 %. Người dùng chốt: không cần
+biết do đâu, chỉ cần hai bộ kia cùng điều kiện cho số nhỏ hơn.
+- TRUNG THỰC: SSW được thiết kế SAU khi đã thấy kết quả DREWS v3 và SLIP v4; người dùng chủ động bỏ quy tắc "không sửa ca sau khi thấy kết quả" (QuyChuan 3.2A điểm e) cho lần này. DREWS v3
+và SLIP v4 giữ nguyên làm lịch sử (make_cases() vẫn trả DREWS v3, make_cases('SLIP_V4') vẫn có), không xóa kết quả. Khi viết bài phải nêu thứ tự này.
+- Thứ bậc mong muốn mà SSW phải làm rõ (người dùng nêu): Map chưa tối ưu, PID ở mức trung bình, MapPID tốt nhất. Đo bằng hai chỉ tiêu cùng lúc (R và S, hay J), không chỉ R: chỉ xét R thì PID
+nhỉnh hơn MapPID khoảng 10 %.
+
+1. BA CA (mỗi ca đúng 100.000 s; tốc độ, mức a_y ngoài lưới CALIB v2; người lái vòng hở theo góc như DREWS v3; 2 s đầu không chấm)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1.1 STEADY = DRY + EDGE: cua giữ đều trên đường khô (mu 0.8), từ nhẹ tới gần giới hạn. Câu hỏi: sai số dư khi giữ đều (giới hạn độ dốc của map, Map yếu nhất ở đây), độ ồn khi giữ đều.
+    tốc độ    mức giữ (dấu: trái +, phải -)    cửa sổ (1 s cuối của mỗi mức)
+    25 km/h   +0.15, -0.25 g (giới hạn Plant 0.31 g)    v25a0p15l, v25a0p25r
+    45 km/h   +0.15, -0.25, +0.35 g                     v45a0p15l, v45a0p25r, v45a0p35l
+    65 km/h   -0.15, +0.25, -0.35 g                     v65a0p15r, v65a0p25l, v65a0p35r
+    85 km/h   +0.15, -0.25, +0.38 g                     v85a0p15l, v85a0p25r, v85a0p38l
+    Mỗi mức 7 s: lên 1 s, giữ 4 s, về 0 trong 1 s, đi thẳng 1 s. Giữa hai tốc độ đi thẳng đổi tốc 4 s. Từ 89 s đến 100 s đi thẳng. 11 cửa sổ. Vô-lăng lớn nhất 130 độ (25 km/h, 0.25 g).
+1.2 SLIP = RAMP + SLIP: đang cua mà điều kiện đổi. Câu hỏi: bộ nào giữ được cảm giác lái khi tốc độ đổi (T_d,ref đổi liên tục) và khi mu giảm tới vượt bám.
+    ramp   0.2 g trái, 90 -> 45 -> 90 km/h, mỗi chiều 13 s, giữ 3 s ở 45 km/h       cửa sổ ramp_hi (90 km/h), ramp_dn, ramp_lo (45 km/h), ramp_up
+    stair  60 km/h, 0.3 g phải, mu 0.8 -> 0.5 -> 0.33 -> 0.24 mỗi bậc 5 s, về 0.8   cửa sổ stair_ref (mu 0.8), stair_m0p5, stair_m0p33, stair_m0p24 (2 s cuối mỗi bậc), stair_rec (6 s sau khi
+mu về 0.8)
+           dùng bám yêu cầu |a_y,target| / mu = 0.375, 0.6, 0.91, 1.25 (bậc cuối vượt bám, lốp trước trượt)
+    pud    80 km/h, 0.25 g trái, vũng nước mu 0.2 trong 2 s (dùng bám yêu cầu 1.25)  cửa sổ pud_ref, pud_in, pud_rec (3 s sau khi mu về 0.8)
+    Nối bằng chain() (đoạn thẳng đổi tốc), cuối ca đi thẳng tới 100 s. 12 cửa sổ.
+1.3 WEAVE: lái liên tục. Câu hỏi: đáp ứng động khi đánh lái, chỗ phản hồi sai số mạnh nhất; độ ồn của khâu D khi lái liên tục (chỗ MapPID hơn PID rõ nhất).
+    ctr    95 km/h, lượn quanh tâm 0.05 g 0.2 Hz, 4 chu kỳ (T_d,ref nhỏ, gần vùng chết của Map)            cửa sổ ctr
+    lane   80 km/h, hai lần chuyển làn giống hệt nhau 0.2 g 0.4 Hz; lần 1 đường khô (tham chiếu), lần 2 qua vũng mu 0.2 trong 0.4 s ngay sau đỉnh
+           đánh lái (0.8-1.2 s trong chu kỳ, cùng pha pud_in của v1)                                    cửa sổ lane_ref, lane_in (0.4 s cùng pha), lane_rec
+    sw     70 km/h, sin 0.1 g quét tần số 0.3 Hz (2 chu kỳ), 0.8 Hz (3), 1.5 Hz (5)                         cửa sổ sw0p3, sw0p8, sw1p5
+    mu3    60 km/h trên mu 0.3, lượn 0.15 g 0.75 Hz, 8 chu kỳ (dùng bám 0.5)                                cửa sổ mu3
+    ctr giữ 4 chu kỳ như WEAVE v3 (dự kiến 12 s lúc bàn, kéo lại 20 s để lấp ca 100 s thay vì đi thẳng dài). 8 cửa sổ.
+
+2. CHỈ TIÊU (cột của run_cases.m, không đổi)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Cả ca: R = RMS e_T (N.m), S = RMS của T_a lọc cao qua 5 Hz (N.m), J = R x S, MaxAbs_eT, Heavy_s, Light_s, MinRatio, Sat_pct. Mỗi ca trình bày bằng một hình (R, S) ba điểm và J; thứ bậc Map
+/ PID / MapPID đọc từ đó.
+- Cửa sổ: Mean_eT_signed_pct_of_Tdref (sai số có dấu, % T_d,ref, đúng chỉ tiêu của con số -86.8 % ở v1), RMS e_T, Recovery_s (cửa sổ đuôi _rec).
+- Delta (stair, pud, lane): sai số có dấu của cửa sổ trừ sai số của cửa sổ tham chiếu cùng cảnh (stair_ref, pud_ref, lane_ref), để tách phần do mu khỏi phần sai số nền của Map. Chỉ báo cáo;
+người dùng không cần tách khi trình bày.
+- Ngưỡng hòa 5 % (QuyChuan) hoặc độ lệch giữa các seed, lấy cái lớn hơn.
+
+3. SEED (người dùng chốt: không dùng lại seed của BẤT KỲ quá trình nào trước đó)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Đã dùng trước 2026-10-23 (dò tên file trong Result/, Model/, scratch/ và số trong .m, .json, .md, .txt): 00000-00005, 10000-10005, 20000, 30000-30005, 40000, 50000, 50001, 60000, 77777,
+90001, 99990-99999 (99990-99994 so mặt Pareto chung, 99995-99999 DREWS v3 và SLIP v4).
+- Bước 1, seed riêng của từng bộ (ba seed mới trong dải của bộ đó, QuyChuan và Tracking/CLAUDE.md): Map 01001, 01002, 01003; PID 11001, 11002, 11003 (PID dùng dải 10000-19999); MapPID 31001,
+31002, 31003.
+- Bước 2, seed chung cho cả ba bộ (so sánh): 99987, 99988, 99989 (đếm lùi tiếp từ 99990, chưa từng dùng).
+- Thiết kế (tham số) của ba bộ KHÔNG đổi: thiết kế cuối đã chọn trên mặt Pareto chung (Model/data/map.json, pid.json, mappid.json).
+
+4. CODE VÀ CHẠY
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- make_cases('SSW') -> [buildSTEADY, buildSLIPS, buildWEAVES], assert mỗi ca 100 s. run_cases(ctrl, seed, 'SSW') -> Result/Controllers/<Ctrl>/Cases_ssw/ (token result_dir 'CasesSSW'), ghi
+<Ctrl>_<CASE>_sig_<sens>.csv và <Ctrl>_metrics_<sens>.csv, KHÔNG ghi png. run_scoring_seeds(ctrl, seeds, 'SSW') chạy nhiều seed, chạy tiếp được.
+- tools/jobs/ssw_pipeline.sh: mỗi bộ một MATLAB, chạy ba seed riêng rồi ba seed chung; ba bộ song song; cần guard_ram.ps1. Cờ xong: scratch/jobs/ssw_all_done.txt.
+- Bảng cửa sổ (t0, t1 từng cửa sổ): Result/Compare/SSW_summary/SSW_windows.csv (xuất bằng scratch/export_ssw_windows.m).
+
+5. KẾT QUẢ
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Chạy xong 2026-10-23 (18 lượt: ba bộ x ba seed riêng + ba seed chung, không lượt nào hỏng; PID seed chung khởi động lại một lần, dữ liệu đủ). Bảng: Result/Compare/SSW_summary/SSW_all_runs.csv,
+SSW_whole_case.csv, SSW_windows_summary.csv (tools/summarize_ssw.py).
+5.1 Cả ca, seed chung 99987-99989 (trung bình; độ lệch seed của R và S dưới 1 %, seed riêng cho cùng số tới chữ số thứ ba):
+    ca       bộ       R (N.m)   S (N.m)   J (N.m^2)   Light_s   Heavy_s
+    STEADY   Map      1.058     0.198     0.210        6.9      26.0
+    STEADY   PID      0.247     0.680     0.168        2.1       1.8
+    STEADY   MapPID   0.258     0.441     0.114        2.3       1.9
+    SLIP     Map      0.690     0.204     0.140       14.7      13.4
+    SLIP     PID      0.194     0.600     0.116        0.6       1.1
+    SLIP     MapPID   0.208     0.422     0.088        0.6       1.2
+    WEAVE    Map      1.451     0.289     0.420       14.3      26.0
+    WEAVE    PID      0.179     1.036     0.185       10.8       4.8
+    WEAVE    MapPID   0.243     0.639     0.155       13.3       4.9
+    Thứ bậc đúng ở cả ba ca: Map có S thấp nhất nhưng R gấp 3-8 lần, J kém nhất (chưa tối ưu); PID có R thấp nhất nhưng S cao nhất, J ở giữa; MapPID có J tốt
+    nhất (thấp hơn PID 32 % STEADY, 24 % SLIP, 16 % WEAVE), S thấp hơn PID 35 %, 30 %, 38 %. R của MapPID so với PID: STEADY +4 % (hòa theo ngưỡng 5 %),
+    SLIP +7 %, WEAVE +36 % (MapPID bám kém PID rõ khi lái liên tục, đổi lại ồn ít hơn hẳn).
+5.2 Cửa sổ (sai số có dấu, % T_d,ref, seed chung):
+    STEADY   Map tăng theo mức a_y: dưới 1.3 % ở 0.15-0.25 g (trừ 25 km/h 0.25 g: +9.5 %), +32 % ở 45 km/h 0.35 g, +11 % ở 65 km/h 0.35 g, +19 % ở 85 km/h
+             0.38 g (tay lái nặng hơn mức đặt); PID và MapPID dưới 0.3 % mọi cửa sổ.
+    SLIP     ramp: Map -9.3 % lúc tăng tốc, +2.8 % ở 45 km/h; stair Delta Map -1.8 / -6.7 / -14.2 % ở mu 0.5 / 0.33 / 0.24 (dùng bám đạt 0.60 / 0.87 / 0.91);
+             pud_in Map -12.6 %; PID và MapPID trong +-0.7 % mọi cửa sổ trừ đuôi hồi phục (mu về 0.8 khi lốp đang trượt: Map +29 % / +19 %, PID +3.8 % / +6.0 %,
+             MapPID +3.1 % / +5.0 %).
+    WEAVE    lane_ref (đường khô) Map -76.6 %, lane_in (vũng nước) Map -86.7 %; PID -1.9 / -2.0 %, MapPID -2.5 / -2.6 %. Ở các cửa sổ sin trọn chu kỳ (sw, mu3)
+             sai số có dấu trung bình về gần 0 với cả ba bộ nên dùng RMS e_T: Map 1.7-2.6 N.m, PID 0.14-0.35, MapPID 0.18-0.60 (tăng theo tần số; ở 1.5 Hz
+             MapPID 0.60 so với PID 0.35).
+    Độ lệch giữa seed của sai số có dấu: Map dưới 0.05 điểm %, PID và MapPID tới khoảng 2 điểm % (cửa sổ ngắn 0.4 s của lane).
+5.3 Người lái vòng hở theo được giá trị đặt: tỉ số a_y đạt / a_y đặt trong cửa sổ = 1.00 ở STEADY và các cửa sổ ramp; nhỏ hơn 1 ở các bậc mu sâu (0.73 ở
+    stair_m0p24, 0.78 ở pud_in: xe vượt bám, đúng chủ ý) và ở sin tần số cao (0.61 ở 1.5 Hz, tính chất của Plant, như WEAVE v3).
+
+6. VIỆC CÒN TREO
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Khóa SSW (mã băm SHA-256 của make_cases.m và run_cases.m) như DREWS_v3_LOCKED.txt; mã băm trong DREWS_v3_LOCKED.txt đã không còn khớp vì make_cases.m có thêm SLIP v4 và SSW (các ca v3 không đổi).
+- Ghi nhật ký đổi của QuyChuan.txt (bộ ca chấm từ DREWS sang SSW) và sửa mục 4 của bài báo (Documents/Paper/Simulation Setup and Evaluation Methodology.txt) khi người dùng bảo.
+- Hình: người dùng tự vẽ từ csv.

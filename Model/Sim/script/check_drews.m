@@ -1,12 +1,12 @@
 function R = check_drews(ctrlName)
-%CHECK_DREWS Feasibility check of the DREWS v2 cases (KeHoach_DREWS_v2.txt 1.6 and 3.3): can the open-loop driver follow every segment?
+%CHECK_DREWS Feasibility check of the DREWS v3 cases (KeHoach_DREWS_v3.txt, as KeHoach_DREWS_v2.txt 1.6 and 3.3): can the open-loop driver follow every segment?
 %
 %   R = check_drews('PID')     run load_<ctrl> first; ideal sensors; ONE controller is used only to make the closed loop run (the check is about the driver
 %                              and the grip, not about the controller: the numbers must not be used to adjust a case in favour of any controller)
 %
-%   Per case: duration (must be 60.000 s), largest hand-wheel angle, largest grip use |a_y| / (mu g) of the TARGET and of the ACHIEVED a_y, and per window the
+%   Per case: duration (must be 100.000 s), largest hand-wheel angle, largest grip use |a_y| / (mu g) of the TARGET and of the ACHIEVED a_y, and per window the
 %   achieved mean a_y against the target mean (the achieved a_y is the Plant output, so it includes the effect of the controller on the column torque).
-%   Writes Result/Compare/DREWS_v2_check/DREWS_v2_check_<ctrl>_windows.csv and ..._cases.csv.
+%   Writes Result/Compare/DREWS_v3_check/DREWS_v3_check_<ctrl>_windows.csv and ..._cases.csv.
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
@@ -14,7 +14,7 @@ addpath(modelDir); setup_paths;
 mdl = ['Model_' ctrlName];
 g = 9.81;
 TC = make_cases();
-outDir = result_dir('Compare', 'DREWS_v2_check');
+outDir = result_dir('Compare', 'DREWS_v3_check');
 rowsC = {}; rowsW = {};
 for k = 1:numel(TC)
     S = TC(k);
@@ -44,8 +44,8 @@ for k = 1:numel(TC)
 end
 Rc = cell2table(rowsC, 'VariableNames', {'Case', 'Duration_s', 'MaxHandWheel_deg', 'MaxGripUseTarget', 'MaxGripUseAchieved', 'MaxAy_g', 'Vmin_kmh', 'Vmax_kmh', 'MuMin', 'MuMax'});
 Rw = cell2table(rowsW, 'VariableNames', {'Case', 'Window', 't0', 't1', 'AyTargetMean_g', 'AyAchievedMean_g', 'AyErr_pct_of_target', 'AyTargetPeak_g', 'AyAchievedPeak_g', 'AyPeakErr_pct', 'TdRefPeak_Nm', 'GripUseTargetMax', 'GripUseAchievedMax', 'MuMean'});
-writetable(Rc, fullfile(outDir, sprintf('DREWS_v2_check_%s_cases.csv', ctrlName)));
-writetable(Rw, fullfile(outDir, sprintf('DREWS_v2_check_%s_windows.csv', ctrlName)));
+writetable(Rc, fullfile(outDir, sprintf('DREWS_v3_check_%s_cases.csv', ctrlName)));
+writetable(Rw, fullfile(outDir, sprintf('DREWS_v3_check_%s_windows.csv', ctrlName)));
 R.cases = Rc; R.windows = Rw;
 disp(Rc); disp(Rw);
 evalin('base', 'clear sc_theta1 sc_v sc_mu');

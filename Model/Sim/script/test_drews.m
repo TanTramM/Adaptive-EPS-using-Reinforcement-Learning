@@ -7,7 +7,7 @@ scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
 addpath(modelDir); setup_paths;
 nfail = 0;
-C = make_cases();
+C = make_cases('DREWS_V2');
 names = {'DRY', 'RAMP', 'SLIP', 'EDGE', 'WEAVE'};
 nfail = nfail + check(numel(C) == 5 && isequal({C.tag}, names), 'five cases in the order DRY, RAMP, SLIP, EDGE, WEAVE');
 for k = 1:numel(C)

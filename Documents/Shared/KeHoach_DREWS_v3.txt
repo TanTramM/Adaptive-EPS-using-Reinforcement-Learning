@@ -1,0 +1,66 @@
+KẾ HOẠCH DREWS v3 (năm ca chấm, mỗi ca đúng 100,000 s; khung COMMON viết 2026-10-23; CHƯA dựng, CHƯA chạy, chờ người dùng duyệt)
+===========================================================================================================================================================================================
+
+0. Mục đích, nguyên tắc
+Giữ đúng câu hỏi của từng ca ở DREWS v2 (KeHoach_DREWS_v2.txt mục 1) và các nguyên tắc (a)-(f) của bản đó, chỉ đổi: (1) mỗi ca dài đúng 100,000 s (tổng 500 s) để mỗi câu hỏi có đủ cửa sổ ở
+nhiều tốc độ và mức; (2) SLIP được thiết kế lại để đo RÕ phần mất bám do mu giảm của bộ không có hồi tiếp theo sai số (Map), tách khỏi sai số nền trên đường khô; (3) thêm chỉ tiêu Delta (mục
+2). DREWS v2 giữ làm hồ sơ: make_cases('DREWS_V2'), thư mục Cases_v2; v3 ghi vào Cases_v3 (result_dir khóa 'CasesV3'). Mọi ràng buộc mô hình của v2 giữ nguyên: 20 km/h chỉ tới khoảng 0.2 g;
+không sin dưới 40 km/h; đổi tốc độ không nhanh hơn 0.2 s mỗi km/h; mức dùng bám a_y/mu không quá 0.86 ở cảnh có bước mu; điều kiện ngoài lưới CALIB v2 (tốc độ không thuộc {20, 30, ..., 100},
+mức giữ không thuộc {0.1, 0.2, 0.3} g, mu bước không bằng 0.8 hay 0.35 ở mức mu thấp, tần số không bằng 0.5 và 1 Hz). Chốt trước khi chạy bất kỳ bộ nào (DREWS_v3_LOCKED.txt với mã băm
+SHA-256 của make_cases.m và run_cases.m); sau khi chốt không sửa ca.
+
+0.1. Phép thử tĩnh làm trước khi thiết kế SLIP (scratch/probe_map_mu.m, scratch/probe_map_mu.csv, 2026-10-23)
+Cách làm: không mô phỏng Simulink; trạng thái cua ổn định của map_steady_state.m (lốp Magic Formula, vệt bánh e_p giảm theo tan(alpha_f)/mu) cộng cân bằng cột lái T_s + M(T_s) = T_r với bảng
+Map thiết kế cuối (K 6.77, Ts0 0.3), so với T_d,ref(v, a_y). Hai mô hình người lái: giữ a_y, và giữ góc vô-lăng (như make_cases). PID và MapPID có khâu tích phân nên sai số xác lập bằng 0 ở
+cả hai mô hình (không tính).
+Kết quả (sai số có dấu của Map theo % T_d,ref, người lái giữ góc; âm = trợ lực thừa, tay nhẹ):
+| v [km/h] | a_y [g] | mu 0.8 | 0.6 | 0.5 | 0.4 | 0.35 | 0.3 |
+| 50 | 0.30 | +0.5 | -0.5 | -1.4 | -3.2 | -4.7 (dùng bám 0.86) | -7.6 (1.0, không theo được) |
+| 60 | 0.25 | 0.0 | -1.0 | -1.7 | -2.5 | -3.2 | -4.1 (0.83) |
+| 70 | 0.25 | 0.0 | -0.8 | -1.4 | -2.4 | -3.2 | -4.4 (0.83) |
+| 100 | 0.20 | +0.2 | -0.2 | -0.5 | -0.9 | -1.2 | -1.7 |
+Kiểm chéo với DREWS v2 đã chạy (Map, thiết kế cuối): cảnh drop (70 km/h, 0.2 g, mu 0.5) phép thử tĩnh -0.78 %, đo -0.69 %; cảnh rise trước bước (55 km/h, 0.2 g, mu 0.4) tĩnh +0.7 đến +1.4 %,
+đo +1.2 %. Phép thử tĩnh khớp mô phỏng trong khoảng 0.1-0.3 %.
+Kết luận dùng để thiết kế: (1) trong Plant hiện tại, phần mất bám do mu của Map tăng theo mức dùng bám a_y/mu, nhỏ hơn 2 % khi dùng bám dưới 0.5 (đó là lý do SLIP v2 không thấy: drop dùng
+0.40, rise 0.50, vũng nước chỉ 1 s) và đạt 4-5 % ở mức dùng bám 0.83-0.86 (giới hạn đã chốt); (2) không thể làm lớn hơn mà không vượt giới hạn người lái vòng hở hoặc sửa Plant (PRSM không
+được sửa); (3) sai số nền của Map trên đường khô ở 40-60 km/h (+0.5 đến +2.9 %) cùng cỡ với phần do mu, nên phải báo hiệu số Delta so với chính cửa sổ mu 0.8 cùng tốc độ và a_y; (4) độ lệch
+giữa seed của Map khoảng 0.02 %, nên 4-5 % đo được rất chắc (hơn 100 lần độ lệch seed) dù nhỏ hơn ngưỡng cảm nhận 10 %. Bài phải viết thẳng: mất bám do mu của Map là có thật, đo rõ, nhưng
+nhỏ trong mô hình này.
+
+1. Năm ca (mỗi ca đúng 100,000 s; thời gian từng đoạn khung dựng chỉnh cho khớp, kiểm khả thi như KeHoach_DREWS_v2 mục 1.6)
+1.1. DRY - độ chính xác tĩnh ở tốc độ không dùng để chọn tham số. Đường khô mu 0.8. Bảy khối 25, 35, 45, 55, 75, 85, 95 km/h theo thứ tự đó. Mỗi khối 11 s như v2: giữ 0.15 g trái 4 s (vào 1
+s, lắng 2 s, cửa sổ 1 s), về 0 trong 1.5 s, giữ 0.25 g phải 4 s, về 0 trong 1.5 s; riêng 25 km/h mức thứ hai là 0.18 g (Plant chỉ tới khoảng 0.2 g). Đổi tốc độ khi đi thẳng giữa hai khối: 3
+s cho 10 km/h, 4 s cho 20 km/h (55 lên 75). Đầu ca 2 s đi thẳng, cuối ca đi thẳng đệm. Tổng 2 + 77 + 19 + 2 = 100 s. Cửa sổ dry_v<v>a<g><l|r>. Thêm so với v2: 35 và 55 km/h, vùng Map yếu
+nhất trên CALIB.
+1.2. RAMP - bám khi giá trị đặt đổi liên tục theo tốc độ (phanh hoặc tăng tốc trong cua). Đường khô. Cảnh A 0.18 g trái: 95 km/h giữ 4 s, giảm đều 95 xuống 45 km/h trong 20 s, giữ 4 s, tăng
+lại 95 km/h trong 20 s, giữ 3 s (khoảng 53 s kể cả vào và ra cua). Cảnh B 0.25 g phải, đổi tốc độ nhanh gấp đôi: 85 xuống 45 km/h trong 10 s, giữ 4 s, lên lại 85 km/h trong 10 s, giữ 3 s
+(khoảng 35 s); hai cảnh nối bằng đi thẳng, cuối ca đệm tới 100 s. Cửa sổ: <cảnh>_dn, <cảnh>_up, các đoạn giữ. Câu hỏi thêm so với v2: sai số có phụ thuộc tốc độ đổi không.
+1.3. SLIP - mất bám khi mu giảm (tay nhẹ), nặng tay và hồi phục khi mu tăng. Ba cảnh, mỗi cảnh có cửa sổ tham chiếu mu 0.8 ở CÙNG tốc độ và a_y để tính Delta.
+  (a) 'stair' 60 km/h, 0.27 g trái (khoảng 45 s): mu 0.8 giữ 6 s (cửa sổ ref = 2 s cuối), rồi bậc 0.6, 0.45, 0.38, 0.32 mỗi bậc giữ 7 s (cửa sổ st<mu> = 2 s cuối; dùng bám 0.84 ở 0.32), rồi
+bậc lên 0.8 giữ 8 s (cửa sổ rise_in 2 s đầu, rise_rec tới 6 s, hồi phục). Đo được đường cong sai số theo mu ở trạng thái xác lập.
+  (b) 'ramp' 80 km/h, 0.24 g phải (khoảng 32 s): mu 0.8 giữ 5 s (ref), giảm đều 0.8 xuống 0.29 trong 18 s (dùng bám cuối 0.83), giữ 5 s (cửa sổ ramp_lo = 2 s cuối), về 0.8 trong 4 s. Mu đổi
+chậm nên gần tĩnh: hình sai số theo mu liên tục, không lẫn quá độ.
+  (c) 'pud' 90 km/h, 0.2 g trái (khoảng 14 s): vũng nước mu 0.25 trong 1.5 s (dùng bám 0.80) rồi về 0.8; cửa sổ ref, pud_in, pud_rec. Giữ câu hỏi quá độ của v2.
+  Tổng khoảng 91 s cộng đi thẳng nối và đệm tới 100 s. Dự kiến theo phép thử tĩnh 0.1: Map Delta khoảng -1 % (0.6) đến -4 đến -5 % (0.32, 0.29); PID và MapPID về gần 0 sau quá độ (chênh lệch
+giữa ba bộ nằm ở Delta xác lập và ở thời gian hồi phục).
+1.4. EDGE - gần giới hạn trợ lực, ngoài vùng thiết kế (trên 0.3 g), đường khô. Ba cảnh giữ 0.35 g 5 s rồi 0.38 g 5 s ở 45, 65, 85 km/h (chiều trái, phải, trái; cửa sổ 1 s cuối mỗi mức), hai
+cảnh vào cua nhanh tới 0.35 g trong 0.5 s và giữ 4 s ở 55 và 75 km/h. Kiểm a_y,max của Plant đủ ở 45 km/h. Tổng 100 s với đi thẳng nối.
+1.5. WEAVE - ồn và cảm giác quanh tâm, trễ pha khi lái nhanh, lái liên tục. (a) 95 km/h lái nhẹ quanh tâm 0.05 g, 0.2 Hz, 6 chu kỳ (30 s), mu 0.8; (b) đổi làn kép hai xung 0.25 g, 0.6 Hz ở
+75 km/h và ở 90 km/h (mỗi lần 8 s), mu 0.8; (c) 60 km/h mu 0.3, lượn 0.15 g, 0.75 Hz, 8 chu kỳ (10.7 s; dùng bám 0.5); (d) 70 km/h quét tần số 0.3 lên 1.5 Hz biên 0.1 g trong 20 s, mu 0.8
+(trễ pha theo tần số; quét đi qua 0.5 và 1 Hz mà không dừng ở đó, ngoại lệ có ghi của nguyên tắc tần số). Tổng 100 s với nối và đệm.
+
+2. Chỉ tiêu
+2.1. Giữ toàn bộ chỉ tiêu của DREWS v2 (KeHoach_DREWS_v2 mục 2.1-2.2) cho mọi ca, năm seed 99995-99999, trung bình và độ lệch.
+2.2. Thêm cho SLIP: Delta_w = e_rel có dấu của cửa sổ w trừ e_rel có dấu của cửa sổ ref cùng cảnh (%, âm = tay nhẹ hơn so với chính bộ đó trên đường khô); độ dốc Delta theo mu (bình phương
+tối thiểu trên các bậc của 'stair'); Delta ở ramp_lo; thời gian hồi phục sau bậc lên (đã có). Hình: e_T theo thời gian với mu chồng lên, và Delta theo mu của ba bộ trên một trục (cảnh
+'stair' là điểm, 'ramp' là đường).
+2.3. So sánh như v2: chênh dưới 5 % hoặc dưới độ lệch seed thì coi là ngang nhau. Không gộp thành điểm tổng.
+
+3. Việc (khi người dùng duyệt)
+3.1. make_cases: đổi tập hiện hành thành v3, giữ 'DREWS_V2' và 'DREWS_V1'; viết buildDRY3, buildRAMP3, buildSLIP3, buildEDGE3, buildWEAVE3 theo mục 1; mỗi ca kiểm đúng 100,000 s.
+3.2. Kiểm khả thi bằng mô phỏng với Model_PID (thiết kế cuối, cảm biến lý tưởng): a_y thực trong 10 % mức đặt, dùng bám lớn nhất từng cảnh không quá 0.86 (trừ vũng nước 1.5 s), không trượt
+ngoài ý. Không chỉnh ca theo kết quả của bất kỳ bộ nào.
+3.3. run_cases: cửa sổ ref và cột Delta (mục 2.2); result_dir khóa 'CasesV3'.
+3.4. Chốt (QuyChuan nhật ký thay đổi, DREWS_v3_LOCKED.txt), rồi chạy Map, PID, MapPID thiết kế cuối, năm seed 99995-99999; bảng tóm tắt Result/Compare/DREWS_v3_summary/.
+3.5. Ước lượng thời gian (theo tốc độ đo được ở CALIB: Map 100-570 s mỗi 140 s mô phỏng, PID khoảng 10 s, MapPID khoảng 47 s): Map 25 lần chạy 100 s, cỡ 0.5-2 giờ mỗi MATLAB; PID và MapPID
+dưới 30 phút. Đây là ước lượng, chưa đo.

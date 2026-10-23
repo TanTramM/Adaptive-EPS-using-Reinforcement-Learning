@@ -23,6 +23,12 @@ function p = result_dir(varargin)
         if strcmp(parts{3}, 'Calib'), parts{3} = 'Calib_v2'; elseif strcmp(parts{3}, 'CalibV1'), parts{3} = 'Calib'; end
         % DREWS v2 (2026-10-22): the token 'CasesV2' is Cases_v2 on disk; 'Cases' stays the folder of DREWS v1 and is never written by v2 runs
         if strcmp(parts{3}, 'CasesV2'), parts{3} = 'Cases_v2'; end
+        % DREWS v3 (2026-10-23): the token 'CasesV3' is Cases_v3 on disk
+        if strcmp(parts{3}, 'CasesV3'), parts{3} = 'Cases_v3'; end
+        % SLIP v4 alone (2026-10-23): the token 'CasesSLIP4' is Cases_slip4 on disk
+        if strcmp(parts{3}, 'CasesSLIP4'), parts{3} = 'Cases_slip4'; end
+        % SSW (2026-10-23): the token 'CasesSSW' is Cases_ssw on disk
+        if strcmp(parts{3}, 'CasesSSW'), parts{3} = 'Cases_ssw'; end
     end
     root = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))), 'Result');   % this file is Model/common/
     p = fullfile(root, parts{:});

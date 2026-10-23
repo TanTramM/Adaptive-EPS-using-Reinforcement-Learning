@@ -1,8 +1,9 @@
 function C = make_cases(which)
 %MAKE_CASES The scenario set shared by EVERY controller (Map, PI, PID, SMC, ISMC, RL, ...).
 %
-%   C = make_cases()          the scoring cases DREWS v2 [DRY, RAMP, SLIP, EDGE, WEAVE], each EXACTLY 60.000 s (2026-10-22, Documents/Shared/KeHoach_DREWS_v2.txt;
-%                             struct array, run by run_cases.m). Every condition lies outside the grid of CALIB v2 (speeds 25, 45, 55, 65, 70, 75, 85, 90, 95 km/h ...)
+%   C = make_cases()          the scoring cases DREWS v3 [DRY, RAMP, SLIP, EDGE, WEAVE], each EXACTLY 100.000 s (2026-10-23, Documents/Shared/KeHoach_DREWS_v3.txt;
+%                             struct array, run by run_cases.m). Every condition lies outside the grid of CALIB v2 (speeds 25, 35, 45, 55, 65, 75, 85, 95 km/h ...)
+%   C = make_cases('DREWS_V2') the cases DREWS v2 (five cases of 60 s, 2026-10-22, locked in Documents/Shared/DREWS_v2_LOCKED.txt), kept to reproduce Cases_v2/
 %   C = make_cases('DREWS_V1') the old five cases DREWS v1 (DRY 129 s, RAMP 308.6 s, SLIP 63 s, WEAVE 61 s, EDGE), kept to reproduce the old results (Cases/);
 %                             the descriptions below are those of v1
 %   C = make_cases('CALIB')   the calibration case CALIB v2 only (150 s, 2026-10-17; not a scoring case; every controller picks its parameters on it,
@@ -65,9 +66,28 @@ if nargin > 0 && strcmp(which, 'DREWS_V1')
     C = [buildDRY(thTab), buildRAMP(thTab, modelDir), buildSLIP(thTab), buildWEAVE(thTab), buildEDGE(thTab)];
     return;
 end
-C = [buildDRY2(thTab), buildRAMP2(thTab), buildSLIP2(thTab), buildEDGE2(thTab), buildWEAVE2(thTab)];
+if nargin > 0 && strcmp(which, 'DREWS_V2')
+    C = [buildDRY2(thTab), buildRAMP2(thTab), buildSLIP2(thTab), buildEDGE2(thTab), buildWEAVE2(thTab)];
+    for k = 1:numel(C)
+        assert(abs(C(k).t(end) - 60) < 1e-9, 'DREWS v2: case %s is %.3f s, not 60 s', C(k).tag, C(k).t(end));
+    end
+    return;
+end
+if nargin > 0 && strcmp(which, 'SSW')
+    C = [buildSTEADY(thTab), buildSLIPS(thTab), buildWEAVES(thTab)];
+    for k = 1:numel(C)
+        assert(abs(C(k).t(end) - 100) < 1e-9, 'SSW: case %s is %.3f s, not 100 s', C(k).tag, C(k).t(end));
+    end
+    return;
+end
+if nargin > 0 && strcmp(which, 'SLIP_V4')
+    C = buildSLIP4(thTab);
+    assert(abs(C.t(end) - 100) < 1e-9, 'SLIP v4: case is %.3f s, not 100 s', C.t(end));
+    return;
+end
+C = [buildDRY3(thTab), buildRAMP3(thTab), buildSLIP3(thTab), buildEDGE3(thTab), buildWEAVE3(thTab)];
 for k = 1:numel(C)
-    assert(abs(C(k).t(end) - 60) < 1e-9, 'DREWS v2: case %s is %.3f s, not 60 s', C(k).tag, C(k).t(end));
+    assert(abs(C(k).t(end) - 100) < 1e-9, 'DREWS v3: case %s is %.3f s, not 100 s', C(k).tag, C(k).t(end));
 end
 end
 
@@ -247,6 +267,205 @@ function S = buildWEAVE2(thTab)
     c.tEnd = 14; c.kv = [0 60; 14 60]; c.ka = [0 0; 14 0]; c.kmu = [0 0.3; 14 0.3]; c.sines = [2 2+5/0.75 0.15 0.75];
     c.win = struct('label', {'mu3'}, 't0', {2.5}, 't1', {2 + 5/0.75});
     S = chain('WEAVE', 'WEAVE v2: lái liên tục (quanh tâm, đổi làn kép, mặt trơn)', {a, l, c}, thTab);
+end
+
+
+%% ===================== DREWS v3 (2026-10-23): five scoring cases of EXACTLY 100 s each =====================
+% Plan and reasons: Documents/Shared/KeHoach_DREWS_v3.txt. Same questions as v2, longer cases (more windows, more speeds), and a SLIP built to show the loss of
+% tracking of a controller without error feedback when mu drops (the static probe scratch/probe_map_mu.m: the loss grows with the grip use a_y/mu, 4-5 % of
+% T_d,ref at 0.83-0.86). Window labels: SLIP windows <scene>_ref are the same scene on mu 0.8 (reference for the signed error difference Delta).
+
+%% DRY v3: six speeds outside the CALIB grid, blocks of 12 s (left level, crossing, right level, back to 0), windows of 2 s
+function S = buildDRY3(thTab)
+    speeds = [25 35 45 55 75 95]; ayL = [0.15 0.15 0.15 0.15 0.15 0.15]; ayR = [0.22 0.22 0.25 0.25 0.25 0.25];   % 25 km/h: Plant limit 0.31 g, 35 km/h: 0.585 g
+    kv = [0 speeds(1)]; ka = [0 0]; win = struct('label', {}, 't0', {}, 't1', {});
+    tb = 2;                                                     % 2 s of straight at the start (never scored)
+    for i = 1:numel(speeds)
+        v = speeds(i);
+        % block of 12 s: left level (ramp 1 s, settle 2 s, window 2 s), crossing to the right level in 2 s, settle 2 s, window 2 s, back to 0 in 1 s
+        ka = [ka; tb, 0; tb + 1, ayL(i); tb + 5, ayL(i); tb + 7, -ayR(i); tb + 11, -ayR(i); tb + 12, 0]; %#ok<AGROW>
+        win(end+1) = struct('label', dryLabel(v, ayL(i), 1), 't0', tb + 3, 't1', tb + 5); %#ok<AGROW>
+        win(end+1) = struct('label', dryLabel(v, ayR(i), -1), 't0', tb + 9, 't1', tb + 11); %#ok<AGROW>
+        kv = [kv; tb, v; tb + 12, v]; %#ok<AGROW>
+        tb = tb + 12;
+        if i < numel(speeds)
+            dt = max(4, 0.2 * abs(speeds(i+1) - v));            % straight speed change between blocks
+            kv = [kv; tb + dt, speeds(i+1)]; %#ok<AGROW>
+            tb = tb + dt;
+        end
+    end
+    tEnd = 100;
+    assert(tb <= tEnd - 2, 'DRY v3 timeline is %g s', tb);
+    S = assemble('DRY', 'DRY v3: độ chính xác tĩnh ở tốc độ và mức ngoài lưới CALIB', tEnd, kv, ka, [0 0.8; tEnd 0.8], zeros(0, 4), thTab, win);
+end
+
+%% RAMP v3: set-point follows the speed while cornering; scene A slow (0.18 g, 95-45-95 km/h, 20 s each way), scene B fast (0.25 g, 85-45-85 km/h, 10 s each way)
+function S = buildRAMP3(thTab)
+    a.tEnd = 59; a.kv = [0 95; 7 95; 27 45; 31 45; 51 95; 59 95]; a.ka = [0 0; 3 0; 4 0.18; 55 0.18; 57 0]; a.kmu = [0 0.8; 59 0.8]; a.sines = zeros(0, 4);
+    a.win = struct('label', {'slow_h1', 'slow_dn', 'slow_h2', 'slow_up', 'slow_h3'}, 't0', {5, 7, 28, 31, 52}, 't1', {7, 27, 31, 51, 55});
+    b.tEnd = 35; b.kv = [0 85; 5 85; 15 45; 19 45; 29 85; 35 85]; b.ka = [0 0; 2 0; 3 -0.25; 32 -0.25; 33.5 0]; b.kmu = [0 0.8; 35 0.8]; b.sines = zeros(0, 4);
+    b.win = struct('label', {'fast_h1', 'fast_dn', 'fast_h2', 'fast_up', 'fast_h3'}, 't0', {3.5, 5, 16, 19, 30}, 't1', {5, 15, 19, 29, 32});
+    S = chain('RAMP', 'RAMP v3: bám khi giá trị đặt đổi liên tục theo tốc độ (chậm và nhanh)', {a, b}, thTab);
+end
+
+%% SLIP v3: loss of tracking when mu drops, steady state at high grip use (>= 0.8): staircase, slow ramp, puddle (scenes 39.5 + 33 + 13 s + straight gaps)
+function S = buildSLIP3(thTab)
+    % scene 'stair' 60 km/h, 0.27 g left: mu 0.8 (reference window), then 0.6, 0.45, 0.38, 0.32 held 6 s each (grip use 0.84 at 0.32), back to 0.8 at 31 s
+    a.tEnd = 39.5; a.kv = [0 60; 39.5 60]; a.ka = [0 0; 1 0.27; 38 0.27; 39.5 0];
+    a.kmu = [0 0.8; 7 0.8; 7.001 0.6; 13 0.6; 13.001 0.45; 19 0.45; 19.001 0.38; 25 0.38; 25.001 0.32; 31 0.32; 31.001 0.8; 39.5 0.8]; a.sines = zeros(0, 4);
+    a.win = struct('label', {'stair_ref', 'stair_m0p6', 'stair_m0p45', 'stair_m0p38', 'stair_m0p32', 'stair_in', 'stair_rec'}, ...
+        't0', {5, 11, 17, 23, 29, 31, 31}, 't1', {7, 13, 19, 25, 31, 33, 37});
+    % scene 'ramp' 80 km/h, 0.24 g right: mu 0.8 -> 0.29 over 16 s (slow, almost static; grip use 0.83 at the end), hold 5 s, back to 0.8 in 4 s
+    b.tEnd = 33; b.kv = [0 80; 33 80]; b.ka = [0 0; 1 -0.24; 31 -0.24; 32 0];
+    b.kmu = [0 0.8; 5 0.8; 21 0.29; 26 0.29; 30 0.8; 33 0.8]; b.sines = zeros(0, 4);
+    b.win = struct('label', {'ramp_ref', 'ramp_dn', 'ramp_lo', 'ramp_up'}, 't0', {3, 5, 24, 26}, 't1', {5, 21, 26, 30});
+    % scene 'pud' 90 km/h, 0.2 g left: puddle mu 0.25 for 1.5 s (grip use 0.8) at 5 s
+    c.tEnd = 13; c.kv = [0 90; 13 90]; c.ka = [0 0; 1 0.2; 11.5 0.2; 12.5 0]; c.kmu = [0 0.8; 5 0.8; 5.001 0.25; 6.5 0.25; 6.501 0.8; 13 0.8]; c.sines = zeros(0, 4);
+    c.win = struct('label', {'pud_ref', 'pud_in', 'pud_rec'}, 't0', {3, 5, 5}, 't1', {5, 7, 11});
+    S = fit100('SLIP', 'SLIP v3: mất bám khi hệ số bám giảm (bậc, dốc chậm, vũng nước)', {a, b, c}, thTab);
+end
+
+%% SLIP v4 (2026-10-23, user request): the road loses grip WHILE cornering and the target a_y stays at or above the new grip (grip use >= 0.9, as the
+% scene 'down' of v1), so the front tyre slides and the pneumatic trail collapses; designed after seeing the v3 results (the user waived that rule).
+function S = buildSLIP4(thTab)
+    % scene 'stair' 60 km/h, 0.3 g right: mu 0.8 (reference), then 0.5, 0.4, 0.33, 0.28, 0.24 held 5 s each (target grip use 0.6, 0.75, 0.91, 1.07, 1.25),
+    % back to 0.8
+    b.tEnd = 40.5; b.kv = [0 60; 40.5 60]; b.ka = [0 0; 1 -0.3; 39 -0.3; 40.5 0];
+    b.kmu = [0 0.8; 7 0.8; 7.001 0.5; 12 0.5; 12.001 0.4; 17 0.4; 17.001 0.33; 22 0.33; 22.001 0.28; 27 0.28; 27.001 0.24; 32 0.24; 32.001 0.8; 40.5 0.8];
+    b.sines = zeros(0, 4);
+    b.win = struct('label', {'stair_ref', 'stair_m0p5', 'stair_m0p4', 'stair_m0p33', 'stair_m0p28', 'stair_m0p24', 'stair_rec'}, ...
+        't0', {5, 10, 15, 20, 25, 30, 32}, 't1', {7, 12, 17, 22, 27, 32, 38});
+    % scene 'pud' 80 km/h, 0.25 g left: puddle mu 0.2 for 2 s at 5 s (target grip use 1.25)
+    c.tEnd = 12; c.kv = [0 80; 12 80]; c.ka = [0 0; 1 0.25; 10.5 0.25; 11.5 0]; c.kmu = [0 0.8; 5 0.8; 5.001 0.2; 7 0.2; 7.001 0.8; 12 0.8]; c.sines = zeros(0, 4);
+    c.win = struct('label', {'pud_ref', 'pud_in', 'pud_rec'}, 't0', {3, 5, 7}, 't1', {5, 7, 10});
+    % scene 'lane' (as 'pud' of v1): 80 km/h, two identical lane-change cycles 0.2 g at 0.4 Hz; the first on the dry road (reference), the second
+    % through a puddle mu 0.2 for 0.4 s just after the peak steering demand (same phase as v1: 0.8-1.2 s into the cycle; target grip use 1.0)
+    l.tEnd = 11; l.kv = [0 80; 11 80]; l.ka = [0 0; 11 0]; l.sines = [1 3.5 0.2 0.4; 5.5 8 0.2 0.4];
+    l.kmu = [0 0.8; 6.3 0.8; 6.301 0.2; 6.7 0.2; 6.701 0.8; 11 0.8];
+    l.win = struct('label', {'lane_ref', 'lane_in', 'lane_rec'}, 't0', {1.8, 6.3, 6.7}, 't1', {2.2, 6.7, 10});
+    % scene 'drop' (as 'down' of v1): 100 km/h, 0.3 g left, mu 0.8 -> 0.3 at 6 s (target grip use 1.0), held 6.5 s
+    a.tEnd = 14; a.kv = [0 100; 14 100]; a.ka = [0 0; 1.5 0.3; 12.5 0.3; 14 0];
+    a.kmu = [0 0.8; 6 0.8; 6.001 0.3; 14 0.3]; a.sines = zeros(0, 4);
+    a.win = struct('label', {'drop_ref', 'drop_in', 'drop_lo'}, 't0', {4, 6, 9}, 't1', {6, 8, 12});
+    S = fit100('SLIP', 'SLIP v4: mất bám khi đang cua và khi chuyển làn, mức dùng bám >= 0.9 sau khi mu giảm', {b, c, l, a}, thTab);
+end
+
+%% ===================== SSW (2026-10-23, user decision): three cases STEADY, SLIP, WEAVE of EXACTLY 100 s each =====================
+% Replace the five DREWS cases (they all gave the same ranking). Plan: Documents/Shared/KeHoach_SSW.txt. Designed AFTER seeing the DREWS v3 and SLIP v4
+% results (the user waived that rule). Same open-loop driver and window conventions as DREWS v3.
+
+%% STEADY = DRY + EDGE: steady cornering on the dry road from light to near the limit
+function S = buildSTEADY(thTab)
+    speeds = [25 45 65 85];
+    lev = {[0.15 -0.25], [0.15 -0.25 0.35], [-0.15 0.25 -0.35], [0.15 -0.25 0.38]};   % signed levels [g], a_y > 0 = left; 25 km/h: Plant limit 0.31 g
+    kv = [0 speeds(1)]; ka = [0 0]; win = struct('label', {}, 't0', {}, 't1', {});
+    tb = 2;                                                     % 2 s of straight at the start (never scored)
+    for i = 1:numel(speeds)
+        v = speeds(i);
+        for a = lev{i}
+            % level of 7 s: ramp 1 s, hold 4 s (window = last 1 s), back to 0 in 1 s, 1 s straight
+            ka = [ka; tb, 0; tb + 1, a; tb + 5, a; tb + 6, 0]; %#ok<AGROW>
+            win(end+1) = struct('label', dryLabel(v, abs(a), sign(a)), 't0', tb + 4, 't1', tb + 5); %#ok<AGROW>
+            tb = tb + 7;
+        end
+        kv = [kv; tb, v]; %#ok<AGROW>
+        if i < numel(speeds)
+            dt = max(4, 0.2 * abs(speeds(i+1) - v));            % straight speed change between blocks
+            kv = [kv; tb + dt, speeds(i+1)]; %#ok<AGROW>
+            tb = tb + dt;
+        end
+    end
+    tEnd = 100;
+    assert(tb <= tEnd - 2, 'STEADY timeline is %g s', tb);
+    S = assemble('STEADY', 'STEADY: cua giữ đều trên đường khô, từ nhẹ tới gần giới hạn', tEnd, kv, ka, [0 0.8; tEnd 0.8], zeros(0, 4), thTab, win);
+end
+
+%% SLIP (SSW) = RAMP + SLIP: conditions change while cornering (speed, then friction)
+function S = buildSLIPS(thTab)
+    % scene 'ramp' 0.2 g left: 90 -> 45 -> 90 km/h, 13 s each way, 3 s hold at 45 km/h
+    r.tEnd = 36.5; r.kv = [0 90; 4 90; 17 45; 20 45; 33 90; 36.5 90]; r.ka = [0 0; 1 0.2; 35 0.2; 36.5 0]; r.kmu = [0 0.8; 36.5 0.8]; r.sines = zeros(0, 4);
+    r.win = struct('label', {'ramp_hi', 'ramp_dn', 'ramp_lo', 'ramp_up'}, 't0', {3, 5, 18, 21}, 't1', {4, 17, 20, 33});
+    % scene 'stair' 60 km/h, 0.3 g right: mu 0.8 (reference), 0.5, 0.33, 0.24 held 5 s each (target grip use 0.6, 0.91, 1.25), back to 0.8
+    b.tEnd = 29.5; b.kv = [0 60; 29.5 60]; b.ka = [0 0; 1 -0.3; 28 -0.3; 29.5 0];
+    b.kmu = [0 0.8; 7 0.8; 7.001 0.5; 12 0.5; 12.001 0.33; 17 0.33; 17.001 0.24; 22 0.24; 22.001 0.8; 29.5 0.8]; b.sines = zeros(0, 4);
+    b.win = struct('label', {'stair_ref', 'stair_m0p5', 'stair_m0p33', 'stair_m0p24', 'stair_rec'}, 't0', {5, 10, 15, 20, 22}, 't1', {7, 12, 17, 22, 28});
+    % scene 'pud' 80 km/h, 0.25 g left: puddle mu 0.2 for 2 s at 5 s (target grip use 1.25)
+    c.tEnd = 12; c.kv = [0 80; 12 80]; c.ka = [0 0; 1 0.25; 10.5 0.25; 11.5 0]; c.kmu = [0 0.8; 5 0.8; 5.001 0.2; 7 0.2; 7.001 0.8; 12 0.8]; c.sines = zeros(0, 4);
+    c.win = struct('label', {'pud_ref', 'pud_in', 'pud_rec'}, 't0', {3, 5, 7}, 't1', {5, 7, 10});
+    S = fit100('SLIP', 'SLIP (SSW): đang cua mà tốc độ hoặc hệ số bám đổi', {r, b, c}, thTab);
+end
+
+%% WEAVE (SSW): continuous steering, including a lane change through a puddle (as 'pud' of v1)
+function S = buildWEAVES(thTab)
+    % scene 'ctr' 95 km/h: gentle weaving about the centre, 0.05 g at 0.2 Hz, 4 cycles (20 s); small T_d,ref compared with the dead zone of the Map
+    a.tEnd = 23; a.kv = [0 95; 23 95]; a.ka = [0 0; 23 0]; a.kmu = [0 0.8; 23 0.8]; a.sines = [2 22 0.05 0.2];
+    a.win = struct('label', {'ctr'}, 't0', {3}, 't1', {22});
+    % scene 'lane' 80 km/h: two identical lane changes 0.2 g at 0.4 Hz, the first on the dry road (reference), the second through a puddle mu 0.2 for
+    % 0.4 s just after the peak steering demand (0.8-1.2 s into the cycle, as v1)
+    l.tEnd = 11; l.kv = [0 80; 11 80]; l.ka = [0 0; 11 0]; l.sines = [1 3.5 0.2 0.4; 5.5 8 0.2 0.4];
+    l.kmu = [0 0.8; 6.3 0.8; 6.301 0.2; 6.7 0.2; 6.701 0.8; 11 0.8];
+    l.win = struct('label', {'lane_ref', 'lane_in', 'lane_rec'}, 't0', {1.8, 6.3, 6.7}, 't1', {2.2, 6.7, 10});
+    % scene 'sw' 70 km/h: stepped-frequency sine 0.1 g at 0.3 Hz (2 cycles), 0.8 Hz (3 cycles), 1.5 Hz (5 cycles); each segment ends at a zero crossing
+    t1 = 2 + 2/0.3; t2 = t1 + 3/0.8; t3 = t2 + 5/1.5;
+    s.tEnd = ceil(t3 + 2); s.kv = [0 70; s.tEnd 70]; s.ka = [0 0; s.tEnd 0]; s.kmu = [0 0.8; s.tEnd 0.8];
+    s.sines = [2 t1 0.1 0.3; t1 t2 0.1 0.8; t2 t3 0.1 1.5];
+    s.win = struct('label', {'sw0p3', 'sw0p8', 'sw1p5'}, 't0', {2, t1, t2}, 't1', {t1, t2, t3});
+    % scene 'mu3' 60 km/h on mu 0.3: weaving 0.15 g at 0.75 Hz, 8 cycles (10.7 s); grip use 0.5
+    c.tEnd = 14.5; c.kv = [0 60; 14.5 60]; c.ka = [0 0; 14.5 0]; c.kmu = [0 0.3; 14.5 0.3]; c.sines = [2 2+8/0.75 0.15 0.75];
+    c.win = struct('label', {'mu3'}, 't0', {2.5}, 't1', {2 + 8/0.75});
+    S = fit100('WEAVE', 'WEAVE (SSW): lái liên tục (quanh tâm, chuyển làn qua vũng nước, quét tần số, mặt trơn)', {a, l, s, c}, thTab);
+end
+
+%% EDGE v3: near the assist limit, above 0.3 g (dry road): holds 0.35 g then 0.38 g at 45, 65, 85 km/h, fast entries to 0.35 g at 55 and 75 km/h
+function S = buildEDGE3(thTab)
+    speeds = [45 55 65 75 85]; scenes = cell(1, numel(speeds));
+    for i = 1:numel(speeds)
+        sg = 1 - 2 * mod(i - 1, 2);                             % left, right, left, right, left
+        sc = struct();
+        if mod(i, 2) == 1
+            sc.tEnd = 17; sc.kv = [0 speeds(i); 17 speeds(i)]; sc.kmu = [0 0.8; 17 0.8]; sc.sines = zeros(0, 4);
+            sc.ka = [0 0; 1 sg * 0.35; 7 sg * 0.35; 8 sg * 0.38; 14 sg * 0.38; 15.5 0];
+            sc.win = struct('label', {dryLabel(speeds(i), 0.35, sg), dryLabel(speeds(i), 0.38, sg)}, 't0', {6, 13}, 't1', {7, 14});
+        else
+            sc.tEnd = 10; sc.kv = [0 speeds(i); 10 speeds(i)]; sc.kmu = [0 0.8; 10 0.8]; sc.sines = zeros(0, 4);
+            sc.ka = [0 0; 2 0; 2.5 sg * 0.35; 6.5 sg * 0.35; 8 0];
+            sc.win = struct('label', {sprintf('v%din', speeds(i)), dryLabel(speeds(i), 0.35, sg)}, 't0', {2.5, 5.5}, 't1', {4.5, 6.5});
+        end
+        scenes{i} = sc;
+    end
+    S = fit100('EDGE', 'EDGE v3: gần giới hạn trợ lực, trên 0.3 g', scenes, thTab);
+end
+
+%% WEAVE v3: continuous steering outside the 0.5 and 1 Hz of CALIB: centre weaving, two double lane changes, stepped-frequency sine, weaving on mu 0.3
+function S = buildWEAVE3(thTab)
+    % scene 'ctr' 95 km/h: gentle weaving about the centre, 0.05 g at 0.2 Hz, 4 cycles (20 s); small T_d,ref compared with the dead zone of the Map
+    a.tEnd = 23; a.kv = [0 95; 23 95]; a.ka = [0 0; 23 0]; a.kmu = [0 0.8; 23 0.8]; a.sines = [2 22 0.05 0.2];
+    a.win = struct('label', {'ctr'}, 't0', {3}, 't1', {22});
+    % scenes 'dlc90' and 'dlc75': double lane change, 0.25 g at 0.6 Hz, 2 cycles (3.33 s)
+    l1.tEnd = 8.5; l1.kv = [0 90; 8.5 90]; l1.ka = [0 0; 8.5 0]; l1.kmu = [0 0.8; 8.5 0.8]; l1.sines = [2 2+2/0.6 0.25 0.6];
+    l1.win = struct('label', {'dlc90'}, 't0', {2}, 't1', {2 + 2/0.6});
+    l2.tEnd = 8.5; l2.kv = [0 75; 8.5 75]; l2.ka = [0 0; 8.5 0]; l2.kmu = [0 0.8; 8.5 0.8]; l2.sines = [2 2+2/0.6 0.25 0.6];
+    l2.win = struct('label', {'dlc75'}, 't0', {2}, 't1', {2 + 2/0.6});
+    % scene 'sw' 70 km/h: stepped-frequency sine 0.1 g at 0.3 Hz (2 cycles), 0.8 Hz (3 cycles), 1.5 Hz (5 cycles); each segment ends at a zero crossing
+    t1 = 2 + 2/0.3; t2 = t1 + 3/0.8; t3 = t2 + 5/1.5;
+    s.tEnd = ceil(t3 + 2); s.kv = [0 70; s.tEnd 70]; s.ka = [0 0; s.tEnd 0]; s.kmu = [0 0.8; s.tEnd 0.8];
+    s.sines = [2 t1 0.1 0.3; t1 t2 0.1 0.8; t2 t3 0.1 1.5];
+    s.win = struct('label', {'sw0p3', 'sw0p8', 'sw1p5'}, 't0', {2, t1, t2}, 't1', {t1, t2, t3});
+    % scene 'mu3' 60 km/h on mu 0.3: weaving 0.15 g at 0.75 Hz, 8 cycles (10.7 s); grip use 0.5
+    c.tEnd = 14.5; c.kv = [0 60; 14.5 60]; c.ka = [0 0; 14.5 0]; c.kmu = [0 0.3; 14.5 0.3]; c.sines = [2 2+8/0.75 0.15 0.75];
+    c.win = struct('label', {'mu3'}, 't0', {2.5}, 't1', {2 + 8/0.75});
+    S = fit100('WEAVE', 'WEAVE v3: lái liên tục (quanh tâm, đổi làn kép, quét tần số, mặt trơn)', {a, l1, l2, s, c}, thTab);
+end
+
+function S = fit100(tag, name, scenes, thTab)
+% Join the scenes with chain() and pad the last scene with straight driving so that the case is EXACTLY 100 s (at least 2 s of padding).
+    S = chain(tag, name, scenes, thTab);
+    pad = 100 - S.t(end);
+    assert(pad >= 2 - 1e-9, '%s v3: scenes and gaps take %.3f s, no room for 2 s of straight tail', tag, S.t(end));
+    sc = scenes{end}; tNew = sc.tEnd + pad;
+    sc.kv = [sc.kv; tNew sc.kv(end, 2)]; sc.ka = [sc.ka; tNew 0]; sc.kmu = [sc.kmu; tNew sc.kmu(end, 2)]; sc.tEnd = tNew;
+    scenes{end} = sc;
+    S = chain(tag, name, scenes, thTab);
 end
 
 %% ===================== CALIB: calibration case shared by every controller ========

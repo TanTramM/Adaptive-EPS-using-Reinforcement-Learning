@@ -1,0 +1,5 @@
+DREWS v3 ĐÃ CHỐT 2026-10-23 11:34 (khung COMMON, nhánh auto/pareto-common). Kế hoạch: Documents/Shared/KeHoach_DREWS_v3.txt.
+Năm ca: DRY, RAMP, SLIP, EDGE, WEAVE, mỗi ca đúng 100.000 s (tổng 500 s); make_cases() trả bộ này, make_cases('DREWS_V2') trả bộ v2, make_cases('DREWS_V1') bộ v1.
+Kiểm khả thi: Model/Sim/script/check_drews.m với Model_PID (thiết kế cuối, cảm biến lý tưởng), kết quả Result/Compare/DREWS_v3_check/. Không sửa ca sau khi chốt.
+SHA-256 make_cases.m: 2b2b640ed9fe59bb017e15f8f729fe4804271dcf0fe968ff6f119bd1529b2ca7
+SHA-256 run_cases.m:  6f70c0e088b6c6541522e2bd2219345edebc651c426355b623962ade67e35ba8

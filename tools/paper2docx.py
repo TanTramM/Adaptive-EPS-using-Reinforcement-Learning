@@ -15,7 +15,7 @@ Format rules taken from the advisor's revision:
   Keywords: ...          no indent, label bold
   - item                 bullet (List Paragraph, numId 4)
   (n) ascii + [ latex ]  display equation at 10 pt, one number per line, '#(n)' equation array so Word puts (n) at the right margin
-  [Fig. n. caption | path]    picture (centred, at most text width, at most 15 cm high) followed by the caption in italics (Emphasis)
+  [Fig. n. caption | path]    ONE inline drawing group: picture (centred, at most text width, at most 15 cm high) + a borderless text box with the caption in italics (Emphasis)
   Table n. caption       caption in bold (Strong) above the table; following ' | ' rows: Table Grid, centred, header row bold and centred,
                          body left-aligned, rows kept on one page
   [n] reference          no indent; *text* is italic (journal or book titles)
@@ -44,7 +44,7 @@ INDENT = Cm(1.27)                 # 720 twips, the advisor's first-line indent
 PAGE_BREAK_BEFORE = True          # page break before "1. Introduction": the title page holds the title, the Abstract and the keywords only
 EQ_PT = 10                       # display equations and their numbers [pt] (advisor: HTML Code style, 10 pt)
 BULLET_NUM_ID = '4'
-UNNUMBERED_H1 = ('Abstract', 'Acknowledgements', 'Conflict of Interest', 'References')
+UNNUMBERED_H1 = ('Abstract', 'Acknowledgements', 'Acknowledgments', 'Author contributions', 'Declaration of Generative AI', 'Conflict of Interest', 'References')
 RICH = re.compile(r'\$(.+?)\$|\*(.+?)\*')
 
 
@@ -96,30 +96,89 @@ def equation(doc, latex, num, style=None):
     p._p.append(para)
 
 
+NS_DECL = ('xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+           'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+           'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+           'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
+           'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+           'xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" '
+           'xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"')
+_gid = [100]
+
+
+def _textbox_xml(nid, x, y, w, h):
+    return (f'<wps:wsp><wps:cNvPr id="{nid}" name="Text box {nid}"/><wps:cNvSpPr txBox="1"/>'
+            f'<wps:spPr><a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{w}" cy="{h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
+            f'<a:noFill/><a:ln><a:noFill/></a:ln></wps:spPr><wps:txbx><w:txbxContent/></wps:txbx>'
+            f'<wps:bodyPr rot="0" vert="horz" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="t" anchorCtr="0"><a:noAutofit/></wps:bodyPr></wps:wsp>')
+
+
+def figure_group(doc, items, caption):
+    """ONE inline drawing group = the picture(s) + a borderless text box with the caption (and, for several pictures, a small text box with each panel
+    label). Picture and caption are one object, so they cannot drift apart when the author reformats the text.
+    items = [(file, width_cm, height_cm, panel_label or '')]"""
+    from docx.text.paragraph import Paragraph
+    from docx.oxml import parse_xml
+    emu = lambda cm: int(round(cm * 360000))
+    gap = emu(0.15)
+    cw = emu(TEXT_W)
+    _gid[0] += 1
+    n0 = _gid[0] * 10
+    y = 0; k = 0
+    shapes = []; boxes = []
+    for (full, wcm, hcm, label) in items:
+        rid, _ = doc.part.get_or_add_image(full)
+        pw, ph = emu(wcm), emu(hcm)
+        x = (cw - pw) // 2
+        k += 1
+        shapes.append(
+            f'<pic:pic><pic:nvPicPr><pic:cNvPr id="{n0 + k}" name="Picture {n0 + k}"/><pic:cNvPicPr/></pic:nvPicPr>'
+            f'<pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+            f'<pic:spPr><a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{pw}" cy="{ph}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>')
+        y += ph + gap
+        if label:
+            lh = emu(0.60); k += 1
+            shapes.append(_textbox_xml(n0 + k, 0, y, cw, lh)); boxes.append((label, False))
+            y += lh + gap
+    plain = re.sub(r'\$[^$]*\$', 'xx', caption)
+    per_line = max(10, int(TEXT_W / 0.20))                 # characters of 12 pt Times (italic) per line, with margin
+    lines = -(-len(plain) // per_line)
+    cap_h = emu(0.25 + 0.62 * lines)
+    k += 1
+    shapes.append(_textbox_xml(n0 + k, 0, y, cw, cap_h)); boxes.append((caption, True))
+    total_h = y + cap_h
+    xml = (
+        f'<w:drawing {NS_DECL}><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{cw}" cy="{total_h}"/>'
+        f'<wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="{n0}" name="Figure group {n0}"/><wp:cNvGraphicFramePr/>'
+        f'<a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"><wpg:wgp><wpg:cNvGrpSpPr/>'
+        f'<wpg:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cw}" cy="{total_h}"/><a:chOff x="0" y="0"/><a:chExt cx="{cw}" cy="{total_h}"/></a:xfrm></wpg:grpSpPr>'
+        + ''.join(shapes) + '</wpg:wgp></a:graphicData></a:graphic></wp:inline></w:drawing>')
+    el = parse_xml(xml)
+    for content, (text, is_cap) in zip(el.iter(qn('w:txbxContent')), boxes):
+        p_el = OxmlElement('w:p'); content.append(p_el)
+        par = Paragraph(p_el, doc._body)
+        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        par.paragraph_format.first_line_indent = Cm(0)
+        par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(0)
+        par.paragraph_format.line_spacing = 1.0
+        add_rich(par, text, char_style=doc.styles['Emphasis'] if is_cap else None)
+    return el
+
+
 def figure(doc, caption, path):
-    """one figure = one caption. `path` is either one file, or several pictures separated by ' ; ', each written as
-    'file@width_cm|panel label': the pictures are inserted as separate pictures one under the other (not merged), each followed by its panel label."""
-    parts = [p.strip() for p in path.split(' ; ')]
-    for pi, part in enumerate(parts):
+    """one figure = one group (pictures + caption). `path` is one file, or several pictures separated by ' ; ', each written as
+    'file@width_cm|panel label': the pictures go one under the other inside the same group, each followed by its panel label."""
+    items = []
+    for part in [p.strip() for p in path.split(' ; ')]:
         spec, _, label = part.partition('|')
         file_, _, wcm = spec.partition('@')
         full = os.path.join(REPO_ROOT, file_.strip())
-        box = doc.add_paragraph(); box.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        box.paragraph_format.keep_with_next = True
-        if os.path.isfile(full):
-            w, h = Image.open(full).size
-            width = float(wcm) if wcm else min(TEXT_W, MAX_FIG_H * w / h)
-            box.add_run().add_picture(full, width=Cm(min(width, TEXT_W)))
-        else:
-            print('warning: image not found:', full)
-            box.add_run('[insert figure]').italic = True
-        if label.strip():
-            lab = doc.add_paragraph(); lab.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            lab.paragraph_format.keep_with_next = True
-            lab.paragraph_format.space_after = Pt(6)
-            add_rich(lab, label.strip())
-    cap = doc.add_paragraph()
-    add_rich(cap, caption, char_style=doc.styles['Emphasis'])
+        w, h = Image.open(full).size
+        width = min(float(wcm) if wcm else min(TEXT_W, MAX_FIG_H * w / h), TEXT_W)
+        items.append((full, width, width * h / w, label.strip()))
+    box = doc.add_paragraph(); box.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    box.paragraph_format.keep_together = True
+    box.add_run()._r.append(figure_group(doc, items, caption))
 
 
 def keep_table_together(table):

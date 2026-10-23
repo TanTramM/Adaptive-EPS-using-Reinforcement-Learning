@@ -8,12 +8,12 @@ function run_scoring_seeds(ctrlName, seeds, set)
 %   Run load_<ctrl> in the base workspace first. Simulink.sdi.clear after every seed (the Simulation Data Inspector otherwise fills
 %   %TEMP% and the RAM); start MATLAB with TEMP and TMP on the D drive.
 
-if nargin < 3 || isempty(set), set = 'V2'; end                      % DREWS v2 (Cases_v2/) by default; 'V1' = the old set (Cases/)
+if nargin < 3 || isempty(set), set = 'V3'; end                      % DREWS v3 (Cases_v3/) by default; 'V2' = Cases_v2/, 'V1' = the old set (Cases/)
 scriptDir = fileparts(mfilename('fullpath'));
 modelDir  = fileparts(fileparts(scriptDir));
 addpath(modelDir); setup_paths;
 for s = seeds(:)'
-    f = fullfile(result_dir(ctrlName, ternary(strcmp(set, 'V1'), 'Cases', 'CasesV2')), sprintf('%s_metrics_%s.csv', ctrlName, sensor_tag(s)));
+    f = fullfile(result_dir(ctrlName, setToken(set)), sprintf('%s_metrics_%s.csv', ctrlName, sensor_tag(s)));
     if isfile(f)
         fprintf('run_scoring_seeds: %s seed %d exists, skipped\n', ctrlName, s);
         continue
@@ -25,6 +25,12 @@ for s = seeds(:)'
 end
 end
 
-function s = ternary(c, a, b)
-    if c, s = a; else, s = b; end
+function t = setToken(set)
+    switch set
+        case 'V1', t = 'Cases';
+        case 'V2', t = 'CasesV2';
+        case 'SLIP4', t = 'CasesSLIP4';
+        case 'SSW', t = 'CasesSSW';
+        otherwise, t = 'CasesV3';
+    end
 end

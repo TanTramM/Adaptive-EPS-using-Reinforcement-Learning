@@ -3,8 +3,11 @@ function M = run_cases(ctrlName, runSeed, set)
 %
 %   M = run_cases('Map')            % ideal sensors
 %   M = run_cases('Map', 99999)     % noisy sensors, run seed 99999 (the scoring seed of the standard test cases)
-%   M = run_cases('Map', 99999, 'V1')   % the old set DREWS v1 (make_cases('DREWS_V1')), results in Cases/; the default set is DREWS v2 (5 cases of 60 s,
-%                                       2026-10-22), results in Cases_v2/ (result_dir token 'CasesV2'); v2 runs never write into Cases/
+%   M = run_cases('Map', 99999, 'V1')   % the old set DREWS v1 (make_cases('DREWS_V1')), results in Cases/; 'V2' = DREWS v2 (5 cases of 60 s, 2026-10-22),
+%                                       results in Cases_v2/ (result_dir token 'CasesV2'); the default set is DREWS v3 (5 cases of 100 s, 2026-10-23),
+%                                       results in Cases_v3/ (token 'CasesV3'); 'SLIP4' = only the case SLIP v4 (make_cases('SLIP_V4'), 2026-10-23),
+%                                       results in Cases_slip4/ (token 'CasesSLIP4'); 'SSW' = the three cases STEADY, SLIP, WEAVE (make_cases('SSW'),
+%                                       2026-10-23), results in Cases_ssw/ (token 'CasesSSW'), csv only (no png); none of these sets writes into Cases/
 %
 %   Noise (Sensors subsystem, data/sensors.json, Documents/Sim/ThucTeHoa.txt): the seed is passed to the model per run
 %   (sensor_noise_vars.m), so every controller sees the same noise sequence for the same seed. All metrics and plots use the TRUE
@@ -12,9 +15,9 @@ function M = run_cases(ctrlName, runSeed, set)
 %   <sens> in every file name (sensor_tag.m): 'ideal' (no seed) or 's<5 digits>' (noisy, e.g. s99999).
 %
 %   Runs Model_<ctrlName>.mdl (run load_<ctrl> and build the closed-loop model first). For every case <CASE> in DRY, RAMP, SLIP, EDGE, WEAVE:
-%     Result/Controllers/<ctrlName>/Cases_v2/<ctrlName>_<CASE>_sig_<sens>.csv    t, theta1, v, mu, a_y target, T_s, T_d_ref, e_T, T_a, a_y
-%     Result/Controllers/<ctrlName>/Cases/<ctrlName>_<CASE>_resp_<sens>.png   3 panels: T_s vs T_d,ref | e_T with the scoring windows shaded | T_a
-%   and one table Result/Controllers/<ctrlName>/Cases_v2/<ctrlName>_metrics_<sens>.csv (Cases/ for the set 'V1'):
+%     Result/Controllers/<ctrlName>/Cases_v3/<ctrlName>_<CASE>_sig_<sens>.csv    t, theta1, v, mu, a_y target, T_s, T_d_ref, e_T, T_a, a_y
+%     Result/Controllers/<ctrlName>/Cases_v3/<ctrlName>_<CASE>_resp_<sens>.png   3 panels: T_s vs T_d,ref | e_T with the scoring windows shaded | T_a
+%   and one table Result/Controllers/<ctrlName>/Cases_v3/<ctrlName>_metrics_<sens>.csv (Cases_v2/ for the set 'V2', Cases/ for the set 'V1'):
 %     per case  : RMS e_T, max |e_T|, RMS T_a, max |T_a|, total variation of T_a per second (smoothness), S (RMS of T_a high-passed at 5 Hz),
 %                 reverse assist (% of scored samples with |T_s| >= 0.5 N.m and T_a against T_s), peak |T_a| in % of T_a,max(v)
 %                 and the report-only columns of KeHoach_DREWS_v2.txt 2.2 (added at the END of the table, on t >= 2 s, from the true T_s and T_d,ref):
@@ -29,15 +32,27 @@ scriptDir = fileparts(mfilename('fullpath'));   % Sim/script
 modelDir  = fileparts(fileparts(scriptDir));    % Model/
 addpath(modelDir);
 if nargin < 2, runSeed = []; end
-if nargin < 3 || isempty(set), set = 'V2'; end
-assert(any(strcmp(set, {'V1', 'V2'})), 'run_cases: set must be V1 or V2');
+if nargin < 3 || isempty(set), set = 'V3'; end
+assert(any(strcmp(set, {'V1', 'V2', 'V3', 'SLIP4', 'SSW'})), 'run_cases: set must be V1, V2, V3, SLIP4 or SSW');
 noiseVars = sensor_noise_vars(runSeed);
-saveFigs = true;
+saveFigs = ~strcmp(set, 'SSW');                 % SSW: csv only (the figures are drawn elsewhere)
 sens = sensor_tag(runSeed);
-if strcmp(set, 'V1'), outDir = result_dir(ctrlName, 'Cases'); else, outDir = result_dir(ctrlName, 'CasesV2'); end
+switch set
+    case 'V1', outDir = result_dir(ctrlName, 'Cases');
+    case 'V2', outDir = result_dir(ctrlName, 'CasesV2');
+    case 'SLIP4', outDir = result_dir(ctrlName, 'CasesSLIP4');
+    case 'SSW', outDir = result_dir(ctrlName, 'CasesSSW');
+    otherwise, outDir = result_dir(ctrlName, 'CasesV3');
+end
 mdl = ['Model_' ctrlName];
 
-if strcmp(set, 'V1'), TC = make_cases('DREWS_V1'); else, TC = make_cases(); end
+switch set
+    case 'V1', TC = make_cases('DREWS_V1');
+    case 'V2', TC = make_cases('DREWS_V2');
+    case 'SLIP4', TC = make_cases('SLIP_V4');
+    case 'SSW', TC = make_cases('SSW');
+    otherwise, TC = make_cases();
+end
 TaMaxJ = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
 rows = {}; nanc = num2cell(nan(1, 7));
 for k = 1:numel(TC)

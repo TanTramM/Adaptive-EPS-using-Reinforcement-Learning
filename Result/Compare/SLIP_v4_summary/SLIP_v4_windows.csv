@@ -1,0 +1,17 @@
+label,t0,t1,case
+stair_ref,5,7,SLIP
+stair_m0p5,10,12,SLIP
+stair_m0p4,15,17,SLIP
+stair_m0p33,20,22,SLIP
+stair_m0p28,25,27,SLIP
+stair_m0p24,30,32,SLIP
+stair_rec,32,38,SLIP
+pud_ref,49.5,51.5,SLIP
+pud_in,51.5,53.5,SLIP
+pud_rec,53.5,56.5,SLIP
+lane_ref,66.3,66.7,SLIP
+lane_in,70.8,71.2,SLIP
+lane_rec,71.2,74.5,SLIP
+drop_ref,85.5,87.5,SLIP
+drop_in,87.5,89.5,SLIP
+drop_lo,90.5,93.5,SLIP
