@@ -14,6 +14,8 @@
 - L5: chuẩn bị push toàn bộ lưới, kết quả chọn tạm và cờ bàn giao cho PC.
 - L5: hoàn tất và push commit `2dd90b8`.
 - L6: bắt đầu đánh giá seed chung MapPID, id 1-4/8, hai pha theo Sửa đổi A.
+- L6 pha 1 id 1-4: hoàn tất, mỗi worker 30 dòng = 6 thiết kế x 5 seed. Pha 2 tạm dừng vì cần đủ pha 1 id 5-8.
+- L7: quá 30 phút từ L5 không có file/cờ PC; laptop tự chạy id 5-8 theo kế hoạch.
 
 ## Nhật ký từng bước
 
@@ -61,3 +63,9 @@
 ### L6 - Đánh giá MapPID trên seed chung (2026-10-27)
 
 - Runner dùng bốn MATLAB patient cho id 1-4/8, chạy pha 1 trước rồi pha 2; seed/cổng/tập dự tuyển do `compare_pareto_common.m` hiện có quyết định theo `KeHoach_SoMatPareto.txt` Sửa đổi A. Laptop không sửa file dùng chung này.
+- Pha 1 id 1-4 hoàn tất lúc 04:53, mỗi worker ghi 30 dòng (6 thiết kế x 5 seed), không lỗi.
+- Runner ban đầu chuyển thẳng sang pha 2 trước khi có pha 1 id 5-8 của PC. `compare_pareto_common` từ chối đúng với lỗi nguyên văn: `Phase 1 of MapPID is not complete: phase 2 needs its noise estimate.` Worker 1 gặp hai lần và các worker khác tối đa một lần; dừng cả cây supervisor PID 4180 trước lần thứ ba, không có mô phỏng pha 2 và không mất dữ liệu pha 1.
+
+### L7 - Chờ PC hoặc tự chạy id 5-8 (2026-10-27)
+
+- Fetch `origin/main` lúc 04:55, hơn 30 phút sau cờ L5: không có `ParetoCommon_MapPID_w5..w8_*`, không có `PIDBOOK_MAPPID_PC_DONE.txt`, và origin vẫn ở commit laptop `8548774`. Theo kế hoạch, laptop tự chạy pha 1 id 5-8, sau đó chạy pha 2 id 1-4 rồi 5-8 (tối đa bốn MATLAB).

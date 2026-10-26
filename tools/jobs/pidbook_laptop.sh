@@ -36,6 +36,40 @@ if [ "${1:-l3}" = "l6" ]; then
   exit 0
 fi
 
+if [ "${1:-l3}" = "l7self" ]; then
+  mstat "L7 self-help start: no PC w5-w8 after 30 minutes"
+  pids=""
+  for id in 5 6 7 8; do
+    run_job_patient "pbl_l7_ph1_w$id" "compare_pareto_common('run',{'MapPID'},$id,8,1); disp('PBL_L7_WORKER_DONE')" "PBL_L7_WORKER_DONE" &
+    pids="$pids $!"
+    sleep 30
+  done
+  wait $pids
+  for id in 5 6 7 8; do
+    [ -f "$S/pbl_l7_ph1_w${id}_done.txt" ] || failed "L7 phase 1 worker $id"
+  done
+  mstat "L7 phase 1 ids 5-8 done; all phase-1 noise estimates available"
+
+  for block in first second; do
+    if [ "$block" = first ]; then ids="1 2 3 4"; else ids="5 6 7 8"; fi
+    pids=""
+    for id in $ids; do
+      run_job_patient "pbl_l7_ph2_w$id" "compare_pareto_common('run',{'MapPID'},$id,8,2); disp('PBL_L7_WORKER_DONE')" "PBL_L7_WORKER_DONE" &
+      pids="$pids $!"
+      sleep 30
+    done
+    wait $pids
+    for id in $ids; do
+      [ -f "$S/pbl_l7_ph2_w${id}_done.txt" ] || failed "L7 phase 2 worker $id"
+    done
+    mstat "L7 phase 2 block $block done"
+  done
+  echo "PIDBOOK_MAPPID_PC_DONE $(date '+%F %T') laptop self-help" > "$REPO/Result/Compare/Pareto_common/PIDBOOK_MAPPID_PC_DONE.txt"
+  echo done > "$S/pbl_l7self_done.txt"
+  mstat "L7 self-help done"
+  exit 0
+fi
+
 mstat "L3 start: MapPID grid seed 30000, four workers"
 pids=""
 for id in 1 2 3 4; do
