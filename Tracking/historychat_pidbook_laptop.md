@@ -40,3 +40,4 @@
 
 - Tạo runner riêng của laptop dùng `job_lib_patient.sh`, bốn worker, marker tách biệt `pbl_l3_w1..w4`, `MATLAB_TEMP` và preferences đều đặt trong `scratch/MatlabTemp` trên ổ C. `guard_ram.ps1` PID 2036 tiếp tục chạy nền.
 - Đã dọn thư mục preferences rác `MathWorks/MATLAB/R2023a/graphicsState.bin` do lần gọi MATLAB sandbox thất bại tạo ra; đây là tệp chưa theo dõi do chính lượt này sinh, không phải dữ liệu repo.
+- Mốc một giờ 04:00: lưới thô 256 điểm và ba lớp mịn 81 điểm đã hoàn tất; lớp mịn 4 đang chạy, tổng bốn CSV khoảng 521 dòng, không có worker lỗi/restart. Đẩy ảnh chụp CSV theo quy tắc ít nhất mỗi giờ; worker tiếp tục ghi phần sau.
