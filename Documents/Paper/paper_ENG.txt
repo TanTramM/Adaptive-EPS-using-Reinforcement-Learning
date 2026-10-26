@@ -1,0 +1,14 @@
+==============================================================================================================================================================================================
+Plug-In Steering-Torque Feedback for Column Electric Power Steering with a Calibrated Assist Map
+==============================================================================================================================================================================================
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Abstract
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+In many electric power steering (EPS) systems in the literature, the assist comes from an assist map and a stabilizing compensator, both calibrated per vehicle on a dry road. Because the map responds only to the measured torsion-bar torque and vehicle speed, it has no reference to track. When the road reaction torque changes (loss of grip, column friction, rapid steering), the map reduces the torque error only by a factor set by its local slope. This slope cannot be raised, because a steeper map lowers stability and amplifies sensor noise. This study adds torque feedback to the calibrated map.
+
+Map, an assist map with a lead–lag compensator, represents the vehicle's existing controller. PID replaces the map and acts on the error between the measured torque and a target torque set by vehicle speed and lateral acceleration, without a friction estimate. MapPID retains Map and adds a parallel PID branch on the same error; only four branch parameters are tuned for each vehicle. Analysis shows that the branch removes the steady error unless the motor saturates.
+
+Closed-loop simulations use a nonlinear steering–vehicle model with tire saturation, motor dynamics, and noisy, quantized sensors. Parameters are chosen on a Pareto front and tested on independent scenarios. Map shows large errors near its slope limit and during rapid steering, whereas PID and MapPID remove the steady error. At low torque, MapPID gives a smoother assist than PID because the map carries part of the loop gain, but it tracks worse during rapid steering.
+
+Keywords: Electric power steering; Assist map; Torque feedback; PID control; Lateral acceleration; Road friction.

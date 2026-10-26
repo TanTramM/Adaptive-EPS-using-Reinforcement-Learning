@@ -1,0 +1,141 @@
+KẾ HOẠCH THIẾT KẾ LẠI KHÂU PID (PID VÀ NHÁNH PID CỦA MapPID) THEO SÁCH ÅSTRÖM-HÄGGLUND, CHẠY LẠI BẰNG CODE MỚI (bản nháp 2026-10-27, đã chốt phần lớn mục với người dùng; khung COMMON; CHƯA CHẠY)
+==============================================================================================================================================================================================
+Nguồn chính: Åström, K. J., Hägglund, T. (1995). PID Controllers: Theory, Design, and Tuning, 2nd ed., ISA (References/PID Controllers.pdf; số trang dưới đây là số IN trong sách, trang PDF =
+số in + 6). Trong bài báo là [18], trong Documents/Shared/References.txt là [20].
+Luật áp dụng (Tracking/CLAUDE.md, 2026-10-27): kết quả các lần chạy trước chỉ để rút kinh nghiệm, không làm căn cứ chọn thiết kế và không đưa vào bài. Mọi lựa chọn dưới đây có căn cứ ĐỘC LẬP
+(sách, lý thuyết, quy chuẩn viết trước). Mục [CẦN CHỐT] còn lại phải được người dùng chốt trước khi chạy; sau khi chạy không đổi lưới, cổng, quy tắc chọn, seed. Bộ ca chấm CHỈ là SSW (người
+dùng chốt 2026-10-27): không chạy DREWS, SLIP v4 nữa.
+
+0. PHẠM VI
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Đổi: khối PID (bộ PID) và nhánh PID của MapPID, cùng một định nghĩa. Không đổi: Map (khối, lead-lag, map.json), Plant, Ref, Sensors, AssistLimit, Actuator, CALIB v2, SSW, các cổng của QuyChuan.
+- Map KHÔNG chạy lại quét lưới và không chọn lại: bộ điều khiển Map và toàn bộ code mô phỏng của nó không đổi, nên mặt Pareto và thiết kế của Map vẫn là kết quả hợp lệ của đúng quy trình
+  (KeHoach_SoMatPareto.txt). Đây không phải lập luận dựa trên kết quả cũ: Map chỉ là bộ không bị thay đổi. MapPID vẫn khóa Map theo map.json như trước (ý tưởng cắm vào map có sẵn).
+- Số của Map được giữ vì phần so sánh dùng CÙNG seed với các lần chạy của Map (mục 3) và mô phỏng là tất định (cùng code, cùng seed thì ra cùng số). Kiểm bằng một phép chạy lại ngắn (mục 4 bước 1).
+
+1. CẤU TRÚC PID THEO SÁCH (mỗi thành phần một nguồn)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    T_a,PID = K [ (T_s,m - b T_ref) + (1/T_i) INT e_T dt + T_d dT_s,m/dt qua bộ lọc T_d/N ],   e_T = T_s,m - T_ref (quy ước dấu của bài: T_s lớn hơn mức đặt thì tăng trợ lực)
+1.1 Dạng chuẩn (ISA, không tương tác), tham số K, T_i, T_d (§3.4 tr. 70-73, Eq. 3.14). Lý do: T_i, T_d có nghĩa thời gian, các luật N và T_t của sách viết theo T_i, T_d; dạng chuẩn cho phép
+    zero phức (tr. 73: "hữu ích khi điều khiển hệ có cực dao động"), phù hợp cột lái có cộng hưởng.
+1.2 Khâu I dùng sai số thật e_T (tr. 74, bắt buộc để không có sai số xác lập).
+1.3 Khâu D trên đại lượng đo T_s,m, tức trọng số c = 0 (tr. 74: "c thường chọn bằng 0 để tránh quá độ lớn khi giá trị đặt đổi"). Ở bài này T_ref tra từ a_y đo nên còn mang nhiễu và bước lượng
+    tử (lập luận của bài, không gán cho sách).
+1.4 Khâu P trên sai số đầy đủ, b = 1 CỐ ĐỊNH (tr. 73-75; mục tiêu của bài là bám T_ref nên P phải thấy T_ref; b chỉ đổi đáp ứng theo giá trị đặt, không đổi đáp ứng với nhiễu tải và nhiễu đo, tr. 74;
+    b < 1 làm khâu P một phần chỉ nhìn đại lượng đo, mờ ranh giới giữa PID và MapPID). Đã chốt: không quét b.
+1.5 Bộ lọc khâu D: hằng số T_d/N, N là biến quét (tr. 76-77, Eq. 3.22: N thường 8-20, độ lợi cao tần chặn ở K N). Hộp N từ 8 tới 20, thang log, quét thô rồi mịn cùng với K, T_i, T_d (người dùng chốt
+    2026-10-27: làm đúng như Map, một lưới thô-mịn chung). Bỏ tham số tự do tau_f (tau_f = T_d/N).
+1.6 Chống bão hòa tích phân kiểu back-calculation (§3.5 tr. 84-86, Hình 3.22), tín hiệu ΔT_a = T_a,lim - T_a,cmd lấy sau khối giới hạn chung, hằng số bám T_t = sqrt(T_i T_d) (tr. 85: T_t lớn hơn T_d
+    và nhỏ hơn T_i, gợi ý sqrt(T_i T_d)). Nhánh PID của MapPID dùng cùng luật với T_i, T_d của nhánh; bỏ Eq. (39) K_aw = K_i/(K_p + K_max).
+1.7 Rời rạc chu kỳ T_c = 1 ms (cố định của nền tảng, không từ sách): khâu I Euler tiến (tr. 96, Eq. 3.28), khâu D sai phân lùi có lọc (tr. 98: dùng khi cần thuật toán ổn với T_d nhỏ):
+    D[k] = a_d D[k-1] + b_d (T_s,m[k] - T_s,m[k-1]), a_d = T_d/(T_d + N T_c), b_d = K T_d N/(T_d + N T_c) (dấu + theo quy ước dấu của bài).
+
+2. CHỌN K, T_i, T_d (tối ưu có ràng buộc, §4.6 tr. 164-165)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2.1 Phương pháp: quét lưới và chọn trên mặt Pareto (R, S) đúng quy trình chung của QuyChuan và KeHoach_SoMatPareto.txt (cùng cách đã áp cho Map: cùng công sức thiết kế). Sách chấp nhận tối ưu
+    nhưng đòi kèm ràng buộc độ bền và nhiễu (tr. 165); ở đây: độ bền = cổng tuyến tính PM >= 30 độ, GM >= 2 trên 68 mô hình và cổng mô phỏng (độ lợi motor x2, thêm trễ 1 ms, tỉ số R <= 2),
+    khớp sách: M_s 1.3-2, biên biên độ 2-5 (tr. 126, Eq. 4.10: M_s = 2 cho biên biên độ > 2, biên pha > 29 độ); nhiễu = S trên mặt Pareto. Thêm cổng e_rel <= 10 % (QuyChuan).
+2.2 Không dùng luật chỉnh kiểu Ziegler-Nichols hay Chương 5 làm cách chọn: các luật đó làm cho quá trình ổn định dạng bậc nhất có trễ; sách tự nói Ziegler-Nichols cho đáp ứng quá dao động
+    (tr. 203). Không chạy Ziegler-Nichols làm đối chứng (người dùng chốt).
+2.3 Biến và hộp (thang log; mỗi biên có lý do độc lập). Đã chốt 2026-10-27 (người dùng không phản đối đề xuất): bốn biến K, T_i, T_d, N.
+    - T_d: từ 20 ms tới 796 ms. Cận trên: T_d/N <= 79.6 ms ở N = 8 là hằng số lọc giữ độ lợi >= 0.707 tại 2 Hz (ràng buộc dải lái của QuyChuan); với N lớn hơn hằng số lọc nhỏ hơn nên vẫn thỏa.
+      Cận dưới 20 ms = N_max x T_c (N_max = 20, T_c = 1 ms): bảo đảm hằng số lọc T_d/N không nhỏ hơn chu kỳ điều khiển ở mọi N trong hộp.
+    - N: từ 8 tới 20 (khoảng sách khuyên, tr. 77). Thang log: u = 0, 1/3, 2/3, 1 cho N = 8, 10.9, 14.7, 20 ở lưới thô.
+    - T_i: từ 2 T_c = 2 ms tới 10 s (trên đó khâu I gần như không tác dụng trong ca CALIB 140 s).
+    - K: từ 0.01 tới 30 (dưới 0.01 khâu P không tác dụng so với độ lợi map; trên 30 vượt cổng ổn định ở mọi T_i, T_d hợp lý; cổng sẽ loại điểm không ổn định).
+    - Ràng buộc T_d < T_i (người dùng chốt 2026-10-27, cách 1): đây là HẠN CHẾ CỦA BÀI để luật T_t = sqrt(T_i T_d) nhất quán với câu của sách (tr. 85: T_t lớn hơn T_d và nhỏ hơn T_i); sách KHÔNG đòi
+      T_d < T_i cho PID nói chung và đây không phải điều kiện ổn định (ổn định do các cổng PM, GM, margin quyết định; dạng chuẩn vốn cho phép zero phức, tr. 73). Là điều kiện cứng kiểm TRƯỚC
+khi mô phỏng:
+      điểm vi phạm không được mô phỏng và được ghi là không khả thi (như cờ simulated = 0). Viết trước khi chạy: nếu điểm chọn nằm trên biên T_d = T_i thì bài báo cáo đó là ràng buộc đang hoạt động,
+      không chạy lại với biên khác. Chấp nhận nếu kết quả không tối ưu (người dùng chốt: cần có nguồn từ sách, số không tối ưu cũng được).
+    - Không có điểm T_d = 0 (người dùng chốt): luật T_t = sqrt(T_i T_d) của sách chỉ áp cho bộ có khâu D; bộ PID của bài là PID nên luôn có D.
+2.4 Thuật toán lưới: run_pid_grid hiện có (lưới tất định, thô rồi mịn), đổi sang 4 biến tự do (K, T_i, T_d, N), lưới thô 4 mức mỗi biến rồi các lớp mịn như Map. MapPID: cùng 4 biến cho
+nhánh, Map khóa theo map.json.
+    Số điểm lưới thô 4^4 = 256 (tăng so với 3 biến), mỗi lớp mịn 3^4 = 81 điểm, tối đa 6 lớp (con số chỉ để lên lịch).
+
+3. SEED (người dùng chốt 2026-10-27: dùng lại ĐÚNG seed cũ của từng lần chạy của PID và MapPID, vì đây là bản thay thế bộ PID cũ)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mỗi bước chạy lại dùng đúng seed mà bước tương ứng của PID, MapPID cũ đã dùng; nhờ vậy mọi chênh lệch giữa bản cũ và bản mới chỉ do cấu trúc PID, không do nhiễu, và số của Map (không đổi) ghép được.
+    bước                                              PID                MapPID             nguồn seed cũ
+    quét lưới CALIB (seed tìm)                        10000              30000              pid_grid_spec.m, run_mappid_plug.m
+    báo cáo năm seed cho điểm chọn tạm và 4 điểm kế   10001-10005        30001-30005        select_pareto.m (pid_grid_spec), select_mappid_plug.m
+    cổng margin khi chọn tạm                          10001              30001              pid_grid_spec.m, select_mappid_plug.m
+    so mặt Pareto chung và chọn thiết kế cuối         99990-99994        99990-99994        KeHoach_SoMatPareto.txt (Map đã có mặt ở đúng các seed này)
+    cổng margin ở seed chung                          99990              99990              KeHoach_SoMatPareto.txt 0(d)
+    chấm SSW, seed chung                              99987-99989        99987-99989        KeHoach_SSW.txt (Map đã có kết quả ở đúng các seed này)
+    chấm SSW, seed riêng                              11001-11003        31001-31003        KeHoach_SSW.txt
+DREWS v2, DREWS v3, SLIP v4 (seed 99995-99999) không chạy lại (ca chấm chỉ là SSW, người dùng chốt 2026-10-27).
+Kết quả cũ của PID, MapPID ở các seed trên được chuyển sang thư mục lưu (mục 4 bước 2) trước khi chạy, để file mới không trộn với file cũ.
+
+4. CÁC BƯỚC
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. Kiểm tất định: chạy lại SSW của Map ở seed 99987 và một điểm CALIB của Map ở seed 99990, so với file cũ; phải trùng số (sai khác cỡ sai số làm tròn). Không trùng thì dừng, báo người dùng.
+2. Lưu kết quả cũ: chuyển các file kết quả cũ của PID và MapPID (Calib_v2, Pareto_common phần PID và MapPID, Cases_ssw) sang thư mục con Legacy_<ngày>/ cùng chỗ (không xóa), để bước sau
+   ghi file mới cùng tên mà không trộn.
+3. Code mới (nhỏ): cấu trúc của khối PID hiện có ĐÃ là dạng ở mục 1 (P trên e_T, I trên e_T, D lọc bậc 1 trên T_s,m, back-calculation trên lệnh sau lọc), nên KHÔNG viết lại khối Simulink hay mô hình
+   tuyến tính: chỉ đổi tham số hóa. Ánh xạ (K, T_i, T_d, N) sang biến hiện có: Kp = K, Ki = K/T_i, Kd = K T_d, Tf = T_d/N (cùng một hàm truyền C(s) = K (1 + 1/(s T_i) + s T_d/(1 + s T_d/N)),
+nên pidlag_margins,
+   mappid_margins dùng nguyên). Thay đổi thật: (a) K_aw = 1/T_t = sqrt(Ki/Kd) cho cả PID và nhánh PID của MapPID (sửa pidlag_variables.m, mappid_variables.m; bỏ Ki/Kp và Ki/(Kp + Kmax)); (b) u2x, x2u,
+   pid_grid_spec và lưới MapPID cho 4 biến (K, Ti, Td, N) với hộp mục 2.3 và điều kiện T_d < T_i kiểm trước khi mô phỏng; (c) json mới (pid.json, mappid.json: trường design theo (K, Ti, Td,
+N), thiết kế
+   cũ chuyển sang trường legacy, không đọc); (d) test_pid.m và test_mappid.m: đáp án độc lập theo mục 1.7 với K_aw mới, có đoạn chạm giới hạn để kích chống bão hòa; PASS mới chạy tiếp.
+4. Quét lưới PID và MapPID ở seed tìm (10000, 30000). Chọn tạm và báo cáo năm seed (10001-10005, 30001-30005), margin ở 10001, 30001, như quy trình cũ. Tập dự tuyển = điểm qua cổng
+   tuyến tính (như KeHoach_SoMatPareto 0(b)).
+5. Đánh giá tập dự tuyển ở 5 seed chung 99990-99994 theo Sửa đổi A (tập pha 1 cộng điểm trong dải nhiễu 3 sigma), cổng e_rel, cổng margin lặp loại, hai mặt (an toàn, đủ cổng).
+6. Chọn thiết kế cuối theo Sửa đổi B (mặt đủ cổng nếu không rỗng; J = R_tb x S_tb nhỏ nhất; hòa 3 % lấy PM lớn nhất), ghi json có sao lưu.
+7. So mặt ba bộ (compare_pareto_common.m) với mặt Map có sẵn; hai hình, hai bảng như cũ.
+8. Chạy SSW cho PID và MapPID mới (seed ở mục 3); Map dùng kết quả SSW ở cùng seed (đã kiểm tất định ở bước 1).
+9. Viết bài: mục 3.3-3.4 theo mục 1 (công thức dạng chuẩn, bảng nguồn từng tham số, trích [18]), sửa đóng góp thứ hai (bỏ luật chống bão hòa riêng), mục 4-6 chỉ dùng số của lần chạy này.
+Ước lượng (kinh nghiệm, chỉ để lên lịch): một đánh giá CALIB PID khoảng 10 s, MapPID khoảng 47 s; chia hai máy, mỗi máy 4 MATLAB; tổng vài giờ, chủ yếu là MapPID.
+
+5. ĐỀ XUẤT RIÊNG CHO MapPID (do sách, cần người dùng chốt)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5.1 Nhánh PID dùng đúng mục 1 (bắt buộc để PID và MapPID cùng định nghĩa). Hệ quả: bỏ Eq. (39); đóng góp thứ hai chỉ còn "cắm nhánh PID vào map có sẵn, không đổi map".
+5.2 Chống bão hòa của MapPID: sách (Chương 3 và 7) KHÔNG có mục nào nói riêng về nhánh PID song song với một map, nên làm theo nguyên tắc chung của sách và nêu rõ phần suy ra:
+    (i) tín hiệu bám của bộ tích phân là đầu ra THẬT của cơ cấu chấp hành (Hình 3.19 và 3.22, tr. 84-86); sách mô tả khi cộng nhiều thành phần (kết hợp hồi tiếp và truyền thẳng, Hình 7.10, tr. 286)
+    thì bộ điều khiển PID vẫn là mô-đun có tín hiệu bám. Khối giới hạn của ta chặn lệnh TỔNG T_a,cmd = u_map + u_PID; vì map không có tích phân, tín hiệu bám cho nhánh PID là T_a,lim - u_map, nên hiệu
+    của nó với u_PID chính là Delta T_a = T_a,lim - T_a,cmd (suy ra của bài, tính được trực tiếp; không gán cho sách). Do đó giữ Delta T_a của lệnh tổng như cũ.
+    (ii) hằng số bám chỉ liên quan tới bộ tích phân của nhánh PID: trong trạng thái bão hòa tích phân đứng yên, sách cho e_s = -(K T_t/T_i) e (tr. 84), trong đó K và T_i là của mô-đun PID; độ dốc map
+    K_max không xuất hiện. Vậy T_t = sqrt(T_i T_d) với T_i, T_d của nhánh PID, đúng luật của PID (tr. 85). Bỏ Eq. (39) K_aw = K_i/(K_p + K_max): sách không có căn cứ cho K_max trong hằng số bám.
+5.3 Cách nhìn theo sách (chỉ để giải thích, không đổi code): map tác động lên T_s,m chứ không lên sai số, tức giống một khâu P phi tuyến lập lịch theo v với trọng số giá trị đặt b = 0 (tr. 73-74);
+    nhánh PID thêm phần bám T_ref (b = 1) và khâu I. Người dùng chốt 2026-10-27: GHI LẠI để dùng khi viết lại bài (mục 3.4): viết thận trọng một hai câu ("map acts on the measured torque
+only, like the
+    measured-output part of a two-degree-of-freedom controller with b = 0"), trích [18] chỉ cho khái niệm b, c, không gán cho sách kết luận về map. Phần viết bài và nguồn lực tính sau.
+5.4 Không đề xuất thêm thành phần khác cho MapPID (QuyChuan: không thêm phần ngoài lõi cho bộ nào).
+
+6. CHẠY HAI MÁY (PC và laptop, cùng repo, nhánh main; khung COMMON viết 2026-10-27 tối, người dùng đi ngủ, hai khung mới chạy không người)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6.1 Chia việc theo bộ, mỗi máy chỉ sửa và commit file của bộ mình (không bao giờ hai máy cùng ghi một file):
+    PC (khung PIDBOOK-PC, nhật ký Tracking/historychat_pidbook_pc.md): bộ PID và kiểm tất định Map. File của PC: pidlag_variables.m, pidlag_eval.m, pid_u2x.m, pid_x2u.m, pid_grid_spec.m,
+      select_pid_pareto.m, test_pid.m, Model/data/pid.json, Result/Controllers/PID/**, Result/Compare/Pareto_common/ParetoCommon_PID_*, ParetoCommon_MapPID_w5..w8_*, tools/jobs/pidbook_pc.sh.
+    Laptop (khung PIDBOOK-LAPTOP, nhật ký Tracking/historychat_pidbook_laptop.md): bộ MapPID và bước cuối chung. File của laptop: mappid_variables.m, mappid_eval.m, mappid_u2x.m, mappid_x2u.m,
+      run_mappid_plug.m, select_mappid_plug.m, test_mappid.m, Model/data/mappid.json, Result/Controllers/MapPID/**, ParetoCommon_MapPID_* (trừ w5..w8), các file chung của ba bộ
+      (ParetoCommon_fronts_*, _table_*, _select*, *.png), Result/Compare/SSW_summary/**, tools/jobs/pidbook_laptop.sh, mục KẾT QUẢ của tài liệu này.
+    Không ai sửa: mọi file của Map (map.json, Result/Controllers/Map/**, ParetoCommon_Map_*), grid_search.m, compare_pareto_common.m, calib_*.m, run_cases.m, make_cases.m. Nếu buộc phải sửa file
+    dùng chung thì DỪNG bước đó, ghi lý do vào nhật ký và chờ người dùng (không tự sửa).
+6.2 Cách code tối thiểu (để mọi file tải xuống dưới giữ nguyên): cột thiết kế trong csv vẫn là (Kp, Ki, Kd, Tf); u2x ánh xạ u (4 chiều) sang (K, Ti, Td, N) theo hộp mục 2.3 rồi sang (Kp, Ki, Kd, Tf);
+    x2u làm ngược lại. Điều kiện T_d < T_i (tức Kd Ki < Kp^2) kiểm ở đầu hàm đánh giá (pidlag_eval, mappid_eval): vi phạm thì ghi một dòng simulated = 0 với cờ cổng dương, không mô phỏng.
+    K_aw = sqrt(Ki/Kd) trong pidlag_variables (PID) và mappid_variables (nhánh PID của MapPID). json ghi cả (K, Ti, Td, N) và (Kp, Ki, Kd, Tf); thiết kế cũ chuyển sang trường legacy.
+6.3 Trình tự, hai máy chạy SONG SONG từ đầu (không máy nào phải chờ code của máy kia):
+    PC  : P0 kéo main, commit và push mọi thay đổi đang có (kế hoạch, bài, nhật ký) ngay khi bắt đầu, tạo cờ PIDBOOK_PLAN_PUSHED.txt -> P1 chuyển kết quả cũ của PID sang Legacy_2026-10-27/
+          -> P2 code PID, test_pid PASS -> P3 (nền, song song P2) kiểm tất định Map: SSW Map seed 99987 và một điểm CALIB Map seed 99990, so với file cũ -> P4 quét lưới PID seed 10000 (4 worker)
+          -> P5 chọn tạm và báo cáo 10001-10005, margin 10001 -> P6 compare_pareto_common('run', {'PID'}, id, 4) ở seed chung, rồi ('margin', {'PID'}, ...) lặp tới khi mặt PID không còn điểm chờ
+          -> P7 compare_pareto_common('select', {'PID'}, true) ghi pid.json -> P8 SSW cho PID (seed 99987-99989, 11001-11003) -> P9 giúp MapPID (6.4) -> cờ PIDBOOK_PC_DONE.txt.
+    Laptop: L0 chờ cờ PIDBOOK_PLAN_PUSHED.txt trên origin/main (script nền, git fetch mỗi 3 phút) -> L1 chuyển kết quả cũ của MapPID và các file chung ba bộ sang Legacy_2026-10-27/ -> L2 code
+          MapPID, test_mappid PASS -> L3 quét lưới MapPID seed 30000 (4 worker) -> L4 chọn tạm và báo cáo 30001-30005, margin 30001 -> L5 push grid và cờ PIDBOOK_MAPPID_GRID_DONE.txt -> L6 chạy
+          ('run', {'MapPID'}, id, 8) với id 1-4 -> L7 chờ cờ PIDBOOK_MAPPID_PC_DONE.txt (phần w5-w8 của PC) hoặc tự chạy nốt id 5-8 nếu PC chưa bắt đầu sau 30 phút -> L8 ('margin', {'MapPID'})
+          -> L9 kéo main (có PID của PC), ('select', {'PID', 'MapPID'}, true) chỉ để ghi file chung (pid.json phải trùng bản của PC; khác thì dừng và ghi) -> L10 SSW cho MapPID (99987-99989,
+          31001-31003) -> L11 ('front') vẽ hai hình ba mặt, tools/summarize_ssw.py, điền mục KẾT QUẢ -> L12 python tools/update_repo_history.py, commit, push, cờ PIDBOOK_ALL_DONE.txt.
+6.4 Giúp nhau để không máy nào chờ lâu: phần chậm nhất là MapPID (một đánh giá CALIB khoảng 47 s so với PID khoảng 10 s, kinh nghiệm để lên lịch). Khi PC xong P8, script nền của PC kéo main
+mỗi 3 phút;
+    thấy PIDBOOK_MAPPID_GRID_DONE.txt thì chạy ('run', {'MapPID'}, id, 8) với id 5-8 (4 worker), push file w5-w8 và cờ PIDBOOK_MAPPID_PC_DONE.txt. Chia theo vị trí điểm nên hai máy không trùng điểm.
+    Nếu PC xong trước khi laptop có cờ grid thì PC chờ tối đa 2 giờ rồi dừng (không chiếm laptop).
+6.5 Git (mọi lần đẩy): chỉ git add đúng đường dẫn của máy mình (6.1), commit có tag "[PC]" hoặc "[laptop]", rồi git pull --rebase origin main, rồi git push origin main; đẩy sau mỗi bước lớn và ít nhất
+    mỗi giờ khi đang chạy (file csv của worker). Trong đêm KHÔNG chạy tools/sync_repo.sh và không sửa Tracking/repo_history.md (hai máy cùng sinh lại file đó gây xung đột); chỉ laptop ở L12. Nếu pull
+    báo xung đột thì không ép: ghi vào nhật ký, giữ bản của máy kia cho file không thuộc mình (git checkout --theirs trong rebase là bản của mình, nên dùng git checkout origin/main --
+<file>), rồi tiếp.
+6.6 RAM và ổ đĩa: chạy tools/jobs/guard_ram.ps1 nền trên mỗi máy trước khi mở MATLAB (giữ 10 % RAM trống); tối đa 4 MATLAB mỗi máy; tools/jobs/job_lib_patient.sh để tự chạy lại khi MATLAB bị dừng;
+    TEMP và TMP: PC D:/MatlabTemp, laptop thư mục theo biến MATLAB_TEMP (laptop không có ổ D); Simulink.sdi.clear sau mỗi mô phỏng; kiểm ổ C còn trống trước mỗi bước dài (dưới 15 GB thì dừng, ghi).
+6.7 Hỏng thì làm gì: test không PASS, kiểm tất định không trùng, hay một bước báo lỗi lặp 3 lần thì dừng bước đó và các bước phụ thuộc, ghi nguyên văn lỗi vào nhật ký, push, làm tiếp các
+bước không phụ
+    thuộc. Không đổi lưới, hộp, cổng, seed, quy tắc chọn so với mục 1-3 (luật Tracking/CLAUDE.md 2026-10-27). Sáng người dùng đọc hai nhật ký và mục KẾT QUẢ.
