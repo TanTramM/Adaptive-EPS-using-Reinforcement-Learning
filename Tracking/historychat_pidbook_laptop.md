@@ -9,7 +9,9 @@
 - Bước 0: hoàn tất. Đã `git fetch origin`, `git checkout main`, `git pull`; cờ `PIDBOOK_PLAN_PUSHED.txt` đã có trên `origin/main` nên điều kiện chờ L0 thỏa ngay. Không có nhánh cục bộ khác `main`, do đó không có commit cục bộ chưa đẩy cần bảo toàn.
 - L1: hoàn tất và đã push commit `9c7040e`.
 - L2: hoàn tất, `test_mappid` PASS; chuẩn bị commit/push mã.
-- L3: chuẩn bị chạy nền bốn worker bằng `tools/jobs/pidbook_laptop.sh` và `job_lib_patient.sh`.
+- L3: hoàn tất. Lưới dừng theo hội tụ của `grid_search` ở 545 điểm; 225 điểm được mô phỏng/qua cổng tuyến tính.
+- L4: hoàn tất, chọn tạm `(K,Ti,Td,N)=(2.08008382306, 0.02398259906, 0.02331802644, 13.65279781)`; margin PASS.
+- L5: chuẩn bị push toàn bộ lưới, kết quả chọn tạm và cờ bàn giao cho PC.
 
 ## Nhật ký từng bước
 
@@ -41,3 +43,15 @@
 - Tạo runner riêng của laptop dùng `job_lib_patient.sh`, bốn worker, marker tách biệt `pbl_l3_w1..w4`, `MATLAB_TEMP` và preferences đều đặt trong `scratch/MatlabTemp` trên ổ C. `guard_ram.ps1` PID 2036 tiếp tục chạy nền.
 - Đã dọn thư mục preferences rác `MathWorks/MATLAB/R2023a/graphicsState.bin` do lần gọi MATLAB sandbox thất bại tạo ra; đây là tệp chưa theo dõi do chính lượt này sinh, không phải dữ liệu repo.
 - Mốc một giờ 04:00: lưới thô 256 điểm và ba lớp mịn 81 điểm đã hoàn tất; lớp mịn 4 đang chạy, tổng bốn CSV khoảng 521 dòng, không có worker lỗi/restart. Đẩy ảnh chụp CSV theo quy tắc ít nhất mỗi giờ; worker tiếp tục ghi phần sau.
+- Hoàn tất 04:05: bốn CSV có lần lượt 140, 136, 137, 132 dòng, tổng 545; `simulated=1` và qua ba cổng tuyến tính là 225 điểm. Cả bốn marker worker DONE, không có marker FAILED; thuật toán tự dừng theo điều kiện hội tụ hiện có, không đổi số lớp hay lưới.
+
+### L4 - Chọn tạm MapPID (2026-10-27)
+
+- Bắt đầu `select_mappid_plug(true)` qua `job_lib_patient.sh`; quy tắc chọn, seed báo cáo 30001-30005 và margin seed 30001 giữ nguyên theo kế hoạch.
+- Lần gọi đầu bằng `bash -lc` bị PowerShell tách sai chuỗi tại dấu chấm phẩy, lỗi nguyên văn: `true : The term 'true' is not recognized` và `disp : The term 'disp' is not recognized`. Chưa mở MATLAB và chưa chạm kết quả. Sửa runner nhận đối số `l4` để tránh lớp quote lồng nhau rồi chạy lại.
+- Chạy lại qua runner thành công ngay lần MATLAB thứ nhất. Tổng 545 điểm, 225 mô phỏng, 151 khả thi, 36 điểm Pareto. Điểm tạm: `K=2.08008382306`, `Ti=0.0239825990561 s`, `Td=0.0233180264360 s`, `N=13.6527978129`; tương đương `Kp=2.08008382306`, `Ki=86.7330441622`, `Kd=0.0485034495753`, `Tf=0.00170793025398 s`, `Kaw=42.2869129155`.
+- CALIB seed tìm: `R=2.44515775 %`, `S=0.7939389451 N.m`, `J=1.94130596464`; báo cáo năm seed: `J=2.04693500943 +/- 0.113269161715`, `e_rel,max=1.678 %`; `PM=38.822 deg`, `GM=3.118`; margin seed 30001 PASS với tỉ số gain `0.7594`, delay `1.0254`.
+
+### L5 - Đẩy lưới và cờ bàn giao MapPID (2026-10-27)
+
+- Tạo `Result/Compare/Pareto_common/PIDBOOK_MAPPID_GRID_DONE.txt` sau khi L3 và L4 hoàn tất; commit gồm đúng kết quả MapPID, `mappid.json`, runner và nhật ký laptop.

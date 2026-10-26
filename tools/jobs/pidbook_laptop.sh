@@ -10,6 +10,13 @@ MASTER="$S/pidbook_laptop_master.txt"
 mstat() { echo "$(date '+%F %T') $1" >> "$MASTER"; }
 failed() { mstat "STOPPED: $1"; exit 1; }
 
+if [ "${1:-l3}" = "l4" ]; then
+  mstat "L4 start: provisional selection, seeds 30001-30005, margin 30001"
+  run_job_patient "pbl_l4" "select_mappid_plug(true); disp('PBL_L4_DONE')" "PBL_L4_DONE" || failed "L4 selection"
+  mstat "L4 done"
+  exit 0
+fi
+
 mstat "L3 start: MapPID grid seed 30000, four workers"
 pids=""
 for id in 1 2 3 4; do

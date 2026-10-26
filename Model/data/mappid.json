@@ -3,35 +3,35 @@
   "Ts_ctrl": 0.001,
   "legacy": {
     "design_before_pidbook_2026_10_27": {
-    "Ts0": 0.3,
-    "Kmax": 6.77455395156,
-    "lead": {
-      "z": 33.50093752,
-      "p": 673.26610829759863
-    },
-    "lag": {
-      "z1": 28.12757927,
-      "p1": 10.688480119984135
-    },
-    "Kp": 1.48352278904,
-    "Ki": 73.6806299731,
-    "Kd": 0.0469733968465,
-    "Tf": 0.00207404819824,
-    "Kaw": 8.9222505781348129,
-    "rule": "final design on the common-seed (99990-99994) margin-checked front: J = R_tb x S_tb minimum, 3 % tie by maximum PM; KeHoachMatlab.txt 10.1; 2026-10-23",
-    "CALIB_common_Rtb": 2.7293302678,
-    "CALIB_common_Stb": 0.7655554345,
-    "CALIB_common_J": 2.0894536190596305,
-    "CALIB_common_erel_max": 2.01023413,
-    "CALIB_common_face": "full",
-    "CALIB_R_pct": 2.600188688,
-    "CALIB_S_Nm": 0.7651740406,
-    "CALIB_J": 1.9895968847193728,
-    "CALIB_erel_pct": 1.389125217,
-    "PM_deg": 39.50797843,
-    "GM": 3.135029483,
-    "margin_ratio_gain": 0.778417617345328,
-    "margin_ratio_delay": 1.01268929067001,
+      "Ts0": 0.3,
+      "Kmax": 6.77455395156,
+      "lead": {
+        "z": 33.50093752,
+        "p": 673.26610829759863
+      },
+      "lag": {
+        "z1": 28.12757927,
+        "p1": 10.688480119984135
+      },
+      "Kp": 1.48352278904,
+      "Ki": 73.6806299731,
+      "Kd": 0.0469733968465,
+      "Tf": 0.00207404819824,
+      "Kaw": 8.9222505781348129,
+      "rule": "final design on the common-seed (99990-99994) margin-checked front: J = R_tb x S_tb minimum, 3 % tie by maximum PM; KeHoachMatlab.txt 10.1; 2026-10-23",
+      "CALIB_common_Rtb": 2.7293302678,
+      "CALIB_common_Stb": 0.7655554345,
+      "CALIB_common_J": 2.0894536190596305,
+      "CALIB_common_erel_max": 2.01023413,
+      "CALIB_common_face": "full",
+      "CALIB_R_pct": 2.600188688,
+      "CALIB_S_Nm": 0.7651740406,
+      "CALIB_J": 1.9895968847193728,
+      "CALIB_erel_pct": 1.389125217,
+      "PM_deg": 39.50797843,
+      "GM": 3.135029483,
+      "margin_ratio_gain": 0.778417617345328,
+      "margin_ratio_delay": 1.01268929067001,
       "date": "2026-10-23 04:19:31"
     }
   },
@@ -141,5 +141,51 @@
       30005
     ],
     "date": "2026-10-22 02:17:40"
+  },
+  "design": {
+    "Ts0": 0.3,
+    "Kmax": 6.77455395156,
+    "lead": {
+      "z": 33.50093752,
+      "p": 673.26610829759863
+    },
+    "lag": {
+      "z1": 28.12757927,
+      "p1": 10.688480119984135
+    },
+    "Kp": 2.08008382306,
+    "Ki": 86.7330441622,
+    "Kd": 0.0485034495753,
+    "Tf": 0.00170793025398,
+    "K": 2.08008382306,
+    "Ti": 0.023982599056133924,
+    "Td": 0.023318026436043738,
+    "N": 13.652797812853073,
+    "Kaw": 42.286912915502043,
+    "rule": "PIDBOOK 2026-10-27: Map locked to map.json; standard PID variables (K,Ti,Td,N), Td<Ti; feasible Pareto (R,S), J=R*S with 3% tie by maximum PM, e_max=10%, calib_margin",
+    "CALIB_R_pct": 2.44515775,
+    "CALIB_S_Nm": 0.7939389451,
+    "CALIB_J": 1.9413059646380892,
+    "CALIB_erel_pct": 1.17227723,
+    "PM_deg": 38.82218646,
+    "GM": 3.118275255,
+    "CALIB_Jbar_5seed": 2.0469350094291703,
+    "CALIB_sigmaJ_5seed": 0.11326916171534467,
+    "CALIB_erel_max_5seed": 1.6780168214418676,
+    "margin_ratio_gain": 0.75939785258730308,
+    "margin_ratio_delay": 1.0253957363656891,
+    "n_grid_evaluations": 545,
+    "n_grid_simulations": 225,
+    "n_grid_feasible": 151,
+    "n_pareto": 36,
+    "search_seed": 30000,
+    "reporting_seeds": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005
+    ],
+    "date": "2026-10-27 04:24:22"
   }
 }
