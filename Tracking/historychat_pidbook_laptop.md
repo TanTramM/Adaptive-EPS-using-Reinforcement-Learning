@@ -9,6 +9,7 @@
 - Bước 0: hoàn tất. Đã `git fetch origin`, `git checkout main`, `git pull`; cờ `PIDBOOK_PLAN_PUSHED.txt` đã có trên `origin/main` nên điều kiện chờ L0 thỏa ngay. Không có nhánh cục bộ khác `main`, do đó không có commit cục bộ chưa đẩy cần bảo toàn.
 - L1: hoàn tất và đã push commit `9c7040e`.
 - L2: hoàn tất, `test_mappid` PASS; chuẩn bị commit/push mã.
+- L3: chuẩn bị chạy nền bốn worker bằng `tools/jobs/pidbook_laptop.sh` và `job_lib_patient.sh`.
 
 ## Nhật ký từng bước
 
@@ -34,3 +35,8 @@
 - Hai lần gọi MATLAB trong sandbox không chạy được do môi trường, lỗi nguyên văn lần 1: `Unable to create preferences folder in MathWorks\\MATLAB\\R2023a. Preferences folder location must be a valid full path.`; sau khi đặt `MATLAB_PREFDIR`, lỗi lần 2: `Previously accessible file "C:\\Program Files\\MATLAB\\R2023a\\toolbox\\local\\pathdef.m" is now inaccessible.` và `Unrecognized function or variable 'run'.` Đây là lỗi quyền đọc cài đặt, không phải lỗi mã.
 - Chạy lại MATLAB ngoài sandbox với `MATLAB_TEMP`, `TEMP`, `TMP`, `MATLAB_PREFDIR` trên ổ C và `guard_ram.ps1` nền (10% RAM) thành công: `test_mappid_grid_helpers: PASS`; cổng `Td/Ti` vi phạm PASS; ba ca Map-only, PID-only, Map+PID đều khớp nghiệm độc lập với sai số lớn nhất lần lượt `2.92e-12`, `7.11e-15`, `3.45e-12` N.m; kết thúc `TEST PASS`.
 - Ổ C còn 43.91 GB trước khi chạy, lớn hơn ngưỡng dừng 15 GB; không có MATLAB khác khi bắt đầu.
+
+### L3 - Quét lưới MapPID seed 30000 (2026-10-27)
+
+- Tạo runner riêng của laptop dùng `job_lib_patient.sh`, bốn worker, marker tách biệt `pbl_l3_w1..w4`, `MATLAB_TEMP` và preferences đều đặt trong `scratch/MatlabTemp` trên ổ C. `guard_ram.ps1` PID 2036 tiếp tục chạy nền.
+- Đã dọn thư mục preferences rác `MathWorks/MATLAB/R2023a/graphicsState.bin` do lần gọi MATLAB sandbox thất bại tạo ra; đây là tệp chưa theo dõi do chính lượt này sinh, không phải dữ liệu repo.
