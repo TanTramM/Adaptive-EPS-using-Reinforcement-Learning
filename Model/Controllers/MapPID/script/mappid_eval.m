@@ -4,7 +4,7 @@ function out = mappid_eval(x, seed, csvFile)
 %   out = mappid_eval(x, seed, csvFile)
 %     x       row or column of the nine design variables
 %             [K, z, p/z, z1, p1/z1, Kp, Ki, Kd, Tf]   K slope limit of the table; lead z, p [rad/s]; lag z1, p1 [rad/s] (p1/z1 < 1);
-%                                                     Kp, Ki [1/s], Kd [s], Tf [s] of the PID branch (Kaw = Ki/(Kp + K))
+%                                                     Kp, Ki [1/s], Kd [s], Tf [s] of the PID branch (Kaw = sqrt(Ki/Kd))
 %     seed    run seed of the sensor noise (MapPID tuning seed 30000; the check seed 30001)
 %     csvFile optional: every evaluation is appended as one row (resumable: a design already in the file is returned from it, not simulated again)
 %   out.c      constraint vector, feasible when all <= 0:  [PM_min - PM, GM_min - GM, g_lag_min - lagGain2Hz, erel - 10, p - 3142, 3 - p1, ratio bounds]
@@ -34,6 +34,16 @@ if ~isempty(csvFile) && exist(csvFile, 'file')
             'HF', r.HF, 'lagGain2Hz', r.lagGain2Hz, 'simulated', r.simulated, 'c', [r.c1 r.c2 r.c3 r.c4], 'cached', true);
         return;
     end
+end
+
+% Standard-form structural constraint Td < Ti. Since Ti=Kp/Ki and Td=Kd/Kp,
+% this is Kd*Ki < Kp^2. Reject at the head of the evaluator, before loading
+% plants, computing margins, or simulating. A positive gate flag is persisted.
+if x(6) <= 0 || x(7) <= 0 || x(8) <= 0 || x(9) <= 0 || x(8) * x(7) >= x(6)^2
+    out = struct('x', x, 'seed', seed, 'J', Inf, 'R', NaN, 'S', NaN, 'TV', NaN, 'erel', NaN, 'rev', NaN, 'PM', NaN, 'GM', NaN, 'HF', NaN, ...
+        'lagGain2Hz', NaN, 'simulated', 0, 'c', [1 0 0 0], 'cached', false);
+    if ~isempty(csvFile), writeRow(csvFile, names, x, seed, out, 0); end
+    return;
 end
 
 if isempty(Gj), [Gj, w] = mappid_plants(); Cal = calibrate_map_cached(); end

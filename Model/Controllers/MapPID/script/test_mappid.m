@@ -9,7 +9,7 @@ function test_mappid()
 %     T_a[k] = u_map[k] + Kp e[k] + u_I[k] + d[k],   u_I[k+1] = u_I[k] + Ts (Ki e[k] + Kaw (T_a_lim[k] - T_a[k]))
 %   Three runs: (a) PID gains 0 -> the Map alone; (b) table 0 -> the PID alone with Kaw; (c) both branches, Kp, Ki, Kd, Tf, Kmax and a lag of the
 %   test, with T_a_lim clamping part of the time. Also (d): the table built by mappid_variables equals the independent table at every grid point,
-%   and (e) Kaw = Ki / (Kp + Kmax).
+%   and (e) Kaw = sqrt(Ki/Kd), computed independently from Ti and Td. Case (c) contains explicit positive and negative clamp intervals.
 scriptDir = fileparts(mfilename('fullpath'));   % MapPID/script
 ctlDir    = fileparts(scriptDir);               % MapPID/
 modelDir  = fileparts(fileparts(ctlDir));       % Model/
@@ -28,7 +28,9 @@ t = (0:Ts:6)'; n = numel(t);
 T_s = 1.5 + 1.3 * sin(2*pi*0.7*t) + 0.2 * sin(2*pi*13*t);       % crosses the dead zone and the whole table
 v   = 16 + 8 * (t > 3) + 3 * sin(2*pi*0.1*t);                    % m/s
 a_y = 3.0 * sin(2*pi*0.4*t);                                      % m/s^2, both signs
-T_a_lim = 3.0 * sin(2*pi*0.2*t + 0.5) + 0.4;                      % independent of T_a: the anti-windup term is active
+T_a_lim = 20 * ones(size(t));                                      % effectively unclamped outside the explicit intervals
+T_a_lim(t >= 2.0 & t < 3.0) = 0.6;                                % positive clamp interval
+T_a_lim(t >= 4.0 & t < 5.0) = -0.6;                               % negative clamp interval
 
 harness = 'test_mappid_harness';
 mdlFile = 'MapPID';
@@ -63,7 +65,7 @@ cases = struct( ...
     'Kmax', {dm.Kmax, 6.5, 4.0}, ...
     'lead', {dm.lead, struct('z', 40, 'p', 700), struct('z', 25, 'p', 500)}, ...
     'lag',  {dm.lag, struct('z1', 30, 'p1', 12), struct('z1', 20, 'p1', 8)}, ...
-    'Kp',   {0, 0.7, 0.5}, 'Ki', {0, 12, 20}, 'Kd', {0, 0.02, 0.01}, 'Tf', {0.005, 0.008, 0.004}, 'scale', {1, 0, 1});
+    'Kp',   {0, 0.7, 0.5}, 'Ki', {0, 8.75, 8.33333333333333}, 'Kd', {0, 0.021, 0.0125}, 'Tf', {0.005, 0.003, 0.025/12}, 'scale', {1, 0, 1});
 for ic = 1:numel(cases)
     c = cases(ic);
     d = struct('Ts_ctrl', Ts, 'Ts0', dm.Ts0, 'Kmax', c.Kmax, 'lead', c.lead, 'lag', c.lag, 'Kp', c.Kp, 'Ki', c.Ki, 'Kd', c.Kd, 'Tf', c.Tf);
@@ -72,7 +74,8 @@ for ic = 1:numel(cases)
     Tab = mkTable(c.Kmax);
     errTab = max(abs(V.MapPID_table(:) - Tab(:)));
     assert(errTab < 1e-9, 'table of mappid_variables differs from the independent table by %.3g', errTab);
-    assert(abs(V.MapPID_Kaw - ternary(c.Ki > 0 && c.Kp + c.Kmax > 0, c.Ki / (c.Kp + c.Kmax), 0)) < 1e-12, 'Kaw must be Ki/(Kp+Kmax)');   % (e)
+    expectedKaw = ternary(c.Ki > 0 && c.Kd > 0, 1 / sqrt((c.Kp / c.Ki) * (c.Kd / c.Kp)), 0);
+    assert(abs(V.MapPID_Kaw - expectedKaw) < 1e-12, 'Kaw must be 1/sqrt(Ti*Td) = sqrt(Ki/Kd)');   % (e)
     fn = fieldnames(V);
     for i = 1:numel(fn), assignin('base', fn{i}, V.(fn{i})); end
     if c.scale == 0, assignin('base', 'MapPID_table', zeros(size(V.MapPID_table))); end
@@ -92,7 +95,7 @@ for ic = 1:numel(cases)
     [numH, denH] = compTustin(c.lead, c.lag, Ts);
     umap = filter(numH, denH, Tamap);
     Ta_ref = zeros(n, 1); uI = 0; dk = 0; Tsp = 0; a = c.Tf / (c.Tf + Ts); b = c.Kd / (c.Tf + Ts);
-    Kaw = ternary(c.Ki > 0 && c.Kp + c.Kmax > 0, c.Ki / (c.Kp + c.Kmax), 0);
+    Kaw = ternary(c.Ki > 0 && c.Kd > 0, 1 / sqrt((c.Kp / c.Ki) * (c.Kd / c.Kp)), 0);
     for k = 1:n
         e = in.T_s(k) - Td(k);
         dk = a * dk + b * (in.T_s(k) - Tsp); Tsp = in.T_s(k);
@@ -103,7 +106,8 @@ for ic = 1:numel(cases)
     fprintf('[MapPID] %s: T_a %.3f .. %.3f N.m, max |Simulink - reference| = %.3g N.m, table error %.2g\n', c.name, min(Ta_ref), max(Ta_ref), err, errTab);
     assert(err < 1e-8, '%s: T_a differs from the independent reference by %.3g', c.name, err);
     if ic == 3
-        assert(max(abs(in.T_a_lim - Ta_ref)) > 1, 'case (c) must exercise the anti-windup term');
+        clamp = (t >= 2.0 & t < 3.0) | (t >= 4.0 & t < 5.0);
+        assert(max(abs(in.T_a_lim(clamp) - Ta_ref(clamp))) > 1, 'case (c) must exercise anti-windup during the clamp intervals');
     end
 end
 

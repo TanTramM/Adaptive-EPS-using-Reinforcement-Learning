@@ -22,13 +22,17 @@ sel = select_pareto(spec, false);
 
 d = sel.design;
 q = rmfield(d, 'Ts_ctrl');
-q.Kaw = q.Ki / (q.Kp + q.Kmax);
+q.K = q.Kp; q.Ti = q.Kp / q.Ki; q.Td = q.Kd / q.Kp; q.N = q.Td / q.Tf;
+q.Kaw = sqrt(q.Ki / q.Kd);
 fprintf('Plug-in design: K %.6g, lead z %.6g p %.6g, lag z1 %.6g p1 %.6g | Kp %.6g Ki %.6g Kd %.6g Tf %.6g Kaw %.6g\n', ...
     q.Kmax, q.lead.z, q.lead.p, q.lag.z1, q.lag.p1, q.Kp, q.Ki, q.Kd, q.Tf, q.Kaw);
 if writeJson
     J = jsondecode(fileread(jsonPath));
-    if isfield(J, 'design') && ~isfield(J, 'design_pre_plug'), J.design_pre_plug = J.design; end
-    q.rule = 'plug-in: Map block locked to map.json design, PID block (Kp, Ki, Kd, Tf) by the PID coarse-to-fine grid and box, feasible Pareto (R,S), J=R*S with 3% tie by maximum PM, e_max=10%, calib_margin; PhuongPhap_TimThamSo.txt 15; 2026-10-22';
+    if isfield(J, 'design')
+        if ~isfield(J, 'legacy') || ~isstruct(J.legacy), J.legacy = struct(); end
+        if ~isfield(J.legacy, 'design_before_pidbook_2026_10_27'), J.legacy.design_before_pidbook_2026_10_27 = J.design; end
+    end
+    q.rule = 'PIDBOOK 2026-10-27: Map locked to map.json; standard PID variables (K,Ti,Td,N), Td<Ti; feasible Pareto (R,S), J=R*S with 3% tie by maximum PM, e_max=10%, calib_margin';
     q.CALIB_R_pct = sel.R; q.CALIB_S_Nm = sel.S; q.CALIB_J = sel.J;
     q.CALIB_erel_pct = sel.erel; q.PM_deg = sel.PM; q.GM = sel.GM;
     q.CALIB_Jbar_5seed = sel.Jbar; q.CALIB_sigmaJ_5seed = sel.sigmaJ;

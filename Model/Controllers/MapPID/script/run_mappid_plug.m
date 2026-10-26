@@ -1,7 +1,7 @@
 function summary = run_mappid_plug(workerId, nWorkers)
 %RUN_MAPPID_PLUG One resumable worker of the plug-in grid (PhuongPhap_TimThamSo.txt 15).
 %   The Map block (K, z, p/z, z1, p1/z1) is locked to the design of data/map.json; only the PID block
-%   (Kp, Ki, Kd, Tf) is searched with the same coarse-to-fine grid and box as the stand-alone PID.
+%   standard-form PID parameters (K, Ti, Td, N) are searched on the agreed four-dimensional coarse-to-fine grid. CSV columns remain (Kp, Ki, Kd, Tf).
 %   Results: Result/Controllers/MapPID/Calib_v2/PlugPlay/MapPID_CALIB_P1B1_w<id>_s30000.csv
 if nargin < 1, workerId = 1; end
 if nargin < 2, nWorkers = 4; end
