@@ -8,7 +8,10 @@ function V = pidlag_variables(ctrl, d)
 Ts = d.Ts_ctrl;
 V.([ctrl '_Ts_ctrl']) = Ts;
 V.([ctrl '_Kp']) = d.Kp; V.([ctrl '_Ki']) = d.Ki; V.([ctrl '_Kd']) = d.Kd; V.([ctrl '_Tf']) = d.Tf;
-if d.Ki > 0 && d.Kp > 0, V.([ctrl '_Kaw']) = d.Ki / d.Kp; else, V.([ctrl '_Kaw']) = 0; end
+if strcmp(ctrl, 'PID')
+    % book design (KeHoach_PID_Sach.txt 1.6): Kaw = 1/Tt, Tt = sqrt(Ti Td); with Ki = K/Ti, Kd = K Td: sqrt(Ki/Kd) = 1/sqrt(Ti Td)
+    if d.Ki > 0 && d.Kd > 0, V.([ctrl '_Kaw']) = sqrt(d.Ki / d.Kd); else, V.([ctrl '_Kaw']) = 0; end
+elseif d.Ki > 0 && d.Kp > 0, V.([ctrl '_Kaw']) = d.Ki / d.Kp; else, V.([ctrl '_Kaw']) = 0; end
 if isfield(d, 'lag') && ~isempty(d.lag) && isfinite(d.lag.z1) && isfinite(d.lag.p1)
     a = 2 / Ts;                                    % Tustin: s -> a (1 - z^-1)/(1 + z^-1)
     num = [a / d.lag.z1 + 1, 1 - a / d.lag.z1] / (a / d.lag.p1 + 1);

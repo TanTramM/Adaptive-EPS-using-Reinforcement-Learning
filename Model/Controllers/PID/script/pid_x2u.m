@@ -1,8 +1,8 @@
 function u = pid_x2u(x)
-%PID_X2U Inverse of pid_u2x (clipped to the box; Kd = 0 gives u(3) = 0).
+%PID_X2U Inverse of pid_u2x (clipped to the box): x = [Kp, Ki, Kd, Tf] -> K = Kp, Ti = Kp/Ki, Td = Kd/Kp, N = Td/Tf -> u.
 x = x(:)';
+K = x(1); Ti = x(1) / x(2); Td = x(3) / x(1); N = Td / x(4);
 il = @(a, b, v) (log10(v) - log10(a)) ./ (log10(b) - log10(a));
-if x(3) <= 0, u3 = 0; else, u3 = 0.01 + 0.99 * il(1e-4, 2, x(3)); end
-u = [il(1e-3, 30, x(1)), il(0.1, 2000, x(2)), u3, il(1e-3, 0.0796, x(4))];
+u = [il(0.01, 30, K), il(2e-3, 10, Ti), il(0.02, 0.796, Td), il(8, 20, N)];
 u = min(max(u, 0), 1);
 end

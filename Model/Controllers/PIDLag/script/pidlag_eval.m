@@ -44,6 +44,15 @@ out = struct('x', x, 'seed', seed, 'J', Inf, 'R', NaN, 'S', NaN, 'TV', NaN, 'ere
     'lagGain2Hz', lagGain, 'simulated', 0, 'c', c, 'cached', false);
 tStart = tic;
 
+if strcmp(ctrl, 'PID')
+    % Book design (KeHoach_PID_Sach.txt 2.3, 6.2): Td < Ti (Kd Ki < Kp^2) is checked BEFORE anything is computed; a violating point is logged as not simulated
+    % with a positive structural flag (c3). The steering-band gate (QuyChuan 6.2: derivative filter Tf = Td/N gives gain >= 0.707 at 2 Hz, i.e. Tf <= 79.6 ms) is applied
+    % as the same flag; the plan's box (Td up to 796 ms, N down to 8) reaches Tf = 99.5 ms in one corner, so the gate is enforced here instead of changing the box.
+    lagGain = 1 / sqrt(1 + (w2 * x(4))^2); out.lagGain2Hz = lagGain;
+    if x(3) * x(2) >= x(1)^2 * (1 - 1e-9) || lagGain < gLagMin
+        out.c = [0 0 1 0]; finish(); return;
+    end
+end
 bad = isfield(d, 'lag') && (d.lag.p1 < 3 || d.lag.p1 > d.lag.z1 + 1e-9);
 R = pidlag_margins(Gj, w, d);
 out.PM = R.PM; out.GM = R.GM; out.HF = R.HF;

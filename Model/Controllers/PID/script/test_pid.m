@@ -15,7 +15,8 @@ modelDir  = fileparts(fileparts(ctlDir));       % Model/
 loadPiPath = fullfile(ctlDir, 'load_pid.m');
 evalin('base', sprintf('run(''%s'');', strrep(loadPiPath, '\', '/')));
 Ts = evalin('base', 'Ts_ctrl');
-Kp = 0.7; Ki = 12; Kaw = Ki / Kp; Kd = 0.02; Tf = 0.008;
+Kp = 0.7; Ki = 12; Kd = 0.02; Tf = 0.008; Kaw = sqrt(Ki / Kd);   % book design: Kaw = 1/Tt, Tt = sqrt(Ti Td) = sqrt(Kd/Ki)
+satL = 1.2;                                                             % saturation level of the harness limiter [N.m]
 assignin('base', 'PID_Kp', Kp); assignin('base', 'PID_Ki', Ki); assignin('base', 'PID_Kaw', Kaw);
 assignin('base', 'PID_Kd', Kd); assignin('base', 'PID_Tf', Tf);
 
@@ -24,7 +25,7 @@ t = (0:Ts:6)'; n = numel(t);
 T_s = 1.5 + 1.2 * sin(2*pi*0.7*t) + 0.2 * sin(2*pi*13*t);
 v   = (16 + 8 * (t > 3) + 3 * sin(2*pi*0.1*t));                      % m/s: 16-27, crosses table breakpoints
 a_y = 3.0 * sin(2*pi*0.4*t);                                           % m/s^2, both signs, crosses 0
-T_a_lim = 3.0 * sin(2*pi*0.2*t + 0.5) + 0.4;                           % independent of T_a: the anti-windup term is active
+T_a_lim = zeros(n, 1);                                                       % placeholder: the harness feeds back the SATURATED, delayed T_a (below)
 
 %% the block in Simulink
 harnessName = 'test_pid_harness';
@@ -36,8 +37,8 @@ assert(numel(subs) == 1, 'PID must have exactly 1 root subsystem');
 new_system(harnessName);
 add_block(subs{1}, [harnessName '/DUT']);
 dut = [harnessName '/DUT'];
-sigs = {T_s, v, a_y, T_a_lim};
-names = {'T_s', 'v', 'a_y', 'T_a_lim'};
+sigs = {T_s, v, a_y};
+names = {'T_s', 'v', 'a_y'};
 for i = 1:numel(names)
     assignin('base', ['tp_' names{i}], [t sigs{i}]);
     b = [harnessName '/FW_' names{i}];
@@ -48,6 +49,14 @@ end
 add_block('simulink/Sinks/To Workspace', [harnessName '/Ta_out']);
 set_param([harnessName '/Ta_out'], 'VariableName', 'tp_Ta_log', 'SaveFormat', 'Timeseries');
 add_line(harnessName, portRef(dut, 'T_a'), 'Ta_out/1');
+% limiter feedback: T_a_lim[k] = sat(T_a[k-1]) (one-sample delay, saturation at +-satL), so the block really saturates and the back-calculation term acts as in the closed loop
+add_block('simulink/Discrete/Unit Delay', [harnessName '/UD'], 'SampleTime', num2str(Ts), 'InitialCondition', '0');
+add_block('simulink/Discontinuities/Saturation', [harnessName '/SAT'], 'UpperLimit', num2str(satL), 'LowerLimit', num2str(-satL));
+add_line(harnessName, portRef(dut, 'T_a'), 'UD/1');
+add_line(harnessName, 'UD/1', 'SAT/1');
+add_line(harnessName, 'SAT/1', portRef(dut, 'T_a_lim'));
+add_block('simulink/Sinks/To Workspace', [harnessName '/LG_lim'], 'VariableName', 'tp_in_T_a_lim', 'SaveFormat', 'Timeseries');
+add_line(harnessName, 'SAT/1', 'LG_lim/1');
 set_param(harnessName, 'SolverType', 'Fixed-step', 'Solver', 'ode1', 'FixedStep', num2str(Ts), 'StopTime', num2str(t(end)));
 for i = 1:numel(names)       % log what the block really receives
     b = [harnessName '/LG_' names{i}];
@@ -63,7 +72,8 @@ for i = 1:numel(names)
     in.(names{i}) = squeeze(q.Data); in.(names{i}) = in.(names{i})(:);
     assert(numel(in.(names{i})) == n, 'logged input %s has a different length', names{i});
 end
-T_s = in.T_s; v = in.v; a_y = in.a_y; T_a_lim = in.T_a_lim;
+q = so.get('tp_in_T_a_lim'); T_a_lim = squeeze(q.Data); T_a_lim = T_a_lim(:);
+T_s = in.T_s; v = in.v; a_y = in.a_y;
 
 %% expected output from the logged inputs, independent of gates and of the block
 rawRef = jsondecode(fileread(fullfile(modelDir, 'data', 'ref.json')));
@@ -78,6 +88,10 @@ for k = 1:n
     Ta_ref(k) = Kp * e + uI + dk;
     uI = uI + Ts * (Ki * e + Kaw * (T_a_lim(k) - Ta_ref(k)));
 end
+lim_expect = [0; min(max(Ta_ref(1:end-1), -satL), satL)];
+assert(max(abs(T_a_lim - lim_expect)) < 1e-9, 'limiter feedback differs from sat(delayed T_a)');
+assert(nnz(abs(Ta_ref) > satL) > 100, 'the limit is not touched: choose a smaller satL');
+fprintf('[%s] limit touched in %d of %d samples\n', modelFileName, nnz(abs(Ta_ref) > satL), n);
 fprintf('[%s] expected T_a: %.3f .. %.3f N.m, T_a_lim - T_a up to %.3f N.m (anti-windup term exercised)\n', modelFileName, min(Ta_ref), max(Ta_ref), max(abs(T_a_lim - Ta_ref)));
 Ta_sim = squeeze(ts.Data); Ta_sim = Ta_sim(:);
 err = max(abs(Ta_sim - Ta_ref));
@@ -90,7 +104,7 @@ assert(numel(integ) == 1 && strcmp(get_param(integ{1}, 'IntegratorMethod'), 'Int
 fprintf('[%s] TEST PASS: PID (back-calculation anti-windup, filtered derivative of T_s) matches the independent recursion (max error %.3g)\n', modelFileName, err);
 close_system(harnessName, 0);
 close_system(modelFileName, 0);
-evalin('base', 'clear tp_T_s tp_v tp_a_y tp_T_a_lim');
+evalin('base', 'clear tp_T_s tp_v tp_a_y tp_in_T_a_lim');
 end
 
 function ref = portRef(subPath, portName)
