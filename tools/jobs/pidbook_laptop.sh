@@ -17,6 +17,25 @@ if [ "${1:-l3}" = "l4" ]; then
   exit 0
 fi
 
+if [ "${1:-l3}" = "l6" ]; then
+  for phase in 1 2; do
+    mstat "L6 phase $phase start: MapPID ids 1-4 of 8"
+    pids=""
+    for id in 1 2 3 4; do
+      run_job_patient "pbl_l6_ph${phase}_w$id" "compare_pareto_common('run',{'MapPID'},$id,8,$phase); disp('PBL_L6_WORKER_DONE')" "PBL_L6_WORKER_DONE" &
+      pids="$pids $!"
+      sleep 30
+    done
+    wait $pids
+    for id in 1 2 3 4; do
+      [ -f "$S/pbl_l6_ph${phase}_w${id}_done.txt" ] || failed "L6 phase $phase worker $id"
+    done
+    mstat "L6 phase $phase done"
+  done
+  echo done > "$S/pbl_l6_done.txt"
+  exit 0
+fi
+
 mstat "L3 start: MapPID grid seed 30000, four workers"
 pids=""
 for id in 1 2 3 4; do

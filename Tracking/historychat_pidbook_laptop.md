@@ -12,6 +12,8 @@
 - L3: hoàn tất. Lưới dừng theo hội tụ của `grid_search` ở 545 điểm; 225 điểm được mô phỏng/qua cổng tuyến tính.
 - L4: hoàn tất, chọn tạm `(K,Ti,Td,N)=(2.08008382306, 0.02398259906, 0.02331802644, 13.65279781)`; margin PASS.
 - L5: chuẩn bị push toàn bộ lưới, kết quả chọn tạm và cờ bàn giao cho PC.
+- L5: hoàn tất và push commit `2dd90b8`.
+- L6: bắt đầu đánh giá seed chung MapPID, id 1-4/8, hai pha theo Sửa đổi A.
 
 ## Nhật ký từng bước
 
@@ -55,3 +57,7 @@
 ### L5 - Đẩy lưới và cờ bàn giao MapPID (2026-10-27)
 
 - Tạo `Result/Compare/Pareto_common/PIDBOOK_MAPPID_GRID_DONE.txt` sau khi L3 và L4 hoàn tất; commit gồm đúng kết quả MapPID, `mappid.json`, runner và nhật ký laptop.
+
+### L6 - Đánh giá MapPID trên seed chung (2026-10-27)
+
+- Runner dùng bốn MATLAB patient cho id 1-4/8, chạy pha 1 trước rồi pha 2; seed/cổng/tập dự tuyển do `compare_pareto_common.m` hiện có quyết định theo `KeHoach_SoMatPareto.txt` Sửa đổi A. Laptop không sửa file dùng chung này.
