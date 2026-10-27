@@ -71,3 +71,8 @@ Lỗi còn treo / lưu ý:
 - Cổng Tf <= 79.6 ms (c3) thêm vào pidlag_eval cho PID vì hộp kế hoạch (Td 796 ms, N 8) cho Tf tới 99.5 ms; mappid_eval của laptop có thể chưa có cổng này (góc hộp khác nhau).
 - Các file dùng chung ParetoCommon_fronts_*, ParetoCommon_select*.csv không đẩy (thuộc laptop); bản PID nằm ở ParetoCommon_PID_select*.csv. pid.json: Kaw sửa tay sau compare select (hai hàm shared ghi Kaw = Ki/Kp).
 - Marker *_failed.txt cũ trong scratch/jobs (init_pid_grid_select, map_grid_select) là của lần cũ.
+
+### Đổi seed SSW theo người dùng (2026-10-27, sau khi P0-P9 xong)
+- Người dùng chốt: SSW chung dùng 99999-99995 (hình bài báo lấy 99999, năm seed để tính trung bình); bỏ SSW seed riêng (11001-11003, 01001-01003, 31001-31003) vì không cần. Thay cho 99987-99989 trong KeHoach_PID_Sach.txt mục 3.
+- PC đã chạy SSW cho PID ở 99999, 99998, 99997, 99996, 99995 (thiết kế mới, 50-57 s mỗi seed), kết quả Result/Controllers/PID/Cases_ssw/PID_metrics_s9999x.csv. Các file seed 99987-99989 và 11001-11003 giữ nguyên trên đĩa, KHÔNG dùng nữa (không xóa).
+- Phần còn lại KHÔNG thuộc PC, cần khung Map và khung PIDBOOK-LAPTOP làm: SSW của Map và MapPID ở 99995-99999 (Map đã có kết quả SSW chỉ ở 99987-99989, 01001-01003); sửa mục 3 của KeHoach_PID_Sach.txt (file của COMMON).
