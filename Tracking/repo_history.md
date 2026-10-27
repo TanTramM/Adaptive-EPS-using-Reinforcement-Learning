@@ -10,11 +10,41 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 - laptop: chạy song song phần việc chia cho nó (MapPID, một nửa Map và PID khi so mặt Pareto chung), thường đẩy lên nhánh phụ rồi gộp.
 - Commit trước 2026-10-22 chưa ghi máy (hiện "?"): lúc đó làm trên một máy; từ nay mọi commit có tag [PC] hoặc [laptop] ở đầu (tools/sync_repo.sh tự thêm).
 
-## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 112 commit)
+## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 133 commit)
 
 
-### 2026-10-23 (? 2, PC 17, laptop 7)
+### 2026-10-28 (PC 1)
 
+- 01:40 ec0feef [PC] Mục 2-3 tiếng Anh và Việt, Fig 3-6 vẽ lại (một khối controller, T_a,cmd), rule viết như người trong CLAUDE.md
+
+### 2026-10-27 (PC 8, laptop 9)
+
+- 23:38 4ef20a2 [PC] SSW for Map and MapPID on seeds 99999-99995
+- 17:09 87bba46 [laptop] L8-L9 MapPID: margin xong, thiết kế cuối trên mặt đủ cổng, mappid.json
+- 16:38 64ace58 [laptop] L7 pha 2 MapPID id 1-4 (w5-w8 lấy bản của PC)
+- 16:48 31d53f4 [PC] PID SSW on seeds 99999-99995 (user change: common SSW seeds, no local SSW seeds)
+- 07:31 ae72a78 [PC] pidbook log: summary table, pid.json book parameters
+- 07:30 e087803 [PC] PIDBOOK_PC_DONE
+- 04:56 d5406e4 [laptop] L6 pha 1 MapPID id 1-4 hoàn tất
+- 04:25 8548774 [laptop] chuẩn bị runner L6 seed chung MapPID
+- 04:25 2dd90b8 [laptop] L3-L5 hoàn tất lưới và chọn tạm MapPID
+- 04:01 9ead994 [laptop] L3 tiến độ lưới MapPID sau một giờ
+- 02:58 4aa5da5 [laptop] thêm runner bền bỉ cho lưới MapPID
+- 02:57 bbfe151 [laptop] L2 tham số hóa lại MapPID theo sách
+- 02:55 dae597b [PC] PID book redesign code, test_pid PASS, pipeline and log
+- 02:55 865b571 [PC] PID book redesign: code (u2x via K,Ti,Td,N; Kaw=sqrt(Ki/Kd); Td<Ti gate), legacy results moved, pipeline
+- 02:51 9c7040e [laptop] L1 lưu kết quả MapPID cũ
+- 02:46 b24c77e [PC] PIDBOOK_PLAN_PUSHED flag
+- 02:46 1ac2c69 [PC] PID book redesign plan and paper edits
+
+### 2026-10-24 (? 1)
+
+- 00:48 b8d6e1a [?] 24-10
+
+### 2026-10-23 (? 3, PC 18, laptop 7)
+
+- 22:30 fdc5b06 [?] update 23/10
+- 16:28 06544e1 [PC] repo_history updated
 - 16:27 a98784b [PC] SSW (STEADY, SLIP, WEAVE) run on three controllers, SLIP v4, DREWS v3 plan and lock, repo_history and sync tools, cleanup of old scripts
 - 12:13 2672ac7 [PC] DREWS v3 rerun on the final designs: summary tables and black-and-white figures
 - 10:37 3403405 [PC] DREWS v2 all three controllers: combined long csv
@@ -213,3 +243,4 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 
 ## Ghi chú tay (ai chạy gì, file kết quả ở đâu; thêm bằng --note)
 - 2026-10-23 16:27 [PC] Gộp toàn bộ vào main, xóa nhánh phụ; thêm tools/update_repo_history.py và tools/sync_repo.sh. SSW (ba ca STEADY, SLIP, WEAVE) chạy xong trên PC: Result/Controllers/<Ctrl>/Cases_ssw/, tóm tắt Result/Compare/SSW_summary/.
+- 2026-10-28 01:40 [PC] Viết lại Abstract, Introduction, mục 2 và 3 theo quy tắc viết như người; hình Fig 4-6 mới ở Figures/new/main/28-10/ (chưa đưa vào docx); paper_ENG.docx chưa gen do Word khóa file; PDF chưa xuất
