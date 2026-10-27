@@ -1,0 +1,2 @@
+ctrl,face_used,label,n_cand,n_in_set,n_pass_erel,n_front_safe,n_front_full,n_margin_fail_safe,n_margin_fail_full,Rtb,Stb,J,Rsd,Ssd,erel_max,PM_deg,GM,ratio_gain,ratio_delay,design
+PID,full,,184,134,99,44,31,0,0,3.2241344426,0.77815079534,2.50886278079228,0.0782576711302626,0.00327144843885949,2.086053692,50.78357817,6.220484398,0.698177998426622,1.02935250404404,2.90376114;84.9064908;0.067709979;0.00121127465
