@@ -76,3 +76,8 @@ Lỗi còn treo / lưu ý:
 - Người dùng chốt: SSW chung dùng 99999-99995 (hình bài báo lấy 99999, năm seed để tính trung bình); bỏ SSW seed riêng (11001-11003, 01001-01003, 31001-31003) vì không cần. Thay cho 99987-99989 trong KeHoach_PID_Sach.txt mục 3.
 - PC đã chạy SSW cho PID ở 99999, 99998, 99997, 99996, 99995 (thiết kế mới, 50-57 s mỗi seed), kết quả Result/Controllers/PID/Cases_ssw/PID_metrics_s9999x.csv. Các file seed 99987-99989 và 11001-11003 giữ nguyên trên đĩa, KHÔNG dùng nữa (không xóa).
 - Phần còn lại KHÔNG thuộc PC, cần khung Map và khung PIDBOOK-LAPTOP làm: SSW của Map và MapPID ở 99995-99999 (Map đã có kết quả SSW chỉ ở 99987-99989, 01001-01003); sửa mục 3 của KeHoach_PID_Sach.txt (file của COMMON).
+
+### SSW cho Map và MapPID ở 99999-99995 (2026-10-27 chiều, người dùng bảo chạy luôn trên PC)
+- run_scoring_seeds('Map' và 'MapPID', [99999 99998 99997 99996 99995], 'SSW') xong, không lỗi (Map 119-215 s mỗi seed, MapPID 198-215 s). File mới: Result/Controllers/Map/Cases_ssw/Map_metrics_s9999x.csv + Map_<ca>_sig_s9999x.csv, và tương tự MapPID. Đây là file của khung Map và laptop nhưng chỉ THÊM file mới (không sửa file cũ); PC chạy theo yêu cầu người dùng.
+- Pareto: các csv đã đủ (ParetoCommon_{Map,PID,MapPID}_*); vẽ hình/bảng ba mặt để khi viết bài (người dùng chốt).
+- Tóm tắt toàn ca (RMS e_T N.m / S N.m) seed 99999: Map STEADY 1.058/0.197, SLIP 0.690/0.202, WEAVE 1.451/0.289; PID 0.249/0.569, 0.205/0.499, 0.203/0.891; MapPID 0.250/0.521, 0.197/0.493, 0.224/0.758. Phân tán giữa năm seed nhỏ.
