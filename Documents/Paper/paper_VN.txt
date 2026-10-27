@@ -22,9 +22,9 @@ Các nghiên cứu trước đã xử lý vấn đề này theo ba hướng. Hư
 
 Hướng thứ hai là điều khiển mờ và mờ–nơ-ron. Saifia và cộng sự [10] giữ hệ ổn định khi dòng động cơ bị giới hạn, và Nguyen và cộng sự [11] kết hợp mờ–nơ-ron với điều khiển định hướng từ thông trong mô phỏng. Cả hai nhắm vào phi tuyến và nhiễu của EPS, không nhắm vào sai lệch mô-men này; [11] còn nêu rằng thay đổi hệ số bám có thể ảnh hưởng đến độ bền vững của bộ điều khiển.
 
-Hướng thứ ba là thêm hoặc thay vòng phản hồi mô-men. Zhao và cộng sự [7] ghép đường đặc tính với vòng PID trên mô-men động cơ và hiệu chỉnh động đường đặc tính. Trên xe thật, dao động của mô-men trợ lực khi bắt đầu đánh lái và khi trả lái giảm từ 4.97 % và 4.32 % xuống 1.43 % và 1.87 %. Tuy nhiên vòng PID này chỉ bám theo mô-men do bản đồ yêu cầu, không so với mô-men mục tiêu của người lái, và không xét việc đổi ma sát. Lee và cộng sự [8] bỏ bản đồ, dùng điều khiển trượt thích nghi để bám mô-men vô-lăng mục tiêu, và HILS cho thấy bám tốt; nhưng lực thanh răng được tính từ mô hình lốp tuyến tính và các phép thử đều trên đường khô (hệ số bám 0.85). Lee và cộng sự [9] tách phần tạo cảm giác lái khỏi bộ bám mô-men (lead–lag cùng bộ quan sát nhiễu). Khi thử trên xe ở trạng thái đỗ, sai lệch bám nhỏ hơn 0.1 N·m, tốt hơn PID cùng bộ quan sát (đến ±0.3 N·m). Khi xe chạy, mô hình của họ coi phản lực mặt đường tỷ lệ tuyến tính với góc cột lái, không có lốp bão hòa hay chuyển đổi hệ số bám.
+Hướng thứ ba là thêm hoặc thay vòng phản hồi mô-men. Zhao và cộng sự [7] ghép đường đặc tính với vòng PID trên mô-men động cơ và hiệu chỉnh động đường đặc tính. Trên xe thật, dao động của mô-men trợ lực khi bắt đầu đánh lái và khi trả lái giảm từ 4.97 % và 4.32 % xuống 1.43 % và 1.87 %. Tuy nhiên vòng PID này chỉ bám theo mô-men do bản đồ yêu cầu, không so với mô-men mục tiêu của người lái, và không xét việc đổi ma sát. Lee và cộng sự [8] bỏ bản đồ, dùng điều khiển trượt thích nghi để bám mô-men vô-lăng mục tiêu, nhưng lực thanh răng được tính từ mô hình lốp tuyến tính và các phép thử đều trên đường khô (hệ số bám 0.85). Lee và cộng sự [9] tách phần tạo cảm giác lái khỏi bộ bám mô-men (lead–lag cùng bộ quan sát nhiễu), nhưng phần đánh giá bám mô-men chủ yếu ở trạng thái xe đỗ. Khi xe chạy, mô hình của họ coi phản lực mặt đường tỷ lệ tuyến tính với góc cột lái, không có lốp bão hòa hay chuyển đổi hệ số bám.
 
-Từ các kết quả trên có thể thấy hai điểm. Thứ nhất, các cách chỉnh bản đồ theo mặt đường cần ước lượng hệ số bám và chỉ cải thiện khi đường trơn, còn bản đồ vẫn giữ nguyên bản chất nên giới hạn do độ dốc chưa được xử lý. Thứ hai, các cách dùng phản hồi mô-men bám tốt, nhưng được kiểm bằng mô hình lốp tuyến tính, trên đường khô hoặc khi xe đỗ, và phải bỏ bản đồ đã hiệu chỉnh sẵn của xe. Chưa có nghiên cứu nào trong số trên giữ nguyên bản đồ và khâu bù có sẵn, thêm phản hồi mô-men lên trên, rồi đánh giá trên mô hình lốp phi tuyến khi hệ số bám thay đổi. Cần nói thêm rằng bộ điều khiển của [9] mạnh hơn PID của bài này và đã được thử trên xe thật; khoảng trống nằm ở mô hình, điều kiện thử và việc bỏ bản đồ, không phải ở chất lượng bám.
+Từ các kết quả trên có thể thấy hai điểm. Thứ nhất, các cách chỉnh bản đồ theo mặt đường cần ước lượng hệ số bám và chỉ cải thiện khi đường trơn, còn bản đồ vẫn giữ nguyên bản chất nên giới hạn do độ dốc chưa được xử lý. Thứ hai, các cách dùng phản hồi mô-men được kiểm bằng mô hình lốp tuyến tính, trên đường khô hoặc khi xe đỗ, và phải bỏ bản đồ đã hiệu chỉnh sẵn của xe. Chưa có nghiên cứu nào trong số trên giữ nguyên bản đồ và khâu bù có sẵn, thêm phản hồi mô-men lên trên, rồi đánh giá trên mô hình lốp phi tuyến khi hệ số bám thay đổi.
 
 Bài này đi theo hướng khác: giữ bản đồ, thêm phản hồi. Một bộ PID tác động lên sai lệch mô-men được đặt song song với bản đồ và khâu bù có sẵn, và chỉ các tham số của PID được chỉnh cho từng xe. Cấu trúc này gọi là MapPID. Mô-men mục tiêu được tính từ tốc độ xe và gia tốc ngang [5,13], không cần ước lượng hệ số bám. Bài so sánh ba bộ: Map (bản đồ kèm khâu bù, đại diện cho khối đã có trên xe), PID (thay bản đồ bằng bộ PID) và MapPID, trên mô hình phi tuyến xe có bão hòa lốp, động học động cơ và cảm biến có nhiễu, với cùng cách chọn tham số.
 
@@ -33,3 +33,204 @@ Bài này đi theo hướng khác: giữ bản đồ, thêm phản hồi. Một 
 - Cách thêm nhánh PID vào bản đồ và khâu bù có sẵn mà không thay đổi chúng, với bốn tham số chỉnh cho từng xe và cơ chế chống bão hòa tích phân phù hợp với độ lợi chung.
 - Quy trình so sánh chung gồm chọn tham số trên mặt Pareto và các kịch bản độc lập, đo bám mô-men và nhiễu của mô-men trợ lực cho ba bộ điều khiển.
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. System Modeling and Problem Formulation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Đối tượng điều khiển (plant) gồm ba hệ con ghép với nhau: cột lái cùng động cơ trợ lực, lốp trước và lốp sau, và chuyển động ngang và xoay của thân xe theo mô hình một vệt (single-track). Hình 1 cho thấy cách chúng nối với nhau. Cột lái đưa góc cột lái dưới $\theta_2$ cho lốp; lốp trả lực ngang cho thân xe và mô-men phản lực mặt đường $T_r$ cho cột lái; thân xe trả góc trượt ngang $\beta$ và vận tốc góc quay thân xe $\gamma$ về góc trượt của lốp. Vòng này là con đường qua đó sự thay đổi hệ số bám $\mu$ giữa lốp và mặt đường làm thay đổi mô-men người lái cảm nhận ở vô-lăng. Các đầu vào bên ngoài là góc vô-lăng của người lái $\theta_1$, mô-men trợ lực $T_a$, tốc độ xe $v$ và $\mu$. Các mục 2.1–2.3 mô hình hóa từng hệ con, mục 2.4 ghép chúng lại, mục 2.5–2.6 nêu mô-men tham chiếu và bài toán bám mô-men chung cho mọi bộ điều khiển.
+
+[Fig. 1. Block diagram of the coupled C-EPS–vehicle plant: steering column, tires, and two-degree-of-freedom vehicle body. | Figures/new/main/Fig_Plant.png@16.0]
+
+2.1. Steering Column and Assist Motor
+
+Cấu trúc cơ khí của EPS đặt trên cột lái được vẽ ở Hình 2. Cột lái trên, do vô-lăng dẫn động, nối với cột lái dưới qua thanh xoắn có độ cứng $K$, đồng thời là cảm biến mô-men. Động cơ đặt mô-men trợ lực $T_a$ lên cột lái dưới qua bộ giảm tốc, và cột lái dưới dẫn động thanh răng qua cơ cấu lái có tỷ số $n_{st}$. Góc vô-lăng $\theta_1$ được cho trước như đầu vào của người lái. Động lực học của cột lái dưới và mô-men thanh xoắn được mô hình hóa như sau [1]
+(1)  J_col*theta2_ddot = T_s + T_a - T_r - C_col*theta2_dot - T_f*tanh(c*theta2_dot)
+[ J_{col}\ddot\theta_2=T_s+T_a-T_r-C_{col}\dot\theta_2-T_f\tanh(c\dot\theta_2) ]
+(2)  T_s = K*(theta1 - theta2)
+[ T_s=K(\theta_1-\theta_2) ]
+\noindent trong đó $\theta_2$ là góc cột lái dưới; $J_{col}$ và $C_{col}$ là quán tính và cản nhớt tương đương của cột lái dưới, đã gồm động cơ và bộ giảm tốc quy về cột lái; $T_f\tanh(c\dot\theta_2)$ là xấp xỉ trơn của ma sát Coulomb có biên độ $T_f$. Cả $T_a$ và mô-men phản lực mặt đường $T_r$ đều được quy về phía cột lái.
+
+[Fig. 2. Mechanical structure of the column-type EPS. | Figures/new/main/Fig_Column.png@11.0]
+
+Việc cho trước $\theta_1(t)$ để $T_s$ thay đổi khi phản lực mặt đường hoặc trợ lực của động cơ thay đổi. Nếu thay vào đó áp đặt mô-men của người lái thì mô-men đo được ở trạng thái xác lập bị cố định và che mất ảnh hưởng của phản lực mặt đường mà bài này khảo sát. Người lái cho trước góc vì vậy phù hợp để so sánh có kiểm soát đáp ứng của lực lái, nhưng không đại diện cho đáp ứng thần kinh–cơ của người lái hay việc họ chỉnh góc lái khi lực lái thay đổi.
+
+2.2. Tire Model and Road-Reaction Torque
+
+Hình 3 định nghĩa các đại lượng trên mặt phẳng đường của lốp trước. Góc quay bánh trước được xấp xỉ bằng $\delta_f=\theta_2/n_{st}$. Với giả thiết góc nhỏ và vận tốc dọc không đổi, góc trượt của lốp trước và lốp sau là [13]
+(3)  alpha_f = theta2/n_st - beta - l_f*gamma/v
+[ \alpha_f=\dfrac{\theta_2}{n_{st}}-\beta-\dfrac{l_f\gamma}{v} ]
+(4)  alpha_r = -beta + l_r*gamma/v
+[ \alpha_r=-\beta+\dfrac{l_r\gamma}{v} ]
+\noindent trong đó $\beta$ là góc trượt ngang của xe, $\gamma$ là vận tốc góc quay thân xe, $l_f$ và $l_r$ là khoảng cách từ trọng tâm đến cầu trước và cầu sau. Bỏ qua dịch chuyển tải theo phương dọc và ngang, ta có tải tĩnh trên mỗi cầu
+(5)  F_zf = m*g*l_r/(l_f + l_r)
+[ F_{zf}=mg\dfrac{l_r}{l_f+l_r} ]
+(6)  F_zr = m*g*l_f/(l_f + l_r)
+[ F_{zr}=mg\dfrac{l_f}{l_f+l_r} ]
+
+[Fig. 3. Top-view geometry of the front-tire steering angle, slip angle, and lateral force. | Figures/new/main/Fig_Tire_force.png@13.0]
+
+Mỗi cầu được biểu diễn bằng một lốp tương đương. Để giữ được sự bão hòa lực khi hệ số bám thay đổi, lực ngang được tính bằng công thức Magic Formula của Pacejka dạng đơn giản [12]:
+(7)  F_yi = D_i*sin(C*atan(B_i*alpha_i - E*(B_i*alpha_i - atan(B_i*alpha_i)))),  i in {f,r}
+[ F_{yi}=D_i\sin\!\brack{C\tan^{-1}\!\paren{B_i\alpha_i-E\paren{B_i\alpha_i-\tan^{-1}(B_i\alpha_i)}}},\quad i\in\{f,r\} ]
+(8)  D_i = mu*F_zi,   B_i = C_alpha_i/(C*D_i)
+[ D_i=\mu F_{zi},\quad B_i=\dfrac{C_{\alpha i}}{CD_i} ]
+\noindent trong đó $\mu$ là hệ số bám chung giữa lốp và mặt đường, $C_{\alpha i}$ là độ cứng ngang của cầu, $C$ và $E$ là hệ số dạng và hệ số độ cong. Cách đặt tham số này giữ nguyên độ dốc ban đầu $C_{\alpha i}$ và giảm lực cực đại $D_i$ khi $\mu$ giảm, nên lốp bão hòa sớm hơn trên mặt đường có hệ số bám thấp.
+
+Lực ngang của lốp trước tác động lên trục đứng của bánh lái qua một cánh tay đòn hiệu dụng, gồm thành phần caster không đổi và thành phần khí nén phụ thuộc góc trượt. Chỉnh theo quan hệ vết khí nén (pneumatic trail) dùng trong [3], mô hình đặt
+(9)  t_p = max(0, t_0 - t_0*C_alpha_f*|tan(alpha_f)|/(3*mu*F_zf))
+[ t_p=\max\!\paren{0,\ t_0-\dfrac{t_0C_{\alpha f}|\tan\alpha_f|}{3\mu F_{zf}}} ]
+(10) e_eff = e_c + t_p,   e_c = e_p0 - t_0
+[ e_{eff}=e_c+t_p,\quad e_c=e_{p0}-t_0 ]
+\noindent trong đó $e_{p0}$ là cánh tay đòn hiệu dụng khi góc trượt bằng không, $t_0$ là vết khí nén khi góc trượt bằng không, và $e_c$ là thành phần caster không đổi. Cận không âm của $t_p$ biểu diễn việc mất vết khí nén khi vùng tiếp xúc của mô hình trượt hoàn toàn; giữ $e_c$ để tổng cánh tay đòn không bị ép về không. Các cận này là lựa chọn mô hình hóa thêm vào quan hệ gốc và không tái tạo đầy đủ đặc tính mô-men tự lại đúng của một lốp đo được. Mô-men phản lực mặt đường quy về cột lái là
+(11) T_r = (e_eff/n_st)*F_yf
+[ T_r=\dfrac{e_{eff}}{n_{st}}F_{yf} ]
+
+Các phương trình (8)–(11) chứa hai tác động của hệ số bám lên cột lái: $\mu$ thấp hơn làm giảm lực $F_{yf}$ đạt được và, ở cùng góc trượt, làm ngắn vết khí nén $t_p$. Cả hai đều làm giảm $T_r$.
+
+2.3. Single-Track Vehicle Body
+
+Chuyển động ngang và xoay của xe được mô tả bằng các cân bằng phi tuyến của mô hình một vệt [13]:
+(12) a_y = (F_yf + F_yr)/m
+[ a_y=\dfrac{F_{yf}+F_{yr}}{m} ]
+(13) beta_dot = a_y/v - gamma
+[ \dot\beta=\dfrac{a_y}{v}-\gamma ]
+(14) gamma_dot = (l_f*F_yf - l_r*F_yr)/I_z
+[ \dot\gamma=\dfrac{l_fF_{yf}-l_rF_{yr}}{I_z} ]
+\noindent trong đó $m$ và $I_z$ là khối lượng và mô-men quán tính xoay của xe. Gia tốc ngang $a_y$ ở Phương trình (12) cũng là tín hiệu đo được dùng trong mô-men tham chiếu ở mục 2.5.
+
+2.4. Coupled Plant and Torque Balance
+
+Ghép các Phương trình (1)–(14), plant ghép giữa cột lái và xe trong Hình 1 có bốn trạng thái là $\theta_2$, $\dot\theta_2$, $\beta$ và $\gamma$; các trạng thái của động cơ, khâu bù và bộ điều khiển được thêm riêng trong các mô phỏng vòng kín. Các trạng thái này nằm bên trong plant: không bộ điều khiển nào đo $\beta$ hay $\gamma$, tất cả chỉ dùng mô-men thanh xoắn đo được $T_s$, tốc độ xe $v$ và gia tốc ngang $a_y$. Khi cột lái đứng yên, Phương trình (1) trở thành
+(15) T_s = T_r - T_a
+[ T_s=T_r-T_a ]
+\noindent vì số hạng ma sát Coulomb trơn triệt tiêu tại $\dot\theta_2=0$. Các Phương trình (7)–(15) cho thấy mặt đường đi vào cân bằng mô-men như thế nào: $\mu$ giảm làm giảm khả năng tạo lực của lốp và vết khí nén, do đó giảm $T_r$. Nếu trợ lực không giảm cùng mức, Phương trình (15) cho thấy mô-men truyền qua thanh xoắn giảm, tức là trợ lực thừa so với mặt đường.
+
+2.5. Lateral-Acceleration-Based Torque Reference
+
+Mô-men lái mong muốn lấy từ số liệu lực lái theo tốc độ và gia tốc ngang do Li và Xia [5] công bố. Bốn mức gia tốc ngang công bố trong nghiên cứu đó được chép lại ở Bảng 1 và được coi là một đặc tính tham chiếu, không phải mô hình sở thích người lái tổng quát.
+
+Table 1. Ideal steering-wheel torque reference (N·m), adopted from [5].
+Lateral acceleration | 20 km/h | 40 km/h | 60 km/h | 80 km/h | 100 km/h
+0.1 g | 1.0 | 1.7 | 2.1 | 2.3 | 2.6
+0.2 g | 1.5 | 2.0 | 2.4 | 2.8 | 3.0
+0.3 g | 1.6 | 2.3 | 2.8 | 3.1 | 3.3
+0.4 g | 1.8 | 2.4 | 2.9 | 3.3 | 3.4
+
+Một điểm không mô-men được thêm tại gia tốc ngang bằng không. Nội suy Hermite bậc ba từng đoạn đơn điệu (PCHIP) được áp dụng trước theo gia tốc ngang rồi theo tốc độ xe, sau đó kết quả được lấy mẫu trên bảng mịn hơn để cài đặt. Tính đối xứng lẻ cho nhánh quay ngược chiều, còn đầu vào nằm ngoài 20–100 km/h hoặc 0–0.4 g thì bị chặn về biên gần nhất:
+(16) T_ref(v, a_y) = sgn(a_y)*T_hat(v, |a_y|)
+[ T_{ref}(v,a_y)=\mathrm{sgn}(a_y)\widehat T(v,|a_y|) ]
+(17) T_hat(v, 0) = 0
+[ \widehat T(v,0)=0 ]
+\noindent trong đó $\widehat T$ là đặc tính nội suy ứng với gia tốc ngang dương. Việc thêm điểm không, áp đặt đối xứng lẻ, chọn nội suy PCHIP và chặn ngoài lưới đã công bố là các lựa chọn cài đặt của bài này. Chúng làm mô-men tham chiếu liên tục khi đi qua trạng thái lái thẳng mà không ngoại suy các giá trị lực lái chưa được công bố.
+
+Mô-men tham chiếu dùng tốc độ xe và gia tốc ngang đo được, không cần ước lượng $\mu$ hay lực thanh răng. Vì $a_y$ là đầu vào của mô-men tham chiếu, việc giảm hệ số bám cũng có thể làm đổi mục tiêu thông qua thay đổi đáp ứng của xe. Bộ điều khiển vì vậy điều chỉnh lực lái theo chuyển động mà xe thực sự tạo ra, thay vì áp đặt cùng một mô-men tại một góc vô-lăng cố định trên mọi loại mặt đường.
+
+2.6. Torque-Tracking Objective
+
+Mục tiêu điều khiển chung là điều chỉnh mô-men thanh xoắn đo được về giá trị tham chiếu:
+(18) e_T = T_s - T_ref(v, a_y)
+[ e_T=T_s-T_{ref}(v,a_y) ]
+
+Với $T_{ref}\ne0$, $\mathrm{sgn}(T_{ref})e_T<0$ nghĩa là độ lớn mô-men thấp hơn mục tiêu theo chiều quay được yêu cầu. Các đoạn đảo chiều được đánh giá bằng các chỉ tiêu theo độ lớn vì cách hiểu có dấu trở nên mơ hồ gần điểm đổi dấu. Mọi bộ điều khiển đều tác động qua cùng một kênh mô-men trợ lực có giới hạn:
+(19) |T_a| <= T_a,max(v)
+[ |T_a|\le T_{a,max}(v) ]
+\noindent trong đó $T_{a,max}(v)$ được suy ra từ yêu cầu trợ lực trên đường khô của mô hình và được nêu cùng phần cài đặt động cơ. Phép so sánh vì vậy đặt câu hỏi mỗi bộ điều khiển giảm sai lệch bám mô-men đến đâu khi đường và điều kiện lái thay đổi, với cùng động học động cơ, giới hạn trợ lực, điều kiện cảm biến và yêu cầu ổn định.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Control Strategy and Assist-Map Limitation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Mục này trình bày ba cấu trúc điều khiển. Map là bản đồ trợ lực kèm khâu bù sớm–trễ, PID dùng phản hồi mô-men trực tiếp, còn MapPID giữ nguyên thiết kế Map và thêm một nhánh PID song song. Phân tích độ nhạy ở trạng thái xác lập cho thấy một bản đồ trợ lực tĩnh làm được đến đâu khi mô-men phản lực mặt đường thay đổi, và vì sao một nhánh tích phân thêm vào có thể loại bỏ phần sai lệch còn lại.
+
+3.1. Conventional Assist-Map Control with Lead–Lag Compensation
+
+Bộ điều khiển bản đồ trợ lực theo kiến trúc mô tả trong [1]. Một bản đồ tĩnh hai chiều đổi mô-men thanh xoắn đo được và tốc độ xe thành mô-men trợ lực cơ bản, rồi một khâu bù ổn định đứng sau bản đồ. Với điều kiện danh định trên đường khô ($\mu=0.8$), cân bằng mô-men tĩnh ở Phương trình (15) cho ra mức trợ lực cần có tại mỗi điểm hiệu chỉnh:
+(20)  T_s,cal = T_ref(v, a_y)
+[ T_{s,cal}=T_{ref}(v,a_y) ]
+(21)  T_a,cal = T_r(v, a_y, 0.8) - T_ref(v, a_y)
+[ T_{a,cal}=T_r(v,a_y,0.8)-T_{ref}(v,a_y) ]
+
+Bản đồ danh định trên đường khô được hiệu chỉnh tại 17 tốc độ xe, từ 20 đến 100 km/h, cách nhau 5 km/h. Ở mỗi tốc độ, các gia tốc ngang khả thi được xét theo bước 0.005 g. Trợ lực thô chịu hai giới hạn. Vùng chết đối xứng $T_{s0}=0.3$ N·m quanh trạng thái lái thẳng ngăn động cơ rung do nhiễu cảm biến, và độ dốc cục bộ lớn nhất $K_{max}$ giới hạn tốc độ tăng của trợ lực. Tại mỗi điểm hiệu chỉnh, mức tăng của trợ lực thỏa $\bar{M}_k\le\bar{M}_{k-1}+K_{max}(|T_s|_k-|T_s|_{k-1})$, nhờ đó trợ lực không giảm và không có đoạn chuyển quá dốc:
+(22)  M(v, T_s) = sgn(T_s)*M_bar(v, |T_s|)
+[ M(v,T_s)=\mathrm{sgn}(T_s)\bar{M}(v,|T_s|) ]
+\noindent trong đó $\bar{M}(v,|T_s|)$ là đặc tính trợ lực đơn điệu có giới hạn cho mô-men dương. Đặc tính được lập bảng cho mô-men lái đo được từ 0 đến 5 N·m, và nội suy tuyến tính được dùng theo mô-men và theo tốc độ xe.
+
+Một khâu bù sớm–trễ tuyến tính $C_{map}(s)$ [1] xử lý đầu ra của bản đồ. Khâu này ổn định vòng kín quanh cộng hưởng của cột lái (khoảng 6.2 Hz) và hạn chế việc độ lợi trợ lực lớn khuếch đại nhiễu tần số cao:
+(23)  u_map(s) = C_map(s)*M(v_m, T_s,m)
+[ u_{map}(s)=C_{map}(s)M(v_m,T_{s,m}) ]
+(24)  C_map(s) = ((s/z + 1)/(s/p + 1))*((s/z_1 + 1)/(s/p_1 + 1))
+[ C_{map}(s)=\paren{\dfrac{\frac{s}{z}+1}{\frac{s}{p}+1}}\paren{\dfrac{\frac{s}{z_1}+1}{\frac{s}{p_1}+1}} ]
+\noindent trong đó $z$ và $p$ là tần số không và cực của tầng sớm, còn $z_1$ và $p_1$ là của tầng trễ. Tầng sớm làm pha sớm lên quanh cộng hưởng của cột lái, và tầng trễ làm độ lợi giảm ở tần số cao. Cả hai tầng có độ lợi xác lập bằng một ($C_{map}(0)=1$), nên đặc tính tĩnh đã hiệu chỉnh được giữ nguyên. Giới hạn trợ lực ở Phương trình (38) chặn đầu ra của khâu bù, và Hình 4 cho thấy dòng tín hiệu của bộ điều khiển hoàn chỉnh.
+
+[Fig. 4. Closed-loop signal flow of the assist-map controller. The measured vehicle speed is $v_m=H_v(v)$, with $H_v$ the speed-sensor model. The controller block contains the assist map $M$, the lead–lag compensator $C_{map}(s)$, and the assist limit $L(\cdot,v_m)$, which bounds the command by $T_{a,max}(v_m)$. | Figures/new/main/28-10/Fig_Map.png@16.0]
+
+3.2. Steady-State Limitation of Assist-Map Control
+
+Một phân tích độ nhạy cục bộ ở trạng thái xác lập cho thấy giới hạn của bản đồ trợ lực khi hệ số bám thay đổi. Ở tốc độ xe không đổi và gia tốc ngang cố định, cân bằng cột lái dưới điều khiển bản đồ đòi hỏi
+(25)  T_s + M(v, T_s) = T_r(v, a_y, mu)
+[ T_s+M(v,T_s)=T_r(v,a_y,\mu) ]
+\noindent trong đó số hạng ma sát Coulomb triệt tiêu ở trạng thái xác lập ($\dot\theta_2=0$) và $C_{map}(0)=1$. Tuyến tính hóa Phương trình (25) theo độ thay đổi $\Delta T_r$ của mô-men phản lực mặt đường cho
+(26)  Delta T_s = Delta T_r/(1 + s_m)
+[ \Delta T_s=\dfrac{\Delta T_r}{1+s_m} ]
+(27)  s_m = dM(v, T_s)/dT_s
+[ s_m=\dfrac{\partial M(v,T_s)}{\partial T_s} ]
+\noindent trong đó $s_m$ là độ dốc cục bộ của bản đồ tại điểm làm việc.
+
+Phương trình (26) cho thấy độ thay đổi của mô-men thanh xoắn đo được bị giảm đi theo hệ số $1/(1+s_m)$. Mô-men mục tiêu $T_{ref}(v,a_y)$ không đổi khi tốc độ và gia tốc ngang cố định, nên độ thay đổi của sai lệch bám bằng $\Delta T_s$:
+(28)  Delta e_T = Delta T_r/(1 + s_m)
+[ \Delta e_T=\dfrac{\Delta T_r}{1+s_m} ]
+
+Khi hệ số bám giảm khỏi giá trị đường khô ($\mu=0.8$), phản lực mặt đường $T_r$ giảm do lốp bão hòa lực và vết khí nén bị mất. Độ dốc $s_m$ dương và hữu hạn ($s_m\le K_{max}$), nên $\Delta e_T$ khác không và cùng dấu với $\Delta T_r$. Khi đó $T_s$ thấp hơn giá trị mong muốn, nghĩa là trợ lực quá lớn so với mặt đường. $K_{max}$ lớn hơn làm $\Delta e_T$ nhỏ đi, nhưng cũng làm tăng độ lợi vòng và khuếch đại nhiễu cảm biến, và một độ dốc hữu hạn luôn để lại $\Delta e_T$ khác không. Giới hạn độ dốc còn có tác dụng thứ hai. Tại những chỗ độ dốc cần thiết vượt $K_{max}$, bản đồ không đạt tới các điểm hiệu chỉnh ở Phương trình (21), và một sai lệch dư có thể còn lại ngay cả trên đường khô. Bộ điều khiển có tác dụng tích phân trên $e_T$ đưa $e_T$ về không ở trạng thái xác lập, với điều kiện vòng kín ổn định và cơ cấu chấp hành chưa bão hòa.
+
+3.3. PID Steering-Torque Feedback Control
+
+Các thành phần tỷ lệ và tích phân tác động lên sai lệch bám mô-men $e_T=T_{s,m}-T_{ref}(v_m,a_{y,m})$. Thành phần vi phân khác dạng sách giáo khoa ở hai điểm, và cả hai đều quen thuộc trong thực hành PID [18]. Thứ nhất, thành phần vi phân tác động lên mô-men thanh xoắn đo được $T_{s,m}$. Lý do là đạo hàm của sai lệch sẽ chứa đạo hàm của $T_{ref}$. Mô-men tham chiếu được tính từ gia tốc ngang đo được, nên nó đổi nhanh khi người lái bắt đầu hoặc kết thúc một khúc cua và mang theo nhiễu cảm biến. Đạo hàm của nó sẽ tạo ra các xung lớn ở mô-men trợ lực. Việc chỉ lấy đạo hàm của mô-men đo được gọi là dạng PI-D. Dạng này bỏ số hạng tham chiếu và giữ nguyên đáp ứng với nhiễu tải và nhiễu đo, còn thành phần tích phân vẫn dùng sai lệch thật, nên sai lệch xác lập vẫn bằng không [18]. Thứ hai, một khâu trễ bậc nhất lọc thành phần vi phân. Đạo hàm lý tưởng khuếch đại nhiễu tần số cao không giới hạn, còn khâu trễ giới hạn độ lợi tần số cao ở $K_d/\tau_f$ [18]. Ba thành phần là
+(29)  u_P = K_p*e_T
+[ u_P=K_pe_T ]
+(30)  u_I_dot = K_i*e_T + K_aw*Delta T_a
+[ \dot{u}_I=K_ie_T+K_{aw}\Delta T_a ]
+(31)  u_D(s) = (K_d*s/(tau_f*s + 1))*T_s,m(s)
+[ u_D(s)=\paren{\dfrac{K_ds}{\tau_fs+1}}T_{s,m}(s) ]
+\noindent trong đó $K_p$, $K_i$ và $K_d$ là các độ lợi tỷ lệ, tích phân và vi phân, $\tau_f$ là hằng số thời gian của bộ lọc vi phân, và $K_{aw}$ là độ lợi bám của cơ chế chống bão hòa tích phân.
+
+Ở Phương trình (31), thành phần vi phân có dấu dương. Theo quy ước cột lái ở Phương trình (1), mô-men đo được $T_s$ đang tăng cho biết trợ lực chưa đủ, và đáp ứng cần có là tăng mô-men trợ lực. Lệnh chưa bị chặn là tổng của ba thành phần:
+(32)  u = u_P + u_I + u_D
+[ u=u_P+u_I+u_D ]
+
+Cơ chế chống bão hòa tích phân kiểu tính ngược xử lý việc cơ cấu chấp hành bão hòa. Hiệu giữa đầu ra bộ điều khiển $T_{a,cmd}$, là lệnh sau giới hạn trợ lực ở Phương trình (38) và đi vào động cơ, với lệnh chưa chặn $u$ được đưa ngược về bộ tích phân ở Phương trình (30):
+(33)  Delta T_a = T_a,cmd - u
+[ \Delta T_a=T_{a,cmd}-u ]
+(34)  K_aw = K_i/K_p
+[ K_{aw}=\dfrac{K_i}{K_p} ]
+
+Phép tính ngược này xả bộ tích phân khi động cơ bão hòa ở $T_{a,max}(v_m)$ và cho phép hồi phục nhanh khi sai lệch đổi dấu. Hình 5 cho thấy dòng tín hiệu của bộ điều khiển PID.
+
+[Fig. 5. Closed-loop signal flow of the PID steering-torque controller. The block contains the proportional, integral, and derivative terms, the back-calculation anti-windup ($\Delta T_a$ is the difference between the limited output $T_{a,cmd}$ and the unbounded argument of $L$, Eqs. (33)-(34)), and the assist limit. The integral and proportional terms act on the error $e_T=T_{s,m}-T_{ref}$, whereas the derivative term acts on the measured torque $T_{s,m}$ only. This is the PI-D form: $T_{ref}$ is computed from the measured lateral acceleration, so it changes quickly when a turn starts or ends and carries sensor noise, and differentiating the error would pass these changes to the assist torque as spikes. Since $T_{ref}$ is constant between such changes, the derivative of $e_T$ equals the derivative of $T_{s,m}$ there, so the damping action is the same, and the integral term still uses the true error. The sign is positive because $e_T=T_{s,m}-T_{ref}$ is defined with $T_{s,m}$ first. The measured vehicle speed is $v_m=H_v(v)$. | Figures/new/main/28-10/Fig_PID.png@16.0]
+
+3.4. Plug-In MapPID Control Structure
+
+Cấu trúc MapPID giữ nguyên bản đồ trợ lực và khâu bù sớm–trễ ở mục 3.1 đúng như đã hiệu chỉnh cho Map, kể cả độ dốc giới hạn $K_{max}$, vùng chết $T_{s0}$ và các tần số của khâu bù. Nhánh PID ở mục 3.3 được thêm song song (Hình 6), và chỉ bốn tham số $K_p$, $K_i$, $K_d$ và $\tau_f$ của nó được chỉnh trong khi khối bản đồ bị đóng băng. Nhánh này vì vậy là một bộ cắm thêm: nó gắn vào một bản hiệu chỉnh có sẵn và giữ nguyên đặc tính lái trên đường khô của bản đồ. Lệnh trước giới hạn trợ lực là
+(35)  u = u_map + u_PID
+[ u=u_{map}+u_{PID} ]
+(36)  u_PID = u_P + u_I + u_D
+[ u_{PID}=u_P+u_I+u_D ]
+\noindent trong đó $u_{map}$ lấy từ Phương trình (23) và $u_{PID}$ từ các Phương trình (29)–(31).
+
+[Fig. 6. Closed-loop signal flow of the plug-in MapPID controller. The controller block adds the PID terms of Fig. 5 to the output of the assist map and lead–lag compensator of Fig. 4, which are kept unchanged, and bounds the sum with one assist limit; the anti-windup signal $\Delta T_a$ is the difference between the limited output $T_{a,cmd}$ and the unbounded argument of $L$. The derivative term acts on $T_{s,m}$ for the reason given in Fig. 5. The measured vehicle speed is $v_m=H_v(v)$. | Figures/new/main/28-10/Fig_MapPID.png@16.0]
+
+Hành vi xác lập của nhánh cắm thêm suy ra từ Phương trình (25). Khi nhánh được gắn vào, cân bằng cột lái trở thành $T_s+M(v,T_s)+u_{PID}=T_r(v,a_y,\mu)$. Nếu vòng kín ổn định và cơ cấu chấp hành chưa bão hòa, bộ tích phân chỉ ngừng thay đổi khi $e_T=0$. Khi đó $T_s=T_{ref}$, và nhánh ổn định tại
+(37)  u_PID,ss = T_r(v, a_y, mu) - T_ref(v, a_y) - M(v, T_ref)
+[ u_{PID,ss}=T_r(v,a_y,\mu)-T_{ref}(v,a_y)-M(v,T_{ref}) ]
+\noindent Phương trình (37) cho thấy hai tính chất của cấu trúc cắm thêm. Thứ nhất, độ chính xác xác lập không phụ thuộc vào bản đồ, vì bộ tích phân đưa $e_T$ về không với độ dốc và bản hiệu chỉnh của bản đồ đang được gắn. Thứ hai, nhánh cung cấp phần dư mà bản đồ để lại. Tại một điểm hiệu chỉnh trên đường khô mà bản đồ đạt tới, Phương trình (21) cho $M(v,T_{ref})=T_r(v,a_y,0.8)-T_{ref}$, nên $u_{PID,ss}=T_r(v,a_y,\mu)-T_r(v,a_y,0.8)$. Giá trị này bằng không trên đường khô, và trên mặt đường khác nó bằng độ thay đổi phản lực do hệ số bám gây ra. Tại chỗ giới hạn độ dốc làm bản đồ không đạt tới điểm hiệu chỉnh, $u_{PID,ss}$ còn chứa cả phần dư của việc hiệu chỉnh.
+
+Bản đồ cũng ảnh hưởng đến động học của nhánh. Quanh một điểm làm việc, đường thuận từ mô-men đo được đến mô-men trợ lực là $s_mC_{map}(s)+C_{PID}(s)$, trong đó $C_{PID}(s)$ là hàm truyền PID đã tuyến tính hóa. Độ dốc của bản đồ cộng thêm vào độ lợi vòng ở tần số thấp, có thể làm giảm độ lợi tỷ lệ mà nhánh cần. Nó cũng cộng thêm vào độ lợi vòng gần cộng hưởng của cột lái, nên các biên ổn định của nhánh phụ thuộc vào bản đồ. Vì vậy nhánh được chỉnh riêng cho từng xe: bản đồ và khâu bù ổn định của xe đó bị đóng băng trong vòng, mô hình đối tượng được chỉnh cho khớp xe, và các yêu cầu ổn định được kiểm tra trên vòng kết hợp. Giới hạn trợ lực dùng chung cho ba bộ điều khiển, với $u=u_{map}$ ở Phương trình (23) cho Map, $u$ ở Phương trình (32) cho PID và $u$ ở Phương trình (35) cho MapPID:
+(38)  T_a,cmd = clip(u, -T_a,max(v_m), T_a,max(v_m))
+[ T_{a,cmd}=\mathrm{clip}(u,-T_{a,max}(v_m),T_{a,max}(v_m)) ]
+
+Cả bản đồ, với độ dốc lớn nhất $K_{max}$, lẫn đường tỷ lệ $K_p$ đều đóng góp vào độ lợi thuận từ mô-men đo được đến mô-men trợ lực, nên độ lợi thuận hiệu dụng bị chặn bởi $K_p+K_{max}$. Độ lợi tính ngược được chia tỷ lệ theo cách tương tự:
+(39)  K_aw = K_i/(K_p + K_max)
+[ K_{aw}=\dfrac{K_i}{K_p+K_{max}} ]
+
+Với $K_{max}=0$, Phương trình (39) trở về quy tắc PID ở Phương trình (34), và với $K_p$ nhỏ thì độ dốc của bản đồ giữ cho độ lợi chống bão hòa hữu hạn. Bản đồ vẫn đảm nhiệm phần trợ lực danh định trên đường khô, còn nhánh cắm thêm sửa các sai lệch do hệ số bám thay đổi, lốp bão hòa và việc hiệu chỉnh bị giới hạn độ dốc.
+
+Trong ứng dụng, Map của bài này đại diện cho khối mà một chiếc xe sẵn có, gồm bản đồ trợ lực và khâu bù ổn định. Khối này được coi là cho trước, mô hình đối tượng được chỉnh cho khớp xe, và việc tìm bốn tham số PID chạy trên nó, một lần cho mỗi xe. Mô-men tham chiếu phải tái tạo mô-men lái xác lập trên đường khô của chính bản đồ của xe, như Phương trình (20) làm cho bản đồ của bài này, để nhánh thêm vào giữ được cảm giác lái dự kiến trên đường khô.

@@ -190,12 +190,12 @@ The proportional and integral terms of the PID controller act on the torque-trac
 \noindent where $K_p$, $K_i$, and $K_d$ are the proportional, integral, and derivative gains, $\tau_f$ is the derivative filter time constant, and $K_{aw}$ is the anti-windup tracking gain.
 
 In Eq. (31), the derivative term has a positive sign because an increasing measured torque $T_s$ indicates insufficient assistance in the column convention of Eq. (1), which requires an increase of assist torque. The total unconstrained command is
-(32)  T_a,cmd = u_P + u_I + u_D
-[ T_{a,cmd}=u_P+u_I+u_D ]
+(32)  u = u_P + u_I + u_D
+[ u=u_P+u_I+u_D ]
 
-Actuator saturation is handled by back-calculation anti-windup. The difference between the bounded motor command $T_{a,lim}$ and the raw command $T_{a,cmd}$ is fed back to the integrator in Eq. (30):
-(33)  Delta T_a = T_a,lim - T_a,cmd
-[ \Delta T_a=T_{a,lim}-T_{a,cmd} ]
+Actuator saturation is handled by back-calculation anti-windup. The difference between the controller output $T_{a,cmd}$, which is the command after the assist limit of Eq. (38) and is sent to the motor, and the unbounded command $u$ is fed back to the integrator in Eq. (30):
+(33)  Delta T_a = T_a,cmd - u
+[ \Delta T_a=T_{a,cmd}-u ]
 (34)  K_aw = K_i/K_p
 [ K_{aw}=\dfrac{K_i}{K_p} ]
 
@@ -205,9 +205,9 @@ This back-calculation discharges the integrator whenever the motor saturates at 
 
 3.4. Plug-In MapPID Control Structure
 
-The MapPID structure keeps the assist map and lead–lag compensator of Section 3.1 exactly as calibrated for Map, including the slope limit $K_{max}$, the dead zone $T_{s0}$, and the compensator frequencies, and adds the PID branch of Section 3.3 in parallel (Fig. 6). Only the four branch parameters $K_p$, $K_i$, $K_d$, and $\tau_f$ are tuned, with the map block frozen. The branch is therefore a plug-in: it can be attached to an existing calibration without changing the map that encodes the dry-road steering characteristic. The assist command is
-(35)  T_a,cmd = u_map + u_PID
-[ T_{a,cmd}=u_{map}+u_{PID} ]
+The MapPID structure keeps the assist map and lead–lag compensator of Section 3.1 exactly as calibrated for Map, including the slope limit $K_{max}$, the dead zone $T_{s0}$, and the compensator frequencies, and adds the PID branch of Section 3.3 in parallel (Fig. 6). Only the four branch parameters $K_p$, $K_i$, $K_d$, and $\tau_f$ are tuned, with the map block frozen. The branch is therefore a plug-in: it can be attached to an existing calibration without changing the map that encodes the dry-road steering characteristic. The command before the assist limit is
+(35)  u = u_map + u_PID
+[ u=u_{map}+u_{PID} ]
 (36)  u_PID = u_P + u_I + u_D
 [ u_{PID}=u_P+u_I+u_D ]
 \noindent where $u_{map}$ is computed from Eq. (23) and $u_{PID}$ from Eqs. (29)–(31).
@@ -219,9 +219,9 @@ The steady-state behavior of the plug-in branch follows from Eq. (25). With the 
 [ u_{PID,ss}=T_r(v,a_y,\mu)-T_{ref}(v,a_y)-M(v,T_{ref}) ]
 \noindent Equation (37) states the two properties on which the plug-in structure relies. First, the steady-state accuracy does not depend on the map: any monotonic map, whatever its slope or calibration, leads to $e_T=0$. Second, the branch supplies only the residual that the map leaves. At a dry-road calibration point reached by the map, Eq. (21) gives $M(v,T_{ref})=T_r(v,a_y,0.8)-T_{ref}$, so $u_{PID,ss}=T_r(v,a_y,\mu)-T_r(v,a_y,0.8)$, which is zero on the dry road and equal to the friction-induced change of road reaction otherwise. Where the slope limit prevents the map from reaching its calibration point, $u_{PID,ss}$ also contains that calibration residual.
 
-The map is not neutral for the dynamics of the branch. Around an operating point, the forward path from measured torque to assist torque is $s_mC_{map}(s)+C_{PID}(s)$, where $C_{PID}(s)$ is the linearized PID transfer function. The map slope therefore adds to the low-frequency loop gain, which can reduce the proportional gain needed by the branch, but it also adds to the loop gain near the column resonance, so the stability margins of the branch depend on the map it is attached to. The branch is therefore tuned separately for each vehicle: the map and stabilizing compensator of that vehicle are frozen in the loop, the plant model is adjusted to match the vehicle, and the stability requirements are verified on the combined loop. Both branches share the common saturation limit:
-(38)  T_a,lim = clip(T_a,cmd, -T_a,max(v_m), T_a,max(v_m))
-[ T_{a,lim}=\mathrm{clip}(T_{a,cmd},-T_{a,max}(v_m),T_{a,max}(v_m)) ]
+The map is not neutral for the dynamics of the branch. Around an operating point, the forward path from measured torque to assist torque is $s_mC_{map}(s)+C_{PID}(s)$, where $C_{PID}(s)$ is the linearized PID transfer function. The map slope therefore adds to the low-frequency loop gain, which can reduce the proportional gain needed by the branch, but it also adds to the loop gain near the column resonance, so the stability margins of the branch depend on the map it is attached to. The branch is therefore tuned separately for each vehicle: the map and stabilizing compensator of that vehicle are frozen in the loop, the plant model is adjusted to match the vehicle, and the stability requirements are verified on the combined loop. The assist limit is common to the three controllers, with $u=u_{map}$ of Eq. (23) for Map, $u$ of Eq. (32) for PID, and $u$ of Eq. (35) for MapPID:
+(38)  T_a,cmd = clip(u, -T_a,max(v_m), T_a,max(v_m))
+[ T_{a,cmd}=\mathrm{clip}(u,-T_{a,max}(v_m),T_{a,max}(v_m)) ]
 
 Because both the map, with maximum slope $K_{max}$, and the proportional path $K_p$ contribute to the forward gain between sensed torque and assist torque, the effective forward gain is bounded by $K_p+K_{max}$. The back-calculation anti-windup gain is scaled accordingly:
 (39)  K_aw = K_i/(K_p + K_max)
@@ -269,13 +269,13 @@ Initial effective moment arm | $e_{p0}$ | 0.048 | m
 Initial pneumatic trail | $t_0$ | 0.025 | m
 
 All controllers run at a sampling period $T_c=1\ \mathrm{ms}$. The lead–lag compensator of Eq. (24) is discretized with the Tustin method, and the PID integrator uses forward Euler integration with back-calculation anti-windup. The integral and filtered derivative states are updated as
-(43)  u_I[k+1] = u_I[k] + T_c*(K_i*e_T[k] + K_aw*(T_a,lim[k] - T_a,cmd[k]))
-[ u_I[k+1]=u_I[k]+T_c\paren{K_ie_T[k]+K_{aw}\paren{T_{a,lim}[k]-T_{a,cmd}[k]}} ]
+(43)  u_I[k+1] = u_I[k] + T_c*(K_i*e_T[k] + K_aw*(T_a,cmd[k] - u[k]))
+[ u_I[k+1]=u_I[k]+T_c\paren{K_ie_T[k]+K_{aw}\paren{T_{a,cmd}[k]-u[k]}} ]
 (44)  d[k] = a_d*d[k-1] + b_d*(T_s[k] - T_s[k-1])
 [ d[k]=a_d\,d[k-1]+b_d\paren{T_s[k]-T_s[k-1]} ]
 (45)  a_d = tau_f/(tau_f + T_c),   b_d = K_d/(tau_f + T_c)
 [ a_d=\dfrac{\tau_f}{\tau_f+T_c},\quad b_d=\dfrac{K_d}{\tau_f+T_c} ]
-\noindent where $T_{a,lim}$ is the command after the common saturation limit, and the anti-windup gain $K_{aw}$ is given by Eq. (34) for PID and by Eq. (39) for MapPID. The difference between the limited and unlimited commands is the back-calculation signal that prevents integrator windup.
+\noindent where $T_{a,cmd}$ is the controller output after the common saturation limit, $u$ is the command before it, and the anti-windup gain $K_{aw}$ is given by Eq. (34) for PID and by Eq. (39) for MapPID. The difference between the limited and unlimited commands is the back-calculation signal that prevents integrator windup.
 
 The controllers use three measured signals: the torsion-bar torque $T_s$, the vehicle speed $v$, and the lateral acceleration $a_y$. Their noise, quantization, and update periods are given in Table 3, with the resolutions taken from the sensor data sheets [14,15]. The noise standard deviation equals one resolution step for each sensor, except for the vehicle speed, for which 0.38 km/h is adopted [16]. The 10 ms update period of the vehicle signals is an implementation assumption.
 
