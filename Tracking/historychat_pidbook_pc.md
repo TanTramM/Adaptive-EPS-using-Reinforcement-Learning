@@ -50,3 +50,24 @@ Chỉ sửa và commit file của PC (mục 6.1). Nhật ký này chỉ khung PI
 
 ### Bước P9 bắt đầu (06:18)
 - Cờ PIDBOOK_MAPPID_GRID_DONE.txt của laptop đã có trên main; pipeline chạy compare_pareto_common('run', {'MapPID'}, id, 8, pha) với id 5-8 (4 worker), pha 1 rồi pha 2.
+
+### Bước P9 xong (07:30) và BẢNG TÓM TẮT SÁNG
+- P9: MapPID id 5-8 của 8, pha 1 xong 06:35, pha 2 xong 07:30; cờ PIDBOOK_MAPPID_PC_DONE.txt và PIDBOOK_PC_DONE.txt đã đẩy lên main. Không worker nào dừng.
+
+| Bước | Kết quả |
+|---|---|
+| P0 | kế hoạch, bài, nhật ký đã push; cờ PIDBOOK_PLAN_PUSHED.txt |
+| P1 | kết quả cũ của PID chuyển sang Legacy_2026-10-27/ (Calib_v2, Cases_ssw, 37 file ParetoCommon_PID_*) |
+| P2 | code PID mới, test_pid PASS (sai lệch 1.78e-15, chạm giới hạn 4894/6001 mẫu) |
+| P3 | Map tất định: SSW seed 99987 sai lệch 0, CALIB seed 99990 lệch 2e-10; file Map không đổi |
+| P4 | lưới seed 10000: 434 đánh giá, 184 mô phỏng, 111 khả thi, J nhỏ nhất 2.46772 |
+| P5 | chọn tạm J 2.49667 (R 3.110 %, S 0.8027); năm seed J 2.549 +- 0.082; margin đạt |
+| P6 | seed chung: 134 điểm trong dải nhiễu, 99 qua e_rel; mặt an toàn 44, mặt đủ cổng 31; 0 trượt margin; hội tụ vòng 1 |
+| P7 | thiết kế cuối (mặt đủ cổng): K 2.9038, Ti 34.2 ms, Td 23.3 ms, N 19.25 (Kp 2.90376, Ki 84.9065, Kd 0.06771, Tf 1.211 ms, Kaw 35.41); R_tb 3.2241 %, S_tb 0.77815, J 2.5089, PM 50.8, GM 6.22, e_rel max 2.09 %; không trên biên hộp |
+| P8 | SSW 6 seed xong; seed chung RMS e_T (STEADY, SLIP, WEAVE) 0.251, 0.206-0.207, 0.198-0.200 N.m; S 0.565, 0.49, 0.885-0.896 |
+| P9 | MapPID id 5-8 xong, cờ đã đẩy |
+
+Lỗi còn treo / lưu ý:
+- Cổng Tf <= 79.6 ms (c3) thêm vào pidlag_eval cho PID vì hộp kế hoạch (Td 796 ms, N 8) cho Tf tới 99.5 ms; mappid_eval của laptop có thể chưa có cổng này (góc hộp khác nhau).
+- Các file dùng chung ParetoCommon_fronts_*, ParetoCommon_select*.csv không đẩy (thuộc laptop); bản PID nằm ở ParetoCommon_PID_select*.csv. pid.json: Kaw sửa tay sau compare select (hai hàm shared ghi Kaw = Ki/Kp).
+- Marker *_failed.txt cũ trong scratch/jobs (init_pid_grid_select, map_grid_select) là của lần cũ.
