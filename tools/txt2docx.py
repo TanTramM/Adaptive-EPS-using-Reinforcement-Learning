@@ -52,8 +52,8 @@ GREEK = {'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': '
          'Omega': 'Ω', 'Sigma': 'Σ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Gamma': 'Γ', 'Theta': 'Θ'}
 SYMBOLS = {'ne': '≠', 'le': '≤', 'leq': '≤', 'ge': '≥', 'geq': '≥', 'approx': '≈', 'cdot': '·', 'times': '×',
            'Leftrightarrow': '⇔', 'Rightarrow': '⇒', 'rightarrow': '→', 'to': '→', 'infty': '∞',
-           'partial': '∂', 'circ': '°', 'pm': '±', 'neq': '≠', 'sum': '∑', 'in': '∈', 'ldots': '…',
-           'dots': '…', 'cdots': '⋯'}
+           'partial': '∂', 'circ': '°', 'pm': '±', 'neq': '≠', 'sum': '∑', 'prod': '∏', 'in': '∈', 'ldots': '…',
+           'dots': '…', 'cdots': '⋯', 'int': '∫'}
 FUNCS = {'sin', 'cos', 'tan', 'tanh', 'arctan', 'max', 'min', 'exp', 'ln', 'log', 'sgn', 'sign'}
 SPACES = {'quad': ' ', 'qquad': '  ', ';': ' ', ',': ' ', ':': ' ',
           '!': '', ' ': ' '}

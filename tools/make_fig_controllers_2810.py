@@ -1,6 +1,6 @@
 """Fig. 4-6 of the paper redrawn after the teacher's comments (2026-10-28): Map with the limit merged into the lead-lag block, PID as ONE block with the
-limit inside and ONE total formula, MapPID with one PID block.  Writes .drawio + .png + .pdf into Figures/new/main/28-10/ (the hand-made figures in
-Figures/new/main/ are not touched).
+limit inside and ONE total formula, MapPID with one PID block.  Writes .drawio + .png + .pdf into Figures/main/ as Fig_4_Map, Fig_5_PID and Fig_6_MapPID
+(numbers as in the paper).
 
 Usage: C:/Users/Admin/anaconda3/python.exe -I -X utf8 tools/make_fig_controllers_2810.py
 """
@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import drawio_kit
 from drawio_kit import Diagram
 
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Figures', 'new', 'main', '28-10')
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Figures', 'main')
 
 _orig_ascii = drawio_kit.tex2ascii
 
@@ -72,7 +72,7 @@ def fig_map():
     d.line([(xo + 50, y), (xo + 50, 480), (1110, 480)], arrow=True)
     d.line([(750, 480), (650, 480), (650, y + 55)], arrow=True)
     lab(d, 700, 445, r'$T_{s,m}$')
-    d.save(os.path.join(OUT, 'Fig_Map'))
+    d.save(os.path.join(OUT, 'Fig_4_Map'))
 
 
 def ctrl_fig(name, title, formula, h, fs):
@@ -115,13 +115,13 @@ def ctrl_fig(name, title, formula, h, fs):
 
 
 def fig_pid():
-    ctrl_fig('Fig_PID', 'PID controller',
+    ctrl_fig('Fig_5_PID', 'PID controller',
              [r'$T_{a,cmd}=L(K_p e_T+\int_0^t[K_i e_T(\tau)+K_{aw}\Delta T_a(\tau)]\,d\,\tau'
               r'+\frac{K_d s}{\tau_f s+1}T_{s,m},\,v_m)$'], 210, 32)
 
 
 def fig_mappid():
-    ctrl_fig('Fig_MapPID', 'MapPID controller',
+    ctrl_fig('Fig_6_MapPID', 'MapPID controller',
              [r'$T_{a,cmd}=L(C_{map}(s)\,M(v_m,T_{s,m})$',
               r'$+K_p e_T+\int_0^t[K_i e_T(\tau)+K_{aw}\Delta T_a(\tau)]\,d\,\tau+\frac{K_d s}{\tau_f s+1}T_{s,m},\,v_m)$'], 230, 30)
 

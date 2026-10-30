@@ -23,6 +23,14 @@ assert(numel(x) == 9, 'x must have nine entries');
 names = {'K', 'z', 'p_over_z', 'z1', 'p1_over_z1', 'Kp', 'Ki', 'Kd', 'Tf'};
 PMmin = 30; GMmin = 2; gLagMin = 1 / sqrt(2); erelMax = 10; Ts = 1e-3;   % accuracy gate e_max [%], one constant (PhuongPhap_TimThamSo.txt 13.0)
 
+% Steering-band gate of the PID branch (QuyChuan 6.2), same as pidlag_eval.m: the derivative filter tau_f = Tf gives gain >= 0.707 at 2 Hz, i.e. Tf <= 79.6 ms.
+% Checked before the cache lookup so that a design already stored in the csv is rejected too (added 2026-10-30; earlier csv rows are filtered afterwards).
+if 1 / sqrt(1 + (2 * pi * 2 * x(9))^2) < gLagMin
+    out = struct('x', x, 'seed', seed, 'J', Inf, 'R', NaN, 'S', NaN, 'TV', NaN, 'erel', NaN, 'rev', NaN, 'PM', NaN, 'GM', NaN, 'HF', NaN, ...
+        'lagGain2Hz', NaN, 'simulated', 0, 'c', [0 0 1 0], 'cached', false);
+    return;
+end
+
 % cached row?
 if ~isempty(csvFile) && exist(csvFile, 'file')
     T = readtable(csvFile);

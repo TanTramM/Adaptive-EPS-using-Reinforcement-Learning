@@ -124,7 +124,7 @@ def caption_lines(text, width_cm):
     lines, cur = 1, ''
     for w in text.split():
         trial = (cur + ' ' + w).strip()
-        if cm(trial) > 0.97 * width_cm and cur:
+        if cm(trial) > 0.93 * width_cm and cur:
             lines += 1; cur = w
         else:
             cur = trial
@@ -158,9 +158,11 @@ def figure_group(doc, items, caption):
             lh = emu(0.60); k += 1
             shapes.append(_textbox_xml(n0 + k, 0, y, cw, lh)); boxes.append((label, False))
             y += lh + gap
-    plain = re.sub(r'\$[^$]*\$', 'xx', caption)
+    # inline math is typeset as an equation: wider than plain text and it raises the line height, so the estimate keeps its symbols (LaTeX
+    # commands counted as one character) and every line gets extra height; a box that is too short cuts the last line in Word
+    plain = re.sub(r'\$([^$]*)\$', lambda m: re.sub(r'[{}\\_^]', '', re.sub(r'\\[A-Za-z]+', 'x', m.group(1))) + 'x', caption)
     lines = caption_lines(plain, TEXT_W)
-    cap_h = emu(0.2 + 0.50 * lines)                         # 12 pt Times at single spacing is about 0.49 cm per line; 0.2 cm spare
+    cap_h = emu(0.4 + (0.62 if '$' in caption else 0.52) * lines)       # 12 pt Times is about 0.49 cm per line, a line with an equation about 0.6 cm
     k += 1
     shapes.append(_textbox_xml(n0 + k, 0, y, cw, cap_h)); boxes.append((caption, True))
     total_h = y + cap_h
@@ -190,12 +192,37 @@ def figure(doc, caption, path):
         spec, _, label = part.partition('|')
         file_, _, wcm = spec.partition('@')
         full = os.path.join(REPO_ROOT, file_.strip())
+        if label.strip() == 'side' and ' ; ' not in path:        # 'file@width|side': picture on the left, caption on the right, in a borderless two-column table
+            return figure_side(doc, caption, full, float(wcm))
         w, h = Image.open(full).size
         width = min(float(wcm) if wcm else min(TEXT_W, MAX_FIG_H * w / h), TEXT_W)
         items.append((full, width, width * h / w, label.strip()))
     box = doc.add_paragraph(); box.alignment = WD_ALIGN_PARAGRAPH.CENTER
     box.paragraph_format.keep_together = True
     box.add_run()._r.append(figure_group(doc, items, caption))
+
+
+def figure_side(doc, caption, full, width_cm):
+    """A small figure: the picture (width_cm wide) in the left cell and the caption (italic) in the right cell of a one-row table without borders."""
+    t = doc.add_table(rows=1, cols=2); t.alignment = WD_TABLE_ALIGNMENT.CENTER; t.autofit = False
+    tblPr = t._tbl.tblPr
+    borders = OxmlElement('w:tblBorders')
+    for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+        b = OxmlElement('w:' + side); b.set(qn('w:val'), 'nil'); borders.append(b)
+    tblPr.append(borders)
+    left, right = t.rows[0].cells
+    left.width = Cm(width_cm + 0.3); right.width = Cm(TEXT_W - width_cm - 0.3)
+    for cell in (left, right):
+        tcPr = cell._tc.get_or_add_tcPr(); va = OxmlElement('w:vAlign'); va.set(qn('w:val'), 'center'); tcPr.append(va)
+    p = left.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.first_line_indent = Cm(0); p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1.0
+    p.add_run().add_picture(full, width=Cm(width_cm))
+    q = right.paragraphs[0]; q.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    q.paragraph_format.first_line_indent = Cm(0); q.paragraph_format.space_after = Pt(0); q.paragraph_format.line_spacing = 1.0
+    add_rich(q, caption, char_style=doc.styles['Emphasis'])
+    keep_table_together(t)
+    sp = doc.add_paragraph(); sp.paragraph_format.space_after = Pt(0)
+    sp.add_run().font.size = Pt(6)
 
 
 def keep_table_together(table):
@@ -220,7 +247,7 @@ def table(doc, caption, rows):
     # widths in cm for 12 pt Times (about 0.22 cm per character, 0.5 cm cell padding): no column narrower than its longest word,
     # each column as wide as its longest cell when the table fits the text width, else the spare width shared by the overflow
     cm = lambda n: 0.22 * n + 0.5
-    lo = [cm(max(len(w) for c in col(ci) for w in (c.split() or ['']))) for ci in range(ncol)]
+    lo = [cm(max(len(w) + (1 if k == 0 else 0) for k, c in enumerate(col(ci)) for w in (c.split() or ['']))) for ci in range(ncol)]   # +1: bold header
     hi = [max(lo[ci], cm(max(len(c) for c in col(ci)))) for ci in range(ncol)]
     if sum(hi) <= TEXT_W:
         widths = hi
@@ -316,7 +343,12 @@ def build(txt_path, docx_path, through=None):
         mf = figcap.match(raw)
         if mf:
             cap, _, path = mf.group(1).partition(' | ')
-            figure(doc, cap.strip(), path.strip()); i += 1; continue
+            path = path.strip(); newpage = path.endswith('|newpage')         # 'file@width|newpage': the figure starts a new page
+            n0 = len(doc.paragraphs)
+            figure(doc, cap.strip(), path[:-len('|newpage')] if newpage else path)
+            if newpage:
+                doc.paragraphs[n0].paragraph_format.page_break_before = True
+            i += 1; continue
         mt = tabcap.match(raw)
         if mt and i + 1 < len(lines) and ' | ' in lines[i + 1]:
             rows = []; j = i + 1
@@ -326,6 +358,16 @@ def build(txt_path, docx_path, through=None):
         if s.startswith('- '):
             bullet(doc, s[2:]); i += 1; continue
         p = doc.add_paragraph()
+        # a paragraph may be wrapped over several lines of the .txt (Documents rule: 180-200 characters per line): the lines up to the next blank line,
+        # heading, equation, figure, table caption, bullet or the Keywords line belong to it (references stay one per line)
+        j = i + 1
+        if not in_refs and not s.startswith('Keywords:'):
+            def stops(k):
+                t = lines[k]; u = t.strip()
+                return (not u or sep.match(t) or h1.match(u) or h2.match(u) or eq.match(t) or latex.match(t) or figcap.match(t) or tabcap.match(t)
+                        or u.startswith('- ') or u.startswith('Keywords:') or u.startswith('\\noindent ') or u in UNNUMBERED_H1)
+            while j < len(lines) and not stops(j):
+                s += ' ' + lines[j].strip(); j += 1
         if s.startswith('Keywords:'):
             r = p.add_run('Keywords:'); r.bold = True
             add_rich(p, s[len('Keywords:'):])
@@ -334,7 +376,9 @@ def build(txt_path, docx_path, through=None):
         else:
             p.paragraph_format.first_line_indent = INDENT
             add_rich(p, s)
-        i += 1
+        if not in_refs and s.rstrip().endswith(':'):
+            p.paragraph_format.keep_with_next = True               # a lead-in ending with a colon stays on the same page as the equation that follows
+        i = j
     doc.save(docx_path)
     print('Wrote', docx_path)
 
