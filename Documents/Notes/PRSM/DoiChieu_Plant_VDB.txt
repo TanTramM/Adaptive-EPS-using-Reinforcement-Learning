@@ -1,0 +1,45 @@
+==============================================================================================================================================================================================
+ĐỐI CHIẾU PLANT VÀ KHỐI VEHICLE DYNAMICS BLOCKSET (VDB) BẬC 3DOF: MA TRẬN BẢN ĐỦ (BẢN ĐÊM 2026-11-06, CHƯA DUYỆT)
+==============================================================================================================================================================================================
+Nguồn số liệu: các phép thử chạy đêm 2026-11-06 theo Documents/Shared/KeHoach_Plant_VDB.txt mục 10 (script trong Model/PRSM_VDB/Plant_VDB/script/, kết quả trong Result/PRSM/Plant_VDB/).
+Bản này thay bảng đối chiếu tạm ở mục 5 của file kế hoạch. Mọi số trong bảng truy được về file kết quả ghi ở cột bằng chứng. Phương trình PT(n) đánh số theo bảng ở mục 5 của file kế hoạch.
+Phân loại: GIỐNG (đã đo, khớp trong ngưỡng), CHỈNH ĐƯỢC (đặt tham số thì về cùng dạng, đã đo), KHÁC (khác và đã đo mức khác), THIẾU (phải tự dựng), CHƯA RÕ (kèm lý do).
+
+Thành phần Plant                       | Khối hoặc tham số VDB                                    | Loại                 | Bằng chứng (file trong Result/PRSM/Plant_VDB/)
+---------------------------------------+----------------------------------------------------------+----------------------+-----------------------------------------------------------------------
+PT(1)-(2) cột lái, T_s, T_a, ma sát    | Không có khối VDB; giữ SteeringColumn của Plant          | THIẾU: giữ của ta    | S1 chép nguyên SteeringColumn: T_s lệch <= 0.05 % (Plant_VDB_S1_compare.txt)
+PT(3)-(4), (15) thân xe, vòng kín      | Vehicle Body 3DOF Single Track, Cy = 0, velocity mode    | GIỐNG                | S1 STEADY, WEAVE, CALIB: a_y, gamma lệch <= 0.08 %; SLIP trọn 100 s a_y 0.023 %, gamma 0.011 % (sau sửa Cs, Cym)
+PT(3)-(4), (15) thân xe, lực áp đặt hở | Cùng khối, lực lốp ghi sẵn vào FExt, MExt               | GIỐNG                | N4 sau sửa Cs, Cym (10.10): cả 4 ca x 2 mức T_a đạt, gamma lệch 0.0004-0.054 %, a_y 0.017-0.154 %. Lỗi cũ do bảng khí động mặc định (mô-men guồng phụ), không do lực hở
+PT(3), (15) v đổi trong ca             | xdotin (velocity mode)                                   | GIỐNG                | N1: v bám đầu vào 0.0001 km/h; S1 SLIP trọn 100 s gồm 90 -> 45 km/h đạt
+SLIP sau 60 s (vũng nước, mu 0.24-0.8) | PlantVDBS1 chạy trọn 100 s                                | GIỐNG                | Sau sửa Cs, Cym: a_y 0.023 %, gamma 0.011 %, F_yf 0.020 %, T_r 0.026 %, T_s 0.029 % (Plant_VDB_S1_compare.txt "rerun 09:59"; nguyên nhân ở mục 10.10)
+PT(5) delta_f = x1/n_st                | Tự chia (phần cột lái của Plant)                         | GIỐNG                | Nằm trong phần Plant chép nguyên của S1
+PT(6)-(7) góc trượt góc nhỏ            | VDB: atan, xoay Vx, Vy theo delta; S1 dùng beta = ydot/xdot | KHÁC nhỏ          | R8 Q2: alpha_VDB = -alpha_f, khác nhau chỉ ở phần atan so với góc nhỏ; chưa đo ở góc lớn (việc S2)
+PT(8) tải cầu cố định                  | Lốp nhận F_z từ ngoài (vertType None, cổng Fext)         | CHỈNH ĐƯỢC           | N1: F_z đúng 4548.7 N trước, 3166.8 N sau; N3
+PT(9)-(12) Magic Formula               | External file + PCY1 = C, PDY1 = 1, PEY1 = E, PKY1 = -C_alpha/F_z, mọi hệ số phụ = 0 | CHỈNH ĐƯỢC | T1: F_y lệch <= 3e-5 N ở 5 mức mu, cầu trước và sau (Plant_VDB_T1T2_tire.txt). Chỉ cấu hình được qua External file, preset không nhận hệ số
+PT(9) độ cứng không đổi theo mu        | Lốp ngoài: mu chỉ qua ScaleFctrs hàng 3 (LMUY)           | CHỈNH ĐƯỢC           | T2: độ dốc (dây cung +-0.0025 rad) lệch <= 3e-8 tương đối so với cùng phép đo trên công thức Plant; so với C_alpha là 0.982-0.9995; đỉnh = mu*F_z trong 0.1 %
+PT(9) độ cứng không đổi theo mu        | Lốp bên trong khối 3DOF (Cy, muMode)                     | KHÁC                 | T4: độ dốc cầu trước 234310 N/rad ở mu 0.8, 87836 N/rad ở mu 0.3 (tỉ số 0.3749, mu: 0.375); không dùng được cho Y4
+mu đổi khi chạy                        | Lốp: ScaleFctrs hàng 3, bậc mu 0.8 -> 0.2                | CHỈNH ĐƯỢC           | T2c: lực 20 ms sau bậc lệch 0.001 % (cả hai cầu)
+PT(13)-(14) e_p, T_r                   | Không có khối T_r; M_z ở khối lốp; T_r = (e_c*F_y - M_z)/n_st | THIẾU: tự ghép  | T3: dấu đúng cả sáu bộ lốp (đối chứng âm báo sai); độ lớn T_r tại alpha 0.025 rad bằng 0.31-1.32 lần Plant tuỳ bộ lốp
+Không có độ trễ lốp                    | Khối Fy Relaxation của lốp                               | KHÁC nhỏ             | T6: trễ 1.59 ms = 1/(200*pi) s, bằng đúng FyRelFreqLwrLim, không đổi theo tốc độ (20, 60, 100 km/h); không dao động giả
+Không có chuyển tải, lắc, hệ treo      | 3DOF Single Track cũng không có                          | GIỐNG                | Tài liệu VDB; đây là giới hạn của bậc 3DOF (kế hoạch mục đầu)
+Thời gian chạy                         | S1 so với Plant                                          | KHÁC                 | T7: S1 khoảng 9-10 s mỗi ca 100-140 s, Plant khoảng 1 s (chậm khoảng 9-10 lần, còn dùng được)
+
+Điều cần nói thẳng khi trình với thầy:
+  1. Khớp tới sai số số học ở lốp là do lốp VDB đã được cấu hình thành đúng Magic Formula của Plant; đó là xác nhận cấu hình, không phải so Plant với một lốp VDB độc lập.
+  2. S1 khớp Plant dưới 0.1 % chứng tỏ thân VDB 3DOF và Bike2DOF tương đương về động học khi lốp và cột lái là của Plant; không chứng tỏ Plant đúng với xe thật.
+  3. Lỗi solver ở ca SLIP sau 60 s và ở thân bị lực áp đặt: ĐÃ GIẢI THÍCH (2026-11-06, mục 10.10): các bảng khí động Cs, Cym của khối thân còn giá trị mặc định khác 0 nên thêm mô-men guồng phụ, thân phân kỳ khi góc trượt lớn. Khi dựng Plant_VDB chính thức PHẢI đặt Cs, Cym = 0 và Cpm = 0 (đã có trong vdb_body_config.m). Số S1 trong bảng trên (0.1 %) là số TRƯỚC khi sửa nơi nào ghi vậy; số sau sửa nhỏ hơn (SLIP 100 s: gamma 0.011 %).
+4. T_r từ M_z của lốp thư viện khác Plant từ 0.31 tới 1.32 lần ở alpha nhỏ tuỳ bộ lốp; chưa kết luận về e_p0. Hai bộ lốp (205/60R15, 275/65R18) ra đường cong giống hệt tới 1e-9 ở ba mức tải
+     (K2, 2026-11-06): lệnh chọn lốp có tác dụng, năm bộ còn lại khác nhau, nên đó là dữ liệu hay ánh xạ của thư viện; nói "năm bộ lốp phân biệt".
+  5. Mọi ngưỡng của mục 2 chưa đổi trong đêm; lần sửa tiêu chí đo (không phải ngưỡng) của N2, N3 ghi ở mục 10.9.
+
+PHÂN LOẠI KHẲNG ĐỊNH VỀ VDB (K4, kế hoạch mục 11, 2026-11-06): mỗi câu viết về VDB trong báo cáo, bài báo, luận văn phải thuộc đúng một loại và không nói mạnh hơn loại của nó.
+Loại A, XÁC NHẬN CẤU HÌNH: hai phía được đặt cùng công thức, khớp chỉ cho biết cấu hình đúng, không phải so độc lập. Gồm T1, T2 (F_y lệch 3e-5 N), S2 (dưới 0.3 %). Thêm: hệ số C và E của
+chính Plant được trích từ khối Tire (Magic Formula) của VDB (Documents/Data/params_cum2.csv), nên hai lốp không phải hai nguồn độc lập.
+Loại B, TƯƠNG ĐƯƠNG ĐỘNG HỌC: cùng lốp và cột lái của Plant, chỉ khác thân. Gồm S1 (dưới 0.11 % trên bảy ca, hai mức T_a), T5 (thân nhận lực của Plant, 8/8 ca đạt), phép thử thân tự do (K1).
+Nói được: thân VDB 3DOF và Bike2DOF cho cùng chuyển động khi lực như nhau.
+Loại C, SO ĐỘC LẬP: lốp thư viện khác Plant. Gồm S3 (a_y lệch 7-20 %, gamma 5-12 % tùy ca), T3 và K3a (T_r bằng 0.85-0.91 lần Plant ở đỉnh, vệt khí nén 0.45-0.78 lần ở mu 0.8 và mất nhanh
+hơn khi mu giảm). Đây là phép so duy nhất mang thông tin về lốp; mới chạy hở, chưa có bộ điều khiển (K5, K6).
+Loại D, MÔ TẢ KHỐI: tính chất của khối VDB, không so với Plant. Gồm T4 (lốp trong khối 3DOF mềm theo mu), T6 (trễ lốp 1.59 ms), T7 (thời gian chạy), K1 (các tham số mặc định của khối), K2
+(năm bộ lốp phân biệt).
+Câu phải nói thẳng: không có số đo từ xe thật, nên không loại nào xác nhận Plant đúng với xe thật; chưa chạy bộ điều khiển nào trên Plant_VDB nên chưa biết thứ hạng Map, PID, MapPID có giữ
+nguyên không.

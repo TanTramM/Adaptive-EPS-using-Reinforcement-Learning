@@ -1,0 +1,23 @@
+K1c-d free-body and fixed-input checks (2026-11-06 15:31)
+
+BODY (xdot = 16.6667 m/s, m = 1573 kg, Iz = 2873 kg m^2)
+  Fy=     0 Mz=    0 ydot0=   0 r0= 0.00 : max error 0.00e+00 of range
+  Fy=     0 Mz=    0 ydot0=   5 r0=-0.50 : max error 1.94e-14 of range
+  Fy=     0 Mz=    0 ydot0=  25 r0=-0.50 : max error 4.26e-14 of range
+  Fy= -3000 Mz= -500 ydot0=   0 r0= 0.00 : max error 1.21e-13 of range
+  Fy= -3000 Mz= -500 ydot0=   5 r0=-0.50 : max error 4.58e-14 of range
+  Fy= -3000 Mz= -500 ydot0=  25 r0=-0.50 : max error 4.56e-14 of range
+  worst 1.21e-13 (limit 1e-4) -> PASS
+  negative control (default Cs, Cym, Cpm): worst 8.05e+03 -> NOT PASS (expected NOT PASS)
+
+TIRE (half front axle, Fz = 4548.7 N, Ca = 80000 N/rad, Vx = 20 m/s)
+  mu=0.8 Vy=0.5 : Fy 1885.876 N, expected 1885.876 N, error 1.60e-12 of mu*Fz, Fx -0.077 N
+  mu=0.8 Vy=1.5 : Fy 3530.973 N, expected 3530.973 N, error 1.13e-12 of mu*Fz, Fx -0.077 N
+  mu=0.8 Vy=3.0 : Fy 3603.227 N, expected 3603.227 N, error 4.97e-13 of mu*Fz, Fx -0.077 N
+  mu=0.3 Vy=0.5 : Fy 1290.519 N, expected 1290.519 N, error 1.32e-12 of mu*Fz, Fx -0.077 N
+  mu=0.3 Vy=1.5 : Fy 1326.752 N, expected 1326.752 N, error 4.60e-13 of mu*Fz, Fx -0.077 N
+  mu=0.3 Vy=3.0 : Fy 1275.594 N, expected 1275.594 N, error 4.94e-13 of mu*Fz, Fx -0.077 N
+  worst Fy error 1.60e-12 (limit 1e-3), max |Fx| 0.077 N (limit 1) -> PASS
+  negative control (FNOMIN x 1.2): worst Fy error 7.79e-02 -> NOT PASS (expected NOT PASS)
+
+K1c-d overall: PASS

@@ -1,0 +1,14 @@
+Chain A (3DOF Single Track, velocity mode, v=20 m/s, step front steer 0.02 rad, Cy_f=160000, Cy_r=160000 N/rad)
+  sim wall time 16.5 s for 10 s
+  yaw rate at 10 s                      : 0.14990 rad/s
+  bicycle formula, Cy = AXLE stiffness  : 0.11819 rad/s  (diff +26.83 %)
+  bicycle formula, Cy = WHEEL stiffness : 0.13192 rad/s  (diff +13.63 %)
+  bicycle formula, Cy*Fz/Fznom per axle : 0.14925 rad/s  (diff +0.43 %), effective stiffness 291119 and 202678 N/rad
+  xdot at 10 s = 20.0000 m/s (input 20)
+
+Chain B (Combined Slip Wheel 2DOF, Vx=20 m/s, Fz set from outside = 4549 N, one front wheel)
+  LMUY 1.00 : Fz at end 4549 N, peak |Fy| 5459 N (mu*Fz = 4549 N) at alpha 0.137 rad, slope at 0 = -108082 N/rad, max|Mz| 32.6 N.m
+  LMUY 0.50 : Fz at end 4549 N, peak |Fy| 2787 N (mu*Fz = 2274 N) at alpha 0.071 rad, slope at 0 = -106061 N/rad, max|Mz| 20.3 N.m
+  LMUY 0.30 : Fz at end 4549 N, peak |Fy| 1710 N (mu*Fz = 1365 N) at alpha 0.044 rad, slope at 0 = -101414 N/rad, max|Mz| 19.4 N.m
+
+To check by hand: sign of Fy and Mz against alpha (Plant_VDB_demo_tireB.png), and whether LMUY changes the slope at 0 (Plant: slope must not change with mu).

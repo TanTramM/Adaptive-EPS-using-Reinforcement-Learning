@@ -1,0 +1,14 @@
+N2 baseline self-check (2026-11-06 01:37)
+Plant.mdl hash unchanged since the baseline: PASS
+
+case    Ta  length  NaN  err(a_y)  err(F_yf)  err(F_yf, 2x Ca)  err(T_r)   mean dT_s (3-5 s, Ta=2 minus Ta=0), must lie in (-2, 0)   verdict
+STEADY  0   ok      0    0.0000    0.0000     0.431             0.0000     -     PASS
+STEADY  2   ok      0    0.0000    0.0000     0.418             0.0000     -1.961     PASS
+SLIP    0   ok      0    0.0000    0.0000     0.189             0.0000     -     PASS
+SLIP    2   ok      0    0.0000    0.0000     0.193             0.0000     -1.747     PASS
+WEAVE   0   ok      0    0.0000    0.0000     0.262             0.0000     -     PASS
+WEAVE   2   ok      0    0.0000    0.0000     0.251             0.0000     -1.649     PASS
+CALIB   0   ok      0    0.0000    0.0000     0.459             0.0000     -     PASS
+CALIB   2   ok      0    0.0000    0.0000     0.453             0.0000     -1.974     PASS
+
+N2 overall: PASS

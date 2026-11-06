@@ -1,0 +1,19 @@
+N3 tests T1, T2 of the VDB tire against the Plant formula (2026-11-06 01:43)
+axle   mu     peak_Plant(N)  peak_VDB(N)  T1 maxdev/peak(%)  T2a peak/(mu Fz)  T2b slope/Plant  slope/Ca  T1      T2a     T2b
+front  0.80     7278.0        7278.0        0.000             1.0000            0.9995        PASS  PASS  PASS
+       negative control (Plant side, mu 0.8, front): sign flipped -> 200.0 % -> NOT PASS; Ca x2 -> 33.1 % -> NOT PASS (both expected NOT PASS)
+front  0.50     4548.5        4548.5        0.000             0.9999            0.9987        PASS  PASS  PASS
+front  0.33     3002.1        3002.1        0.000             1.0000            0.9970        PASS  PASS  PASS
+front  0.24     2182.3        2182.3        0.000             0.9995            0.9943        PASS  PASS  PASS
+front  0.20     1817.6        1817.6        0.000             0.9990            0.9917        PASS  PASS  PASS
+rear   0.80     5066.7        5066.7        0.000             0.9999            0.9990        PASS  PASS  PASS
+       negative control (Plant side, mu 0.8, rear): sign flipped -> 200.0 % -> NOT PASS; Ca x2 -> 32.9 % -> NOT PASS (both expected NOT PASS)
+rear   0.50     3165.9        3165.9        0.000             0.9997            0.9973        PASS  PASS  PASS
+rear   0.33     2089.3        2089.3        0.000             0.9996            0.9938        PASS  PASS  PASS
+rear   0.24     1518.6        1518.6        0.000             0.9990            0.9880        PASS  PASS  PASS
+rear   0.20     1266.4        1266.4        0.000             0.9997            0.9824        PASS  PASS  PASS
+negative control (VDB side, PKY1 x2, front, mu 0.8): slope/Ca = 1.996 -> T2b NOT PASS (expected NOT PASS)
+T2c mu step 0.8 -> 0.2 at alpha 0.1 rad, front: F(0.98 s) = -7267.9 N (Plant -7267.9), F(1.02 s) = -1700.2 N (Plant -1700.2), error -0.001 % -> PASS
+T2c mu step 0.8 -> 0.2 at alpha 0.1 rad, rear: F(0.98 s) = -5026.7 N (Plant -5026.7), F(1.02 s) = -1167.3 N (Plant -1167.3), error -0.000 % -> PASS
+
+N3 overall: PASS

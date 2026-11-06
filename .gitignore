@@ -24,3 +24,7 @@ scratch/
 # Python bytecode cache
 __pycache__/
 tools/jobs/ram_log.csv
+
+# Plant_VDB: tin hieu mo phong sinh lai duoc (make_plant_baseline.m, compare_vdb_*.m), 229 MB, khong commit
+Result/PRSM/Plant_VDB/baseline/*.mat
+Result/PRSM/Plant_VDB/*.mat

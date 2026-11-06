@@ -1,0 +1,23 @@
+N4 tests T4, T5 of the VDB body (2026-11-06 15:05)
+
+T5: body driven by the Plant forces
+case    Ta  err(gamma)%  err(a_y)%  v err held(km/h)  v err change(km/h)  max|dv/dt*beta| (m/s^2)  RMS(dv/dt*beta)/max|a_y| %  T5
+STEADY  0    0.0004      0.0001      0.000             0.000               0.0001                  0.0004                       PASS
+STEADY  2    0.0002      0.0001      0.000             0.000               0.0007                  0.0034                       PASS
+SLIP    0    0.0202      0.1366      0.000             0.000               0.0077                  0.0254                       PASS
+SLIP    2    0.0124      0.1540      0.000             0.000               0.0079                  0.0262                       PASS
+WEAVE   0    0.0317      0.0231      0.000             0.000               0.0000                  0.0001                       PASS
+WEAVE   2    0.0539      0.0266      0.000             0.000               0.0003                  0.0021                       PASS
+CALIB   0    0.0011      0.0231      0.000             0.000               0.0344                  0.0832                       PASS
+CALIB   2    0.0007      0.0245      0.000             0.000               0.0347                  0.0811                       PASS
+negative control (force sign flipped, STEADY, Ta 0): err(gamma) = 75.99 % -> T5 NOT PASS (expected NOT PASS)
+negative control (Izz doubled, STEADY, Ta 0): err(gamma) = 19.00 % -> T5 NOT PASS (expected NOT PASS)
+
+T4: tire inside the 3DOF block, steady cornering, v = 20 m/s, Cy_f = Cy_r = C_alpha = 160000 N/rad, muMode on
+  mu 0.80, steer 0.01 rad: yaw rate 0.07463 rad/s, a_y 1.4926 m/s^2, front slip angle -0.005943 rad, front slope F_yf/|alpha_f| = 232906 N/rad
+  mu 0.30, steer 0.01 rad: yaw rate 0.07455 rad/s, a_y 1.4909 m/s^2, front slip angle -0.015836 rad, front slope F_yf/|alpha_f| = 87311 N/rad
+  front slope ratio mu 0.3 / mu 0.8 = 0.3749 (mu ratio = 0.3750); yaw-rate ratio = 0.9989 (the yaw rate hardly changes because a_y = v*r is fixed by geometry)
+  -> mu SOFTENS the slope of the tire inside the 3DOF block (threshold 1 %); answer to T4: YES, the internal tire gets softer in proportion to mu, so it cannot meet Y4; the external Plant-like tire of T1/T2 must be used
+  large steer 0.1 rad: a_y mu 0.8 = 14.979, mu 0.3 = 13.748 m/s^2 (limit mu*g = 7.85, 2.94)
+
+N4 overall: PASS

@@ -1,0 +1,35 @@
+Q1  VDB tire (Combined Slip Wheel 2DOF, preset 205/60R15, ply steer and turn slip off, free rolling), one front wheel, Fz = 4549 N, Vx = 20 m/s
+    Vy_tire (m/s)   alpha=atan(Vy/Vx) (rad)   Fy (N)    Mz (N.m)   Fx (N)
+     -1.00           -0.0500                 +4199.6    -28.30     -77.4
+     -0.50           -0.0250                 +2532.9    -24.49     -77.4
+     +0.50           +0.0250                 -2532.9    +24.49     -77.4
+     +1.00           +0.0500                 -4199.6    +28.30     -77.4
+    odd symmetry of Fy (0 = perfect): 0.000; Fy and alpha have OPPOSITE sign; Mz and alpha have the SAME sign
+
+    Plant: alpha_f > 0 for a left steer and F_yf > 0 (left). Therefore the Plant alpha_f = -alpha_VDB, and Fy_VDB (tire frame) has the sign of F_yf.
+    Mz_VDB has the sign of alpha_VDB, so Mz_VDB < 0 when Fy > 0: the trail t = -Mz/Fy is positive. Check: t at small slip below.
+    trail t = -Mz/Fy at alpha = -0.025, +0.025 rad : 0.0097, 0.0097 m (Plant pneumatic trail t_0 = 0.025 m, caster e_c = 0.023 m)
+
+Q2  frame of Vx, Vy given to the tire (state: v=20 m/s, ydot=0.3 m/s, r=0.1 rad/s, delta_f=0.03 rad)
+    Plant alpha_f (PT(6))                              : +0.00950 rad
+    rotation by +delta, alpha = atan(Vy_w/Vx_w)        : -0.00950 rad  (= -alpha_f YES)
+    rotation by -delta, alpha = atan(Vy_w/Vx_w)        : +0.05050 rad  (= -alpha_f no)
+    VDB body definition atan(Vyv/Vxv) - delta          : -0.00950 rad
+    -> use the rotation by +delta (Vx_w = Vx cos(d) + Vy sin(d), Vy_w = -Vx sin(d) + Vy cos(d)); then alpha_VDB = -alpha_f(Plant).
+       The small residual against -alpha_f comes from atan versus the small-angle form of PT(6).
+
+Q3  body 3DOF, Cy = 0, velocity mode (v = 20 m/s, delta = 0), forces through FExt and MExt (vehicle frame), 0.5 s
+    Fy at CG only                            ydot(0.5 s) =  +0.3173 (Plant  +0.3179 m/s)   r =  -0.0003 (Plant  +0.0000 rad/s)
+    Mz only                                  ydot(0.5 s) =  -0.9572 (Plant  -0.9572 m/s)   r =  +0.1914 (Plant  +0.1914 rad/s)
+    Fy and Mz = a*Fy (a front-axle force)    ydot(0.5 s) =  -0.6393 (Plant  -0.6393 m/s)   r =  +0.1914 (Plant  +0.1914 rad/s)
+    Plant reference: PT(3) in the body frame ydot' = F/m - v*r (the same centripetal term as dx3/dt = F/(m*v) - x4), PT(4) Iz*dr/dt = l_f*Fyf - l_r*Fyr; a_y = ydot' + v*r then equals F/m (PT(15)) by construction.
+    Same sign and size => FExt (y axis, left) and MExt (z axis, counter-clockwise) match the Plant, the moment about the CG being added by us.
+
+Q4  T_r = (e_c*Fy - Mz)/n_st with the axle forces = 2 x one wheel (tire frame, small steer so cos(delta) = 1), e_c = 0.023 m, n_st = 16
+    Plant alpha_f +0.0250 rad (mu 0.8): F_yf  +3771.8 N, T_r +10.236 N.m | VDB: Fy_axle  +5065.7 N, Mz_axle    -49.0 N.m, T_r +10.343 N.m  (same sign: YES)
+    Plant alpha_f -0.0250 rad (mu 0.8): F_yf  -3771.8 N, T_r -10.236 N.m | VDB: Fy_axle  -5065.7 N, Mz_axle    +49.0 N.m, T_r -10.343 N.m  (same sign: YES)
+    A positive T_r must oppose a positive theta2 (Plant PT(2): dx2/dt = (T_a - T_r + T_s - ...)/J_col), i.e. the same sign as F_yf.
+
+Table to carry into Plant_VDB (to be confirmed by the results above):
+  alpha_f(Plant) = -atan(Vy_w/Vx_w);  Vx_w, Vy_w = front-axle velocity rotated by +delta_f;  Fy to the body = Fy_w (small delta) with the sign printed in Q1;
+  FExt = [Fx Fy 0], MExt = [0 0 Mz] in the vehicle frame, Mz = a*Fy_front - b*Fy_rear;  T_r = (e_c*Fy_axle - Mz_axle)/n_st.

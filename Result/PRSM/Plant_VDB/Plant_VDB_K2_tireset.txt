@@ -1,0 +1,35 @@
+K2 library tire selection check (2026-11-06 14:12)
+
+Order test (forward vs reverse order of presets and loads): worst relative difference 0.00e+00 -> PASS
+
+preset                             |  pkFy3167  pkFy4549  pkFy7000 | Fy.02 3167 Fy.02 4549 Fy.02 7000 | Mz.02 3167 Mz.02 4549 Mz.02 7000
+Light passenger car 205/60R15      |    3726.7    5316.0    8080.1 |   -1463.8   -2074.2   -3078.9 |     10.28     20.82     47.14
+Mid-size passenger car 235/45R18   |    3721.0    5287.5    7979.7 |   -1648.2   -2352.0   -3544.4 |     17.87     36.74     85.62
+Performance car 225/40R19          |    3544.4    5044.2    7632.8 |   -1621.7   -2311.1   -3471.6 |     21.86     44.69    102.93
+SUV 265/50R20                      |    3369.9    4780.3    7191.3 |   -1467.8   -2079.4   -3075.6 |     18.39     37.72     87.07
+Light truck 275/65R18              |    3726.7    5316.0    8080.1 |   -1463.8   -2074.2   -3078.9 |     10.28     20.82     47.14
+Commercial truck 295/75R22.5       |    2720.7    3876.0    5869.8 |    -438.7    -629.1    -964.2 |      3.35      6.75     15.29
+
+Pairs of presets with the SAME curves at all three loads (relative difference < 1e-9):
+  SAME: Light passenger car 205/60R15  ==  Light truck 275/65R18
+
+Pairs that differ (largest relative difference of the curves, for information):
+  Light passenger car 205/60R15      vs Mid-size passenger car 235/45R18   : 8.122e-02
+  Light passenger car 205/60R15      vs Performance car 225/40R19          : 1.182e-01
+  Light passenger car 205/60R15      vs SUV 265/50R20                      : 1.660e-01
+  Light passenger car 205/60R15      vs Light truck 275/65R18              : 0.000e+00
+  Light passenger car 205/60R15      vs Commercial truck 295/75R22.5       : 5.333e-01
+  Mid-size passenger car 235/45R18   vs Performance car 225/40R19          : 6.935e-02
+  Mid-size passenger car 235/45R18   vs SUV 265/50R20                      : 1.027e-01
+  Mid-size passenger car 235/45R18   vs Light truck 275/65R18              : 8.224e-02
+  Mid-size passenger car 235/45R18   vs Commercial truck 295/75R22.5       : 5.925e-01
+  Performance car 225/40R19          vs SUV 265/50R20                      : 8.369e-02
+  Performance car 225/40R19          vs Light truck 275/65R18              : 1.252e-01
+  Performance car 225/40R19          vs Commercial truck 295/75R22.5       : 6.003e-01
+  SUV 265/50R20                      vs Light truck 275/65R18              : 1.865e-01
+  SUV 265/50R20                      vs Commercial truck 295/75R22.5       : 5.533e-01
+  Light truck 275/65R18              vs Commercial truck 295/75R22.5       : 5.333e-01
+
+Negative control (External file, PDY1 x 1.1): Fy peak ratio 1.0953 (expected 1.10 +-0.005) -> PASS
+
+K2 overall (order test and negative control): PASS

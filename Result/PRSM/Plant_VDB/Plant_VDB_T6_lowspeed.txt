@@ -1,0 +1,16 @@
+N7 test T6: low-speed behaviour and lag of the VDB tire (2026-11-06 04:08)
+
+(a) step of alpha 0 -> -0.02 rad at 1 s
+speed(km/h)  F_final(N)  overshoot(%)  extrema after 5 ms  time to 63% (ms)  detector
+    20         3086.9      0.000        0                       2.0           PASS  (T6 criterion, 20 km/h)
+    60         3086.9      0.000        0                       2.0           PASS  (reference)
+   100         3086.9      0.000        0                       2.0           PASS  (reference)
+negative control (synthetic ringing response): overshoot 20.3 %, 7 extrema -> detector NOT PASS (expected NOT PASS)
+
+(b) sine alpha = -0.02 sin(2 pi 2 t): F_y against the quasi-static Plant force
+speed(km/h)  amplitude ratio  phase lag (deg)  lag as time (ms)
+    20         0.9997            1.146             1.59
+    60         0.9997            1.146             1.59
+   100         0.9997            1.146             1.59
+
+N7 T6 overall: PASS (20 km/h step criterion and the detector negative control; the lag numbers of (b) are only reported)

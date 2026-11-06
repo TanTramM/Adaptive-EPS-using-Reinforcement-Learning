@@ -1,0 +1,12 @@
+N1 check of vdb_tire_config.m and vdb_body_config.m (2026-11-06 15:30)
+
+front half axle: Fz = 4548.7 N, Ca = 80000 N/rad; Fy(alpha~0) = -8.00 N (0.220 % of peak 3639 N), max|Fx| over last 1 s = 0.1 N (0.00 % of Fz), peak/(0.8 Fz) = 1.0000 -> PASS
+  negative control (PDY1 = 1.2, front): peak/(0.8 Fz) = 1.2000 -> NOT PASS (expected NOT PASS)
+rear half axle: Fz = 3166.8 N, Ca = 80000 N/rad; Fy(alpha~0) = -8.00 N (0.316 % of peak 2533 N), max|Fx| over last 1 s = 0.1 N (0.00 % of Fz), peak/(0.8 Fz) = 1.0000 -> PASS
+  negative control (PDY1 = 1.2, rear): peak/(0.8 Fz) = 1.2000 -> NOT PASS (expected NOT PASS)
+
+body: 90 -> 45 km/h in 13 s, max |xdot - input| = 0.0001 km/h (limit 0.5) -> PASS; final xdot = 12.500 m/s (input 12.500)
+
+free-body and fixed-input checks (check_vdb_freebody.m, Plant_VDB_K1_freebody.txt): PASS
+
+N1 overall: PASS

@@ -1,0 +1,10 @@
+K8 body states, SLIP T_a level 0, aero tables = default, stop 69.39 s (2026-11-06 15:09)
+RAN to 69.39 s without a solver error
+  t=0.50: body integrator state [25 0.00209508 0.00295643 0.0244867]
+  t=30.00: body integrator state [25 -0.0541391 3.20852 0.083056]
+  t=60.00: body integrator state [25 -0.0242524 1.20339 -0.162582]
+  t=62.00: body integrator state [25 0.16044 0.878683 -0.16092]
+  t=64.00: body integrator state [25 1.44942 0.526798 -0.202937]
+  t=66.00: body integrator state [25 5.70235 0.00753833 -0.343999]
+  t=69.00: body integrator state [25 20.745 -2.05395 -1.27344]
+  last: t=69.39: [25 27.3164 -2.61843 -1.65857]   (ydot = element 2, r = element 4)

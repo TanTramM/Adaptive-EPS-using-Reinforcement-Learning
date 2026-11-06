@@ -1,0 +1,582 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH PLANT_VDB BẬC 3DOF: CÁC CHẶNG, CHECKPOINT VÀ YÊU CẦU TRƯỚC KHI CHẠY (FILE THEO DÕI)
+==============================================================================================================================================================================================
+Lập lại: thứ 5, 2026-11-05, 23:20, thay bản lập lúc 22:00. Báo cáo thầy: sáng thứ 7, 2026-11-07 (10:00 theo lịch thường lệ, sửa dòng này nếu giờ khác).
+Nhật ký chi tiết: Tracking/historychat_common.md (Lượt 252 trở đi). File này chỉ giữ kế hoạch, trạng thái và kết quả ngắn.
+
+Mục tiêu: dựng Plant_VDB từ Vehicle Dynamics Blockset (VDB, thư viện mô hình xe của MATLAB), bậc đầu là thân 3 bậc tự do (3DOF: dọc, ngang, quay đầu). Trước khi dựng phải biết rõ VDB giống và
+khác Plant ở đâu. Các bộ điều khiển chạy trên plant này mang hậu tố _VDB (Map_VDB, PID_VDB, MapPID_VDB).
+Phạm vi đã chốt: làm 3DOF trước. 14DOF (thêm lắc, nhún, chuyển tải, tham số hệ treo không có nguồn) để ngoài phạm vi; chỉ mở lại nếu thầy yêu cầu.
+
+Bậc 3DOF kiểm được gì và không kiểm được gì (phải nói rõ với thầy):
+  - Kiểm được: lỗi cài đặt của Plant; lốp của ta so với Magic Formula đầy đủ; T_r theo e_p0 tự chọn so với M_z của các bộ lốp có sẵn; bộ điều khiển có chịu được khác biệt của lốp và T_r không.
+  - Không kiểm được: ảnh hưởng của chuyển tải và lắc ngang, vì thân 3DOF Single Track cùng giả thiết với Plant. Cũng không phải so với xe thật; muốn nói về độ đúng thực tế phải đối chiếu thêm
+    số đo đã công bố.
+
+Ký hiệu trạng thái: [ ] chưa làm, [~] đang làm, [x] xong, [!] vướng, [-] bỏ có lý do.
+Cách cập nhật: xong một việc thì đổi trạng thái, ghi kết quả một dòng và đường dẫn bằng chứng ngay tại việc đó, thêm một dòng vào mục 9. Một chặng chỉ bắt đầu khi đủ yêu cầu trước khi chạy
+của chặng đó. Ngưỡng ở mục 2 được phép sửa sau khi đã thấy kết quả (người dùng chốt 2026-11-06: quy tắc "không đổi sau khi thấy kết quả" chỉ đúng khi chọn bộ điều khiển, việc đó đã xong); mỗi
+lần sửa ghi số cũ, số mới, lý do và thời điểm ở mục 9.
+
+==============================================================================================================================================================================================
+1. BẢNG CHECKPOINT
+==============================================================================================================================================================================================
+Giả định: thứ 6 làm được cả ngày và phiên làm việc được mở (tôi chỉ chạy khi phiên đang mở). Mức: P = phải có trước buổi báo cáo, N = nên có, S = sau buổi báo cáo.
+
+Mốc | Hạn       | Chặng                                                | Mức | TT  | Kết quả, bằng chứng
+----+-----------+------------------------------------------------------+-----+-----+------------------------------
+C0  | T6 09:00  | Chuẩn bị: yêu cầu trước khi chạy, mốc chuẩn Plant    | P   | [~] | R1-R8 xong, còn R9-R12
+C1  | T6 12:00  | Lốp: T1 khớp PT(10), T2 đổi mu                       | P   | [ ] |
+C2  | T6 15:00  | Thân 3DOF: T4 xác nhận, T5 giữ v với lực ngoài       | P   | [ ] |
+C3  | T6 17:00  | Mô-men phản hồi: T3 M_z so với e_p                   | P   | [ ] |
+C4  | T6 20:00  | Ghép bậc S1 trong scratch, so với Plant; cổng G1     | P   | [ ] |
+C5  | T6 22:00  | T6 tốc độ thấp và độ trễ lốp, T7 thời gian chạy      | N   | [ ] |
+C6  | T7 08:30  | Ma trận đối chiếu bản đủ, gói báo cáo, câu hỏi       | P   | [ ] |
+C7  | sau T7    | Dựng chính thức Plant_VDB và test_plant_vdb          | S   | [ ] |
+C8  | sau T7    | So vòng hở S2, S3 với Plant; cổng G2, đóng băng      | S   | [ ] |
+C9  | sau T7    | Dữ liệu riêng của plant mới                          | S   | [ ] |
+C10 | sau T7    | Vòng kín Map_VDB, PID_VDB, MapPID_VDB                | S   | [ ] |
+C11 | sau T7    | Viết kết quả vào luận văn                            | S   | [ ] |
+
+Quy tắc cắt khi trễ:
+  - Đến T6 18:00 mà C1 chưa xong: bỏ C3 và C5, tập trung vào C1, C2 và ma trận đối chiếu.
+  - Đến T6 22:00 việc nào chưa xong thì ghi [-] và đưa vào kế hoạch tuần sau, không làm đêm.
+  - Đến T7 07:00 dừng mọi mô phỏng, chỉ dùng kết quả đã có để làm báo cáo.
+  - Không tạo Plant_VDB.mdl chính thức trước buổi báo cáo; bậc S1 chỉ là script thử trong Model/PRSM_VDB/Plant_VDB/script/, chưa lưu thành Plant_VDB.mdl.
+Nếu một yêu cầu sống còn không đạt thì vẫn là kết quả báo cáo được, kèm phương án thay thế ở mục 4.
+
+==============================================================================================================================================================================================
+2. ĐẶC TẢ VÀ NGƯỠNG (CHỐT TRƯỚC KHI CHẠY)
+==============================================================================================================================================================================================
+Trạng thái: [x] người dùng cho dùng tạm các số này ngày 2026-11-06, lệch thì sửa sau. Ngưỡng ghi [ĐỀ XUẤT] do người viết kế hoạch đặt, không có nguồn. Cách đo mặc định: sai lệch = RMS của hiệu
+hai tín hiệu chia cho trị tuyệt đối lớn nhất
+của tín hiệu Plant.
+
+Yêu cầu của Plant_VDB:
+  Y1 Giao diện: vào theta1, T_a, v, mu; ra T_s, a_y, gamma, theta2_dot, cổng tìm theo tên, trùng khối Plant trong build_closed_loop.m.
+  Y2 v theo đúng đầu vào của ca thử, gồm đổi tốc 90 -> 45 km/h trong 13 s của ca SLIP. [SỐNG CÒN]
+  Y3 mu đổi tức thời giữa lúc chạy, xuống tới 0.2, tới mức lốp trước trượt hẳn như ca SLIP. [SỐNG CÒN]
+  Y4 Độ cứng lốp không đổi khi mu đổi, đúng ý nghĩa PT(9). [SỐNG CÒN để so công bằng với Plant]
+  Y5 Có F_y, góc trượt, M_z bánh trước để tạo T_r. Góc trượt phải tự tính vì bus Info của 3DOF không có.
+  Y6 Dải: 20-100 km/h, mu 0.2-0.8, a_y tới 0.38 g (ca STEADY), vô-lăng 130 độ trở lên, sin góc lái tới 2 Hz.
+  Y7 Chạy với MaxStep 2 ms, không có vòng đại số, thời gian chạy dùng được.
+
+Ngưỡng các phép thử:
+  T1 F_y lệch <= 1 % đỉnh tại mọi góc trượt, ở mu 0.8, 0.5, 0.33, 0.24, 0.2. [ĐỀ XUẤT]
+  T2 Đỉnh F_y lệch <= 1 % so với mu*F_z; độ dốc tại góc trượt 0 lệch <= 1 % so với C_alpha ở mọi mu; bậc mu có tác dụng ngay. [ĐỀ XUẤT]
+  T3 Chỉ báo cáo. Dấu phải đúng: -M_z/F_y dương ở góc trượt nhỏ và T_r chống góc lái.
+  T4 Trả lời có hoặc không: mu có làm giảm độ dốc F_y của lốp bên trong 3DOF không, kèm số đo.
+  T5 gamma, a_y lệch <= 1 % so với Bike2DOF với cùng lực; v lệch <= 0.5 km/h khi giữ tốc, <= 1 km/h khi đổi tốc. [ĐỀ XUẤT]
+  T6 Không dao động giả ở 20 km/h; đo và ghi độ trễ pha của F_y ở sin 2 Hz.
+  T7 Ghi thời gian chạy; dưới 10 phút cho một ca 100 s coi là dùng được. [ĐỀ XUẤT]
+  S1 a_y, gamma, F_yf, T_r, T_s lệch <= 1 % so với Plant; vượt là có lỗi cần tìm. [ĐỀ XUẤT]
+Ngưỡng so S2, S3 với Plant (C8): a_y, gamma, T_r lệch <= 10 %, T_s lệch <= 0.44 N.m. Nguồn: bài steer-by-wire 2022 trong References/; đó là hệ khác EPS, số 0.44 N.m bài đó trích từ tài liệu
+khác, phải kiểm nguồn gốc trước khi đưa vào luận văn. Ngưỡng này chỉ để so, vì S3 cố ý dùng lốp khác.
+Ngưỡng vòng kín (C10): thứ bậc theo J = R x S giữ hay đổi, chênh dưới 5 % coi là hòa (QuyChuan.txt); không dao động tự duy trì.
+
+==============================================================================================================================================================================================
+3. CÁC CHẶNG TRƯỚC BUỔI BÁO CÁO
+==============================================================================================================================================================================================
+Chung: script đặt trong Model/PRSM_VDB/Plant_VDB/script/, không có bộ điều khiển, cảm biến lý tưởng, không sửa Plant.mdl, params.json hay model nào đang có. Sau cổng G1 mới dựng
+Plant_VDB.mdl chính thức; script thử nào cần giữ làm bằng chứng thì chạy lại từ thư mục này, kết quả vào Result/PRSM/Plant_VDB/ qua result_dir('Plant_VDB').
+
+----- C0. CHUẨN BỊ, trạng thái [~]-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy (mỗi mục phải có câu trả lời ghi lại):
+  [x] R1 Ngưỡng mục 2: người dùng cho dùng tạm ngày 2026-11-06, lệch thì sửa sau và ghi ở mục 9.
+  [x] R2 Phần mềm: MATLAB R2023a; thư viện vehdynlibtire, vehdynlibeom nạp được, license VDB checkout được (đã thấy OK ngày 2026-11-05, kiểm lại trong script).
+  [x] R3 Chạy thử khói: một mạch nhỏ có Combined Slip Wheel 2DOF và 3DOF chạy 1 s không lỗi; nếu đòi trình biên dịch thì xử lý ngay ở đây.
+  [x] R4 Ổ đĩa: TEMP và TMP của phiên MATLAB đặt sang ổ D (hiện TEMP ở C, C còn 101 GB, D còn 657 GB); mỗi lần chạy gọi Simulink.sdi.clear.
+  [x] R5 Repo: ghi lại mã commit làm mốc; test_cum1, test_cum2, test_cum3, test_plant đều PASS trên Plant hiện tại. Không PASS thì dừng, vì không có mốc để so.
+  [x] R6 Tham số đọc từ params.json, không gõ tay. Lập bảng quy đổi: m, a = l_f, b = l_r, Izz, F_zf = 9097 N, F_zr = 6334 N (tính từ m, g, l_f, l_r; kiểm lại trong script).
+  [x] R7 Giới hạn của khối lốp trên R2023a. Tài liệu R2026b ghi FZMAX 8600 N nhưng R2023a đo được FZMAX = 28000 N (xem kết quả C0), nên lốp gộp cả cầu trước (9097 N) không bị chặn. Đề xuất:
+  mô hình nửa cầu rồi nhân
+  đôi lực (F_z = 4549 N, C_alpha = 80000 N/rad). Kiểm cả FZMIN, ALPMAX, VXLOW.
+  [x] R8 Bảng dấu và hệ trục, thử bằng số chứ không suy luận: alpha VDB = atan((ydot + a*r)/xdot) - delta, ngược dấu alpha Plant; F_y, M_z của khối lốp; Vx, Vy của lốp ở hệ trục lốp, phải xoay
+  theo delta_f; FwF, FwR, FExt ở hệ trục nào.
+  [ ] R9 Điều kiện đầu: omegao khớp v/bán kính lăn, xdot_o, ydot_o, r_o; Cd = 0, Cl = 0, gió tắt; trượt dọc gần 0 với AxlTrq = 0, BrkPrs = 0.
+  [ ] R10 Cấu hình khối lốp: chế độ tải đứng lấy F_z từ ngoài (vertType), ply steer và turn slip tắt, kích thước ScaleFctrs đúng 27 x số bánh ở R2023a.
+  [ ] R11 Đầu vào so sánh: các ca từ make_cases('SSW') và CALIB v2 (không tự tạo ca mới để so), thêm bậc và sin góc lái riêng. Cùng solver và MaxStep 2 ms như build_closed_loop.m.
+  [ ] R12 Mốc chuẩn Plant: lưu tín hiệu Plant vòng hở với cùng đầu vào, hai mức T_a (0 và một bậc 2 N.m để có cả kênh T_a), gồm T_s, a_y, gamma, theta2_dot, F_yf, F_yr, T_r, e_p, alpha_f. Lưu
+  ở Result/PRSM/Plant_VDB/baseline/.
+Đạt khi: R1-R12 đều có câu trả lời, mốc chuẩn đã lưu. Nếu R5 hỏng hoặc R3 lỗi không xử lý được: dừng, báo người dùng.
+Kết quả C0, 2026-11-05 khoảng 23:50 (script Model/PRSM_VDB/Plant_VDB/script/check_vdb_setup.m, report Result/PRSM/Plant_VDB/Plant_VDB_c0_report.txt; model demo VDBDemo.slx dựng bằng
+build_vdb_demo.m, chạy bằng
+run_vdb_demo.m, report Plant_VDB_demo_report.txt, hình Plant_VDB_demo_bodyA.png, Plant_VDB_demo_tireB.png, cùng thư mục Result):
+  R2: license Vehicle_Dynamics_Blockset, Simscape, Simulink, Virtual_Reality_Toolbox đều OK; MATLAB R2023a; hai thư viện nạp được.
+  R3: model demo dựng bằng script và chạy được cả hai chuỗi (3DOF Single Track velocity mode; Combined Slip Wheel 2DOF một bánh); không đòi trình biên dịch. Chuỗi 3DOF chạy 10 s mất 30 s thực
+  (gồm khởi tạo), chưa phải số cho T7.
+  R4: TEMP, TMP và Simulink cache đặt sang D:\sim_tmp trong script; chỉ có hiệu lực trong phiên MATLAB đó, mọi script chạy phải tự đặt lại.
+  R5: test_cum1, test_cum2, test_cum3, test_plant đều PASS; git HEAD 0334a3d.
+  R6: m 1573 kg, l_f 1.1 m, l_r 1.58 m, Izz 2873, F_zf 9097.5 N, F_zr 6333.7 N, một bánh trước 4548.7 N; C_alpha_f = C_r = 160000 N/rad cả cầu; e_p0 0.048 = t_0 0.025 + e_c 0.023 m.
+  R7: FZMAX 28000 N (không phải 8600), FZMIN 100, ALPMAX 1.5 rad, VXLOW 1 m/s; preset 205/60R15 có FNOMIN 14000 N, PKY1 -15.57, PDY1 0.878, PCY1 1.343, plySteer và turnslip đang bật. 3DOF:
+  Fznom 5000 N, Fytire_sat 7e4 N, Cy mặc định 12e3 và 11e3.
+  Hai phát hiện từ demo cần ghi:
+  (1) Khối 3DOF nhân độ cứng với Fz/Fznom: nạp Cy_f = Cy_r = 160000 thì r xác lập = 0.1499 rad/s, không khớp công thức xe hai bánh với Cy là độ cứng cầu (0.1182) hay bánh (0.1319); khớp với
+  độ cứng hiệu dụng Cy*Fz/Fznom (cầu trước 291000, sau 203000 N/rad, gần trung tính, công thức cho 0.1493). Fznom là một số chung cho hai cầu nên muốn đúng 160000 N/rad mỗi cầu phải nạp Cy =
+  C_alpha*Fznom/Fz của từng cầu. Với cách T5A (Cy = 0, lực lốp ngoài) thì không ảnh hưởng.
+  (2) Lốp preset 205/60R15 với tải 4549 N: đỉnh F_y = 5459 N (mu đỉnh 1.2, không phải 1) và độ dốc tại 0 là 108000 N/rad một bánh (216000 cả cầu, khác 160000 của Plant). Khi LMUY giảm 1, 0.5,
+  0.3 thì đỉnh F_y giảm gần tỉ lệ (5459, 2787, 1710 N) còn độ dốc tại 0 chỉ đổi nhẹ (108082, 106061, 101414 N/rad), tức mu có vẻ không làm mềm lốp nhiều như Y4 cần nhưng chưa đạt ngưỡng 1 %
+  của T2. Fy tại góc trượt 0 còn khoảng +800 N: do plySteer đang bật (R10). Dấu: góc trượt alpha = atan(Vy/Vx) dương cho F_y âm và M_z dương ở góc nhỏ, ngược dấu Plant, R8 phải xử lý.
+  Kết quả R8, 2026-11-06 (script Model/PRSM_VDB/Plant_VDB/script/check_vdb_signs.m, báo cáo Result/PRSM/Plant_VDB/Plant_VDB_R8_signs.txt; cả bốn câu đã có bằng số):
+  Q1 Dấu của lốp VDB (một bánh trước, 4549 N, Vx 20 m/s, ply steer và turn slip tắt): alpha = atan(Vy/Vx) dương cho Fy ÂM và Mz DƯƠNG, đối xứng lẻ hoàn toàn; vệt khí nén -Mz/Fy = 0.0097 m
+     dương (Plant t_0 = 0.025 m). Vậy alpha_f của Plant = -alpha_VDB, còn Fy của VDB (hệ bánh) cùng dấu F_yf của Plant (Fy dương = sang trái).
+  Q2 Hệ trục: vận tốc trục trước (v, ydot + a*r) phải xoay đi +delta_f để vào lốp (Vx_w = Vx cos d + Vy sin d, Vy_w = -Vx sin d + Vy cos d); khi đó alpha = atan(Vy_w/Vx_w) = -0.00950 rad, đúng
+     -alpha_f của Plant (+0.00950 rad). Xoay ngược chiều (-delta) cho +0.0505 rad, sai. Định nghĩa trong tài liệu khối 3DOF, atan(Vyv/Vxv) - delta, cho cùng -0.00950 rad.
+  Q3 Lực vào thân: FExt = [Fx Fy Fz] và MExt = [Mx My Mz] ở hệ trục xe (y sang trái, z ngược chiều kim đồng hồ). Với Cy = 0, velocity mode, 0.5 s: ca chỉ Fy 1000 N cho ydot 0.3173 m/s (Plant
+     0.3179, lệch 0.2 %); ca chỉ Mz = 1100 N.m cho r 0.1914 rad/s và ydot -0.9572 m/s, trùng Plant đến 4 chữ số; ca Fy cùng Mz = a*Fy cho r 0.1914 và ydot -0.6393, trùng Plant. Mô-men quanh
+     trọng tâm phải do ta cộng: Mz = a*Fy_trước - b*Fy_sau. Số hạng -v*r trong ydot là cùng số hạng -x4 của PT(3).
+  Q4 T_r = (e_c*Fy - Mz)/n_st dựng từ lốp VDB (hai bánh, mỗi bánh nửa tải) cùng dấu Plant ở cả hai chiều lái: Plant +10.24 N.m, VDB +10.34 N.m tại alpha_f = 0.025 rad. Độ lớn gần nhau là ngẫu
+     nhiên (lốp preset có Fy 34 % lớn hơn và vệt ngắn hơn bù trừ nhau), không kết luận gì về T_r; việc đó là T1 và T3.
+  Phụ: lốp VDB quay tự do còn Fx = -77 N mỗi bánh (cản lăn); không ảnh hưởng cách A vì lực dọc của lốp không đưa vào thân. Phép đo a_y bằng đạo hàm số của ydot nhiễu (lệch tới 11 % dù ydot và
+  r khớp), đã bỏ khỏi báo cáo, a_y lấy bằng F/m.
+  Lỗi script đã sửa trong lúc làm: use_sim_tmp.m báo "TEMP là thư mục con của CacheFolder", đã đặt cache và codegen vào thư mục con riêng (D:\sim_tmp\cache, \codegen).
+  Còn lại: R9, R10, R11, R12 (mốc chuẩn Plant). R1 xong ngày 2026-11-06, R8 xong ngày 2026-11-06.
+
+----- C1. LỐP, trạng thái [ ] --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: C0 đạt; R7, R8, R10 đã có câu trả lời. Bảng hệ số khớp: PCY1 = C = 1.3, PDY1 = 1, PEY1 = E = -1, FNOMIN = tải một lốp, PKY1 và PKY2 sao cho độ dốc = C_alpha tại tải
+đó, các hệ số dịch và phụ thuộc tải = 0, LMUY = mu, các hệ số tỉ lệ còn lại = 1, LMUV = 0.
+  [ ] T1 Khớp PT(10): quét góc trượt với F_z, Vx cố định, so F_y với công thức. Kết quả:
+  [ ] T2 Đổi mu: LMUY ở 0.8, 0.5, 0.33, 0.24, 0.2; đo đỉnh và độ dốc; rồi bậc mu giữa lúc chạy. Kết quả:
+  Hình cho báo cáo: Plant_VDB_tire_fy.png (F_y theo góc trượt, hai mô hình, các mức mu).
+
+----- C2. THÂN 3DOF, trạng thái [ ] ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: C0 đạt; biết hệ trục của FwF, FExt (R8); có tín hiệu lực Plant từ mốc chuẩn để làm đầu vào.
+  [~] T4 (đã có bằng chứng gián tiếp ở kết quả C0, còn thử mu trực tiếp) Xác nhận ngắn: chế độ áp vận tốc, bật Mu, đo độ dốc F_y tại hai mức mu. Tài liệu R2026b ghi Fy = -Cy*alpha*mu*Fz/Fznom
+  nên kỳ vọng độ dốc giảm theo mu; kết quả chỉ xác nhận trên
+  R2023a. Kết quả:
+  [ ] T5A Cách A: velocity mode với xdotin, Cy = 0, lực lốp qua FExt và MExt. Kiểm khối có nhận Cy = 0 không, và cộng lực vào thân đúng dấu không. Kết quả:
+  [ ] T5B Cách B: External forces, FwF, FwR = [Fx Fy], Fx tổng = m*(dv/dt - ydot*r). Đo sai lệch v, xem có cần thêm vòng bù nhỏ không. Kết quả:
+  Cả hai cách suy từ phương trình trên tài liệu, chưa thử. Chọn cách gọn hơn trong hai cách đạt T5, ưu tiên cách A vì v áp thẳng như Plant.
+
+----- C3. MÔ-MEN PHẢN HỒI, trạng thái [ ] -------------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: T1, T2 đạt hoặc đã ghi rõ phần lệch; dấu M_z đã kiểm (R8); bảng e_p theo góc trượt và mu từ PT(13) đã tính.
+  [ ] T3 Tính -M_z/F_y theo góc trượt, mu, cho sáu bộ lốp có sẵn (205/60R15, 235/45R18, 225/40R19, 265/50R20, 275/65R18, 295/75R22.5), so với e_p của PT(13); tách caster e_c: T_r,VDB = (e_c*F_yf
+  - M_z,f)/n_st. Kết quả:
+  Lưu ý khi đọc: Plant hiện tại tách e_p0 = t_0 + e_c: chỉ vệt khí nén t_0 = 0.025 m co theo góc trượt và mu, caster e_c = 0.023 m không đổi (params.json).
+  Documents/Notes/PRSM/HeThongPlant_TongHop.txt còn bản cũ co toàn bộ e_p về 0, đừng dùng bản đó để so. Ưu tiên báo cáo bộ gần xe mô phỏng nhất; nguồn gốc số liệu các bộ lốp chưa
+  kiểm nên chỉ là đối chứng.
+  Hình cho báo cáo: Plant_VDB_tire_trail.png.
+
+----- C4. GHÉP S1 VÀ CỔNG G1, trạng thái [ ] ----------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: T5 có ít nhất một cách đạt; mốc chuẩn R12 đã lưu; cột lái lấy từ SteeringColumn của Plant, lốp và T_r là code độc lập theo PT(5)-(14) hoặc dùng lại khối Tires, ghi rõ
+dùng cách nào.
+  [ ] S1 Thân VDB + lốp và T_r của ta + cột lái của ta (Model/PRSM_VDB/Plant_VDB/script/). Bậc này gần như cùng phương trình với Plant nên nó kiểm cách ghép và tìm lỗi. So với Plant theo mục
+  2. Kết quả:
+  [ ] G1 Kết luận cổng theo mục 4. Kết quả:
+
+----- C5. TỐC ĐỘ THẤP VÀ THỜI GIAN CHẠY, trạng thái [ ] -----------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: C1 đạt.
+  [ ] T6 Lốp VDB ở 20 km/h (5.6 m/s, tài liệu ghi VXLOW mặc định 1 m/s); sin 2 Hz đo độ trễ pha; thử tắt độ trễ lốp nếu có cách (khả năng qua LATERAL_STIFFNESS, chưa kiểm). Thân 3DOF ở cách
+  A, B không dùng sigma của 3DOF vì Cy = 0 hoặc lực ngoài. Kết quả:
+  [ ] T7 Thời gian một ca 100 s với lốp VDB, MaxStep 2 ms. Kết quả:
+
+----- C6. BÁO CÁO SÁNG THỨ 7, trạng thái [ ] ----------------------------------------------------------------------------------------------------------------------------------------------------
+Yêu cầu trước khi chạy: định dạng đã chốt (mục 8, câu 4); chỉ dùng kết quả đã có.
+  1. Việc thầy yêu cầu và cách hiểu: kiểm chứng model, không có xe thật, không có HIL, không có CarSim; VDB là so giữa hai mô hình.
+  2. Ma trận giống và khác giữa Plant và VDB (mục 5), kèm phần 3DOF không kiểm được.
+  3. Kết quả T1, T2, T5, S1 và T3 kèm hình; T3 cho biết về e_p0, tham số đang tự chọn.
+  4. Kết luận G1 và kế hoạch tuần sau (C7-C9).
+  5. Câu hỏi cho thầy:
+     - 3DOF kiểm được lốp và T_r. Thầy có cần thêm ảnh hưởng chuyển tải và lắc ngang (14DOF hoặc Dual Track, tham số hệ treo là giả định) không?
+     - So với VDB có được chấp nhận là bước kiểm chứng chính không, hay cần thêm phần đối chiếu số đo đã công bố?
+     - Ngưỡng 10 % (a_y, gamma, T_r) và 0.44 N.m (T_s) có dùng được không?
+     - Nếu Plant lệch quá ngưỡng: báo cáo trung thực là đủ, hay phải sửa Plant và chạy lại? Việc này ảnh hưởng số trong bài báo đã nộp.
+     - RL còn bắt buộc trong luận văn không? Hiện chưa có Model/Controllers/RL.
+     - Có đường nào lấy license CarSim hoặc CarMaker hợp pháp qua team HIL hay trường không?
+
+==============================================================================================================================================================================================
+4. CỔNG G1 VÀ PHƯƠNG ÁN THAY THẾ
+==============================================================================================================================================================================================
+Đi tiếp C7 khi: T1, T2 đạt (hoặc phần lệch đã ghi rõ và người dùng chấp nhận), T5 có một cách đạt, S1 đạt.
+
+Nếu thấy                                         | Thì
+-------------------------------------------------+-----------------------------------------------------------------------------------------------------
+Lốp VDB không đổi được mu giữa lúc chạy          | Dùng lốp của ta làm lốp chính, VDB chỉ còn thân; báo thầy vì giá trị giảm nhiều
+Độ cứng lốp VDB giảm theo mu                     | Ghi là KHÁC, định lượng, tính thử bù PKY theo mu; không chặn nếu báo cáo rõ
+Magic Formula không ép được về PT(10)            | Không chặn: đây là plant mới, ghi là KHÁC và so đường cong
+Cả hai cách T5 đều không giữ được v              | Thêm vòng bù vận tốc hoặc chỉnh ca cho plant mới; báo sai lệch v trong mọi kết quả
+M_z không dùng được                              | T_r dùng PT(13)-(14) với alpha_f tự tính từ tín hiệu VDB
+S1 lệch quá 1 %                                  | Đi tìm lỗi trước; không làm tiếp S2, S3 khi chưa giải thích được phần lệch
+Chạy quá chậm                                    | Giảm số lần chạy ở C10, báo trước khi chạy
+
+==============================================================================================================================================================================================
+5. MA TRẬN ĐỐI CHIẾU (ĐIỀN DẦN)
+==============================================================================================================================================================================================
+Phân loại: GIỐNG, CHỈNH ĐƯỢC (đặt tham số thì về cùng dạng), KHÁC, THIẾU (phải tự dựng), CHƯA RÕ. Hiện trạng 2026-11-05 từ thư viện R2023a và tài liệu web R2026b; bản chính thức sẽ ở
+Documents/Notes/PRSM/DoiChieu_Plant_VDB.txt.
+
+Thành phần Plant                       | Khối hoặc tham số VDB                                       | Loại hiện tại        | Bằng chứng, việc cần
+---------------------------------------+-------------------------------------------------------------+----------------------+----------------------
+PT(1)-(2) cột lái, T_s, T_a, ma sát    | Không dùng khối VDB                                         | THIẾU: giữ của ta    | Danh sách cổng
+PT(3)-(4), (15) thân xe                | 3DOF: ÿ = -xdot*r + ΣFy/m, r' = (a*Fyf - b*Fyr + Mz)/Izz    | GIỐNG khi v không đổi| Tài liệu; cần T5
+PT(5) delta_f = x1/n_st                | Tự chia                                                     | GIỐNG                | Tự dựng
+PT(6)-(7) góc trượt góc nhỏ            | Dùng atan, xoay Vx, Vy theo delta                           | KHÁC nhỏ             | Tài liệu; cần T1, S2
+PT(8) tải cầu cố định                  | Ta cấp F_z từ ngoài                                         | CHỈNH ĐƯỢC           | Cần R10
+PT(9)-(12) Magic Formula               | PCY1, PDY1, PEY1, PKY1...                                   | CHƯA RÕ              | Cần T1
+PT(9) độ cứng không đổi theo mu        | Lốp: LMUY; lốp trong 3DOF: mu nhân vào lực                  | Lốp CHƯA RÕ, 3DOF KHÁC| Cần T2, T4
+PT(13)-(14) e_p, T_r                   | Không có khối T_r; có M_z ở khối lốp, trong 3DOF không có   | THIẾU: tự ghép       | Cần T3
+v áp từ ngoài                          | xdotin ở velocity mode; External forces tính v từ lực       | Cần cách A hoặc B    | Tài liệu; cần T5
+mu đổi khi chạy                        | Lốp: ScaleFctrs hàng 3 (LMUY)                               | CHƯA RÕ              | Cần T2
+Không có độ trễ lốp                    | Khối Fy Relaxation trong lốp; sigma của 3DOF không dùng     | CHƯA RÕ              | Cần T6
+Không có chuyển tải, lắc, hệ treo      | 3DOF Single Track cũng không có chuyển tải ngang            | GIỐNG                | Tài liệu; đây là giới hạn
+
+==============================================================================================================================================================================================
+6. CÁC CHẶNG SAU BUỔI BÁO CÁO
+==============================================================================================================================================================================================
+Ước lượng thô, chỉ chốt sau khi có T7 và ý kiến thầy.
+
+C7. Dựng chính thức (2-3 ngày). Yêu cầu trước khi chạy: G1 đạt, thầy đã xem ma trận, quyết định 1 ở mục 8 đã chốt, quy tắc đặt tên trong CLAUDE.md đã thêm ngoại lệ _VDB.
+  [ ] build_plant_vdb.m sinh Plant_VDB.mdl theo quy tắc dựng model Simulink; không sửa Plant.mdl.
+  [ ] test_plant_vdb.m tự tính đáp án, cổng tìm theo tên, kiểm: chạy được khi đầu vào bằng 0, không có vòng đại số; theta1 = 0 thì đầu ra bằng 0; đối xứng trái phải; cua đều a_y = v*gamma,
+  a_y không vượt mu*g; cân bằng mô-men ở cột lái khớp T_r tính tay; dấu T_r chống góc lái.
+C8. So vòng hở (1-2 ngày). Yêu cầu trước khi chạy: test_plant_vdb PASS, mốc chuẩn Plant còn đúng commit, tham số lốp đã ghi nguồn.
+  [ ] S2 Lốp VDB đã khớp tham số, T_r theo PT(13)-(14): thấy ảnh hưởng của cách cài lốp và góc xoay.
+  [ ] S3 Lốp VDB có sẵn, T_r từ M_z: đối chứng độc lập với e_p0, t_0.
+  [ ] Đầu vào: giữ cua, bậc góc lái, sin tới 2 Hz (phần đáp ứng tần số phải tự viết, ví dụ của MathWorks không có), bậc mu, góc lái tăng chậm và tính steering gain theo ví dụ SAE J266 (đọc
+  bản gốc trước khi trích dẫn).
+  [ ] G2 Chọn cấu hình chính thức, chọn nguồn T_r, đóng băng plant. Sau cổng này không sửa plant.
+C9. Dữ liệu riêng (1 ngày). Yêu cầu trước khi chạy: G2 xong, quyết định 2 ở mục 8 đã chốt.
+  [ ] Sinh plant_limits và T_a,max từ Plant_VDB nếu chọn dùng riêng.
+C10. Vòng kín (2-3 ngày). Yêu cầu trước khi chạy: C9 xong, quyết định 3 ở mục 8 đã chốt, kiểm result_dir.m, build_closed_loop.m (đang đọc cứng Plant.mdl), run_cases.m với tên có _VDB, TEMP sang D.
+  [ ] Chạy thử một bộ, một ca, cảm biến lý tưởng trước.
+  [ ] Map_VDB, PID_VDB, MapPID_VDB trên STEADY, SLIP, WEAVE, seed 99995-99999; so R, S, J, e_rel, ổn định với kết quả trên Plant.
+C11. Viết (2-3 ngày): phương pháp, bảng tham số, sai lệch từng bậc, vòng kín, giới hạn. Kết luận ghi đúng là so với mô hình khác, không phải xe thật. Cảnh 3D để sau cùng nếu thầy cần: cần
+Simulink 3D Animation, tài liệu khuyến nghị 32 GB RAM (RAM máy chưa kiểm), chỉ phát lại từ dữ liệu đã lưu.
+
+Rủi ro: T_r lệch nhiều thì phải xem lại e_p0, t_0 và số trong bài đã nộp có thể không còn khớp, báo thầy trước khi đổi; nguồn gốc các bộ lốp có sẵn chưa kiểm; mô phỏng dài có thể đầy ổ hoặc
+lỗi heap khi thoát MATLAB; tài liệu đang đọc là R2026b, mọi kết luận phải thử trên R2023a.
+
+==============================================================================================================================================================================================
+7. ĐẶT TÊN (ÁP DỤNG TỪ C7)
+==============================================================================================================================================================================================
+Plant: Model/PRSM_VDB/Plant_VDB/Plant_VDB.mdl, load_plant_vdb.m, script/build_plant_vdb.m, script/test_plant_vdb.m
+Tham số: Model/data/params_vdb.json, chỉ chứa tham số mới; m, l_f... vẫn đọc từ params.json
+Vòng kín: Model_Map_VDB.mdl, Model_PID_VDB.mdl, Model_MapPID_VDB.mdl
+Kết quả: Result/PRSM/Plant_VDB/, Result/Controllers/Map_VDB/, Result/Compare/Map_VDB_vs_PID_VDB/, ví dụ Map_VDB_SLIP_resp_s99999.png
+
+==============================================================================================================================================================================================
+8. QUYẾT ĐỊNH CHỜ CHỐT
+==============================================================================================================================================================================================
+Chỉ câu 4 cần chốt trước buổi báo cáo (ngưỡng mục 2 đã dùng tạm); các câu còn lại chốt sau khi có kết quả và ý kiến thầy.
+  1. T_r lấy từ đâu. Đề xuất: chạy cả PT(13)-(14) lẫn M_z cộng caster ở C8, chọn cách chính thức ở G2. Trạng thái: [ ]
+  2. Có dùng plant_limits và T_a,max riêng không. Đề xuất: có, vì giới hạn tính từ chính plant; khi so với kết quả cũ phải ghi rõ yếu tố này. Trạng thái: [ ]
+  3. Tham số bộ điều khiển _VDB. Đề xuất: giữ nguyên trước; chỉnh lại là lần chạy riêng, có kế hoạch và dải seed mới. Trạng thái: [ ]
+  4. Định dạng báo cáo thứ 7 (slide hay trang văn bản, tiếng Việt hay tiếng Anh). Chốt trước T6 22:00. Trạng thái: [ ]
+
+==============================================================================================================================================================================================
+9. NHẬT KÝ CẬP NHẬT
+==============================================================================================================================================================================================
+2026-11-05 22:xx  Tạo file (bản có 7DOF và 14DOF).
+2026-11-05 23:20  Lập lại cho bậc 3DOF theo yêu cầu người dùng; bỏ 7DOF, 14DOF khỏi phạm vi; đánh số lại phép thử (T6 cũ về bám vận tốc bỏ, T7 và T8 cũ thành T6 và T7). Chưa chạy phép thử nào.
+2026-11-05 23:50  Làm thử C0: R2-R7 xong (kết quả ở mục C0); dựng và chạy model demo; sửa R7 (FZMAX 28000), sửa ghi chú caster ở T3. Còn R1, R8-R12.
+2026-11-06 00:20  Theo yêu cầu người dùng: tạo Model/PRSM_VDB/Plant_VDB/ (plug-in thay PRSM/Plant, dùng chung Ref, Sensors, AssistLimit, Actuator); chuyển script demo và C0 từ scratch sang
+script/ của thư mục đó, ghi kết quả vào Result/PRSM/Plant_VDB/; sửa setup_paths.m, result_dir.m, CLAUDE.md; chạy lại cả ba script, số liệu như cũ.
+2026-11-06 sáng  Người dùng cho dùng tạm các ngưỡng mục 2 (R1 xong) và bỏ quy tắc "không sửa ngưỡng sau khi thấy kết quả" cho việc kiểm Plant_VDB; từ nay sửa ngưỡng thì ghi tại đây (số cũ, số
+mới, lý do). Chưa sửa ngưỡng nào.
+2026-11-06 sáng  R8 xong (kết quả ở mục C0): alpha_f = -alpha_VDB, xoay vận tốc +delta_f, FExt y trái, MExt z ngược chiều kim đồng hồ, T_r cùng dấu Plant. Thêm check_vdb_signs.m; sửa use_sim_tmp.m.
+Còn R9-R12.
+2026-11-06 chiều  Thêm mục 11 (kế hoạch kiểm tra lại theo 12 rủi ro, điểm cao trước, K0-K12, tiêu chí chốt trước khi chạy). Chưa chạy bước nào. Ghi nhận giả thuyết của R11 yếu đi (g = 9.81 ở cả hai).
+2026-11-06 chiều muộn  Chạy mục 11 (K0-K12, trừ K5, K6, K3b): kết quả ở 11.4. Tìm ra nguồn lệch a_y 0.017 % (đơn vị g chuẩn 9.80665 của khối VDB), sửa build_vdb_s1.m và chạy lại S1, T5, S2, S3. Thêm script check_vdb_freebody.m, audit_vdb_params.m, check_vdb_tireset.m, check_vdb_trail_mu.m, check_vdb_bodystate.m, check_plant_sensitivity.m; compare_vdb_s2.m có thêm tùy chọn solver bước cố định; make_plant_baseline.m thêm DRY, RAMP, EDGE. Đổi cách đo sau khi thấy số ở K1 (kịch bản lốp), ghi ở 11.4.
+
+==============================================================================================================================================================================================
+10. KẾ HOẠCH CHẠY ĐÊM (LẬP THỨ 6, 2026-11-06, 00:50; CHƯA CHẠY, CHỜ NGƯỜI DÙNG RA LỆNH)
+==============================================================================================================================================================================================
+Mục tiêu: trong đêm làm hết phần P của các mốc C0-C5 (không có người xem), tự sửa lỗi, tự đánh giá; sáng ra có kết quả và bản nháp để người dùng duyệt, không cần ngồi canh. Đích là sáng thứ
+7 có đủ gói báo cáo, nên đêm nay chỉ cần xong trước; các hạn ở mục 1 vẫn giữ làm mốc muộn nhất.
+
+10.1 Phạm vi
+Được làm: viết và chạy script trong Model/PRSM_VDB/Plant_VDB/script/, model thử trong cùng thư mục, kết quả trong Result/PRSM/Plant_VDB/, sửa file kế hoạch này, viết
+Documents/Notes/PRSM/DoiChieu_Plant_VDB.txt, ghi Tracking/historychat_common.md.
+KHÔNG được làm trong đêm (gặp là dừng việc đó, ghi lại cho người dùng):
+  - Sửa bất kỳ file nào trong Model/PRSM/, Model/Controllers/, Model/Sim/, Model/common/, Model/data/ và setup_paths.m; không lưu đè Plant.mdl (chỉ đọc, chép sang model tạm để đo).
+  - Dựng Plant_VDB.mdl chính thức, chạy Map, PID, MapPID trên plant mới, sửa build_closed_loop.m (đó là C7, C10, sau khi thầy xem).
+  - Đổi ngưỡng ở mục 2. Quy tắc người dùng chốt cho phép sửa ngưỡng, nhưng đêm nay không có ai duyệt nên tôi chỉ ĐỀ XUẤT trong báo cáo sáng; nới ngưỡng để tự chấm mình đạt thì phần tự đánh
+    giá mất nghĩa.
+  - Git commit, push, xóa file không do đêm nay tạo, cài thêm phần mềm, tải dữ liệu ngoài, đóng MATLAB của người dùng, dọn ổ đĩa.
+
+10.2 Các bước theo thứ tự (làm xong bước nào đánh dấu bước đó; thời gian là giới hạn, chưa phải ước lượng đã đo)
+Bước | Việc                                | Script dự kiến                                 | Tự đánh giá ĐẠT khi                                                       | Giới hạn | TT  | Kết quả
+-----+-------------------------------------+------------------------------------------------+---------------------------------------------------------------------------+----------+-----+------------
+N0   | Chụp toàn vẹn trước khi chạy        | (lệnh shell)                                   | Có băm SHA-256 của các thư mục cấm sửa, danh sách PID MATLAB đang mở      | 5 phút   | [x] | xem 10.9
+N1   | R9, R10: cấu hình chung lốp, thân   | vdb_tire_config.m, vdb_body_config.m           | alpha = 0 cho |F_y| < 1 % đỉnh; Fx không đáng kể; v đúng đầu vào            | 60 phút  | [x] | PASS 01:3x, Plant_VDB_N1_config.txt
+N2   | R11, R12: mốc chuẩn Plant           | make_plant_baseline.m                          | Đủ ca SSW, CALIB ở hai mức T_a; tín hiệu tự nhất quán; Plant.mdl không đổi | 90 phút  | [x] | PASS, Plant_VDB_N2_baseline.txt
+N3   | C1: T1, T2 (Cụm 2, lực ngang)       | check_vdb_tire.m                               | Ngưỡng T1, T2 ở mục 2, cho cả lốp trước và sau                            | 90 phút  | [x] | PASS, Plant_VDB_T1T2_tire.txt
+N4   | C2: T4, T5A, T5B (Cụm 3, thân)      | check_vdb_body.m                               | Ngưỡng T5, lực lấy từ mốc chuẩn, gồm đoạn đổi tốc 90 -> 45 km/h           | 90 phút  | [x] | T4, T5 ĐẠT cả 4 ca sau khi sửa Cs, Cym (10.10)
+N5   | C3: T3 (Cụm 2, T_r)                 | check_vdb_trail.m                              | Dấu đúng, có bảng và hình sáu bộ lốp; chỉ báo cáo, không kết luận e_p0    | 60 phút  | [x] | PASS dấu, Plant_VDB_T3_trail.txt
+N6   | C4: S1 và đề xuất G1                | build_vdb_s1.m, compare_vdb_s1.m               | Ngưỡng S1 ở mục 2 trên các ca SSW; đầu vào và solver giống mốc chuẩn      | 120 phút | [x] | S1 ĐẠT cả 4 ca trọn, gồm SLIP 100 s (10.10)
+N7   | C5: T6, T7                          | check_vdb_lowspeed.m, time_vdb_case.m          | Ngưỡng T6, T7 ở mục 2                                                     | 60 phút  | [x] | T6 ĐẠT, T7 ghi số, mục 10.9
+N8   | Ma trận đối chiếu bản đủ            | DoiChieu_Plant_VDB.txt                         | Mỗi PT(1)-(15) có phân loại và bằng chứng trỏ tới file; không còn CHƯA RÕ không lý do | 45 phút  | [x] | DoiChieu_Plant_VDB.txt
+N9   | Thử thêm S2, S3 (chưa chính thức)   | build_vdb_s2.m, compare_vdb_s2.m               | Có số lệch so với Plant, ghi rõ "thử, chưa chính thức"; không có ngưỡng đạt | 120 phút | [x] | thử, chưa chính thức
+N10  | Tự đánh giá tổng, nháp báo cáo sáng | mục 10.8                                       | Băm toàn vẹn khớp N0; mọi số trong báo cáo truy được về file kết quả      | 45 phút  | [x] | băm khớp N0, mục 10.8
+Phụ thuộc: N1 -> N3, N5, N7; N2 -> N4; (N3 hoặc lốp của ta), N4 -> N6; N6 -> N9. Một bước kẹt thì bước không phụ thuộc vào nó vẫn làm tiếp; N8 và N10 luôn làm, ghi rõ phần thiếu.
+
+Chi tiết cần nhớ khi làm:
+  - N1: tắt cản lăn (QSY) nếu khối cho phép, omegao khớp v, Cd = Cl = 0, gió tắt, sigmaMode tắt, ply steer và turn slip tắt, tải đứng từ ngoài; chỉ một file cấu hình dùng lại cho mọi bước.
+  - N2: chép Plant vào model tạm rồi gắn đo tín hiệu trong (F_yf, F_yr, T_r, e_p, alpha_f); ghi mã commit và băm Plant.mdl vào file mốc. Kiểm nhất quán: a_y = (F_yf + F_yr)/m, T_s = K(theta1 - x1).
+  - N3: mỗi lốp nửa cầu: trước F_z 4549 N, C_alpha 80000 N/rad; sau F_z 3167 N, 80000 N/rad. PCY1 = C, PDY1 = 1, PEY1 = E, FNOMIN = tải, PKY2 = 1, PKY1 = -C_alpha/F_z (kiểm lại công thức trên
+    block bằng số), LMUY = mu; các hệ số dịch và phụ thuộc tải bằng 0. Không chỉnh hệ số riêng theo từng mu; làm vậy là che đúng cái T2 cần đo.
+  - N4: dùng F_yf(t), F_yr(t), v(t) từ mốc chuẩn làm đầu vào của thân, so gamma và a_y với mốc chuẩn; PT(3) có v đổi khác ydot = v*beta một lượng dv/dt*beta, nếu lệch ở đoạn đổi tốc thì định
+    lượng phần này trước khi kết luận.
+  - N5: T_r theo cả cầu = 2 x một bánh; không dùng số gần trùng làm bằng chứng (R8 đã có trường hợp 10.34 và 10.24 N.m do hai sai lệch bù nhau).
+  - N6: lấy nguyên SteeringColumn và Tires của Plant bằng chép, không sửa nguồn; lưu thành PlantVDBS1.slx, không gọi là Plant_VDB. Thứ tự so: ca ngắn trước, ca dài sau.
+
+10.3 Quy tắc tự sửa lỗi
+Tự sửa được: lỗi script, tên cổng, kích thước tín hiệu, tham số khối thử, solver của model thử, cách đo và cách so của chính tôi.
+Trình tự mỗi lỗi: đọc nguyên văn lỗi, tìm nguyên nhân rồi mới sửa, chạy lại, ghi một dòng (lỗi, nguyên nhân, cách sửa) vào mục 10.9. Cùng một nguyên nhân sửa tối đa 3 lần, hoặc hết giới hạn
+thời gian của bước: đánh dấu [!], ghi những gì đã thử, chuyển sang bước không phụ thuộc.
+Khi kết quả lệch ngưỡng (không phải lỗi chạy): trước hết nghi cách đo, vì R8 có hai lần báo lệch giả đều do cách đo. Kiểm bằng ít nhất một cách độc lập. Nếu vẫn lệch thì giữ nguyên số, ghi
+KHÔNG ĐẠT kèm nguyên nhân nghi ngờ; không chỉnh tham số, cửa sổ đo hay bỏ ca cho đến khi đạt.
+Không che lỗi: không dùng try/catch để nuốt lỗi phép đo, không bỏ dòng dữ liệu xấu, không báo xong khi chưa chạy.
+
+10.4 Quy tắc tự đánh giá (mỗi phép thử T1-T7, S1)
+Mỗi phép thử ghi kết quả số ra csv và một phán quyết trong ba loại: ĐẠT, KHÔNG ĐẠT, CHƯA KẾT LUẬN (cách đo còn nghi ngờ, thiếu dữ liệu). Phán quyết do script tính từ ngưỡng ở mục 2, không phán
+bằng mắt. Đạt chỉ khi có đủ ba lớp:
+  (a) Đáp án độc lập: tính trong script từ params.json hoặc từ mốc chuẩn, không lấy từ chính khối đang thử.
+  (b) Đối chứng âm: cố ý làm sai một thứ (đổi dấu lực, nhân đôi độ cứng, bỏ xoay delta) và phép thử phải báo KHÔNG ĐẠT. Phép thử không bắt được lỗi cố ý thì coi là chưa có giá trị.
+  (c) Xem hình: vẽ hình, tự đọc hình bằng công cụ Read, ghi một câu về điều thấy được, nhất là đoạn đầu mô phỏng và chỗ đổi mu, đổi tốc.
+Cuối đêm (N10): so băm với N0; đối chiếu từng số trong báo cáo sáng với file; liệt kê rõ việc nào đạt, việc nào không, việc nào không làm được.
+
+10.5 Điều kiện dừng và an toàn
+  - Ổ D còn dưới 50 GB: dừng chạy mô phỏng mới, chỉ viết báo cáo từ dữ liệu có sẵn. Ổ C còn dưới 30 GB: như vậy. Mỗi lần chạy gọi Simulink.sdi.clear, dùng use_sim_tmp.
+  - MATLAB chạy nền bằng run_in_background, mỗi lô tối đa 45 phút. Treo thì chỉ tắt đúng PID do tôi khởi động; không đụng các MATLAB đang mở lúc N0. Đánh giá theo file đã ghi, không theo mã
+    thoát (lỗi heap khi thoát từng xảy ra và vô hại nếu dữ liệu đã ghi).
+  - Hết license, băm toàn vẹn đổi, hoặc MATLAB sập ba lần liên tiếp không rõ lý do: dừng hẳn, ghi lý do.
+  - Việc cần người dùng quyết định: không đoán, ghi vào báo cáo sáng rồi làm việc khác.
+  - Không có giờ dừng cứng: chạy đến khi hết việc hoặc gặp điều kiện dừng.
+
+10.6 Tiếp tục khi bị ngắt
+Trạng thái chỉ nằm trong file này. Mỗi bước xong thì đánh dấu và ghi ngay. Script ghi kết quả từng ca ra đĩa, ca đã có thì không chạy lại. Khi phiên được gọi lại (qua /loop hoặc người dùng),
+đọc mục 10 và làm tiếp từ bước đầu tiên chưa xong, kiểm script dở dang trước.
+
+10.7 Người dùng cần làm trước khi ngủ: xem câu trả lời trong khung chat (quyền chạy lệnh, không cho máy ngủ, tạm dừng OneDrive, lệnh khởi động).
+
+10.8 Báo cáo sáng (điền khi xong, người dùng đọc mục này đầu tiên)
+Trạng thái: ĐÃ CHẠY HẾT N0-N10 (2026-11-06 00:55 đến khoảng 06:40). Toàn vẹn: băm 246 file cấm sửa khớp N0 (B36AE40A...739E), không đụng MATLAB của bạn (PID 43932, 54320), không commit. Ổ C 98.9 GB, ổ D 634 GB.
+ĐẠT: N1 cấu hình lốp, thân; N2 mốc chuẩn Plant (8 ca, tự nhất quán < 1 %); N3 T1, T2 lốp (khớp 3e-5 N, mu 0.8-0.2, cầu trước và sau); N5 dấu T_r của sáu bộ lốp; N6 S1 trên STEADY, WEAVE, CALIB (lệch < 0.1 %) và SLIP tới 60 s (gồm đổi tốc 90 -> 45 km/h); N7 T6 không dao động giả, T7 thời gian chạy 9-10 s mỗi ca; N8 ma trận đối chiếu bản đủ (Documents/Notes/PRSM/DoiChieu_Plant_VDB.txt); N9 thử S2 (lệch < 0.2 %) và S3 (lệch 2-17 %, lốp khác).
+KHÔNG ĐẠT hoặc CHƯA KẾT LUẬN (việc cần bạn quyết):
+  [ĐÃ LÀM RÕ NGÀY 2026-11-06 SAU BÁO CÁO SÁNG, xem 10.10] Mục 1 và 2 dưới đây (bản viết lúc 06:40) đã có nguyên nhân: các bảng khí động Cs, Cym của khối thân VDB còn giá trị mặc định khác 0; đặt về 0 thì S1 chạy trọn SLIP 100 s và T5 đạt cả 4 ca.
+  1. (đã xử lý) SLIP sau 60 s: solver dừng đúng tại 69.399 s (T_a = 0) và 70.116 s (T_a = 2) với ba cách chạy, nguyên nhân chưa biết. Cổng G1 vì thế chưa nên chốt "đạt toàn ca". Cần quyết: cho phép đọc khối VDB bên trong (chỉ đọc, không sửa) để tìm nguyên nhân?
+  2. (đã xử lý) N4 T5 (thân nhận lực Plant ghi sẵn): chỉ WEAVE kết luận được (đạt, 0.03-0.06 %); STEADY, SLIP, CALIB solver lỗi sau 27-32 s. S1 vòng kín chạy tốt nên nghi do lực áp đặt hở; chưa kiểm.
+  3. Hai bộ lốp thư viện (205/60R15 và 275/65R18) ra số giống hệt; không nói "sáu bộ lốp phân biệt" khi viết báo cáo.
+Phát hiện quan trọng cần ghi vào mọi báo cáo: (a) T4: lốp bên trong khối 3DOF mềm đi tỉ lệ với mu (độ dốc 0.3749 lần khi mu 0.375 lần), không dùng được cho Y4; phải dùng lốp ngoài. (b) Preset lốp VDB không nhận hệ số mới, phải dùng tireType = External file. (c) Info.BdyFrm.Cg.Acc.ay tính bằng g. (d) Cổng Mu của thân 3DOF nhận vector 2 phần tử. (e) Khớp ở lốp là do ép cùng Magic Formula, không phải so với lốp VDB độc lập.
+Đề xuất (không phải quyết định, bạn duyệt): không sửa ngưỡng nào trong mục 2. Hai lần sửa CÁCH ĐO (không đổi ngưỡng): N2 phép kiểm bậc T_a (cực đại -> trung bình 3-5 s), N3 T2b (so với độ dốc Plant đo cùng dây cung thay vì C_alpha); lý do ở mục 10.9.
+Đã làm thêm ngoài danh sách: không. Đã tắt: hai tiến trình MATLAB do tôi mở (một cái 11.7 GB vì ghi cả bus Info, một cái chạy ode45 hơn 40 phút), đúng PID.
+Việc cần làm tiếp (đề xuất thứ tự): (1) quyết định mục 1 trên; (2) làm rõ lỗi 69.4 s; (3) khi G1 đạt, dựng Plant_VDB.mdl chính thức (C7); (4) nhật ký đã ghi ở Tracking/historychat_common.md (Lượt 268).
+
+10.9 Nhật ký lỗi đêm
+N0 (2026-11-06): băm 246 file Model/PRSM, Controllers, Sim, common, data (trừ PRSM_VDB) + setup_paths.m, danh sách ở Result/PRSM/Plant_VDB/night_N0_hashes.txt; băm tổng B36AE40AC32FA018A38CCCEABDAE45B4C7F9D459BFF77D40EAE3A8A14528739E (băm của các dòng đã sắp xếp, UTF8).
+  MATLAB người dùng đang mở lúc N0: PID 43932, 54320 (không đụng). Ổ C 99.7 GB, ổ D 655.5 GB. HEAD 0334a3d; working tree có sửa dở của người dùng (result_dir.m, setup_paths.m) đã tính vào băm.
+N1 (2026-11-06 01:3x), script vdb_tire_config.m, vdb_body_config.m, load_vdb_params.m, check_vdb_n1.m, kết quả Result/PRSM/Plant_VDB/Plant_VDB_N1_config.txt: PASS (Fy(alpha~0) 8 N = 0.3 % đỉnh; Fx 0.1 N; đỉnh Fy = 0.8 Fz đúng 1.0000; v bám đầu vào 0.0001 km/h; đối chứng âm PDY1 = 1.2 báo NOT PASS).
+  Lỗi và phát hiện đêm N1:
+  (1) Preset tireType (Light passenger car 205/60R15) KHÔNG nhận hệ số mới: set_param PCY1, PKY1... không báo lỗi nhưng không có tác dụng (đỉnh vẫn 4053 N, độ dốc vẫn 108000 N/rad, Fx = -77 N). Nguyên nhân: ô hệ số bị khóa ở preset. Cách sửa: tireType = External file (ô hệ số mở, tireParamSet mặc định vdynPassCar.mat) rồi ghi đè hệ số qua mask; cách dựng file .mat riêng cũng thử nhưng mask không nạp lại giá trị. Cần nhớ khi dựng Plant_VDB chính thức: PHẢI dùng External file.
+  (2) Trong khối lốp này PHY1 và PVY1 không có tác dụng (đặt 0.01 và 0.05, Fy tại alpha = 0 không đổi), nên không dùng làm đối chứng âm; dùng PDY1 = 1.2 (đỉnh lệch 20 %). Cũng nghĩa là lệch ngang (PHY, PVY) của preset không ảnh hưởng, kiểm lại ở T1 bằng số.
+  (3) Cản lăn QSY1-QSY8 = 0 thì Fx ở lăn tự do về 0.1 N (trước đó 77 N, do cản lăn); đã đưa vào cấu hình chung.
+  (4) Phép đo Fy tại alpha = 0 bằng quét dốc bị lệch ~9 N do độ trễ lốp (hằng số thời gian ~2 ms); đo bằng lần chạy riêng tại Vy = 0.002 m/s.
+  (5) Thân 3DOF với Cy = 0 và lực ngoài không đổi 500 N: solver báo "Nonlinear iteration is not converging" sau 9-10 s (ydot khoảng 3 m/s); lực 0 chạy được 13 s. Chưa hiểu nguyên nhân (ca R8 chỉ chạy 0.5 s). Theo dõi ở N4: nếu lực Plant ghi lại làm kẹt cùng kiểu thì phải tìm rõ (thử Cy nhỏ khác 0, bước tối thiểu, solver khác) trước khi kết luận T5.
+  (6) Nhật ký chạy MATLAB nền: lệnh bash có heredoc quá dài bị lỗi quoting "unexpected EOF"; dùng công cụ Write để tạo file, không heredoc dài. 10.4(c) xem hình: N1 không có hình (chỉ cấu hình), nên không áp dụng.
+N2 (2026-11-06 01:4x), script make_plant_baseline.m, check_plant_baseline.m; mốc ở Result/PRSM/Plant_VDB/baseline/Plant_<STEADY|SLIP|WEAVE|CALIB>_Ta<0|2>.mat (tám file, lưới 1 ms, T_s, a_y, gamma, theta2_dot, F_yf, F_yr, T_r, alpha_f, và đầu vào), baseline_info.txt có băm Plant.mdl và HEAD. PASS: a_y = (F_yf+F_yr)/m, F_yf theo Magic Formula tính độc lập từ alpha_f và mu, T_r theo PT(13)-(14) đều lệch 0.0000 (< 1 %); đối chứng âm (C_alpha nhân đôi) lệch 19-46 % báo NOT PASS đúng; băm Plant.mdl không đổi. Hình Plant_VDB_N2_baseline.png (ca SLIP): đã xem, có đoạn đổi tốc 25 -> 12.5 -> 25 -> 16.7 -> 22 m/s, các bậc mu 0.5, 0.33, 0.24 rồi vũng nước 0.2, đỉnh F_yf khoảng 7000 N và a_y khoảng 7 m/s^2 tại hai chỗ mu nhảy, đúng thiết kế ca SLIP.
+  Sửa tiêu chí sau khi thấy số (ghi theo quy tắc): phép kiểm "bậc T_a 2 N.m làm T_s đổi ít hơn 2 N.m" ban đầu dùng cực đại trên cả ca, báo NOT PASS (2.0-4.7 N.m) vì gồm quá độ; đổi sang trung bình T_s trong 3-5 s sau bậc phải nằm trong (-2, 0). Số mới: -1.65 tới -1.97 N.m. Lý do: tiêu chí cũ đo sai đại lượng (tính chất của test_plant là ở trạng thái xác lập), không phải lỗi Plant. Thời điểm 01:40.
+  Ghi chú N2: e_p không tap được (không có Goto riêng trong Plant); thay bằng T_r và kiểm T_r so với PT(13)-(14) từ alpha_f, F_yf, mu. Mỗi ca chạy khoảng 1 s thực (Plant nhanh). Ca CALIB trong make_cases có thêm trường blk, nên gộp từng trường khi ghép với ca SSW.
+N3 (2026-11-06 01:5x), script check_vdb_tire.m, kết quả Result/PRSM/Plant_VDB/Plant_VDB_T1T2_tire.txt, .csv, .png: T1, T2a, T2b, T2c đều PASS cho lốp trước và sau, mu 0.8, 0.5, 0.33, 0.24, 0.2. Lệch F_y VDB so với Plant tối đa 3e-5 N (hình đã xem: các đường VDB và Plant trùng nhau, hiệu số cỡ 1e-5 N); đỉnh F_y = mu*F_z trong 0.1 %; bậc mu 0.8 -> 0.2 tại alpha 0.1 rad: lực 20 ms sau bậc lệch 0.001 %. Đối chứng âm đều báo NOT PASS: Plant đổi dấu (lệch 200 %), Plant nhân đôi C_alpha (33 %), VDB nhân đôi PKY1 (độ dốc gấp 1.996).
+  LƯU Ý khi dùng kết quả này (nói thẳng với thầy): VDB khớp Plant tới sai số số học vì lốp đã được CẤU HÌNH để cùng một Magic Formula (PCY1 = C, PEY1 = E, độ cứng C_alpha, mu qua LMUY, mọi hệ số phụ bằng 0). Phép thử xác nhận cấu hình đúng và mu đổi có tác dụng ngay, KHÔNG phải so Plant với một lốp VDB độc lập. Lốp preset 205/60R15 nguyên bản khác Plant (đỉnh mu 1.2, độ dốc 108000 N/rad một bánh) và là việc của S3.
+  Sửa tiêu chí sau khi thấy số (ghi theo quy tắc), 01:50: T2b ban đầu so độ dốc đo bằng dây cung +-0.0025 rad với C_alpha, báo NOT PASS ở rear mu 0.24 và 0.20 (0.988, 0.982). Nguyên nhân là cách đo: dây cung chứa số hạng bậc ba, càng rõ khi mu nhỏ (vùng tuyến tính hẹp theo mu); kiểm độc lập: T1 lệch 3e-5 N tại cùng các điểm. Đổi sang so với độ dốc của chính công thức Plant đo bằng cùng dây cung (ngưỡng 1 % giữ nguyên); tỉ số slope/C_alpha vẫn in ra để tham khảo (0.982-0.9995). Ngưỡng không đổi, chỉ đổi đại lượng so.
+N4 (2026-11-06 01:50-03:50, quá giới hạn 90 phút, đánh dấu [!]), script check_vdb_body.m, run_vdb_body.m, kết quả Result/PRSM/Plant_VDB/Plant_VDB_T4T5_body.txt (bản chạy cuối: mode WEAVE; bản chạy đầy đủ lần đầu mất khi ghi đè, xem dưới):
+  T4 ĐÃ ĐO: lốp bên trong khối 3DOF (Cy_f = Cy_r = 160000 N/rad, muMode bật) mềm đi tỉ lệ với mu: độ dốc cầu trước 234310 N/rad ở mu 0.8, 87836 N/rad ở mu 0.3, tỉ số 0.3749 (mu: 0.375). Vậy lốp trong 3DOF KHÔNG đạt Y4, phải dùng lốp ngoài như N3. Tốc độ quay thân gần như không đổi (tỉ số 1.0128) nên đừng dùng nó để kết luận về độ cứng. Ở lái 0.1 rad a_y vượt mu*g (15.1 và 14.0 m/s^2 so với 7.85 và 2.94): lốp trong khối không bão hòa theo mu.
+  T5 CHỈ KẾT LUẬN ĐƯỢC CHO WEAVE: gamma lệch 0.033 % (T_a = 0) và 0.056 % (T_a = 2), a_y lệch 0.025 % và 0.028 %, v lệch 0.000 km/h: ĐẠT. Đối chứng âm đổi dấu lực: gamma lệch 65.9 %, báo NOT PASS đúng. Đối chứng Izz nhân đôi: CHƯA CHẠY ĐƯỢC (solver lỗi ở 20.4 s, cùng kiểu lỗi dưới).
+  T5 CHƯA KẾT LUẬN cho STEADY, SLIP, CALIB (kể cả đoạn đổi tốc 90 -> 45 km/h của SLIP, là đoạn Y2 cần): solver báo lỗi tại 27.7-32 s (STEADY 27.8 và 27.7, SLIP 32.1 và 31.9, CALIB 26.8 s); ode4 bước cố định 1 ms: "Derivative of state in block Body/state/xdot ext/Integrator at time 27.693 is not finite". ode45 và ode15s chạy hơn 40 phút không ra kết quả (đã tắt đúng PID do tôi mở). Đã thử 3 solver (ode23t, ode4, ode45/ode15s); hết lượt sửa cho cùng nguyên nhân (10.3). Điều đã biết: lỗi xảy ra ở ca có đoạn giữ cua dài sau khi lực tăng nhanh ở tốc độ không đổi, còn WEAVE (lực dao động) chạy hết; lực không đổi 500 N với Cy = 0 cũng kẹt sau 9-10 s (phát hiện N1). Giả thuyết CHƯA kiểm: thân Cy = 0 nhận lực ngoài mà không có lực hồi phục nên trạng thái ydot trôi dần (sai số tích phân nhỏ giữa r và lực), tới lúc nào đó khối bên trong phát nổ. Đã thử và không thử gì thêm vì cần mở khối bên trong để xem công thức; việc này chuyển sang báo cáo sáng: người dùng quyết định có cho tôi mở khối VDB (đọc, không sửa) để tìm nguyên nhân hay đổi cách đặt thân (Cy nhỏ khác 0 chỉ để chống trôi).
+  Phát hiện cách đo (ghi trước khi quên): Info.BdyFrm.Cg.Acc.ay của khối VDB tính bằng g (steady cornering 0.1535 khi r*v = 1.506 m/s^2); lần chạy đầu so thẳng với a_y của Plant (m/s^2) nên báo lệch giả 24 %; đã nhân g (P.g) và lệch còn 0.025 %. Cũng: ghi cả bus Info vào To Workspace làm MATLAB ngốn 11.7 GB trong một ca 100 s (đã tắt tiến trình của tôi); chỉ ghi các tín hiệu cần bằng Bus Selector. Cổng Mu của thân 3DOF khi muMode bật nhận vector [mu_f; mu_r] 2 phần tử (scalar gây lỗi kích thước "delta_r"). Cổng thân tìm theo tên vì thứ tự đổi khi tắt FExt, MExt.
+  Mất dữ liệu cần ghi: bảng STEADY, SLIP lần chạy đầy đủ đầu tiên chỉ còn trong mục này (file txt bị ghi đè khi chạy lại), file chạy đầu đã lưu bằng tên Plant_VDB_T5_first_attempt.txt chỉ ở một lần (có thể rỗng).
+N5 (2026-11-06 04:0x), script check_vdb_trail.m, kết quả Result/PRSM/Plant_VDB/Plant_VDB_T3_trail.txt, .csv, .png (chỉ báo cáo, không kết luận e_p0): sáu bộ lốp thư viện, nửa cầu trước F_z 4549 N, mu = 1, 20 m/s, lấy T_r = (e_c*F_y - M_z)/n_st với giá trị cầu = 2 lần một bánh. Dấu ĐẠT cả sáu: vệt khí nén t = -M_z/F_y dương và T_r cùng dấu F_y; đối chứng âm (đổi dấu M_z) báo NOT PASS cả sáu. Vệt t tại alpha 0.025 rad: 0.0097 (205/60R15), 0.0147 (235/45R18), 0.0170 (225/40R19), 0.0173 (265/50R20), 0.0097 (275/65R18), 0.0106 m (295/75R22.5) so với t_0 = 0.025 m của Plant. T_r tại alpha 0.025 rad: 10.35, 13.46, 14.08, 12.78, 10.35, 3.30 N.m so với Plant 10.69 N.m (tỉ số 0.97, 1.26, 1.32, 1.20, 0.97, 0.31); đỉnh T_r 16.4, 17.5, 17.2, 17.1, 16.4, 12.6 so với Plant 19.3 N.m. Hình đã xem: năm bộ lốp xe con có cùng hình dạng với Plant (đỉnh sớm ở alpha 0.05-0.06 rad còn Plant ở 0.08), bộ xe tải thương mại thấp và rộng hơn hẳn.
+  Hai điều cần nhớ: (1) bộ 205/60R15 và 275/65R18 ra số GIỐNG HỆT đến mọi chữ số: dữ liệu thư viện có thể trùng hoặc chọn lốp theo tên không phân biệt; chưa kiểm được vì ô hệ số trên mask không cập nhật khi đổi tireType bằng lệnh (đọc PCY1, PKY1... trả cùng giá trị cho cả sáu bộ), nên không đọc hệ số để xác nhận. Khi viết vào báo cáo chỉ nói "năm bộ lốp phân biệt được", không nói sáu. (2) Vì T_r của Plant chỉ có một tham số e_p0 mà lốp VDB cho vệt thay đổi theo góc trượt và theo loại lốp (0.0097-0.0173 m, phần khí nén; Plant dùng 0.025 m), kết quả cho thấy e_p0 thay đổi cỡ 0.7-1.3 lần ở alpha nhỏ tuỳ lốp; không kết luận e_p0 đúng hay sai theo kế hoạch.
+N6 (2026-11-06 04:3x-05:1x), script build_vdb_s1.m (sinh Model/PRSM_VDB/Plant_VDB/PlantVDBS1.slx, không phải Plant_VDB.mdl), compare_vdb_s1.m; kết quả Result/PRSM/Plant_VDB/Plant_VDB_S1_compare.txt, Plant_VDB_S1_<ca>_Ta<0|2>.mat/.png. S1 = Plant với chỉ khối thân Bike2DOF thay bằng thân VDB 3DOF (vận tốc, Cy = 0, không cản), SteeringColumn và Tires chép nguyên từ Plant; lực lốp vào thân bằng FExt, MExt (dấu R8). Cùng đầu vào và solver như mốc chuẩn (ode auto, MaxStep 2 ms, RelTol 1e-6).
+  KẾT QUẢ S1 (ngưỡng 1 %, sai số RMS/max): ĐẠT cả ca dài: WEAVE (a_y 0.009 %, gamma 0.001 %, F_yf 0.001-0.002 %, T_r 0.001-0.002 %, T_s 0.001 %), STEADY (0.016, 0.010, 0.024, 0.023, 0.015 %), CALIB (0.079, 0.015, 0.094, 0.096, 0.044 %), cả hai mức T_a. SLIP chỉ ĐẠT tới t <= 60 s (0.078, 0.021, 0.075, 0.074, 0.058 %; T_a = 2 tương tự), đoạn này gồm đổi tốc 90 -> 45 km/h (Y2): ĐẠT. Hình STEADY T_a = 2 đã xem: các đường Plant và S1 chồng nhau. Thời gian chạy một ca 100-140 s là 9-10 s (cho T7: dưới 10 phút, dùng được).
+  SLIP sau 60 s CHƯA KẾT LUẬN: solver lỗi tại t = 69.399 s (T_a = 0) và 70.116 s (T_a = 2), "Nonlinear iteration is not converging with step size reduced to hmin" (2.5e-13). Đã thử 3 cách cho cùng nguyên nhân: ode mặc định, ode23t MaxStep 1 ms RelTol 1e-8, ode15s: cả ba dừng đúng tại 69.399 s, nên không phải dung sai solver mà là sự kiện cố định trong mô phỏng. Đã kiểm: đầu vào Plant tại đó bình lặng (theta1 = -0.559, mu = 0.8, đã giữ cua 2.4 s sau cú nhảy mu 0.24 -> 0.8 tại 67 s), không có bước nhảy đầu vào; góc quay thân ψ không trùng giá trị đặc biệt nào (-0.15 pi, -0.09 pi; các lỗi N4 ở -0.05 pi tới 1.2 pi). Chưa biết nguyên nhân; để người dùng quyết định như ở N4 (có cho mở khối VDB bên trong để đọc).
+  Điều rút ra cho N4: thân VDB với Cy = 0 chạy ổn khi vòng kín có lốp (STEADY, CALIB, WEAVE đều xong ở S1) nhưng nổ khi chạy hở với lực ghi sẵn (STEADY, SLIP, CALIB ở N4) hoặc lực không đổi; tức lỗi N4 có thể là do cách thử (lực áp đặt, không có hồi phục) hơn là lỗi thân. Đây vẫn là phỏng đoán, chưa kiểm.
+  Đề xuất G1 (chưa phải quyết định): S1 khớp Plant dưới 0.1 % trên STEADY, WEAVE, CALIB và SLIP tới 60 s; trước khi dựng Plant_VDB chính thức nên làm rõ lỗi tại 69.4 s của SLIP. Việc đề xuất cổng G1 theo đúng nghĩa (ý nghĩa của khớp tới 0.1 %: vì lốp và cột lái là chính Plant, khác biệt duy nhất là thân VDB so với Bike2DOF, S1 xác nhận hai thân tương đương về động học, KHÔNG xác nhận độ đúng của Plant so với xe thật).
+  Lỗi cách làm đã gặp: xóa khối trong subsystem để lại các dây treo, phải delete_line các dây gắn vào nó trước khi nối lại; add_line không trộn chuỗi tên cổng với handle; From không nối xuyên cấp subsystem nên thêm Goto cục bộ cho F_yf, F_yr ở cấp Plant.
+N7 (2026-11-06 05:2x), script check_vdb_lowspeed.m, kết quả Result/PRSM/Plant_VDB/Plant_VDB_T6_lowspeed.txt, .png. Không có script time_vdb_case.m riêng: T7 lấy từ thời gian đã ghi (nguồn bên dưới).
+  T6 ĐẠT: lốp VDB đã cấu hình, nửa cầu trước, mu 0.8, bậc alpha 0 -> -0.02 rad tại 1 s: ở 20 km/h vượt đỉnh 0.000 %, không có cực trị sau 5 ms (không dao động giả); 60 và 100 km/h giống hệt. Đối chứng âm của bộ dò (đáp ứng tổng hợp có dao động vượt 20 %): bộ dò báo NOT PASS đúng (7 cực trị).
+  Độ trễ (chỉ báo cáo): thời gian lên 63 % là 2.0 ms ở cả ba tốc độ; sin alpha 2 Hz (biên 0.02 rad) cho tỉ số biên 0.9997 và trễ pha 1.146 độ = 1.59 ms, GIỐNG HỆT ở 20, 60, 100 km/h. Con số 1.59 ms = 1/(200 pi) s đúng bằng FyRelFreqLwrLim = 200*pi rad/s của khối (tần số cắt tối thiểu của độ trễ lốp, đọc ở bảng tham số C0), và không đổi theo tốc độ như một chiều dài hồi phục thật sẽ đổi, nên độ trễ lốp trong cấu hình này là sàn của khối, không phải mô hình trễ theo quãng đường. Ý nghĩa: Plant không có trễ lốp; VDB cho 1.6 ms ở cấu hình này, nhỏ hơn rất nhiều so với chu kỳ lái 0.5 s, nên T6 không tạo khác biệt đo được. Nếu thầy muốn độ trễ theo quãng đường thật (chiều dài hồi phục), phải đặt tham số riêng và làm lại; không đề xuất ở bậc này. Hình đã xem qua số liệu (không mở ảnh riêng): bậc và sin được kiểm bằng số.
+  T7 (thời gian chạy, 100-140 s mô phỏng): Plant mốc chuẩn khoảng 1 s mỗi ca (scratch/n2_run.log, 8 ca); S1 (thân VDB) 9-10 s mỗi ca (Plant_VDB_S1_compare.txt: WEAVE, STEADY 9 s, CALIB 10 s). Dưới ngưỡng 10 phút nhiều lần: ĐẠT. Thân VDB chậm khoảng 9-10 lần Plant. Thời gian ước theo máy này (một phiên MATLAB khác đang mở, ghi chú không đo điều kiện nền).
+N8 (2026-11-06 05:4x), file Documents/Notes/PRSM/DoiChieu_Plant_VDB.txt: ma trận đối chiếu bản đủ. Mọi dòng có phân loại và bằng chứng trỏ tới file kết quả; còn đúng hai dòng CHƯA RÕ, mỗi dòng ghi lý do (thân bị lực áp đặt hở: nguyên nhân solver chưa tìm ra; SLIP sau 60 s: lỗi tại 69.399 s). Phần "điều cần nói thẳng" gồm năm ý (cấu hình lốp là xác nhận cấu hình, S1 không chứng minh Plant đúng xe thật, lỗi solver chưa giải thích, T_r khác 0.31-1.32 lần, ngưỡng chưa đổi). Đã sửa một số trong bảng khi đối chiếu csv: độ dốc T2 lệch tương đối 3e-8 so với phép đo cùng cách trên Plant (bản nháp ghi nhầm 0.0002 %).
+N9 (2026-11-06 05:5x-06:3x), THỬ, CHƯA CHÍNH THỨC, không có ngưỡng đạt; script build_vdb_s2.m (sinh PlantVDBS2.slx và PlantVDBS3.slx trong Model/PRSM_VDB/Plant_VDB/, không phải Plant_VDB.mdl), compare_vdb_s2.m; kết quả Result/PRSM/Plant_VDB/Plant_VDB_S2S3_compare.txt, Plant_VDB_S2_<ca>_Ta0.mat/.png, Plant_VDB_S3_<ca>_Ta0.mat/.png. Chỉ chạy T_a = 0; SLIP chỉ tới 60 s (lỗi 69.4 s của N6 chưa giải quyết nên không chạy trọn).
+  S2 = S1 với Tires của Plant thay bằng hai khối lốp VDB đã cấu hình (vdb_tire_config.m), góc trượt tự tính từ tín hiệu thân (xoay vận tốc cầu trước theo +delta_f), T_r theo PT(13)-(14) với alpha_f = -atan(Vy_w/Vx_w). Lệch so với Plant (RMS/max): WEAVE a_y 0.131 %, gamma 0.083 %, F_yf 0.137 %, T_r 0.139 %, T_s 0.099 %; STEADY 0.082, 0.098, 0.087, 0.085, 0.063 %; SLIP (t <= 60 s) 0.090, 0.021, 0.087, 0.084, 0.060 %; CALIB 0.156, 0.086, 0.180, 0.185, 0.096 %. Tức dưới 0.2 %: phần lệch thêm so với S1 (0.01-0.1 %) đến từ góc trượt tính bằng atan thay vì dạng góc nhỏ, trễ lốp 1.6 ms, và hệ trục xoay. Con số này nói thẳng: do lốp đã bị ép thành cùng Magic Formula, S2 gần như S1 là điều dự kiến, không phải bằng chứng độc lập.
+  S3 = lốp thư viện 205/60R15 nguyên bản (ply steer, turn slip tắt), T_r = (e_c*F_y - M_z)/n_st: lệch lớn hơn nhiều, đúng như dự kiến vì lốp khác: WEAVE a_y 7.3 %, gamma 8.1 %, F_yf 7.5 %, T_r 3.4 %, T_s 2.1 %; STEADY 12.0, 5.8, 12.0, 7.5, 4.9 %; SLIP (t <= 60 s) 17.4, 14.9, 17.4, 8.3, 6.7 %; CALIB 13.4, 6.1, 13.5, 7.9, 3.6 %. Mốc tham khảo 10 % của C8 (mục 2): S3 vượt ở STEADY, SLIP, CALIB về a_y và gamma/F_yf; chưa phải kết luận vì S3 cố ý dùng lốp khác (độ dốc 216000 N/rad cả cầu, đỉnh mu 1.2 so với 160000 và 1.0 của Plant). Ngưỡng 0.44 N.m cho T_s chưa so (cần kiểm nguồn gốc, mục 2): sai số T_s của S3 tính theo RMS/max, chưa quy ra N.m.
+  Thời gian chạy: S2, S3 khoảng 20-27 s mỗi ca 60-140 s (chậm hơn S1 vì thêm hai khối lốp 2DOF).
+
+
+10.10 Làm rõ hai mục treo sau báo cáo sáng (2026-11-06 khoảng 09:00-10:20, người dùng hỏi "tại sao chưa kết luận, tìm nguyên nhân từng cái")
+NGUYÊN NHÂN CHUNG: khối thân "Vehicle Body 3DOF Single Track" còn các bảng khí động Cs (lực ngang theo góc trượt gió), Cym (mô-men guồng theo góc trượt gió) và Cpm (mô-men chúc) ở giá trị MẶC ĐỊNH khác 0 (Cs = [0 0.01:0.01:0.3], Cym = [0 1e-6:0.01:0.3], Cpm = 0.1). Đặt Cd = Cl = 0 ở N1 chỉ tắt lực cản và lực nâng, KHÔNG tắt hai bảng này. Hai bảng thêm vào thân một lực ngang và một mô-men guồng phụ thuộc góc trượt (cỡ 1/2 rho A v^2 x L x Cym), làm mất ổn định khi góc trượt lớn. Sai sót là của tôi ở N1 (cấu hình thân chưa quét hết tham số mặt nạ).
+Chuỗi bằng chứng (từng bước, mỗi bước kiểm độc lập):
+  (1) Đầu vào Plant tại 69.4 s hoàn toàn bình lặng (theta1, v, mu hằng; a_y phẳng), nên lỗi không do kích thích. Góc hướng psi tích phân từ gamma tại hai thời điểm lỗi (-0.15 pi, -0.09 pi) không đặc biệt.
+  (2) Ghi trạng thái thân đến 69.39 s (scratch/diag69.m): tích phân "state/xdot ext/Integrator" có ydot = 27.3 m/s, r = -1.66 rad/s tại 69.39 s (Plant: gamma = -0.165). Thân đã PHÂN KỲ (xe quay vòng) từ khoảng 62 s; solver chỉ chết ở hệ quả, 69.4 s không phải sự kiện đặc biệt. Với T_a = 2 N.m phân kỳ chậm hơn nên chết muộn hơn (70.1 s).
+  (3) Phân kỳ bắt đầu ngay sau mu giảm 0.33 -> 0.24 tại 61.5 s (vô-lăng giữ 0.559 rad: xe ở giới hạn bám). Tại 62, 63, 64, 65, 66 s lệch gamma S1 so với Plant là 0.000, 0.004, 0.020, 0.060, 0.145 rad/s, tăng khoảng 3 lần mỗi giây.
+  (4) Loại trừ "Plant nhạy tự nhiên": chạy chính Plant (scratch/sens_plant.m) với RelTol 1e-9, Iz nhân 1.0001, m nhân 1.0001: lệch gamma lớn nhất trên 60-66.4 s chỉ 3e-8, 4e-6, 6e-6. Plant KHÔNG nhạy, nên S1 lệch là khác biệt động học thật chứ không phải nhiễu số.
+  (5) Phần dư phương trình trên tín hiệu S1: r' phải bằng (l_f F_yf - l_r F_yr)/Iz; phần dư = 0 đến 62 s rồi mọc theo hàm mũ: -10 N.m (62.5 s), -74 (64), -344 (66), -428 N.m (66.3 s). Plant: phần dư 0.0000. Tức có mô-men ngoài MExt cộng vào thân, phụ thuộc trạng thái.
+  (6) Thử tự do cô lập (scratch/free_body.m): thân một mình, FExt = 0, MExt = 0, ydot đầu 5 m/s, r đầu -0.5 rad/s, xdot 16.67 m/s. Đúng phải có r' = 0 và ydot' = -xdot r. Kết quả mặc định: r' đo được -0.12 (0.1 s), -0.43 (1 s), -1.78 (2 s), -10.8 rad/s^2 (2.9 s): mô-men phụ sinh ra tăng với ydot. Cùng phép thử với lực/mô-men không đổi (-3000 N, -500 N.m) đúng khi ydot nhỏ, lệch khi ydot lớn.
+  (7) Liệt kê DialogParameters của khối: ngoài Cd, Cl còn Cs, Cym, Cpm chưa đặt. Đặt Cs, Cym = zeros(1, 31) (cùng độ dài beta_w) và Cpm = 0: thân tự do cho r' = 0.00000 (kỳ vọng 0.00000) và ydot' = 8.3334 (kỳ vọng 8.3333) suốt 3 s, kể cả ydot tới 29 m/s; lực/mô-men không đổi khớp tới 4 chữ số ở mọi ydot. Đối chứng âm tự nhiên: cùng phép thử với cấu hình cũ báo lệch (bước 6).
+Sửa: thêm vào Model/PRSM_VDB/Plant_VDB/script/vdb_body_config.m (đặt Cs, Cym bảng 0 và Cpm = 0, độ dài lấy từ beta_w). Không đụng thư mục cấm sửa. Dựng lại PlantVDBS1, S2, S3 (model thử của tôi) bằng build_vdb_s1.m, build_vdb_s2.m với cấu hình mới.
+KẾT QUẢ SAU SỬA (Result/PRSM/Plant_VDB/Plant_VDB_S1_compare.txt mục "rerun 09:59", Plant_VDB_T4T5_body.txt 10:03, Plant_VDB_S2S3_compare.txt mục "rerun 10:04"):
+  - S1 (ngưỡng 1 %): ĐẠT trọn thời gian cả bốn ca và hai mức T_a. SLIP 100 s: a_y 0.023 %, gamma 0.011 %, F_yf 0.020 %, T_r 0.026 %, T_s 0.029 % (T_a = 2: 0.023, 0.012, 0.021, 0.027, 0.026 %). STEADY 0.017 / 0.000 / 0.000 / 0.000 / 0.001 %; WEAVE 0.009 / 0.000 / 0.000 / 0.001 / 0.001 %; CALIB 0.081 / 0.006 / 0.076 / 0.079 / 0.036 %. Gamma khớp tốt hơn trước (0.021 -> 0.011 % ở SLIP, 0.015 -> 0.006 % ở CALIB): phần lệch cũ 0.01-0.1 % cũng một phần do hai bảng này. Lỗi 69.4 s MẤT: mục 10.9 N6 "SLIP sau 60 s CHƯA KẾT LUẬN" nay thành ĐẠT. Đoạn đổi tốc 90 -> 45 km/h (Y2) vẫn trong ca và đạt.
+  - T5 (N4): ĐẠT cả tám ca, tức STEADY, SLIP, CALIB, WEAVE x hai mức T_a: gamma lệch 0.0004-0.054 %, a_y lệch 0.017-0.154 %, v lệch 0.000 km/h; đối chứng âm đổi dấu lực lệch 76 % (NOT PASS), Izz nhân đôi lệch 19 % (NOT PASS), đúng kỳ vọng. Giả thuyết trong 10.9 N4 ("lực áp đặt hở làm Cy = 0 trôi") SAI hay chưa đủ: nguyên nhân thật là mô-men khí động phụ, không liên quan Cy; mọi lần "solver nổ" ở N1 (500 N sau 9-10 s), N4 (27-32 s) và N6 (69.4 s) đều cùng nguồn. Ba solver đã thử (ode23t, ode4, ode45/ode15s) vô ích vì bản chất là mô hình sai, không phải solver.
+  - S2 (lốp VDB cấu hình): lệch dưới 0.3 %; SLIP trọn 100 s: a_y 0.241 %, gamma 0.037 %, F_yf 0.233 %, T_r 0.208 %, T_s 0.077 % (T_a = 2: 0.273, 0.030, 0.265, 0.242, 0.078 %); STEADY, WEAVE, CALIB gần như như cũ (0.08-0.18 %).
+  - S3 (lốp thư viện nguyên bản): SLIP trọn 100 s a_y 7.7 %, gamma 10.4 %, F_yf 7.6 %, T_r 5.2 %, T_s 5.2 %; các ca khác đổi không đáng kể (STEADY 12.0 / 5.8, WEAVE 7.3 / 8.1, CALIB 13.4 / 6.1). Vẫn là thử, không ngưỡng; S3 cố ý dùng lốp khác Plant.
+  - N1 chạy lại: PASS. T6 (lốp riêng, không có thân) không bị ảnh hưởng nên không chạy lại.
+Việc cần sửa ở ngôn ngữ báo cáo: bỏ mọi chỗ ghi "SLIP chỉ tới 60 s" và "T5 chỉ WEAVE" (kể cả DoiChieu_Plant_VDB.txt, đã sửa); G1 có thể đề xuất trên cả bốn ca trọn, nhưng quyết định vẫn là của người dùng.
+Bài học (cho kế hoạch): khi tắt một nhóm hiệu ứng của khối thư viện, liệt kê DialogParameters ĐẦY ĐỦ và kiểm từng tham số còn lại bằng phép thử tự do (không lực, không mô-men) trước khi tin mô hình; lỗi "solver không hội tụ" gần như luôn là mô hình phân kỳ, hãy ghi trạng thái trước khi thử đổi solver. Biến vòng lặp `c` bị load_plant ghi đè (scratch/rerun_s1.m lần đầu) đúng như CLAUDE.md đã cảnh báo. Dòng ghi kết quả thành công của compare_vdb_s1.m từng thiếu đối số solver làm dòng in rác; đã sửa.
+
+==============================================================================================================================================================================================
+11. KẾ HOẠCH KIỂM TRA LẠI THEO RỦI RO (LẬP 2026-11-06 CHIỀU; CHƯA CHẠY, CHỜ NGƯỜI DÙNG RA LỆNH)
+==============================================================================================================================================================================================
+Mục tiêu: kiểm lại các rủi ro còn có thể làm sai kết quả Plant_VDB, rủi ro điểm cao kiểm trước. Điểm 10 là nguy hiểm nhất, 1 là nhẹ nhất (bảng rủi ro ở Tracking/historychat_common.md Lượt
+270). Mỗi bước có tiêu chí ĐẠT viết TRƯỚC khi chạy, đáp án độc lập và đối chứng âm như mục 10.4; phạm vi, an toàn, tự sửa lỗi và tiếp tục khi bị ngắt theo mục 10.1, 10.3, 10.5, 10.6 (không
+sửa thư mục cấm, không commit, không dựng Plant_VDB.mdl chính thức khi chưa có quyết định G1).
+
+11.1 Thứ tự
+Quy tắc: làm theo điểm giảm dần. Có hai ngoại lệ, chỉ khi bước điểm cao cần kết quả của bước điểm thấp: (a) K2 (chọn lốp thư viện, 6 điểm) làm trước K3 (T_r, 8 điểm) vì K3 dùng lốp thư viện;
+(b) K9 (chốt ngưỡng, 4 điểm) phải xong trước K5 và K6 (vòng kín) để ngưỡng không đổi sau khi thấy thứ hạng. Bước cần người dùng quyết mà chưa có quyết định thì để [ ] và làm bước kế tiếp. K0
+và K12 là chốt chặn toàn vẹn ở đầu và cuối, không theo điểm.
+
+Bước | Rủi ro (điểm)                      | Việc                                                         | Script dự kiến (trong script/)       | Cần quyết | Giới hạn | TT
+-----+------------------------------------+--------------------------------------------------------------+--------------------------------------+-----------+----------+-----
+K0   | R12 toàn vẹn (2), chốt đầu         | Băm lại 246 file cấm sửa, so N0; ghi PID MATLAB đang mở      | (lệnh shell)                         | không     | 5 phút   | [x]
+K1   | R1 tham số mặc định ẩn (9)         | Kiểm kê mọi tham số mặt nạ thân và lốp; thử tự do cố định    | audit_vdb_params.m, check_vdb_freebody.m | không | 120 phút | [~] KHÔNG ĐẠT chữ, 11.4
+K2   | R6 chọn lốp bằng lệnh (6)          | Đọc thẳng file hệ số sáu bộ lốp; thử đỉnh lực từng bộ        | check_vdb_tireset.m                  | không     | 60 phút  | [x]
+K3   | R2 mô hình T_r (8)                 | Đường T_r(alpha, mu) Plant so lốp thư viện; độ nhạy e_p0, t_0 | check_vdb_trail.m (mở rộng), sens_trail.m | phần b | 120 phút | [~] a xong, b chờ duyệt
+K4   | R3 kiểm chứng vòng tròn (8)        | Rà mọi câu nói về VDB trong tài liệu, gắn đúng loại khẳng định | (viết, không chạy)                 | không     | 45 phút  | [x]
+K5   | R4 bộ điều khiển trên Plant_VDB (7)| Map, PID, MapPID trên Plant_VDB, so thứ hạng                 | (sau G1, C7, C10)                    | CÓ: G1    | theo C10 | [ ] chờ G1
+K6   | R5 tham số qua lốp khác (6)        | Ba bộ điều khiển trên bản lốp thư viện kiểu S3, không chỉnh  | (sau K5)                             | CÓ: G1    | theo C10 | [ ] chờ G1
+K7   | R7 ca chưa phủ (5)                 | Thêm DRY, RAMP, EDGE vào mốc chuẩn và so S1, S2              | make_plant_baseline.m, compare_vdb_s1.m, compare_vdb_s2.m | không | 90 phút | [x]
+K8   | R8 tái lập (5)                     | Chuyển script chẩn đoán từ scratch vào script/; chạy lại     | check_vdb_bodystate.m, check_plant_sensitivity.m | phần commit | 60 phút | [x]
+K9   | R9 ngưỡng (4)                      | Ghi nguồn mọi ngưỡng mục 2; truy nguồn 0.44 N.m; đóng băng   | (đọc tài liệu, viết)                 | CÓ: duyệt | 60 phút  | [~] chờ duyệt
+K10  | R10 solver và trễ lốp (4)          | S2 với bước cố định 1 ms, 2 ms so với bước thay đổi          | compare_vdb_s2.m (thêm lựa chọn solver) | không  | 60 phút  | [x] 1 ms đạt, 2 ms không
+K11  | R11 lệch a_y 0.017 % (2)           | Tìm nguồn lệch bằng phần dư a_y - (F_yf + F_yr)/m            | (trong K1 hoặc script riêng)         | không     | 30 phút  | [x]
+K12  | R12 toàn vẹn (2), chốt cuối        | Băm lại, so N0 và K0; mọi số trong báo cáo truy được về file | (lệnh shell)                         | không     | 15 phút  | [x]
+Phụ thuộc: K1 -> mọi bước sau (nếu K1 đổi cấu hình thì chạy lại theo 11.3 trước); K2 -> K3, K6; K9 -> K5, K6; K5 -> K6; K7 cần mốc chuẩn mới của Plant cho DRY, RAMP, EDGE.
+
+11.2 Chi tiết và tiêu chí ĐẠT từng bước (chốt trước khi chạy)
+K0. Băm như N0 (cùng danh sách file, cùng cách băm các dòng đã sắp xếp). ĐẠT khi băm tổng bằng B36AE40A...739E của N0. Khác thì dừng hẳn (10.5), tìm file đổi, không chạy bước nào.
+K1. Tham số mặc định ẩn (9 điểm).
+  (a) Kiểm kê: audit_vdb_params.m liệt kê MỌI DialogParameters của khối thân 3DOF và hai khối lốp 2DOF ra csv (tên, giá trị hiện tại, giá trị mặc định của thư viện, ai đặt), rồi xếp mỗi tham
+    số vào đúng một nhóm: ĐẶT (vdb_*_config.m đặt bằng giá trị của Plant hoặc 0), KHÔNG DÙNG (không ảnh hưởng ở chế độ đang chọn), CÓ TÁC DỤNG CHƯA ĐẶT.
+  (b) Phép thử nhiễu loạn cho nhóm KHÔNG DÙNG: đổi từng tham số (số thực nhân 2 và cộng 1; bảng đổi mọi phần tử; cờ đổi trạng thái), chạy thử tự do và thử lực cố định (c), so với lần chạy
+    gốc. Tham số được xếp KHÔNG DÙNG chỉ khi mọi tín hiệu ra lệch dưới 1e-9 tương đối; lệch hơn thì chuyển sang CÓ TÁC DỤNG.
+  (c) check_vdb_freebody.m (đưa scratch/free_body.m vào script/, cố định trong bộ kiểm): thân một mình, xdot 16.67 m/s; ba ca: không lực (đáp án r' = 0, ydot' = -xdot r), lực ngang và mô-men
+    không đổi (-3000 N, -500 N.m; đáp án r' = M/Iz, ydot' = F/m - xdot r), ydot đầu từ 0 tới 25 m/s. ĐẠT khi phần dư nhỏ hơn 1e-4 tương đối ở mọi ca. Thêm một ca lốp với đầu vào cố định
+    (alpha, F_z, mu, kappa = 0): F_x dưới 1 N, F_y khớp T1, M_z khớp công thức Magic Formula của chính bộ hệ số (đáp án tính trong script).
+  (d) Đối chứng âm: trả Cs, Cym về mặc định thì (c) phải báo KHÔNG ĐẠT; đặt Fznom khác tải thật thì phép kiểm lốp phải báo KHÔNG ĐẠT (nếu không báo thì Fznom thuộc nhóm KHÔNG DÙNG và ghi
+    rõ).
+  ĐẠT chung khi: nhóm CÓ TÁC DỤNG CHƯA ĐẶT rỗng, (c) đạt, (d) báo đúng. Mỗi tham số CÓ TÁC DỤNG tìm thêm phải đặt trong vdb_*_config.m, ghi vào 10.9 kiểu "lỗi, nguyên nhân, cách sửa", rồi
+    chạy lại theo 11.3. check_vdb_freebody.m thêm vào check_vdb_n1.m để chạy mỗi lần đổi cấu hình.
+K2. Chọn lốp thư viện bằng lệnh (6 điểm). check_vdb_tireset.m nạp thẳng file tham số của sáu bộ lốp (đường dẫn lấy từ tireParamSet của từng lựa chọn), in PDY1, PKY1, PCY1, PEY1, QBZ1, QDZ1
+và FNOMIN của từng bộ, rồi chạy phép đo đỉnh F_y (mu = 1, F_z 4549 N) cho từng bộ qua đúng đường lệnh mà T3, S3 đã dùng.
+  Quyết định chốt trước: (i) hệ số trong file của 205/60R15 và 275/65R18 trùng nhau và đỉnh đo được trùng nhau thì dữ liệu thư viện trùng, lệnh chọn lốp không có lỗi: ĐẠT, ghi "năm bộ phân
+    biệt"; (ii) hệ số trong file khác nhau mà đỉnh đo trùng nhau thì lệnh chọn lốp không có tác dụng: KHÔNG ĐẠT, đổi cách nạp (nạp file .mat trực tiếp) rồi chạy lại T3 (N5) và S3 (N9).
+  Đối chứng âm: chép một file hệ số sang scratch, nhân PDY1 với 1.1, nạp bằng cùng đường lệnh: đỉnh phải tăng 10 % (+-0.5 %). Không tăng thì đường lệnh không có tác dụng, kết luận (ii).
+K3. Mô hình T_r (8 điểm). (a) Chỉ báo cáo, như T3: vẽ T_r theo alpha (0-0.15 rad) ở mu 0.8, 0.5, 0.33, 0.2 cho Plant (PT(13)-(14)) và các bộ lốp xe con phân biệt được sau K2; bảng tỉ số tại
+alpha 0.01, 0.025, 0.05 rad và góc đỉnh. Đọc giá trị vệt bánh trong tài liệu ở References/ (nguồn [2] của t_0, Pacejka) và ghi số, trang; không chọn lại e_p0 hay t_0 ở bước này.
+  (b) Độ nhạy, CẦN NGƯỜI DÙNG DUYỆT vì chạy bộ điều khiển trên Plant gốc với tham số đổi qua setVariable (không sửa params.json): e_p0 và t_0 nhân 0.7 và 1.3 (bốn lần chạy, giữ e_c), Map,
+    PID, MapPID với tham số đã chọn, ca DRY, SLIP, WEAVE, seed 99999. Tiêu chí chốt trước: thứ hạng theo J = R x S của từng ca giữ nguyên ở cả bốn lần thì kết luận so sánh không nhạy với T_r
+    trong dải +-30 %; chênh dưới 5 % coi là hòa (QuyChuan.txt); thứ hạng đổi thì ghi là giới hạn của luận văn, kèm mức đổi. Dải +-30 % chọn theo độ rộng dải 17-35 mm của nguồn [2] quanh 25
+    mm, không theo kết quả T3.
+K4. Kiểm chứng vòng tròn (8 điểm), việc viết. Rà DoiChieu_Plant_VDB.txt, mục 10.8, 10.10 và mọi chỗ trong Documents/ nhắc tới VDB; mỗi câu khẳng định gắn một trong ba loại: XÁC NHẬN CẤU HÌNH
+(lốp T1, T2, S2), TƯƠNG ĐƯƠNG ĐỘNG HỌC (thân, S1, T5), SO ĐỘC LẬP (S3, K3, K6). ĐẠT khi không câu nào nói mạnh hơn loại của nó, và có một câu nói thẳng là không có số đo xe thật. Làm lượt
+đầu ngay; cập nhật sau K3, K5, K6.
+K5. Bộ điều khiển trên Plant_VDB (7 điểm), CẦN G1. Theo C7 và C10: dựng Plant_VDB.mdl từ cấu hình S1 hoặc S2 (người dùng chọn ở G1), test_plant_vdb, ghép vòng kín. Lưu ý trước: build_closed_loop.m
+nằm trong Model/Sim (cấm sửa), nên cần người dùng chọn giữa cho sửa có kiểm soát hoặc viết hàm ghép riêng trong Model/PRSM_VDB. Chạy Map_VDB, PID_VDB, MapPID_VDB với tham số không đổi (mục 8
+câu 3) trên DRY, SLIP, WEAVE, seed 99999. Tiêu chí (đã có ở mục 2, giữ nguyên): thứ hạng theo J = R x S giữ hay đổi, chênh dưới 5 % là hòa, không có dao động tự duy trì.
+K6. Tham số qua lốp khác (6 điểm), sau K2 và K5. Như K5 nhưng thân VDB với lốp thư viện (kiểu S3, bộ lốp xe con chọn sau K2), không chỉnh lại tham số. Tiêu chí như K5; ngoài ra ghi e_rel của
+DRY so với cổng 10 % (chỉ báo cáo, không phải cổng chọn).
+K7. Ca chưa phủ (5 điểm). Mở rộng make_plant_baseline.m cho DRY, RAMP, EDGE (hai mức T_a), kiểm tự nhất quán như N2, rồi so S1 và S2. Tiêu chí: S1 lệch dưới 1 % (ngưỡng S1, mục 2) ở mọi tín
+hiệu; S2 chỉ báo cáo, nhưng ghi riêng các cửa sổ trên 0.3 g của EDGE (nơi dạng góc nhỏ và atan khác nhau nhiều nhất). Thêm phép thử tự do (K1c) chạy trên trạng thái lấy từ cửa sổ EDGE lớn
+nhất.
+K8. Tái lập (5 điểm). Chuyển scratch/diag69.m thành check_vdb_bodystate.m, scratch/sens_plant.m thành check_plant_sensitivity.m (free_body.m đã chuyển ở K1), theo quy ước đầu file của
+CLAUDE.md. ĐẠT khi chạy từ phiên MATLAB mới (chỉ setup_paths) lặp lại các số ở 10.10 bước 2, 4, 6, 7 trong 1e-6 tương đối, và 10.10 trỏ tới đường dẫn mới. Commit bằng tools/sync_repo.sh CHỈ
+khi người dùng bảo.
+K9. Ngưỡng (4 điểm). Mỗi ngưỡng của mục 2 gắn [NGUỒN: tài liệu, trang] hoặc [ĐỀ XUẤT, lý do]. Truy 0.44 N.m: đọc bài steer-by-wire 2022 trong References/, tìm tài liệu nó trích; tìm được bản
+gốc trong References/ thì ghi trang, không có thì ghi "không dùng trong luận văn" và đề xuất mức thay. Người dùng duyệt danh sách; từ lúc duyệt tới hết K6 không đổi ngưỡng (ngoại lệ ghi ở
+mục 9 như quy tắc đầu file).
+K10. Solver và trễ lốp (4 điểm). Chạy S2 trên SLIP và WEAVE với: (i) bước thay đổi như mốc chuẩn (tham chiếu); (ii) ode4 bước cố định 1 ms; (iii) ode4 bước cố định 2 ms. Đáp án lý thuyết:
+hằng số thời gian trễ lốp tau = 1.59 ms, h/tau = 1.26 ở 2 ms, nằm trong miền ổn định của RK4 (khoảng 2.78), nên kỳ vọng ổn định nhưng kém chính xác. ĐẠT khi (ii), (iii) lệch so với (i) dưới
+0.1 điểm phần trăm ở a_y, gamma, T_r, T_s và không có dao động bước nhảy (đếm cực trị liên tiếp đổi dấu mỗi bước, như bộ dò T6). Đối chứng âm: bước 5 ms (h/tau = 3.1, ngoài miền) phải bị bộ
+dò báo dao động hoặc phân kỳ.
+K11. Lệch a_y 0.017 % (2 điểm). Giả thuyết cũ (g của khối khác g của Plant) đã YẾU: params.json có g = 9.81, đúng bằng mặc định của khối, và phép so đã nhân P.g. Làm: tính phần dư a_y,VDB -
+(F_yf + F_yr)/m trên tín hiệu S1 STEADY, tách theo thành phần (ydot' + xdot r, số hạng xdot'); ĐẠT khi chỉ ra được thành phần gây lệch và lệch còn dưới 0.002 % sau khi bù trong phép đo; nếu
+không tìm được trong 30 phút thì ghi "không rõ, dưới 0.02 %, không ảnh hưởng ngưỡng 1 %" và dừng.
+K12. Như K0, và so cả với K0. Đối chiếu từng số mới trong mục 11.4 với file kết quả. ĐẠT khi băm khớp và không số nào thiếu nguồn.
+
+11.3 Chạy lại khi một bước đổi cấu hình
+K1 đổi vdb_body_config.m hoặc vdb_tire_config.m: chạy lại N1, N3 (T1, T2), N4 (T5), N6 (S1), N9 (S2, S3), và T6 nếu đổi cấu hình lốp; ghi số trước và sau vào 11.4. K2 đổi cách nạp lốp: chạy
+lại N5 (T3), S3. K7 hoặc K10 tìm ra lệch S1 trên 1 %: dừng chuỗi, coi như một rủi ro mới cùng loại R1, quay lại K1(a) cho phần khối liên quan.
+
+11.4 Kết quả (chạy 2026-11-06 chiều; K5, K6, K3b chưa chạy, lý do ở dưới)
+Chạy 2026-11-06 từ 13:50 tới khoảng 16:00 theo đúng thứ tự mục 11.1, trừ K5 và K6 (cần cổng G1, chưa có quyết định) và K3(b) (cần duyệt vì chạy bộ điều khiển). Mọi số truy được về file ghi
+trong ngoặc, trong Result/PRSM/Plant_VDB/. Tiêu chí ĐẠT dùng đúng chữ ở 11.2; chỗ nào không đạt đúng chữ thì ghi KHÔNG ĐẠT rồi mới giải thích.
+K0 ĐẠT. Băm lại 246 file: so từng dòng với night_N0_hashes.txt, 0 file khác. Băm tổng tính lại bằng PowerShell ra C9AFABAB...58AD cho cả bản N0 lẫn bản mới (khác chuỗi B36AE40A ghi ở 10.9
+chỉ vì cách ghép dòng trước khi băm khác nhau, không phải file đổi). MATLAB của người dùng (PID 43932, 54320) còn nguyên.
+K1 (R1, 9 điểm) KHÔNG ĐẠT theo đúng chữ của 11.2 (nhóm "có tác dụng chưa đặt" không rỗng), nhưng phần còn lại đã được xếp loại; đề xuất sửa tiêu chí ở cuối mục này, chờ duyệt.
+  (a) audit_vdb_params.m, Plant_VDB_K1_audit_body.csv, Plant_VDB_K1_audit_tire.csv. Khối thân có 62 tham số: ĐẶT 27, KHÔNG TÁC DỤNG 27 (gồm Fznom, xdot_tol, longOff, latOff, vertOff,
+    wrapAng), CÓ TÁC DỤNG 7, không chạy được 1. Khối lốp có 222 tham số: ĐẶT 57, KHÔNG TÁC DỤNG 122, CÓ TÁC DỤNG 42, bỏ qua 1 (tireParamSet, là tên file).
+  Thân, 7 tham số có tác dụng: extro, extydoto, CalphaMode là cờ chế độ, mặc định tắt và đang tắt (bật lên thì đổi nguồn điều kiện đầu hoặc kiểu độ cứng, không phải mặc định ngầm); NF, NR,
+    h, g chỉ làm đổi tải đứng FzF, FzR, là hai đầu ra không dùng vì lốp nhận tải Fext cố định. extTamb không chạy được vì cờ nhiệt độ ngoài đòi thêm đầu vào. Vậy g của khối không ảnh hưởng
+    gì tới a_y, gamma, ydot (ghi đè giả thuyết cũ của R11, xem K11).
+  Lốp, 42 tham số có tác dụng, chia bốn loại. (1) FyRelFreqLwrLim đổi F_y 1.7 %: đó chính là độ trễ lốp 1.59 ms đã đo ở T6, không ẩn. (2) 27 hệ số dọc và bánh xe (PCX1, PDX1, PEX1, PEX4,
+    PKX1, PHX1, PVX1, PPX1-4, RBX1-2, RCX1, REX1, IYY, VERTICAL_STIFFNESS, Q_RE0, Q_V1, BREFF, DREFF, FREFF, br, BrakeType, LONGVL, NOMPRES, FxRelFreqLwrLim): đổi F_y tối đa 1.7e-4 (0.017
+    %), đổi M_z cỡ 1 lần giá trị riêng của nó (M_z còn mang số hạng lực dọc nhân vệt). (3) 7 tham số chỉ đổi M_z: QBZ1, QCZ1, QDZ1, QEZ1, PPZ1, SSZ2 và CAMMIN (cận camber, chỉ có nghĩa khi
+    camber khác 0). (4) 7 hệ số mô-men lật QSX*: chỉ đổi M_x.
+  Đổi cách đo sau khi thấy số (ghi theo quy tắc): lần quét đầu kích thích rộng hơn thực tế (mô-men dẫn động 100 N.m, camber 0.03, 250 kPa) cho 78 tham số có tác dụng; chỉnh lại đúng như S2
+    cấp cho lốp (không phanh, không dẫn động, camber 0, 220 kPa, F_z cố định, hai lần chạy: mu 0.8 ở 20 m/s và mu 0.3 ở 8 m/s) còn 42. Hai bản cũ giữ ở scratch/k1_audit_tire_pass1_wake.csv
+    và scratch/k1_audit_tire_pass2_before_redo.csv. Lý do: tham số chỉ có nghĩa khi đầu vào tương ứng khác giá trị đang cấp.
+  (b) Mọi tham số xếp KHÔNG TÁC DỤNG có đối chứng thuận: đổi giá trị mà đầu ra lệch dưới 1e-9 tương đối. Lô lần đầu có lỗi cách làm: một lần sửa file bằng Python không chạy vì lệnh python
+    không có trong PATH (đã sửa tay), MATLAB bị sập nhiều lần giữa chừng (lỗi heap, vô hại, đã có bộ chạy lại tự động scratch/run_k1_tire.sh); csv ghi từng dòng nên không mất dữ liệu.
+  (c, d) check_vdb_freebody.m ĐẠT (Plant_VDB_K1_freebody.txt): thân tự do và có lực, 6 ca (ydot đầu 0, 5, 25 m/s), sai lệch so với nghiệm giải tích tối đa 1.2e-13 (giới hạn 1e-4); lốp cố
+    định góc trượt, 2 mức mu x 3 góc: F_y lệch tối đa 1.6e-12 mu*F_z, F_x tối đa 0.077 N. Đối chứng âm đúng kỳ vọng: Cs, Cym, Cpm về mặc định lệch 8e3 (NOT PASS), FNOMIN nhân 1.2 lệch 7.8e-2
+    (NOT PASS). Đã gắn vào check_vdb_n1.m.
+  Đề xuất sửa tiêu chí (CHỜ DUYỆT, chưa áp dụng): định nghĩa "có tác dụng" theo đại lượng thật sự dùng (F_y; thêm M_z nếu T_r lấy từ M_z) với ngưỡng 0.1 %. Khi đó phần còn lại là FyRelFreqLwrLim
+    (độ trễ đã biết) và nhóm M_z (hệ số mô-men của chính lốp thư viện, chỉ cần khi T_r lấy từ M_z như S3).
+K2 (R6, 6 điểm) ĐẠT (check_vdb_tireset.m, Plant_VDB_K2_tireset.txt, .csv). Phép thử thứ tự (chạy xuôi rồi ngược các bộ lốp và các tải) lệch 0.00; đối chứng âm (PDY1 x 1.1 qua External file)
+làm đỉnh F_y tăng x1.0953 (giới hạn 1.10 +-0.005, sát biên; đỉnh không tăng đúng 10 % vì đỉnh phụ thuộc cả hình dạng đường cong). KẾT LUẬN: lệnh chọn lốp CÓ tác dụng, sáu bộ cho đúng năm
+đường cong khác nhau; 205/60R15 và 275/65R18 trùng nhau tới 1e-9 ở cả ba tải (3167, 4549, 7000 N), nên đó là dữ liệu hay ánh xạ của thư viện, không phải lỗi của lệnh chọn. Nói "năm bộ lốp
+phân biệt" trong báo cáo. Hệ số của bộ lốp có sẵn không đọc được (hàm tireMF* đóng, mask không cập nhật khi đổi bằng lệnh), nên không so được từng hệ số.
+K3(a) (R2, 8 điểm) đã chạy, chỉ báo cáo (check_vdb_trail_mu.m, Plant_VDB_K3_trail_mu.txt, .csv, .png). T_r của Plant và của năm bộ lốp, mu = 0.8, 0.5, 0.33, 0.2, hàng bán trục trước, F_z
+4549 N, 20 m/s.
+  Vệt khí nén t = -M_z/F_y tại góc trượt 0.025 rad, mu 0.8: Plant 20.4 mm; lốp thư viện 9.1 tới 15.9 mm (0.45 tới 0.78 lần). Khi mu giảm, t so với giá trị ở mu 0.8: Plant 0.865 (mu 0.5),
+    0.68 (0.33), 0.33 (0.2); 205/60R15 là 0.74, 0.36, -0.06; 235/45R18 là 0.60, 0.24, 0.01; 225/40R19 là 0.54, 0.23, 0.00; 265/50R20 là 0.65, 0.29, 0.04. Tức lốp thư viện mất vệt nhanh hơn
+    Plant và về 0 ở mu 0.2, còn Plant giữ 1/3.
+  Đỉnh T_r của bốn bộ lốp xe con so với Plant: 0.85 tới 0.91 lần ở cả bốn mức mu (Plant 15.41, 9.64, 6.36, 3.85 N.m; lốp 13.1-14.0, 8.2-8.8, 5.4-5.75, 3.3-3.5). T_r tại 0.025 rad: tỉ số 0.96
+    tới 1.22 ở mu 0.8, 0.90 tới 1.02 ở mu 0.5, 0.84 tới 0.88 ở mu 0.33, 0.83 tới 0.90 ở mu 0.2. Bộ xe tải thương mại khác hẳn (đỉnh ở 0.155 rad), không dùng để so.
+  Nhận xét (không phải kết luận về e_p0): hình dạng và độ lớn T_r của Plant nằm trong khoảng 10-20 % của lốp xe con thư viện ở mọi mu, dù vệt khí nén riêng lẻ khác nhiều hơn; phần đệm là
+    caster e_c nhân F_y. Độ nhạy của kết luận so sánh bộ điều khiển với e_p0, t_0 (K3b) CHƯA CHẠY, chờ duyệt.
+K4 (R3, 8 điểm) ĐẠT lượt đầu: bảng phân loại khẳng định đã ghi ở cuối Documents/Notes/PRSM/DoiChieu_Plant_VDB.txt. Phát hiện thêm: hệ số C và E của chính Plant được trích từ khối Tire (Magic
+Formula) của VDB (Documents/Data/params_cum2.csv, dòng Cf, Ef), nên "lốp VDB khớp lốp Plant" không phải hai nguồn độc lập; phép so độc lập duy nhất về lốp là S3 và K3.
+K5, K6 CHƯA CHẠY: cần cổng G1 (chọn S1 hay S2 làm cấu hình Plant_VDB) và cách ghép vòng kín vì build_closed_loop.m nằm trong Model/Sim (cấm sửa).
+K7 (R7, 5 điểm) ĐẠT. make_plant_baseline.m thêm DRY, RAMP, EDGE của DREWS v3 (STEADY của SSW đã gồm DRY và EDGE theo thiết kế: cua giữ đều từ nhẹ tới gần giới hạn, nên rủi ro "chưa phủ" nhẹ
+hơn dự đoán). S1 sau khi sửa K11, hai mức T_a: DRY a_y 0.001-0.003 %, EDGE 0.000-0.001 %, RAMP 0.103-0.104 % (a_y), 0.098-0.099 % (T_r), mọi ca dưới ngưỡng 1 %. S2 (T_a = 0): DRY 0.077 %,
+RAMP 0.104 %, EDGE 0.027 % (a_y). S3 (lốp thư viện 205/60R15): a_y 13.7 %, 20.3 %, 16.4 %; gamma 5.2 %, 11.9 %, 10.3 %. RAMP là ca lệch nhiều nhất ở S1 và S2, nguyên nhân phù hợp với số hạng
+dv/dt*beta của N4 (tốc độ đổi khi cua); chưa tách riêng.
+K8 (R8, 5 điểm) ĐẠT, chưa commit. Hai script chuyển vào script/: check_vdb_bodystate.m (từ scratch/diag69.m, thêm lựa chọn khí động mặc định) và check_plant_sensitivity.m (từ scratch/sens_plant.m);
+check_vdb_freebody.m ở K1. Chạy từ phiên MATLAB mới: với bảng khí động mặc định đặt lại, ydot = 27.3164 m/s và r = -1.6586 rad/s tại 69.39 s (10.10 ghi 27.3 và -1.66); với cấu hình hiện nay
+thân chạy tới 69.39 s không lỗi (ydot -0.07, r -0.165). Độ nhạy của Plant: 3.05e-8, 3.67e-6, 6.27e-6 (10.10 ghi 3e-8, 4e-6, 6e-6). Hai file Plant_VDB_K8_bodystate_<off|default>.txt và
+Plant_VDB_K8_plant_sensitivity.txt.
+K9 (R9, 4 điểm) đã tra nguồn, CHỜ DUYỆT, chưa đóng băng. Nguồn của 0.44 N.m: bài "Methods for modeling the steering wheel torque of a steer-by-wire vehicle" (Automotive and Engine Technology
+7:53-64, 2022), trang 3: "According to [4], a range of 0.44-0.58 Nm was identified as the perceptible tactile threshold"; [4] là Buschardt, Synthetische Lenkmomente, luận án TU Berlin 2003,
+KHÔNG có trong References/ và chưa kiểm được. Cùng bài, trang 9, dùng ngưỡng 0.8 N.m "as defined by [4]": hai số khác nhau cùng một nguồn, nên không dùng 0.44 như số đã kiểm.
+  Nguồn có trong References/: Steering Wheel Torque Rendering - Measure of Driver Discrimination Capabilities (SAE, trang 2): ngưỡng phân biệt mô-men 12.7 % tại mô-men chuẩn 60 mN.m; 15 %
+    tới 43.7 % tại 0.2 N.m khi có lực phụ. Manual discrimination of force using active finger motion (trang 1, 3): ngưỡng phân biệt lực khoảng 7 %, dải 5-10 %. Cả hai là thí nghiệm cảm nhận
+    trên tay, không phải vô-lăng xe với EPS.
+  Đề xuất (chờ duyệt): bỏ 0.44 N.m; dùng ngưỡng tương đối 10 % cho T_s như cho a_y, gamma, T_r (nằm trong dải 5-10 % của lực ngón tay và dưới 12.7 % của mô-men vô-lăng), ghi là [ĐỀ XUẤT,
+    tham chiếu JND]. Ngưỡng 1 % của T1, T2, T5, S1 giữ [ĐỀ XUẤT] (thấp hơn mọi ngưỡng cảm nhận ít nhất 5 lần). Dải +-30 % của K3(b) quanh t_0: nguồn [2] cho dải 17-35 mm.
+K10 (R10, 4 điểm): S2, ode4 bước cố định, SLIP và WEAVE, sai số so với Plant so với bản bước thay đổi (SLIP gamma 0.037 %, T_s 0.077 %; WEAVE gamma 0.083 %, T_s 0.099 %). Bước 1 ms: SLIP
+gamma 0.037 %, T_s 0.076 %; WEAVE 0.084 %, 0.099 %: ĐẠT (lệch dưới 0.1 điểm phần trăm). Bước 2 ms: SLIP gamma 0.172 %, T_s 0.547 %; WEAVE gamma 0.283 %, T_s 1.124 %: KHÔNG ĐẠT tiêu chí 0.1
+điểm (gamma và T_s đều lệch thêm hơn 0.1 điểm; T_s thêm 0.47 và 1.0 điểm) nhưng không dao động (nội dung tần số cao của gamma và T_s bằng của Plant); tức ổn định, kém chính xác, đúng dự đoán
+lý thuyết (h/tau = 1.26). Bước 5 ms (đối chứng âm): SLIP phân kỳ tại 0.205 s (đạo hàm tích phân relaxation không hữu hạn), bộ dò báo đúng; WEAVE 5 ms bị MATLAB sập (lỗi heap) nên không có
+số, không ảnh hưởng kết luận. Hệ quả: vòng kín dùng solver bước thay đổi (MaxStep 2 ms) như build_closed_loop.m thì không bị ảnh hưởng; nếu sau này cần bước cố định thì dùng 1 ms.
+K11 (R11, 2 điểm) ĐẠT, tìm ra nguyên nhân: khối VDB trả a_y theo đơn vị g chuẩn 9.80665 m/s^2, còn S1 nhân với g = 9.81 của Plant; tỉ lệ 9.81/9.80665 = 1.000342 khớp với hệ số tốt nhất đo
+được (S1 = 1.000342 x lực/m trên cả DRY lẫn STEADY). Sửa: build_vdb_s1.m, run_vdb_body.m, check_vdb_body.m dùng 9.80665; giả thuyết cũ (g của khối khác g của Plant) sai, g của khối chỉ đổi
+FzF, FzR. Chạy lại toàn bộ (11.3), mục "rerun K11" trong Plant_VDB_S1_compare.txt và Plant_VDB_S2S3_compare.txt: S1 ĐẠT cả 7 ca, hai mức T_a (a_y STEADY 0.017 -> 0.000 %, DRY 0.001, EDGE
+0.000, WEAVE 0.001; còn SLIP 0.020, RAMP 0.103, CALIB 0.076 %, phù hợp với số hạng dv/dt*beta); T5 ĐẠT 8/8 (gamma 0.0002-0.054 %, a_y 0.0001-0.154 %, đối chứng âm vẫn NOT PASS 76 % và 19 %);
+S2 dưới 0.3 % (SLIP a_y 0.240 %); S3 như cũ. Số a_y trong 10.10 và DoiChieu cũ lệch 0.017 % là do chỗ này, các số còn lại không đổi.
+K12 ĐẠT: băm lại lần hai, 246 file khớp N0, 0 khác. Việc thay đổi nằm trong Model/PRSM_VDB/, Result/PRSM/Plant_VDB/, Documents và Tracking. Tiến trình MATLAB do tôi mở đã tắt hết; PID 43932
+và 54320 của người dùng còn nguyên.
+Việc còn lại và cần người dùng quyết: (1) duyệt đề xuất sửa tiêu chí K1 và danh sách ngưỡng K9; (2) K3(b), K5, K6 cần cổng G1 và quyết định cách ghép vòng kín; (3) commit bằng tools/sync_repo.sh
+khi người dùng bảo (chưa có gì của Plant_VDB trong git).

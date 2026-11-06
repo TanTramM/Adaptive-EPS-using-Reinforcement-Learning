@@ -5,14 +5,14 @@ function p = result_dir(varargin)
 %   p = result_dir('Compare', 'Map_vs_PI')   -> <repo>/Result/Compare/Map_vs_PI
 %
 %   Layout of <repo>/Result/ (mirrors Model/):
-%     PRSM/Plant/, PRSM/Reference/        results of the shared environment
+%     PRSM/Plant/, PRSM/Reference/, PRSM/Plant_VDB/   results of the shared environment (Plant_VDB: the VDB plant, Model/PRSM_VDB/)
 %     Controllers/<Ctrl>/<what>/          results of ONE controller (Design, Calib = Calib_v2 on disk, CalibV1 = Calib on disk, Cases)
 %     Compare/<A>_vs_<B>/                 results that compare controllers
 %   File naming (rule in Tracking/CLAUDE.md): <Subject>_<CASE>_<what>[_<event>]_<sens>.<png|csv|mat>, e.g. Map_SLIP_resp_s00000.png.
 %   Change the root or the layout here only (this is the single place that knows it).
 
     parts = varargin;
-    if any(strcmp(parts{1}, {'Plant', 'Reference'}))
+    if any(strcmp(parts{1}, {'Plant', 'Reference', 'Plant_VDB'}))      % Plant_VDB = Result/PRSM/Plant_VDB (added 2026-11-05, see Documents/Shared/KeHoach_Plant_VDB.txt)
         parts = [{'PRSM'}, parts];
     elseif ~strcmp(parts{1}, 'Compare')
         parts = [{'Controllers'}, parts];

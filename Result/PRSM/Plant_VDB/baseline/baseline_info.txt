@@ -1,0 +1,4 @@
+Plant baseline (night plan N2), 2026-11-06 14:48
+Plant.mdl SHA-256: 2336510a388e915aaa4a5fb0d23c8fdea9abe44b15e5fa4b7c1f5bd54855c52e
+git HEAD: 0334a3d
+T_a levels: 0 and a 2 N.m step at t = 1 s. Signals on a 1 ms grid. Cases: make_cases('SSW') and make_cases('CALIB').

@@ -1,0 +1,12 @@
+N5 test T3: reaction torque T_r from the aligning moment of six VDB tire sets (2026-11-06 03:46)
+Front half axle F_z = 4548.7 N, Vx = 20 m/s, mu = 1; Plant: e_c = 0.023 m, t_0 = 0.025 m (e_p0 = 0.048 m), n_st = 16
+
+tire                                  trail t=-Mz/Fy at alpha 0.01  0.025  0.05 rad (m)   T_r VDB at 0.025 rad (N.m)  T_r Plant (N.m)  ratio   peak T_r VDB / Plant   sign
+Light passenger car 205/60R15           0.0105  0.0097  0.0067                          10.35                       10.69          0.97    16.40 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+Mid-size passenger car 235/45R18        0.0165  0.0147  0.0080                          13.46                       10.69          1.26    17.53 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+Performance car 225/40R19               0.0230  0.0170  0.0076                          14.08                       10.69          1.32    17.22 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+SUV 265/50R20                           0.0190  0.0173  0.0103                          12.78                       10.69          1.20    17.11 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+Light truck 275/65R18                   0.0105  0.0097  0.0067                          10.35                       10.69          0.97    16.40 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+Commercial truck 295/75R22.5            0.0108  0.0106  0.0100                           3.30                       10.69          0.31    12.62 /  19.27      PASS  (neg. control Mz flipped: NOT PASS)
+
+N5 sign tests overall: PASS (T3 itself is report only: the table above is the result; no conclusion about e_p0)

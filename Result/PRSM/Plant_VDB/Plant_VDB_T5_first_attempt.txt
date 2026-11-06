@@ -1,0 +1,11 @@
+N4 tests T4, T5 of the VDB body (2026-11-06 02:17)
+
+T5: body driven by the Plant forces
+case    Ta  err(gamma)%  err(a_y)%  v err held(km/h)  v err change(km/h)  max|dv/dt*beta| (m/s^2)  RMS(dv/dt*beta)/max|a_y| %  T5
+STEADY  0   RUN ERROR: Solver encountered an error while simulating model 'tmp_n4_body' at time 27.826011575983294 and cannot continue. Please check the model for errors. -> NOT CONCLUDED
+STEADY  2   RUN ERROR: Solver encountered an error while simulating model 'tmp_n4_body' at time 27.738372172385848 and cannot continue. Please check the model for errors. -> NOT CONCLUDED
+SLIP    0   RUN ERROR: Solver encountered an error while simulating model 'tmp_n4_body' at time 32.085969680495282 and cannot continue. Please check the model for errors. -> NOT CONCLUDED
+SLIP    2   RUN ERROR: Solver encountered an error while simulating model 'tmp_n4_body' at time 31.893915248211758 and cannot continue. Please check the model for errors. -> NOT CONCLUDED
+WEAVE   0    0.0328     24.6203      0.000             0.000               0.0000                  0.0001                       NOT PASS
+WEAVE   2    0.0562     23.6950      0.000             0.000               0.0003                  0.0021                       NOT PASS
+CALIB   0   RUN ERROR: Solver encountered an error while simulating model 'tmp_n4_body' at time 26.779320416613931 and cannot continue. Please check the model for errors. -> NOT CONCLUDED
