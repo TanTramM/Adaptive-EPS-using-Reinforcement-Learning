@@ -9,6 +9,14 @@
 
 ---
 
+## 0. VIỆC ĐANG LÀM DỞ: PLANT_VDB (cập nhật 2026-11-06 chiều, để máy khác biết làm tới đâu; đọc mục này TRƯỚC mục 1)
+- Đọc ở file kế hoạch Documents/Shared/KeHoach_Plant_VDB.txt: mục 10.10 (nguyên nhân lỗi cũ), mục 11 (kế hoạch kiểm theo 12 rủi ro) và 11.4 (kết quả). Lượt 269-273 ở mục 8.
+- XONG: đêm 2026-11-06 làm N0-N10; sáng sửa lỗi bảng khí động Cs, Cym, Cpm của khối thân VDB; chiều chạy K0-K12 trừ K3b, K5, K6. S1 (thân VDB 3DOF + lốp và cột lái của Plant) khớp Plant dưới 0.11 % trên 7 ca, T5 đạt 8/8, a_y đã sửa dùng g chuẩn 9.80665. Đã commit và push (e4d9320).
+- CHƯA LÀM, cần NGƯỜI DÙNG quyết trước: (1) duyệt đề xuất sửa tiêu chí K1 (đổi "có tác dụng" sang ngưỡng 0.1 % trên F_y, M_z); (2) duyệt danh sách ngưỡng K9 (bỏ 0.44 N.m, dùng 10 % cho T_s); (3) cổng G1: chọn S1 hay S2 làm cấu hình Plant_VDB; (4) T_r lấy từ công thức Plant hay từ M_z (mục 8 câu 1 của kế hoạch); (5) cách ghép vòng kín vì Model/Sim/script/build_closed_loop.m là thư mục cấm sửa (sửa có kiểm soát, hay hàm ghép riêng trong Model/PRSM_VDB); (6) cho phép K3b (chạy Map, PID, MapPID trên Plant gốc với e_p0, t_0 đổi +-30 %).
+- SAU KHI CÓ QUYẾT ĐỊNH: K5 (Map_VDB, PID_VDB, MapPID_VDB trên Plant_VDB, tham số không đổi, DRY, SLIP, WEAVE, seed 99999, so thứ hạng J = R x S) rồi K6 (cùng việc trên bản lốp thư viện kiểu S3, chỉ báo cáo); sau đó C7-C11 của mục 3 và 6 của kế hoạch (dựng Plant_VDB.mdl chính thức, test_plant_vdb, viết luận văn). Chưa dựng Plant_VDB.mdl; chỉ có model thử PlantVDBS1/2/3.slx trong Model/PRSM_VDB/Plant_VDB/.
+- CHẠY TRÊN MÁY MỚI: git pull; run(Model/setup_paths.m); make_plant_baseline (khoảng 1 phút, sinh lại 14 file .mat mốc chuẩn vì .mat không commit); rồi compare_vdb_s1(tag, lvl), compare_vdb_s2(variant, tag, lvl), check_vdb_n1 (kiểm cấu hình, gồm check_vdb_freebody). Mỗi lần gọi MATLAB nền dùng use_sim_tmp (TEMP sang ổ D; nếu máy không có ổ D thì tự dùng thư mục tạm). MATLAB hay sập heap giữa chừng, vô hại nếu csv đã ghi.
+- Quy tắc nhớ: ngưỡng kiểm Plant_VDB sửa được nhưng phải ghi số cũ, số mới, lý do, thời điểm; không đổi cổng chọn bộ điều khiển. Khi tắt hiệu ứng của khối thư viện phải liệt kê hết tham số mặt nạ và kiểm bằng phép thử tự do. Nhật ký COMMON vẫn QUÁ HẠN NÉN (chưa nén, cần một lượt riêng).
+
 ## 1. TRẠNG THÁI HIỆN TẠI (2026-10-12, sáng)
 
 - Repo & PRSM: Plant, Ref, Sensors, AssistLimit, Actuator đủ và test PASS; khung thử `Model/Sim`.
@@ -1416,3 +1424,6 @@ GHI TRƯỚC KHI TRẢ LỜI. Chỉ tư vấn, không sửa file. Căn cứ: bui
 
 ### Lượt 273 - [common] Commit và push toàn bộ công việc Plant_VDB để tiếp tục từ laptop (2026-11-06)
 - Người dùng bảo commit và push hết. Dùng tools/sync_repo.sh. Ngoại lệ có chủ ý: 229 MB tín hiệu .mat sinh lại được (Result/PRSM/Plant_VDB/baseline/*.mat và Plant_VDB_*.mat) KHÔNG commit, thêm vào .gitignore; trên laptop chạy lại make_plant_baseline (khoảng 1 phút) rồi compare_vdb_s1/s2 khi cần. Mọi script, txt, csv, png, tài liệu được commit. Việc treo như Lượt 272.
+
+### Lượt 274 - [common] Cập nhật tracking và kế hoạch cho máy khác (2026-11-06)
+- Thêm mục 0 "VIỆC ĐANG LÀM DỞ: PLANT_VDB" ở đầu mục trạng thái của file này và khối "TIẾP TỤC TỪ MÁY KHÁC" ở đầu KeHoach_Plant_VDB.txt: làm xong gì, chờ người dùng quyết gì, làm gì sau đó, cách chạy trên máy mới. Commit và push.

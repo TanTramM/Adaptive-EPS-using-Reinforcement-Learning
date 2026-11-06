@@ -4,6 +4,13 @@ KẾ HOẠCH PLANT_VDB BẬC 3DOF: CÁC CHẶNG, CHECKPOINT VÀ YÊU CẦU TRƯ�
 Lập lại: thứ 5, 2026-11-05, 23:20, thay bản lập lúc 22:00. Báo cáo thầy: sáng thứ 7, 2026-11-07 (10:00 theo lịch thường lệ, sửa dòng này nếu giờ khác).
 Nhật ký chi tiết: Tracking/historychat_common.md (Lượt 252 trở đi). File này chỉ giữ kế hoạch, trạng thái và kết quả ngắn.
 
+TIẾP TỤC TỪ MÁY KHÁC (cập nhật 2026-11-06 chiều, đọc khối này trước):
+Xong: N0-N10 (mục 10), nguyên nhân lỗi cũ (10.10), K0-K12 trừ K3b, K5, K6 (mục 11, kết quả ở 11.4). S1 khớp Plant dưới 0.11 % trên bảy ca, T5 đạt 8/8. Đã commit và push.
+Chờ người dùng quyết: (1) sửa tiêu chí K1; (2) danh sách ngưỡng K9; (3) cổng G1 (S1 hay S2); (4) T_r lấy từ công thức Plant hay từ M_z (mục 8 câu 1); (5) cách ghép vòng kín vì build_closed_loop.m
+cấm sửa; (6) K3b.
+Làm tiếp khi có quyết định: K5, K6, rồi C7-C11 (mục 3 và 6). Chưa có Plant_VDB.mdl chính thức; model thử PlantVDBS1/2/3.slx ở Model/PRSM_VDB/Plant_VDB/.
+Máy mới: git pull, run Model/setup_paths.m, chạy make_plant_baseline (khoảng 1 phút) để sinh lại các file .mat mốc chuẩn (không commit); rồi compare_vdb_s1, compare_vdb_s2, check_vdb_n1.
+
 Mục tiêu: dựng Plant_VDB từ Vehicle Dynamics Blockset (VDB, thư viện mô hình xe của MATLAB), bậc đầu là thân 3 bậc tự do (3DOF: dọc, ngang, quay đầu). Trước khi dựng phải biết rõ VDB giống và
 khác Plant ở đâu. Các bộ điều khiển chạy trên plant này mang hậu tố _VDB (Map_VDB, PID_VDB, MapPID_VDB).
 Phạm vi đã chốt: làm 3DOF trước. 14DOF (thêm lắc, nhún, chuyển tải, tham số hệ treo không có nguồn) để ngoài phạm vi; chỉ mở lại nếu thầy yêu cầu.
