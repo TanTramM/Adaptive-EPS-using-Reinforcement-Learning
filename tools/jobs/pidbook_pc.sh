@@ -10,7 +10,7 @@ failed() { mstat "STOPPED: $1"; push_mine "[PC] pidbook stopped: $1"; exit 1; }
 
 push_mine() {   # git add ONLY the paths of the PC (KeHoach_PID_Sach 6.1), commit, pull --rebase, push
   cd "$REPO"
-  git add -A -- Model/Controllers/PID Model/Controllers/PIDLag/script/pidlag_variables.m Model/Controllers/PIDLag/script/pidlag_eval.m Model/data/pid.json \
+  git add -A -- Model/original/Controllers/PID Model/original/Controllers/PIDLag/script/pidlag_variables.m Model/original/Controllers/PIDLag/script/pidlag_eval.m Model/shared/data/pid.json \
     Result/Controllers/PID "$CD"/ParetoCommon_PID_* "$CD"/Legacy_2026-10-27/ParetoCommon_PID_* "$CD"/ParetoCommon_MapPID_w[5-8]_* \
     "$CD"/PIDBOOK_PC_* "$CD"/PIDBOOK_MAPPID_PC_* tools/jobs/pidbook_pc.sh Tracking/historychat_pidbook_pc.md 2>/dev/null
   git diff --cached --quiet || git commit -q -m "${1:-[PC] pidbook progress}
@@ -33,7 +33,7 @@ trap 'kill $HOURLY 2>/dev/null' EXIT
 
 mstat "pipeline start"
 # --- pid.json: move the old designs to 'legacy' (not read), idempotent
-run_job_patient pb_json "J=jsondecode(fileread('$REPO/Model/data/pid.json')); if ~isfield(J,'legacy'), L=struct(); for f={'design','design_grid','design_emax5','design_pre_pareto'}, if isfield(J,f{1}), L.(f{1})=J.(f{1}); J=rmfield(J,f{1}); end, end, J.legacy=L; J.x_note_book='2026-10-27: design is written by the book redesign (KeHoach_PID_Sach.txt: K, Ti, Td, N); older designs are under legacy and are NOT read'; fid=fopen('$REPO/Model/data/pid.json','w'); fprintf(fid,'%s',jsonencode(J,'PrettyPrint',true)); fclose(fid); end; disp('PB_JSON_DONE')" PB_JSON_DONE || failed json
+run_job_patient pb_json "J=jsondecode(fileread('$REPO/Model/shared/data/pid.json')); if ~isfield(J,'legacy'), L=struct(); for f={'design','design_grid','design_emax5','design_pre_pareto'}, if isfield(J,f{1}), L.(f{1})=J.(f{1}); J=rmfield(J,f{1}); end, end, J.legacy=L; J.x_note_book='2026-10-27: design is written by the book redesign (KeHoach_PID_Sach.txt: K, Ti, Td, N); older designs are under legacy and are NOT read'; fid=fopen('$REPO/Model/shared/data/pid.json','w'); fprintf(fid,'%s',jsonencode(J,'PrettyPrint',true)); fclose(fid); end; disp('PB_JSON_DONE')" PB_JSON_DONE || failed json
 # --- P3 (one MATLAB) then worker 4 of the grid; workers 1-3 start now (max 4 MATLAB at once)
 ( run_job_patient pb_p3 "run('$REPO/scratch/pidbook/p3_map_check.m')" P3_DONE; mstat "P3 finished"
   run_job_patient pid_grid_w4 "run_pid_grid(4,4); disp('PID_GRID_WORKER_DONE')" PID_GRID_WORKER_DONE ) &
@@ -70,7 +70,7 @@ run_job_patient pb_select_final "compare_pareto_common('select',{'PID'},true); d
 restore_shared copy
 mstat "P7 done"; push_mine "[PC] PID final design chosen on the common-seed front"
 # --- P8: SSW (seed 99987-99989 common, 11001-11003 local)
-run_job_patient pb_ssw "run('$REPO/Model/Controllers/PID/load_pid.m'); run_scoring_seeds('PID',[99987 99988 99989 11001 11002 11003],'SSW'); disp('PB_SSW_DONE')" PB_SSW_DONE || failed "P8 SSW"
+run_job_patient pb_ssw "run('$REPO/Model/original/Controllers/PID/load_pid.m'); run_scoring_seeds('PID',[99987 99988 99989 11001 11002 11003],'SSW'); disp('PB_SSW_DONE')" PB_SSW_DONE || failed "P8 SSW"
 mstat "P8 done"; push_mine "[PC] PID SSW done"
 # --- P9: help MapPID (6.4): wait for the laptop grid flag (at most 2 h), then ids 5-8 of 8
 t0=$(date +%s)

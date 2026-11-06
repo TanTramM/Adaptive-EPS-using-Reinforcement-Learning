@@ -31,7 +31,7 @@ mstat "stage 2: Pareto selection, calib_margin, and five-seed report"
 run_job_patient "pid_grid_select" "select_pid_pareto(true); disp('PID_GRID_SELECT_DONE')" "PID_GRID_SELECT_DONE" || failed selection
 
 mstat "stage 3: PID DREWS scoring seeds 99995-99999"
-run_job_patient "pid_grid_score" "run('$REPO/Model/Controllers/PID/load_pid.m'); run_scoring_seeds('PID',99995:99999); disp('PID_GRID_SCORE_DONE')" "PID_GRID_SCORE_DONE" || failed scoring
+run_job_patient "pid_grid_score" "run('$REPO/Model/original/Controllers/PID/load_pid.m'); run_scoring_seeds('PID',99995:99999); disp('PID_GRID_SCORE_DONE')" "PID_GRID_SCORE_DONE" || failed scoring
 
 mstat "ALL DONE"
 echo done > "$S/pid_grid_pipeline_done.txt"

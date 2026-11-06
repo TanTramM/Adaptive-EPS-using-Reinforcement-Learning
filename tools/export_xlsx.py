@@ -3,8 +3,8 @@
 Usage:  python tools/export_xlsx.py        (close both Excel files first; run after make_ta_max / calibrate_map / export_map_results)
 
 Sources:
-  Model/data/map.json                          map table, parameters, lead compensator, calibration pairs
-  Model/data/ref.json  (field Ta_max)          assist limit T_a,max(v) of Documents/Ref/ref.txt section 1.5
+  Model/shared/data/map.json                          map table, parameters, lead compensator, calibration pairs
+  Model/shared/data/ref.json  (field Ta_max)          assist limit T_a,max(v) of Documents/Ref/ref.txt section 1.5
   Result/Map/Calibration, OverAssist, TestCases  dry-road error, over-assist, test-case metrics
 Only the values of the existing sheets are replaced; titles, widths and styles of the header row are kept.
 """
@@ -31,8 +31,8 @@ def clear(ws):
         ws.delete_rows(2, ws.max_row)
 
 
-m = json.load(open(path('Model', 'data', 'map.json'), encoding='utf-8'))
-ref = json.load(open(path('Model', 'data', 'ref.json'), encoding='utf-8'))
+m = json.load(open(path('Model', 'shared', 'data', 'map.json'), encoding='utf-8'))
+ref = json.load(open(path('Model', 'shared', 'data', 'ref.json'), encoding='utf-8'))
 ta = ref['Ta_max']
 v = m['v_breakpoints_kmh']
 assert v == ta['v_kmh'], 'map.json and ref.json Ta_max speeds differ'

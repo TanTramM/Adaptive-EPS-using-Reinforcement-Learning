@@ -2,7 +2,7 @@
 """Build the English progress report on the common parameter-selection method (Opt controllers) for the supervisor.
 
 Reads only existing result files (no simulation):
-  Model/data/{map,pid,mappid,mapopt,pidopt,mappidopt}.json         designs and CALIB scores
+  Model/shared/data/{map,pid,mappid,mapopt,pidopt,mappidopt}.json         designs and CALIB scores
   Result/Controllers/<Ctrl>/Cases/<Ctrl>_metrics_s9999[5-9].csv     DREWS on the five scoring seeds
   Result/Controllers/<Ctrl>/Cases/<Ctrl>_SLIP_sig_s99999.csv        time responses (one seed)
   Result/Controllers/{MapOpt,PIDOpt,MapPIDOpt}/Calib/*_CALIB_*.csv  search evaluations (Pareto) and the multi-seed choice
@@ -32,7 +32,7 @@ COLOR = {'MapOpt': '#2171b5', 'PIDOpt': '#d94801', 'MapPIDOpt': '#238b45'}
 
 
 def jload(name):
-    with open(os.path.join(ROOT, 'Model', 'data', name + '.json'), encoding='utf-8') as f:
+    with open(os.path.join(ROOT, 'Model', 'shared', 'data', name + '.json'), encoding='utf-8') as f:
         return json.load(f)['design']
 
 

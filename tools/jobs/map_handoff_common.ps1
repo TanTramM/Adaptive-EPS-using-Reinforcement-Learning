@@ -7,7 +7,7 @@ if (-not (Test-Path -LiteralPath $gitExe)) { throw 'git.exe not found.' }
 $env:GIT_TERMINAL_PROMPT = '0'
 $handoffBranch = 'automation/map-s2-ready'
 $manifestPath = 'tools/jobs/map_s2_ready.json'
-$mapJsonPath = 'Model/data/map.json'
+$mapJsonPath = 'Model/shared/data/map.json'
 $mapPickPath = 'Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv'
 function Git-Text {
     $savedPreference = $ErrorActionPreference

@@ -6,7 +6,7 @@
       their Pareto front and the selected point. Source: Result/Controllers/<Ctrl>/Calib/<Ctrl>_CALIB_{sweep,fine,pick}_<seed>.csv
   Figure_9_dry_map.png, Figure_10_dry_pi.png, Figure_11_dry_pid.png and Figure_12_slip_map.png, Figure_13_slip_pi.png, Figure_14_slip_pid.png
       Detail of the cases DRY and SLIP of each controller (seed 99999): T_s with T_d,ref, e_T with the scoring windows shaded, T_a. These are the
-      figures <Ctrl>_<CASE>_resp_s99999.png written by Model/Sim/script/run_cases.m, copied here (not redrawn).
+      figures <Ctrl>_<CASE>_resp_s99999.png written by Model/shared/Sim/script/run_cases.m, copied here (not redrawn).
   Figure_15_drews_map.png, Figure_16_drews_pi.png, Figure_17_drews_pid.png
       Tracking error e_T on the five scoring cases (DRY, RAMP, SLIP, WEAVE, EDGE), common noise seed 99999, same axes for the three
       controllers. Source: Result/Controllers/<Ctrl>/Cases/<Ctrl>_<CASE>_sig_s99999.csv

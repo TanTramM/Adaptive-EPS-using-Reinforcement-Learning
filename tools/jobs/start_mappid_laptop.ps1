@@ -10,11 +10,11 @@ $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $state = Join-Path $repo 'scratch\jobs\mappid_laptop'
 $required = @(
-    'Model/setup_paths.m', 'Model/data/pid.json', 'Model/data/map.json',
-    'Model/data/mappid.json', 'Model/Controllers/MapPID/Model_MapPID.mdl',
-    'Model/Controllers/MapPID/script/run_mappid_grid.m',
-    'Model/Controllers/MapPID/script/select_mappid_pareto.m',
-    'Model/common/grid_search.m', 'Model/common/select_pareto.m',
+    'Model/shared/setup_paths.m', 'Model/shared/data/pid.json', 'Model/shared/data/map.json',
+    'Model/shared/data/mappid.json', 'Model/original/Controllers/MapPID/Model_MapPID.mdl',
+    'Model/original/Controllers/MapPID/script/run_mappid_grid.m',
+    'Model/original/Controllers/MapPID/script/select_mappid_pareto.m',
+    'Model/shared/common/grid_search.m', 'Model/shared/common/select_pareto.m',
     'Result/Controllers/PID/Calib_v2/PID_CALIB_pick_s10000.csv'
 )
 if ($Stage -in @('S2','Select','All')) {
@@ -78,7 +78,7 @@ function Run-CachedStage([string]$Name, [string]$Expression) {
         $stdout = Join-Path $state "${Name}_${stamp}.out.log"
         $stderr = Join-Path $state "${Name}_${stamp}.err.log"
         $marker = "MAPPID_LAPTOP_${Name}_DONE"
-        $expr = "run('$repoMatlab/Model/setup_paths.m'); $Expression; disp('$marker')"
+        $expr = "run('$repoMatlab/Model/shared/setup_paths.m'); $Expression; disp('$marker')"
         Set-Content -LiteralPath (Join-Path $state 'status.txt') -Value "$Name attempt=$attempt running at $(Get-Date -Format s)"
         $process = Start-Process -FilePath $MatlabExe -ArgumentList @('-softwareopengl','-batch',('"' + $expr + '"')) -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
         while (-not $process.HasExited) { Start-Sleep -Seconds 15; $process.Refresh() }

@@ -33,7 +33,7 @@ run_job() {
     wait_mem "$tag"
     export TEMP="${MATLAB_TEMP:-D:\MatlabTemp}" TMP="${MATLAB_TEMP:-D:\MatlabTemp}"
     log "$tag start try $i"
-    "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch "run('$REPO/Model/setup_paths.m'); $expr" > "$S/${tag}_try$i.log" 2>&1
+    "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch "run('$REPO/Model/shared/setup_paths.m'); $expr" > "$S/${tag}_try$i.log" 2>&1
     KILLMARK="$expr" powershell -NoProfile -ExecutionPolicy Bypass -File "$JOBS_DIR/kill_job.ps1"
     if grep -q "$marker" "$S/${tag}_try$i.log"; then echo done > "$S/${tag}_done.txt"; log "$tag done (try $i)"; return 0; fi
     log "$tag try $i ended without the done text (killed or crashed); will wait for memory and resume"

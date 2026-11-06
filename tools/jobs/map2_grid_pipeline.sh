@@ -42,7 +42,7 @@ mstat "stage 2: Pareto selection, five-seed report, map.json (backup in Desktop/
 run_job_patient "map2_select" "select_map2_pareto(true); disp('MAP2_SELECT_DONE')" "MAP2_SELECT_DONE" || failed selection
 
 mstat "stage 3: load_map and test_map on the new map.json"
-run_job_patient "map2_test" "run('$REPO/Model/Controllers/Map/load_map.m'); test_map; disp('MAP2_TEST_DONE')" "MAP2_TEST_DONE" || failed test_map
+run_job_patient "map2_test" "run('$REPO/Model/original/Controllers/Map/load_map.m'); test_map; disp('MAP2_TEST_DONE')" "MAP2_TEST_DONE" || failed test_map
 
 mstat "ALL DONE (DREWS not run)"
 echo done > "$S/map2_pipeline_done.txt"

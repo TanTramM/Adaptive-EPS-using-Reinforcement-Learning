@@ -22,9 +22,9 @@ for id in $(seq 1 "$NW"); do [ -f "$S/mappid_plug_w${id}_done.txt" ] || failed "
 
 mstat "stage 3: selection (backup mappid.json first)"
 BK="/c/Users/ADMIN/Desktop/Adaptive-EPS_backup_2026-10-22_MapPID_truoc_plug"
-if [ ! -f "$BK/mappid.json" ]; then mkdir -p "$BK" && cp "$REPO/Model/data/mappid.json" "$BK/mappid.json" || failed backup; fi
+if [ ! -f "$BK/mappid.json" ]; then mkdir -p "$BK" && cp "$REPO/Model/shared/data/mappid.json" "$BK/mappid.json" || failed backup; fi
 run_job_patient "mappid_plug_select" "select_mappid_plug(true); disp('MAPPID_PLUG_SELECT_DONE')" "MAPPID_PLUG_SELECT_DONE" || failed selection
-run_job_patient "mappid_plug_loadtest" "run('$REPO/Model/Controllers/MapPID/load_mappid.m'); test_mappid; disp('MAPPID_PLUG_LOADTEST_DONE')" "MAPPID_PLUG_LOADTEST_DONE" || failed loadtest
+run_job_patient "mappid_plug_loadtest" "run('$REPO/Model/original/Controllers/MapPID/load_mappid.m'); test_mappid; disp('MAPPID_PLUG_LOADTEST_DONE')" "MAPPID_PLUG_LOADTEST_DONE" || failed loadtest
 
 mstat "stage 4: D (stand-alone PID design on the locked Map)"
 run_job_patient "mappid_plug_D" "run_mappid_plug_dc('D'); disp('MAPPID_PLUG_D_DONE')" "MAPPID_PLUG_D_DONE" || failed D

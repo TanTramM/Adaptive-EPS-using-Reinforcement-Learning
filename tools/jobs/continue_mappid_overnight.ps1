@@ -85,7 +85,7 @@ try {
     $pick = Join-Path $repo 'Result/Controllers/MapPID/Calib_v2/MapPID_CALIB_pick_s30000.csv'
     $chosen = @(Import-Csv -LiteralPath $pick | Where-Object { [double]$_.chosen -eq 1 })
     if ($chosen.Count -ne 1) { throw 'Final MapPID pick is missing or ambiguous.' }
-    $d = (Get-Content -LiteralPath (Join-Path $repo 'Model/data/mappid.json') -Raw | ConvertFrom-Json).design
+    $d = (Get-Content -LiteralPath (Join-Path $repo 'Model/shared/data/mappid.json') -Raw | ConvertFrom-Json).design
     if ($d.rule -notmatch 'deterministic alternating-block coarse-to-fine grid' -or $null -eq $d.CALIB_J -or [double]::IsNaN([double]$d.CALIB_J) -or [math]::Abs([double]$d.CALIB_J - [double]$chosen[0].Jv) -gt 1e-7 * [math]::Max(1,[double]$d.CALIB_J)) { throw 'Final MapPID JSON/pick mismatch.' }
     Write-State "ALL_DONE: S1 + Map $source + S2 + Pareto; legacy DREWS disabled"
     [IO.File]::WriteAllText((Join-Path $state 'all.done'), $source)

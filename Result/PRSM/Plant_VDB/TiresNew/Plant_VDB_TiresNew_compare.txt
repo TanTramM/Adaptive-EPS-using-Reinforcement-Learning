@@ -1,0 +1,2 @@
+STEADY Ta0 (t <= 5 s, sim 14 s): err a_y 0.0207 %, gamma 0.0093 %, F_yf 0.0267 %, F_yr 0.0158 %, T_r 0.0277 %, T_s 0.0245 % -> within 10 % (trial, no threshold)
+STEADY Ta0 (t <= 100 s, sim 18 s): err a_y 0.0206 %, gamma 0.0073 %, F_yf 0.0227 %, F_yr 0.0204 %, T_r 0.0246 %, T_s 0.0216 % -> within 10 % (trial, no threshold)

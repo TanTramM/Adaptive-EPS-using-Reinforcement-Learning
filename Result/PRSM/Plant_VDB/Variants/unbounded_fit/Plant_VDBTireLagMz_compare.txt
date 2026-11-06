@@ -1,0 +1,3 @@
+Plant_VDBTireLagMz: STEADY Ta0 (t <= 100 s, sim 20 s): err a_y 0.6221 %, gamma 0.3117 %, F_yf 0.7469 %, F_yr 0.5863 %, T_r 1.6237 %, T_s 1.1463 % -> within 10 % (trial, no threshold)
+Plant_VDBTireLagMz: SLIP Ta0 (t <= 100 s, sim 8 s): err a_y 1.3039 %, gamma 0.4158 %, F_yf 1.2637 %, F_yr 1.3722 %, T_r 1.4011 %, T_s 1.6469 % -> within 10 % (trial, no threshold)
+Plant_VDBTireLagMz: WEAVE Ta0 (t <= 100 s, sim 8 s): err a_y 2.8279 %, gamma 2.0322 %, F_yf 3.0149 %, F_yr 3.1186 %, T_r 1.9483 %, T_s 1.2982 % -> within 10 % (trial, no threshold)

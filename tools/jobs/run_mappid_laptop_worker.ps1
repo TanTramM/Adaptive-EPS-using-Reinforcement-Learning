@@ -65,7 +65,7 @@ try {
         $stdout = Join-Path $state "${Stage}_w${WorkerId}_${stamp}.out.log"
         $stderr = Join-Path $state "${Stage}_w${WorkerId}_${stamp}.err.log"
         $marker = "MAPPID_LAPTOP_${Stage}_W${WorkerId}_DONE"
-        $expr = "run('$repoMatlab/Model/setup_paths.m'); run_mappid_grid('$Stage',$WorkerId,$Workers); disp('$marker')"
+        $expr = "run('$repoMatlab/Model/shared/setup_paths.m'); run_mappid_grid('$Stage',$WorkerId,$Workers); disp('$marker')"
         Set-Content -LiteralPath (Join-Path $state "status_${Stage}_w${WorkerId}.txt") -Value "$Stage worker $WorkerId/$Workers attempt=$attempt running at $(Get-Date -Format s)"
         $launchTime = Get-Date
         $process = Start-Process -FilePath $MatlabExe -ArgumentList @('-softwareopengl','-batch',('"' + $expr + '"')) -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru

@@ -24,5 +24,5 @@ done
 [ -f "$S/pbl_l8_done.txt" ] || failed "L8 not converged after 8 rounds"
 mstat "L9 start: select MapPID only (writeJson true)"
 run_job_patient "pbl_l9_select" "compare_pareto_common('select',{'MapPID'},true); disp('PBL_L9_SELECT_DONE')" "PBL_L9_SELECT_DONE" || failed "L9 select"
-run_job_patient "pbl_l9_test" "run('$REPO/Model/Controllers/MapPID/load_mappid.m'); test_mappid; disp('PBL_L9_TEST_DONE')" "PBL_L9_TEST_DONE" || failed "L9 load/test"
+run_job_patient "pbl_l9_test" "run('$REPO/Model/original/Controllers/MapPID/load_mappid.m'); test_mappid; disp('PBL_L9_TEST_DONE')" "PBL_L9_TEST_DONE" || failed "L9 load/test"
 echo done > "$S/pbl_l9_done.txt"; mstat "L9 done"

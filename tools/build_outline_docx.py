@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Build the two outline documents (thesis, paper) from the results already in Result/ and Model/data/.
+"""Build the two outline documents (thesis, paper) from the results already in Result/ and Model/shared/data/.
 
 Usage: python tools/build_outline_docx.py
 Writes Documents/Thesis/dan_y_luan_van.docx and Documents/Thesis/dan_y_bai_bao.docx.
@@ -138,13 +138,13 @@ def overassist_table(doc, ctrls_pairs, case, caption, only=None):
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 def thesis():
-    M = json.load(open(path('Model', 'data', 'map.json'), encoding='utf-8'))['design']
-    PI = json.load(open(path('Model', 'data', 'pi.json'), encoding='utf-8'))['design']
+    M = json.load(open(path('Model', 'shared', 'data', 'map.json'), encoding='utf-8'))['design']
+    PI = json.load(open(path('Model', 'shared', 'data', 'pi.json'), encoding='utf-8'))['design']
     res = read_csv('Result', 'Controllers', 'PI', 'Design', 'PI_plant_resonance.csv')
     ref = read_csv('Result', 'PRSM', 'Reference', 'Reference_Ta_max_by_speed_mu0p8.csv')
 
     D = Doc('Dàn ý luận văn: Adaptive C-EPS', 'Dàn ý, chưa lý luận sâu. Chỗ đã có kết quả thì điền số và hình; chỗ chưa có ghi "[Chưa có]". '
-            'Số liệu đọc từ Result/ và Model/data/ ngày 2026-10-10. Nhiễu cảm biến, seed chung 99999.')
+            'Số liệu đọc từ Result/ và Model/shared/data/ ngày 2026-10-10. Nhiễu cảm biến, seed chung 99999.')
     D.h1('Khung luận văn: 7 chương')
 
     D.h2('Chương 1. Tổng quan')
@@ -216,8 +216,8 @@ def thesis():
 
 
 def paper():
-    M = json.load(open(path('Model', 'data', 'map.json'), encoding='utf-8'))['design']
-    PI = json.load(open(path('Model', 'data', 'pi.json'), encoding='utf-8'))['design']
+    M = json.load(open(path('Model', 'shared', 'data', 'map.json'), encoding='utf-8'))['design']
+    PI = json.load(open(path('Model', 'shared', 'data', 'pi.json'), encoding='utf-8'))['design']
     res = read_csv('Result', 'Controllers', 'PI', 'Design', 'PI_plant_resonance.csv')
     r0 = res[0]
 

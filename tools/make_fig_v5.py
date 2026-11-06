@@ -11,7 +11,7 @@
   Figure_6_drews.png         e_T on DRY, RAMP, SLIP, WEAVE, EDGE; columns (a) Map, (b) PI, (c) PID, shared axes per row
 
 Sources: Result/Controllers/<Ctrl>/Calib/*.csv and Result/Controllers/<Ctrl>/Cases/<Ctrl>_<CASE>_sig_s99999.csv (common seed 99999);
-scoring windows: Figures/v5_Huypt/scoring_windows.csv, exported from Model/Sim/script/make_cases.m (fields tag, win.label, win.t0, win.t1).
+scoring windows: Figures/v5_Huypt/scoring_windows.csv, exported from Model/shared/Sim/script/make_cases.m (fields tag, win.label, win.t0, win.t1).
 
 Usage: C:/Users/Admin/anaconda3/python.exe -I tools/make_fig_v5.py   (from the repo root)
 """

@@ -1,0 +1,3 @@
+STEADY Ta0 (t <= 20 s, sim 18 s): err a_y 0.0164 %, gamma 0.0076 %, F_yf 0.0207 %, F_yr 0.0130 %, T_r 0.0222 %, T_s 0.0204 % -> within 10 % (trial, no threshold)
+SLIP Ta0 (t <= 100 s, sim 24 s): err a_y 0.2401 %, gamma 0.0250 %, F_yf 0.2327 %, F_yr 0.2489 %, T_r 0.2066 %, T_s 0.0721 % -> within 10 % (trial, no threshold)
+WEAVE Ta0 (t <= 100 s, sim 13 s): err a_y 0.1263 %, gamma 0.0832 %, F_yf 0.1370 %, F_yr 0.1363 %, T_r 0.1381 %, T_s 0.0986 % -> within 10 % (trial, no threshold)

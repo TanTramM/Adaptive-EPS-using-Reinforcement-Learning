@@ -2,7 +2,7 @@
 """Generate Documents/Thesis/map.txt (Map chapter, lead-lag, QuyChuan v5) and its three new figures from the Map results.
 
 Every number in the text and the tables is read from the files below, never typed:
-  Model/data/map.json (design), Result/Controllers/Map/Design/Map_calibration_points.csv, Map_design_leadlag.csv,
+  Model/shared/data/map.json (design), Result/Controllers/Map/Design/Map_calibration_points.csv, Map_design_leadlag.csv,
   Calib/Map_CALIB_pick_s00000.csv (73 (g_min, K) pairs with J and the gate flags), Calib/Map_CALIB_sweep_s00000.csv (per-window e_rel),
   Cases/Map_metrics_s00000.csv (DRY, RAMP, SLIP, WEAVE, EDGE).
 Figures written: Design/Map_bode.png, Calib/Map_CALIB_pick_s00000.png, Calib/Map_CALIB_pareto_s00000.png.
@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RC = os.path.join(ROOT, 'Result', 'Controllers', 'Map')
 D, CA, CS = (os.path.join(RC, x) for x in ('Design', 'Calib', 'Cases'))
 SEED = 's00000'
-J = json.load(open(os.path.join(ROOT, 'Model', 'data', 'map.json'), encoding='utf-8'))
+J = json.load(open(os.path.join(ROOT, 'Model', 'shared', 'data', 'map.json'), encoding='utf-8'))
 d = J['design']
 
 cal = pd.read_csv(os.path.join(D, 'Map_calibration_points.csv'))

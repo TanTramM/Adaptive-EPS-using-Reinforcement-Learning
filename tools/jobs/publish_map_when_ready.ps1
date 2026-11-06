@@ -32,7 +32,7 @@ try {
     # Freeze all MATLAB sources used by the laptop; consumer rejects code drift.
     $code = @()
     foreach ($path in ((Git-Text ls-tree -r --name-only $baseCommit -- Model) -split "`n")) {
-        if ($path -match '\.(m|mdl|json)$' -and $path -notin @($mapJsonPath,'Model/data/mappid.json')) {
+        if ($path -match '\.(m|mdl|json)$' -and $path -notin @($mapJsonPath,'Model/shared/data/mappid.json')) {
             $code += [ordered]@{ path=$path; blob=(Git-Text rev-parse "${baseCommit}:$path") }
         }
     }

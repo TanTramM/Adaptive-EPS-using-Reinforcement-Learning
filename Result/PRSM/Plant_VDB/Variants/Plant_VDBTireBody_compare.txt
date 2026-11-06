@@ -1,0 +1,2 @@
+Plant_VDBTireBody: DRY Ta0 (t <= 30 s, sim 9 s): err a_y 0.0170 %, gamma 0.0070 %, F_yf 0.0214 %, F_yr 0.0139 %, T_r 0.0227 %, T_s 0.0212 % -> within 10 % (trial, no threshold)
+Plant_VDBTireBody: DRY Ta0 (t <= 10 s, sim 16 s): err a_y 0.0136 %, gamma 0.0063 %, F_yf 0.0181 %, F_yr 0.0104 %, T_r 0.0190 %, T_s 0.0189 % -> within 10 % (trial, no threshold)

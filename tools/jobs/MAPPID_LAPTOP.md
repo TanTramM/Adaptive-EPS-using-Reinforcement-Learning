@@ -24,7 +24,7 @@ Xem trạng thái laptop: `scratch/jobs/map_handoff_laptop/status.txt`, `events.
 
 Người dùng đã ủy quyền chạy MapPID trên laptop, tự chẩn đoán/sửa lỗi và ghi lịch sử. Khi nhận câu “đọc lịch sử các file tracking, bạn là khung chat mappid, làm theo hướng dẫn”, đọc `CLAUDE.md`, `Tracking/CLAUDE.md`, trạng thái và các lượt cuối `Tracking/historychat_mappid.md`, tài liệu này, cùng mục 13 của `Documents/Shared/PhuongPhap_TimThamSo.txt`. Bắt đầu công việc theo hướng dẫn dưới đây; không yêu cầu người dùng nhắc lại lệnh. Quyết định mới về lịch chạy trong tài liệu này thay khóa cũ chờ cả hai pick trước S1.
 
-Khi người dùng nói **“cập nhật và làm tiếp S2 sau khi xong S1”**, hiểu đó là lệnh đầy đủ để: (1) xác minh S1 có summary/done hợp lệ; (2) kiểm tra `git status` và bảo toàn toàn bộ kết quả mới trên laptop; (3) fetch/pull commit Map mới nhất; (4) chỉ khi commit đó có đồng thời `Model/data/map.json` đã chọn và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv` thì preflight rồi chạy S2; (5) sau S2 chạy `Select` và giám sát đến kết quả cuối. Không yêu cầu người dùng nhắc lại đường dẫn hay lệnh. Nếu remote chưa có đủ cặp Map này thì không lấy JSON tạm và không chạy S2; báo đúng rằng đầu vào Map chưa được push rồi tiếp tục bảo toàn S1.
+Khi người dùng nói **“cập nhật và làm tiếp S2 sau khi xong S1”**, hiểu đó là lệnh đầy đủ để: (1) xác minh S1 có summary/done hợp lệ; (2) kiểm tra `git status` và bảo toàn toàn bộ kết quả mới trên laptop; (3) fetch/pull commit Map mới nhất; (4) chỉ khi commit đó có đồng thời `Model/shared/data/map.json` đã chọn và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv` thì preflight rồi chạy S2; (5) sau S2 chạy `Select` và giám sát đến kết quả cuối. Không yêu cầu người dùng nhắc lại đường dẫn hay lệnh. Nếu remote chưa có đủ cặp Map này thì không lấy JSON tạm và không chạy S2; báo đúng rằng đầu vào Map chưa được push rồi tiếp tục bảo toàn S1.
 
 Laptop có MATLAB và toolbox cùng phiên bản desktop. Desktop tiếp tục Map; laptop sở hữu MapPID. Không khởi chạy Map/PID trên laptop. DREWS cũ đã bị hủy theo yêu cầu người dùng; hoàn tất ở bước chọn Pareto MapPID. Không tự chạy bộ DREWS mới đang được thiết kế.
 
@@ -49,7 +49,7 @@ Runner tự tìm `matlab.exe` trên PATH hoặc thư mục R2023a mặc định,
 
 Mặc định một worker `run_mappid_grid('S1',1,1)`, chờ không còn MATLAB engine khác và giữ lại 10% RAM vật lý (đồng thời kiểm commit/pagefile trống) trước mỗi lần launch. Trên máy 32 GB, reserve xấp xỉ 3.2 GB. Máy nên để dành cho tác vụ này; không tự mở thêm MATLAB từ khung khác. Giữ một worker trong toàn bộ một xuất phát khi resume để tránh đổi cách chia lưới. Không sửa `nWorkers` giữa chừng. Chỉ dùng `-MinHeadroomGB` khi cần ghi đè có chủ ý.
 
-S1 chỉ cần PID đã chọn: `Model/data/pid.json` và `Result/Controllers/PID/Calib_v2/PID_CALIB_pick_s10000.csv`. Vẫn cần các JSON PRSM/Map hiện hành để nạp mô hình/calibration, nhưng không cần Map pick cho S1. `mappid_grid_start.m` đã tách guard đúng từng hướng. Runner kiểm helper trước tìm kiếm; không chạy precheck hard-code số CALIB cũ `check_mappid_grid_eval` vì đó là phép tái lập thiết kế lịch sử, không phải điều kiện S1.
+S1 chỉ cần PID đã chọn: `Model/shared/data/pid.json` và `Result/Controllers/PID/Calib_v2/PID_CALIB_pick_s10000.csv`. Vẫn cần các JSON PRSM/Map hiện hành để nạp mô hình/calibration, nhưng không cần Map pick cho S1. `mappid_grid_start.m` đã tách guard đúng từng hướng. Runner kiểm helper trước tìm kiếm; không chạy precheck hard-code số CALIB cũ `check_mappid_grid_eval` vì đó là phép tái lập thiết kế lịch sử, không phải điều kiện S1.
 
 ## Giám sát, phục hồi và ghi lịch sử
 
@@ -62,7 +62,7 @@ S1 chỉ cần PID đã chọn: `Model/data/pid.json` và `Result/Controllers/PI
 
 ## S2 và Pareto sau khi desktop chọn Map xong
 
-S1 hoàn tất tạo `Result/Controllers/MapPID/Calib_v2/MapPID_CALIB_S1_summary.mat`. Sau đó kiểm tra Map desktop đã chọn và được commit/push; nhận đúng cặp `Model/data/map.json` và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv`. Không lấy Map json tạm rồi giả là kết quả đã chọn. `git pull` có thể xung đột vì laptop có kết quả/log mới; đọc `git status`, bảo toàn thay đổi laptop, không reset/checkout cưỡng bức. Chỉ cập nhật dữ liệu Map cần thiết nếu pull toàn bộ có xung đột, ghi rõ nguồn commit.
+S1 hoàn tất tạo `Result/Controllers/MapPID/Calib_v2/MapPID_CALIB_S1_summary.mat`. Sau đó kiểm tra Map desktop đã chọn và được commit/push; nhận đúng cặp `Model/shared/data/map.json` và `Result/Controllers/Map/Calib_v2/Map_CALIB_pick_s00000.csv`. Không lấy Map json tạm rồi giả là kết quả đã chọn. `git pull` có thể xung đột vì laptop có kết quả/log mới; đọc `git status`, bảo toàn thay đổi laptop, không reset/checkout cưỡng bức. Chỉ cập nhật dữ liệu Map cần thiết nếu pull toàn bộ có xung đột, ghi rõ nguồn commit.
 
 ### Chạy tách hai máy
 
@@ -82,14 +82,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/jobs/start_mappid_lapt
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/jobs/start_mappid_laptop.ps1 -Stage Select
 ```
 
-Có thể chạy ẩn tương tự S1 và giám sát theo PID. `Select` yêu cầu summary hoàn tất của cả S1 lẫn S2, gộp mọi tag để chọn Pareto, kiểm `calib_margin`, báo năm seed CALIB 30001–30005 và ghi `Model/data/mappid.json`. Năm seed CALIB là một phần chọn tham số, vẫn chạy; không phải DREWS. Kiểm output pick/JSON/log selector trước khi báo hoàn tất. Không tuyên bố chọn xong chỉ từ file summary hoặc marker.
+Có thể chạy ẩn tương tự S1 và giám sát theo PID. `Select` yêu cầu summary hoàn tất của cả S1 lẫn S2, gộp mọi tag để chọn Pareto, kiểm `calib_margin`, báo năm seed CALIB 30001–30005 và ghi `Model/shared/data/mappid.json`. Năm seed CALIB là một phần chọn tham số, vẫn chạy; không phải DREWS. Kiểm output pick/JSON/log selector trước khi báo hoàn tất. Không tuyên bố chọn xong chỉ từ file summary hoặc marker.
 
 Lệnh `-Stage All` chỉ dùng sau khi đã có Map pick; nó chạy/resume S1, S2 rồi Select. Lệnh cũ `mappid_grid_pipeline.sh` mặc định đã bị chặn để supervisor desktop không tự launch thêm MapPID khi Map pick xuất hiện. Không bật `MAPPID_ALLOW_LEGACY_PIPELINE` trong luồng bàn giao này.
 
 ## Các file phải có trong commit chuyển máy
 
-Giữ toàn bộ `Model/` (models, `setup_paths`, PRSM, Sim, common và JSON), tài liệu phương pháp/tracking; đặc biệt các script grid mới của MapPID, `Model/common/grid_search.m`, `Model/common/select_pareto.m`, PID json đã chọn và PID pick. Runner và tài liệu này nằm trong `tools/jobs/`. Các file đó đều trong repo và không bị `.gitignore` chặn, nhưng nhiều file ban đầu còn untracked nên cần add/commit.
+Giữ toàn bộ `Model/` (models, `setup_paths`, PRSM, Sim, common và JSON), tài liệu phương pháp/tracking; đặc biệt các script grid mới của MapPID, `Model/shared/common/grid_search.m`, `Model/shared/common/select_pareto.m`, PID json đã chọn và PID pick. Runner và tài liệu này nằm trong `tools/jobs/`. Các file đó đều trong repo và không bị `.gitignore` chặn, nhưng nhiều file ban đầu còn untracked nên cần add/commit.
 
-Không sao chép marker/lock/log `scratch/` của desktop sang laptop. Không cần backup Desktop, MATLAB binaries hay cache build `slprj`. Không cần CSV đang quét của Map để chạy S1. Sau này chuyển kết quả MapPID từ laptop về bằng commit/push các CSV/summary/JSON và lịch sử cần thiết; không commit scratch. Giữ nguồn dữ liệu một chỗ trong `Model/data` và `Result`, không tạo bản sao JSON riêng trong gói bàn giao.
+Không sao chép marker/lock/log `scratch/` của desktop sang laptop. Không cần backup Desktop, MATLAB binaries hay cache build `slprj`. Không cần CSV đang quét của Map để chạy S1. Sau này chuyển kết quả MapPID từ laptop về bằng commit/push các CSV/summary/JSON và lịch sử cần thiết; không commit scratch. Giữ nguồn dữ liệu một chỗ trong `Model/shared/data` và `Result`, không tạo bản sao JSON riêng trong gói bàn giao.
 
 Tài liệu đã chuẩn bị trên desktop; laptop phải kiểm tra môi trường và theo dõi lần chạy thật. Preflight file không chứng minh mô phỏng đã chạy hoặc toàn bộ toolboxes tương thích.

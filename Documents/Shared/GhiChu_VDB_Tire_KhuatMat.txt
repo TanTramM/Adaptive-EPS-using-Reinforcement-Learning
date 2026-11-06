@@ -1,0 +1,92 @@
+GHI CHÚ PHẢN BIỆN: CÁC ĐIỂM CÒN KHUẤT CỦA KHỐI LỐP VDB (Combined Slip Wheel 2DOF, cấu hình S2)
+==========================================================================================================================================================================================
+
+Lập: 2026-11-06, từ cuộc trao đổi giữa người dùng và Claude sau khi kéo main về (commit c096537). Nguồn số liệu: Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_tire_report.txt và
+Tracking/historychat_vdb_tire.md (khung VDB_TIRE, Lượt 2); cấu hình lốp: Model/PRSM_VDB/Plant_VDB/script/vdb_tire_config.m; bộ ca chấm: Documents/Shared/KeHoach_SSW.txt.
+Mục đích: lưu lại từng điểm còn khuất của khối lốp, cách hiểu, cách xử lý và quyết định của người dùng, để sau này phản biện hoặc xét lại. Chỉ ghi điều đã bàn; chưa sửa 12.9, 12.10,
+DoiChieu_Plant_VDB.txt (việc đó của khung COMMON).
+Nguyên tắc người dùng chốt cho khối lốp VDB: làm sao cho GIỐNG ĐIỀU KIỆN CỦA PLANT GỐC NHẤT (Plant gốc dùng PT(10): Fy chỉ phụ thuộc alpha, F_zf, C_alpha và mu; không có lực dọc, không có
+trượt kết hợp).
+
+1. KẾT LUẬN CHUNG VỀ KHỐI LỐP
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Khối lốp tạm ổn được cho cấu hình S2 hiện tại. Cơ sở: 31/31 ca có tiêu chí ĐẠT, 0 KHÔNG ĐẠT; Fy của VDB khớp PT(10) của Plant trong 2e-12 (alpha 0.002 đến 0.06 rad, tải 4549 và 5000 N, mu 0.5,
+0.8, 0.88); các ánh xạ Vx, Vy, Alpha, Fext/Fz, mu qua ô ScaleFctrs số 3, Fy nhân 2 ra cầu, trễ 1.5915 ms đều đo trực tiếp; YawRate và Gnd không tác dụng; Prs không đổi Fy. Không dòng ánh xạ
+nào bị bác hoàn toàn.
+Hai điều phải nói thẳng: (a) "ổn" chỉ trong dải đã thử; (b) một phần bằng chứng chỉ kiểm dây nối, không kiểm độc lập (TCW1, TCW2 lệch đúng 0 vì dùng cùng công thức với khối TireInputs và
+TrCalc của S2).
+
+Tám điểm còn khuất (đánh số theo thứ tự bàn):
+  1. Kappa ban đầu bằng 0.0212 thay vì 0 (ĐÃ BÀN, quyết định giữ nguyên).
+  2. Trượt kết hợp bị tắt, RBY1 = 0 (ĐÃ BÀN, quyết định giữ nguyên).
+  3. Độ nhạy Fy theo tải khác Plant (ĐÃ BÀN, đề xuất giữ nguyên, người dùng chuyển sang điểm 4 không phản đối).
+  4. Dải đã thử hẹp: Vx chỉ hai điểm, alpha đơn cổng tới 0.06 rad, mu thấp 0.2-0.3 chưa có ca riêng, hộp đóng, chỉ R2023a (CHƯA BÀN).
+  5. TCW1, TCW2 chỉ kiểm dây nối, không kiểm độc lập công thức T_r (CHƯA BÀN).
+  6. 27 ô ScaleFctrs: 15 ô có tác dụng; "12 ô không tác dụng" chỉ đúng tại điểm L1 (CHƯA BÀN).
+  7. Hằng số trễ 1.5915 ms đúng bằng 1/(2*pi*100 Hz); gán cho tham số FyRelFreqLwrLim còn là giả thuyết (CHƯA BÀN).
+  8. Chưa kiểm tương tác giữa các cổng, vì mỗi lần chỉ đổi một cổng (CHƯA BÀN).
+
+2. KAPPA LÀ GÌ (giải thích cho điểm 1)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Kappa là độ trượt dọc của lốp (slip ratio): Kappa = (Omega * R_eff - Vx) / Vx, với Omega là tốc độ góc bánh, R_eff là bán kính lăn hiệu dụng, Vx là vận tốc dọc.
+[ \kappa = \dfrac{\Omega R_{eff} - V_x}{V_x} ]
+Kappa = 0: bánh lăn tự do. Kappa > 0: bánh quay nhanh hơn xe (đang ga). Kappa < 0: bánh quay chậm hơn xe (đang phanh). Kappa sinh ra lực dọc Fx; nếu mô hình bật trượt kết hợp thì Kappa còn làm
+giảm lực ngang Fy.
+
+3. ĐIỂM 1: KAPPA BAN ĐẦU BẰNG 0.0212, KHÔNG PHẢI 0
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hiện tượng: ở ca gốc (không đổi cổng nào) Kappa(0) = 0.0212, về khoảng -2e-4 sau 1 s; Fx lúc đầu 1.9e3 N rồi về gần 0. Giả định "Kappa gần 0 suốt ca" của LI6 chỉ đúng sau khoảng 1 s. Ca TC2,
+TC3 (Vx 20 sang 25 m/s) làm Kappa lên 0.20: đây là quá độ thật khi đổi tốc độ nhanh, không phải lỗi dựng.
+Nguyên nhân (suy luận, chưa đọc công thức bên trong khối): ca gốc đặt tốc độ góc ban đầu omegao = v/(0.97*Re), với Re là bán kính không tải và 0.97 là hệ số ước lượng bán kính lăn. Bán kính
+lăn hiệu dụng bên trong khối VDB không trùng 0.97*Re. Từ Kappa = 0.0212 suy ra bán kính thật khoảng 0.99*Re. Bánh có quán tính; lực dọc Fx kéo bánh về cân bằng nên Kappa tắt dần trong khoảng 1
+s.
+Vì sao chưa gây hại: Fy không phụ thuộc Kappa (RBY1 = 0 làm hàm trọng số trượt kết hợp luôn bằng 1); S2 chỉ lấy Fy từ khối lốp; Vx là đầu vào do Plant cấp, không do Fx của khối quyết định. Quá
+độ này không đi vào vòng điều khiển.
+Ba cách xử lý đã cân nhắc: (A) giữ nguyên, sửa câu LI6 thành "Kappa gần 0 sau khoảng 1 s; 1 s đầu có quá độ mà Fy không thấy"; (B) đo bán kính lăn hiệu dụng thật của khối rồi đặt omegao =
+v/R_eff, chỉ làm khi bật trượt kết hợp hoặc cho phanh, ga vào; (C) chạy làm nóng 1-2 s trước khi tính chỉ tiêu (không khuyến nghị: thêm phức tạp, đổi thời gian ca).
+QUYẾT ĐỊNH CỦA NGƯỜI DÙNG (2026-11-06): GIỮ NGUYÊN, không đổi omegao. Việc sửa câu LI6 (cách A) thuộc khung COMMON, chưa làm.
+
+4. HẬU QUẢ CỦA ĐIỂM 1 TRONG BỘ CA SSW (STEADY, SLIP, WEAVE, mỗi ca 100 s)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Kết luận: hậu quả gần như bằng 0, với điều kiện cấu hình lốp giữ nguyên (RBY1 = 0). Lý do: (1) Fy không đọc Kappa; (2) S2 chỉ lấy Fy, Fx, Omega, Kappa không đi vào vòng điều khiển; (3) quá độ
+chỉ khoảng 1 s trong ca 100 s (khoảng 1 %); (4) TCW1 và TCW2 trên SLIP và WEAVE của S2 cho Alpha và T_r lệch đúng 0 (chỉ là kiểm dây nối).
+Hai chỗ chưa chắc, chưa kiểm: (a) cửa sổ chấm của SSW có gồm giây đầu không (chưa mở Result/Compare/SSW_summary/SSW_windows.csv); nếu có thì vẫn không đổi kết luận vì Fy không đổi; (b) đổi tốc
+độ trong ca làm Kappa lên tới 0.20 (theo TC2, TC3), Fy vẫn không bị ảnh hưởng.
+Khi nào thành rủi ro: chỉ khi bật trượt kết hợp (đặt lại RBY*) hoặc đưa phanh, ga vào S2. Lưu ý: kết quả SSW hiện có của Map, PID, MapPID chạy trên Plant gốc, không phải Plant_VDB; khi chuyển
+sang bản _VDB, kết luận trên vẫn đúng nếu giữ RBY1 = 0.
+Chưa xác minh: kết quả đầy đủ của S2 trên SSW (chỉ biết TCW1, TCW2 lệch 0 ở Alpha và T_r, và S1 ĐẠT cả 4 ca trọn theo KeHoach_Plant_VDB.txt).
+
+5. ĐIỂM 2: TRƯỢT KẾT HỢP BỊ TẮT (RBY1 = 0)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Trượt kết hợp: lốp có một "ngân sách" bám đường; khi vừa phanh hoặc ga (Fx) vừa cua (Fy), hai lực dùng chung ngân sách, tăng Fx thì Fy phải giảm. Trong Magic Formula (công thức thực nghiệm
+Pacejka mô tả lực lốp theo độ trượt) phần này nằm ở các hệ số RBY*, tạo hàm trọng số giảm Fy khi Kappa lớn.
+Cấu hình hiện tại (vdb_tire_config.m): mọi hệ số dịch, tải, camber, áp suất và trễ đặt về 0 ("nothing depends on anything but alpha, Fz and mu"); danh sách zeroed gồm RBY1 đến RBY4; dòng 38
+đặt RCY1 = 1 với chú thích trọng số trượt kết hợp bằng 1 khi trượt dọc bằng 0.
+Hệ quả đo được: phanh hay ga không làm Fy giảm (TC33, TC34), Kappa đổi bao nhiêu Fy cũng không đổi.
+Đây là điều muốn có, không phải lỗi: Plant gốc dùng PT(10), không có lực dọc, không có trượt kết hợp; khối VDB giống điều kiện Plant gốc nhất khi tắt trượt kết hợp. Kỳ vọng "Fy giảm do trượt
+kết hợp" ở TC33 và TC34 (12.10) là kỳ vọng sai của kế hoạch, không phải khối sai.
+Hậu quả: với S2 (BrkPrs = AxlTrq = 0, Plant không có Fx) không có hậu quả. Mặt trái cần nói thẳng: khối lốp VDB hiện chỉ dùng phần Fy theo alpha và mu, nên chưa làm lốp "thật hơn" Plant gốc ở
+khía cạnh này.
+Cách xử lý: (1) giữ RBY1 = 0; (2) sửa kế hoạch: 12.10 TC33, TC34 đổi kỳ vọng thành "Fy không đổi (RBY1 = 0 theo thiết kế)", 12.9 dòng BrkPrs, AxlTrq ghi "nối 0, đã kiểm Fy không đổi khi cho
+giá trị khác 0"; (3) ghi điều kiện xét lại: chỉ khi có phanh hoặc ga trong mô phỏng mới đặt lại RBY* và đặt lại omegao theo điểm 1.
+QUYẾT ĐỊNH CỦA NGƯỜI DÙNG: nguyên tắc chung "giống điều kiện Plant gốc nhất" (2026-11-06) áp dụng; đề xuất giữ nguyên RBY1 = 0 theo nguyên tắc đó. Việc sửa 12.9, 12.10 thuộc khung COMMON, chưa làm.
+
+6. ĐIỂM 3: ĐỘ NHẠY CỦA Fy THEO TẢI KHÁC PLANT
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hai mô hình: Plant gốc (PT(10)) có độ cứng cua C_alpha hằng số, tải chỉ vào qua D = mu*F_z. Khối VDB còn nhân độ dốc Fy theo alpha với sin(PKY4*atan(Fz/(PKY2*FNOMIN))) = sin(2*atan(Fz/FNOMIN)), nên độ cứng cua đổi theo tải.
+[ F_y' \propto \sin\!\left(2\arctan\dfrac{F_z}{F_{NOMIN}}\right) ]
+Chỗ khớp: vdb_tire_config.m đặt FNOMIN = Fz, PKY2 = 1, PKY4 = 2, PKY1 = -Ca/Fz (đã xác nhận bằng cách đọc file), nên tại tải danh định hệ số bằng 1 và Fy khớp PT(10) trong 2e-12. Tại Fz = FNOMIN hàm sin(2*atan(x)) đạt đỉnh (x = 1), đạo hàm bậc một theo tải bằng 0, sai khác chỉ ở bậc hai.
+Con số: tải tăng 9.9 % (x = 1.099) thì hệ số còn khoảng 0.9957 (tự tính, độ dốc giảm khoảng 0.4 %); báo cáo ghi Fy lệch 2.3e-3 so với kiểu Plant (gồm cả D = mu*Fz tăng), cùng cỡ.
+Ảnh hưởng với S2 và SSW: Plant gốc dùng F_zf cố định, S2 truyền Fext cố định, vertType = None, không có chuyển tải khi cua. Hậu quả bằng 0.
+Khi nào thành rủi ro: khi tải trục đổi trong mô phỏng (chuyển tải khi cua, vertType khác None, gia tốc dọc). Khi đó lốp VDB đổi độ cứng, Plant giữ nguyên; mức khác nhỏ khi tải đổi vài chục phần trăm, lớn dần theo mức đổi tải. Khi viết bài, đây là chỗ VDB gần vật lý lốp thật hơn Plant, không phải VDB sai.
+Cách xử lý: (1) giữ nguyên PKY2, PKY4, FNOMIN; (2) 12.9 dòng B05 ghi "khớp tại tải danh định, đã đo ở hai mức tải, độ dốc khác kiểu Plant khi tải đổi"; (3) điều kiện xét lại: chỉ khi tải trục đổi trong mô phỏng.
+QUYẾT ĐỊNH: giữ nguyên theo nguyên tắc "giống điều kiện Plant gốc nhất". Việc sửa 12.9 thuộc khung COMMON, chưa làm.
+
+7. VIỆC CÒN TREO
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Điểm 4 (dải đã thử hẹp) đã giải thích, chưa chốt: Vx chỉ 20 và 25 m/s (dải 5.5-28), alpha thử đơn cổng tới 0.06 rad, mu thử đơn cổng chỉ 0.5-0.88 trong khi SSW có mu 0.3 và 0.2, hộp đóng, chỉ R2023a. Cách xử lý đề xuất: đọc Result/PRSM/Plant_VDB/Plant_VDB_S2S3_compare.txt (S2 đã chạy đủ ca trên Plant_VDB, chưa đọc) xem vùng mu thấp và alpha lớn có đạt không; chỉ khi còn hở mới thêm ca đơn cổng (Vx 5.5, 14, 28 m/s; mu 0.2, 0.3; alpha 0.1-0.2 rad); hộp đóng và R2023a chỉ ghi giới hạn.
+- Điểm 5 đến 8: TẠM GÁC (người dùng chốt 2026-11-06 để dựng plant thử ghép).
+- Plant thử ghép 2026-11-06: Model/VDB/Plants/ (Plant_VDBTire, Plant_VDBBody, Plant_VDBTireBody; script/build_plant_variants.m, script/compare_plant_variant.m; Model/ đã tái cấu trúc thành shared, original, VDB ngày 2026-11-06): Plant gốc, chỉ thay khối Tires bằng lốp VDB (cấu hình S2), giữ nguyên SteeringColumn và Bike2DOF; góc trượt tính theo công thức (10)-(11) của Plant. Kết quả so với baseline: Result/PRSM/Plant_VDB/TiresNew/.
+- Khung COMMON: ghép mức bằng chứng mới vào 12.9, 12.10 và DoiChieu_Plant_VDB.txt; sửa câu LI6 (Kappa) và kỳ vọng TC33, TC34 (RBY1).
+- Chưa mở Result/Compare/SSW_summary/SSW_windows.csv để xác nhận cửa sổ chấm có gồm giây đầu của ca hay không.
+- Chưa đọc công thức bên trong khối lốp để xác nhận bán kính lăn hiệu dụng (suy luận 0.99*Re ở mục 3).

@@ -287,6 +287,14 @@ Còn R9-R12.
 2026-11-06 chiều muộn  Chạy mục 11 (K0-K12, trừ K5, K6, K3b): kết quả ở 11.4. Tìm ra nguồn lệch a_y 0.017 % (đơn vị g chuẩn 9.80665 của khối VDB), sửa build_vdb_s1.m và chạy lại S1, T5, S2, S3. Thêm script check_vdb_freebody.m, audit_vdb_params.m, check_vdb_tireset.m, check_vdb_trail_mu.m, check_vdb_bodystate.m, check_plant_sensitivity.m; compare_vdb_s2.m có thêm tùy chọn solver bước cố định; make_plant_baseline.m thêm DRY, RAMP, EDGE. Đổi cách đo sau khi thấy số ở K1 (kịch bản lốp), ghi ở 11.4.
 2026-11-06 tối  Theo yêu cầu người dùng: thêm mục 12 (kiểm giao diện vào/ra của khối thân 3DOF và khối lốp, tách riêng, sổ giao diện đủ phủ, B0-B12, L0-L11, X1-X4); làm TRƯỚC G1 và các
 mục chờ quyết. Danh sách cổng lấy bằng lệnh trên R2023a. Chưa chạy phép thử nào, chờ duyệt ngưỡng 12.2.
+2026-11-07  Tái cấu trúc Model/ (shared, original, VDB; xem Tracking/CLAUDE.md). Lốp VDB thực tế hóa theo bước, mỗi bước so Plant gốc: bước 0 lốp VDB cấu hình như Plant (Plant_VDBTire, lệch
+dưới 0.03 % hở mạch DRY); bước 1 độ trễ lốp thật, FyRelFreqLwrLim từ 200*pi xuống 1 rad/s, chiều dài thư giãn 0.609 m (Plant_VDBTireLag, T_s lệch 0.67 / 1.67 / 2.27 % STEADY / SLIP / WEAVE);
+bước 2 T_r lấy từ M_z của lốp (Plant_VDBTireLagMz). Hệ số trail khớp lần đầu (fit_vdb_trail.m không ràng buộc) phi lý về vật lý: QBZ1 4.646, QCZ1 1.003, QDZ1 0.0452, QEZ1 -55.3, sai số 3.47 mm.
+SỬA sau khi thấy kết quả (người dùng duyệt): khớp có ràng buộc theo vùng lốp thật (Pacejka [2] Bảng 4.2, Bảng A3.1 lốp đo 205/60R15, lốp thư viện VDB): QBZ1 6-12, QCZ1 1.05-1.29, QEZ1 -4..0,
+QDZ1 cố định t_0/R_0 để trail ở góc trượt 0 bằng 25 mm. Kết quả QBZ1 11.78, QCZ1 1.083, QEZ1 -3.03, QDZ1 0.0487, sai số trail tối đa 2.53 mm (bản cũ lưu ở data/vdb_trail_fit_unbounded.json).
+Ngưỡng hở mạch đặt TRƯỚC khi chạy bản ràng buộc: T_s lệch không quá 3 %; đạt 1.65 / 2.03 / 1.47 % (T_r 2.42 / 1.65 / 2.28 %). Lý do chọn 3 %: cỡ lệch mà riêng độ trễ lốp ở bước 1 đã gây ra.
+Vòng kín SSW seed 99999 của Map, PID, MapPID trên Plant_VDBTireLagMz: Model/VDB/temp_test/<Ctrl>/Result/; báo cáo gửi thầy Documents/Report/VDB_tire_report.docx (tools/build_report_vdb.py).
+Giới hạn đã biết: trail của PT (17) là đường thẳng gãy góc, trail Magic Formula là đường chuông mượt nên không trùng được với hệ số vật lý; STEADY lệch lớn nhất ở các cửa sổ gia tốc ngang cao.
 
 ==============================================================================================================================================================================================
 10. KẾ HOẠCH CHẠY ĐÊM (LẬP THỨ 6, 2026-11-06, 00:50; CHƯA CHẠY, CHỜ NGƯỜI DÙNG RA LỆNH)
