@@ -10,11 +10,20 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 - laptop: chạy song song phần việc chia cho nó (MapPID, một nửa Map và PID khi so mặt Pareto chung), thường đẩy lên nhánh phụ rồi gộp.
 - Commit trước 2026-10-22 chưa ghi máy (hiện "?"): lúc đó làm trên một máy; từ nay mọi commit có tag [PC] hoặc [laptop] ở đầu (tools/sync_repo.sh tự thêm).
 
-## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 133 commit)
+## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 136 commit)
 
 
-### 2026-10-28 (PC 1)
+### 2026-11-06 (PC 1)
 
+- 16:27 e4d9320 [PC] Plant_VDB: kiem tra theo rui ro (muc 11), sua a_y g chuan, them script check/audit/compare
+
+### 2026-10-31 (? 1)
+
+- 00:57 0334a3d [?] 31-10
+
+### 2026-10-28 (PC 2)
+
+- 01:40 320bbd0 [PC] repo_history updated
 - 01:40 ec0feef [PC] Mục 2-3 tiếng Anh và Việt, Fig 3-6 vẽ lại (một khối controller, T_a,cmd), rule viết như người trong CLAUDE.md
 
 ### 2026-10-27 (PC 8, laptop 9)
@@ -244,3 +253,4 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 ## Ghi chú tay (ai chạy gì, file kết quả ở đâu; thêm bằng --note)
 - 2026-10-23 16:27 [PC] Gộp toàn bộ vào main, xóa nhánh phụ; thêm tools/update_repo_history.py và tools/sync_repo.sh. SSW (ba ca STEADY, SLIP, WEAVE) chạy xong trên PC: Result/Controllers/<Ctrl>/Cases_ssw/, tóm tắt Result/Compare/SSW_summary/.
 - 2026-10-28 01:40 [PC] Viết lại Abstract, Introduction, mục 2 và 3 theo quy tắc viết như người; hình Fig 4-6 mới ở Figures/new/main/28-10/ (chưa đưa vào docx); paper_ENG.docx chưa gen do Word khóa file; PDF chưa xuất
+- 2026-11-06 16:27 [PC] Chay lai baseline: make_plant_baseline; ket qua trong Result/PRSM/Plant_VDB, .mat khong commit
