@@ -236,6 +236,24 @@ def keep_table_together(table):
                     p.paragraph_format.keep_with_next = True
 
 
+def horizontal_rules(t):
+    """JSTT Guide: no vertical rules. Lines above and below the table and under the header row only."""
+    tblPr = t._tbl.tblPr
+    for old in tblPr.findall(qn('w:tblBorders')):
+        tblPr.remove(old)
+    b = OxmlElement('w:tblBorders')
+    for side, val in (('top', 'single'), ('left', 'nil'), ('bottom', 'single'), ('right', 'nil'), ('insideH', 'nil'), ('insideV', 'nil')):
+        e = OxmlElement(f'w:{side}'); e.set(qn('w:val'), val)
+        if val == 'single':
+            e.set(qn('w:sz'), '8'); e.set(qn('w:space'), '0'); e.set(qn('w:color'), '000000')
+        b.append(e)
+    tblPr.append(b)
+    for cell in t.rows[0].cells:
+        tcPr = cell._tc.get_or_add_tcPr(); tb = OxmlElement('w:tcBorders')
+        e = OxmlElement('w:bottom'); e.set(qn('w:val'), 'single'); e.set(qn('w:sz'), '4'); e.set(qn('w:space'), '0'); e.set(qn('w:color'), '000000')
+        tb.append(e); tcPr.append(tb)
+
+
 def table(doc, caption, rows):
     cap = doc.add_paragraph(); cap.paragraph_format.keep_with_next = True
     add_rich(cap, caption, char_style=doc.styles['Strong'])
@@ -264,8 +282,27 @@ def table(doc, caption, rows):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER if (ri == 0 or centred[ci]) else WD_ALIGN_PARAGRAPH.LEFT
             add_rich(p, rw[ci] if ci < len(rw) else '', bold=(ri == 0))
             p.paragraph_format.line_spacing = 1.0          # single spacing inside tables (the text keeps 1.5)
+    horizontal_rules(t)
     keep_table_together(t)
     doc.add_paragraph()
+
+
+def abbrev_table(doc, caption, rows):
+    """'Abbreviations.' note under the keywords: borderless table at the body size (12 pt), single spacing, pairs (abbreviation, meaning) side by side."""
+    cap = doc.add_paragraph(); cap.paragraph_format.keep_with_next = True
+    cap.paragraph_format.line_spacing = 1.0; cap.paragraph_format.space_after = Pt(2)
+    add_rich(cap, caption, char_style=doc.styles['Strong'])
+    ncol = max(len(r) for r in rows)
+    t = doc.add_table(rows=len(rows), cols=ncol); t.alignment = WD_TABLE_ALIGNMENT.LEFT; t.autofit = False
+    cm = lambda n: 0.24 * n + 0.6                                   # 12 pt Times, bold abbreviations
+    widths = [cm(max(len(r[ci]) if ci < len(r) else 0 for r in rows)) for ci in range(ncol)]
+    for ri, rw in enumerate(rows):
+        for ci in range(ncol):
+            cell = t.rows[ri].cells[ci]; cell.width = Cm(widths[ci]); p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT; p.paragraph_format.line_spacing = 1.0
+            p.paragraph_format.space_after = Pt(0)
+            add_rich(p, rw[ci] if ci < len(rw) else '', bold=(ci % 2 == 0))
+    keep_table_together(t)
 
 
 def bullet(doc, text):
@@ -317,7 +354,7 @@ def build(txt_path, docx_path, through=None):
     eq = re.compile(r'^\s*\((\d+)\)\s+(.*)$')
     latex = re.compile(r'^\s*\[\s(.*)\s\]\s*$')
     figcap = re.compile(r'^\s*\[((?:Fig\.|Figure)\s+\d+[.:].*)\]\s*$')
-    tabcap = re.compile(r'^\s*(Table\s+\d+[.:].*)$')
+    tabcap = re.compile(r'^\s*(Table\s+\d+[.:].*|Abbreviations\.)$')            # 'Abbreviations.' = unnumbered table under the keywords
     seps = [i for i, l in enumerate(lines) if re.match(r'^\s*={20,}\s*$', l)]
     title_idx = seps[0] + 1 if len(seps) >= 2 else None
     in_refs = False
@@ -332,7 +369,10 @@ def build(txt_path, docx_path, through=None):
             break
         if s in UNNUMBERED_H1 or (h1.match(s) and not h2.match(s) and len(s) < 100):
             hp = doc.add_paragraph(style='Heading 1'); add_rich(hp, s); in_refs = (s == 'References')
-            if PAGE_BREAK_BEFORE and (h1.match(s) or s in ('Acknowledgments', 'Acknowledgements', 'References')):
+            if '--break-intro-only' in sys.argv:                              # only Abstract -> 1. Introduction starts a new page
+                if s.startswith('1.'):
+                    hp.paragraph_format.page_break_before = True
+            elif PAGE_BREAK_BEFORE and (h1.match(s) or s in ('Acknowledgments', 'Acknowledgements', 'References')):
                 hp.paragraph_format.page_break_before = True              # every numbered section and the reference list start a new page
             i += 1; continue
         if h2.match(s) and len(s) < 120:
@@ -354,7 +394,7 @@ def build(txt_path, docx_path, through=None):
             rows = []; j = i + 1
             while j < len(lines) and ' | ' in lines[j]:
                 rows.append([c.strip() for c in lines[j].strip().split(' | ')]); j += 1
-            table(doc, mt.group(1), rows); i = j; continue
+            (abbrev_table if mt.group(1) == 'Abbreviations.' else table)(doc, mt.group(1), rows); i = j; continue
         if s.startswith('- '):
             bullet(doc, s[2:]); i += 1; continue
         p = doc.add_paragraph()

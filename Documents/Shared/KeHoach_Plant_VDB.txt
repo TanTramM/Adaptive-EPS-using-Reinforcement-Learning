@@ -8,6 +8,7 @@ TIẾP TỤC TỪ MÁY KHÁC (cập nhật 2026-11-06 chiều, đọc khối nà
 Xong: N0-N10 (mục 10), nguyên nhân lỗi cũ (10.10), K0-K12 trừ K3b, K5, K6 (mục 11, kết quả ở 11.4). S1 khớp Plant dưới 0.11 % trên bảy ca, T5 đạt 8/8. Đã commit và push.
 Chờ người dùng quyết: (1) sửa tiêu chí K1; (2) danh sách ngưỡng K9; (3) cổng G1 (S1 hay S2); (4) T_r lấy từ công thức Plant hay từ M_z (mục 8 câu 1); (5) cách ghép vòng kín vì build_closed_loop.m
 cấm sửa; (6) K3b.
+MỚI (2026-11-06 tối): làm mục 12 (kiểm giao diện vào/ra hai khối VDB, tách thân và lốp) TRƯỚC mọi quyết định trên; chờ duyệt ngưỡng 12.2.
 Làm tiếp khi có quyết định: K5, K6, rồi C7-C11 (mục 3 và 6). Chưa có Plant_VDB.mdl chính thức; model thử PlantVDBS1/2/3.slx ở Model/PRSM_VDB/Plant_VDB/.
 Máy mới: git pull, run Model/setup_paths.m, chạy make_plant_baseline (khoảng 1 phút) để sinh lại các file .mat mốc chuẩn (không commit); rồi compare_vdb_s1, compare_vdb_s2, check_vdb_n1.
 
@@ -284,6 +285,8 @@ mới, lý do). Chưa sửa ngưỡng nào.
 Còn R9-R12.
 2026-11-06 chiều  Thêm mục 11 (kế hoạch kiểm tra lại theo 12 rủi ro, điểm cao trước, K0-K12, tiêu chí chốt trước khi chạy). Chưa chạy bước nào. Ghi nhận giả thuyết của R11 yếu đi (g = 9.81 ở cả hai).
 2026-11-06 chiều muộn  Chạy mục 11 (K0-K12, trừ K5, K6, K3b): kết quả ở 11.4. Tìm ra nguồn lệch a_y 0.017 % (đơn vị g chuẩn 9.80665 của khối VDB), sửa build_vdb_s1.m và chạy lại S1, T5, S2, S3. Thêm script check_vdb_freebody.m, audit_vdb_params.m, check_vdb_tireset.m, check_vdb_trail_mu.m, check_vdb_bodystate.m, check_plant_sensitivity.m; compare_vdb_s2.m có thêm tùy chọn solver bước cố định; make_plant_baseline.m thêm DRY, RAMP, EDGE. Đổi cách đo sau khi thấy số ở K1 (kịch bản lốp), ghi ở 11.4.
+2026-11-06 tối  Theo yêu cầu người dùng: thêm mục 12 (kiểm giao diện vào/ra của khối thân 3DOF và khối lốp, tách riêng, sổ giao diện đủ phủ, B0-B12, L0-L11, X1-X4); làm TRƯỚC G1 và các
+mục chờ quyết. Danh sách cổng lấy bằng lệnh trên R2023a. Chưa chạy phép thử nào, chờ duyệt ngưỡng 12.2.
 
 ==============================================================================================================================================================================================
 10. KẾ HOẠCH CHẠY ĐÊM (LẬP THỨ 6, 2026-11-06, 00:50; CHƯA CHẠY, CHỜ NGƯỜI DÙNG RA LỆNH)
@@ -587,3 +590,302 @@ K12 ĐẠT: băm lại lần hai, 246 file khớp N0, 0 khác. Việc thay đổ
 và 54320 của người dùng còn nguyên.
 Việc còn lại và cần người dùng quyết: (1) duyệt đề xuất sửa tiêu chí K1 và danh sách ngưỡng K9; (2) K3(b), K5, K6 cần cổng G1 và quyết định cách ghép vòng kín; (3) commit bằng tools/sync_repo.sh
 khi người dùng bảo (chưa có gì của Plant_VDB trong git).
+
+==============================================================================================================================================================================================
+12. KIỂM GIAO DIỆN VÀO/RA CỦA HAI KHỐI VDB, TÁCH RIÊNG THÂN VÀ LỐP (KẾ HOẠCH 2026-11-06 TỐI, CHƯA CHẠY)
+==============================================================================================================================================================================================
+Người dùng yêu cầu (2026-11-06): trước khi quyết G1 và các mục chờ khác, phải kiểm mọi giả định về đầu vào và đầu ra của khối VDB, đủ phủ, không mục nào nằm ngoài kiểm soát; tách riêng khối
+thân 3DOF và khối lốp. Mục này làm TRƯỚC G1, K3b, K5, K6.
+
+12.1 Vì sao cần, và khác các phép thử đã có ở đâu
+Các phép thử trước (R8, T1, T2, T4, T5, T6, K1, K11) kiểm từng câu hỏi khi nó xuất hiện, nhiều cái kiểm gián tiếp qua S1, S2 (ghép cả mạch). Ghép cả mạch thì hai lỗi có thể bù nhau, và một
+cổng không được thử thì không ai biết. Ba lỗi đã gặp đều thuộc loại này: bảng khí động Cs, Cym ẩn (tham số không ai kiểm), a_y theo g chuẩn 9.80665 (đơn vị một trường bus không ai kiểm), preset
+lốp không nhận hệ số (giả định "đặt được" không ai kiểm). Mục này đổi cách làm: lập SỔ GIAO DIỆN liệt kê MỌI cổng, mọi trường bus được đọc và mọi tham số mặt nạ, mỗi dòng ghi giả định và phép
+thử của nó; mỗi khối thử một mình trong mạch thử riêng với đáp án tính độc lập.
+Danh sách cổng lấy bằng lệnh trên R2023a ngày 2026-11-06 (scratchpad list_vdb_ports.m, cấu hình đúng như vdb_body_config.m và vdb_tire_config.m), không lấy từ tài liệu web:
+  Thân (Vehicle Body 3DOF Single Track): vào WhlAngF [1], xdotin [1], FExt [3], MExt [3]; ra Info (bus 135 phần tử), xdot, ydot, psi, r, FzF, FzR.
+  Lốp (Combined Slip Wheel 2DOF): vào BrkPrs, AxlTrq, Vx, Vy, Camber, YawRate, Prs, Gnd, Fext [1 mỗi cổng], ScaleFctrs [27]; ra Info (bus 24 phần tử), Omega, Fx, Fy, Fz, Mx, My, Mz.
+  Phát hiện khi liệt kê: bus Info của lốp có Alpha và Kappa (góc trượt và trượt dọc do chính khối tính), bus Info của thân có BdyFrm.Cg.Ang.Beta, BdyFrm.Forces.Ext và BdyFrm.Moments.Ext. Các
+    trường này cho phép kiểm ĐỘC LẬP cách ta tính góc trượt (TireInputs của S2) và thứ tự thành phần của FExt, MExt, thay vì suy từ kết quả cả mạch.
+
+12.2 Định nghĩa đủ phủ (chốt trước khi chạy)
+Mỗi dòng của sổ giao diện (12.4) có đúng một vai trò:
+  DÙNG: tín hiệu hay tham số đi vào kết quả của Plant_VDB. Phải có ít nhất một phép thử định lượng với đáp án tính độc lập trong file test (đọc thẳng params.json, không lấy từ base workspace),
+    kiểm đủ: đơn vị, hệ trục và dấu, kích thước và thứ tự phần tử, công thức hoặc động học; và một đối chứng âm (cố ý nối sai hoặc đặt sai: đổi dấu, đổi thứ tự, đổi đơn vị) mà phép thử phải
+    báo KHÔNG ĐẠT.
+  CỐ ĐỊNH: cổng nối hằng số hay tham số đặt một giá trị. Phải có phép thử nhiễu loạn chứng minh giá trị đó cho đúng điều ta giả định (thường là "tắt hiệu ứng"), có đối chứng dương (đổi giá
+    trị thì có tác dụng, chứng tỏ phép thử không mù) khi hiệu ứng đó tồn tại; và phép kiểm cấu trúc X1 xác nhận model chính thức nối đúng hằng số đó.
+  KHÔNG DÙNG: đầu ra hay trường bus không đọc, tham số không ảnh hưởng ở chế độ đang chọn. Đầu ra phải nối Terminator và không trường bus nào ngoài sổ được chọn (X1, X2); tham số phải qua phép
+    nhiễu loạn của K1 (lệch dưới ngưỡng "không tác dụng").
+ĐỦ PHỦ khi: không dòng nào thiếu phép thử, mọi phép thử ĐẠT, mọi đối chứng âm báo đúng, và X1-X4 ĐẠT trên model ghép. Tỉ lệ phủ báo bằng số dòng có phép thử ĐẠT chia tổng số dòng, phải là 100 %.
+Ngưỡng (đề xuất, chờ duyệt cùng K1, K9): khớp giải tích tĩnh 1e-6 tương đối; "không tác dụng" của CỔNG 1e-9 tương đối (chặt, vì cổng là chỗ ta nối); "không tác dụng" của THAM SỐ theo tiêu chí
+K1 người dùng chọn; động học so với nghiệm ODE độc lập (ode45, RelTol 1e-10 trong file test) 1e-6; hằng số thời gian trễ lốp +-2 %.
+Giới hạn phải nói thẳng: hàm bên trong khối là hộp đóng (hàm tireMF* không đọc được, K2), nên phép thử hộp đen chỉ phủ DẢI ĐẦU VÀO ĐÃ THỬ. Vì vậy dải thử của mỗi phép phải bao dải lớn nhất
+thấy trong mốc chuẩn (baseline) của bảy ca cộng biên dự phòng, và dải này ghi trong kết quả. Mọi kết luận chỉ đúng cho R2023a.
+
+12.3 Cách làm
+  - Ba file mới trong Model/PRSM_VDB/Plant_VDB/script/: test_vdb_body.m (khối thân một mình), test_vdb_tire.m (khối lốp một mình), check_vdb_wiring.m (X1-X4 trên model ghép, chạy trên PlantVDBS2.slx bây giờ và trên Plant_VDB.mdl sau C7). Mỗi file tự chứa, cổng tìm theo tên, in [VDBBody] TEST PASS, [VDBTire] TEST PASS, [VDBWiring] TEST PASS. Mỗi phép thử ghi một dòng vào Result/PRSM/Plant_VDB/Plant_VDB_IO_<body|tire|wiring>.csv (mã phép thử, dòng sổ, đại lượng, giá trị đo, đáp án, sai lệch, ngưỡng, ĐẠT/KHÔNG ĐẠT, đối chứng âm báo đúng/sai).
+  - Mạch thử: khối cấu hình bằng đúng vdb_body_config.m, vdb_tire_config.m (để phép thử kiểm chính cấu hình sẽ dùng), mọi cổng vào nối nguồn khai báo rõ (hằng, dốc, sin, bậc theo From Workspace),
+    mọi đầu ra và các trường bus trong sổ được ghi lại; các trường bus khác không ghi (bài học N: ghi cả bus Info làm MATLAB 11.7 GB).
+  - Phép thử đã có (check_vdb_signs, check_vdb_freebody, check_vdb_tire, check_vdb_lowspeed, audit_vdb_params) được GỌI LẠI hoặc chép phần lõi vào hai file test, không chỉ trích số cũ: số cũ
+    là kinh nghiệm, bằng chứng phải là lần chạy mới.
+  - Thứ tự: B (thân) trước vì nhanh và ít cổng, rồi L (lốp), rồi X. Không làm X khi B hoặc L còn KHÔNG ĐẠT. Một phép KHÔNG ĐẠT: kiểm cách đo bằng một đường độc lập trước (bài học N: lệch giả
+    do cách đo xảy ra ba lần), rồi mới coi là phát hiện; phát hiện thật ghi vào 10.9 kiểu "lỗi, nguyên nhân, cách sửa" và chạy lại theo 11.3.
+  - Thời gian ước: B khoảng 2 giờ, L khoảng 3 giờ (L3, L4 nhiều lần chạy), X khoảng 1 giờ.
+
+12.4 Sổ giao diện (mỗi dòng một mục; vai trò là GIẢ ĐỊNH hiện tại, phép thử sẽ xác nhận hoặc bác)
+Khối thân, cấu hình: trackMode Single, inputMode External longitudinal velocity, frontSteerMode on, windMode, muMode, sigmaMode off, extFMode, extMMode on, Cy_f = Cy_r = 0, Cd = Cl = 0, Cs =
+Cym = 0, Cpm = 0.
+
+Dòng | Mục                    | Vai trò    | Giả định cần kiểm                                                                                   | Phép thử
+-----+------------------------+------------+-----------------------------------------------------------------------------------------------------+---------
+BI1  | WhlAngF                | CỐ ĐỊNH 0  | Không tác dụng khi Cy = 0 (lực lốp vào qua FExt)                                                     | B6
+BI2  | xdotin                 | DÙNG       | xdot = xdotin tức thời ở mọi dạng (hằng, dốc 90->45 km/h trong 13 s, sin), m/s, không trễ            | B1, B4
+BI3  | FExt(1) Fx             | CỐ ĐỊNH 0  | Không đổi xdot, ydot, r, a_y ở chế độ áp vận tốc                                                     | B2
+BI4  | FExt(2) Fy             | DÙNG       | Lực ngang tại trọng tâm, hệ trục thân, y sang trái, N; ydot' = Fy/m - xdot*r; không sinh mô-men      | B2, B4, B7
+BI5  | FExt(3) Fz             | CỐ ĐỊNH 0  | Không tác dụng                                                                                      | B2
+BI6  | MExt(1), MExt(2)       | CỐ ĐỊNH 0  | Không tác dụng (3DOF không có lắc, chúi)                                                            | B3
+BI7  | MExt(3) Mz             | DÙNG       | Mô-men quanh trọng tâm, ngược chiều kim đồng hồ dương, N.m; r' = Mz/Izz                            | B3, B4
+BO1  | xdot                   | DÙNG       | Bằng xdotin (BI2)                                                                                   | B1
+BO2  | ydot                   | DÙNG       | Trạng thái, m/s, hệ thân; beta của Plant = ydot/xdot                                                | B2, B4, B5
+BO3  | r                      | DÙNG       | Trạng thái, rad/s, ngược chiều kim đồng hồ dương; gamma của Plant = r                               | B3, B4, B5
+BO4  | psi                    | KHÔNG DÙNG | Bằng tích phân r (chỉ báo cáo); nối Terminator                                                      | B12, X1
+BO5  | FzF, FzR               | KHÔNG DÙNG | Phụ thuộc h, g, NF, NR; lốp nhận tải cố định từ ngoài; nối Terminator                               | B12, X1
+BO6  | Info.BdyFrm.Cg.Acc.ay  | DÙNG       | Đơn vị g chuẩn 9.80665; công thức chính xác chưa biết: (ydot' + xdot*r) hay tổng lực/m, khi xdot đổi | B7
+BO7  | Info.BdyFrm.Cg.Ang.Beta| THEO DÕI   | atan(ydot/xdot) hay ydot/xdot; chỉ dùng để kiểm, không vào kết quả                                   | B7
+BO8  | Info.Forces.Ext, Moments.Ext | THEO DÕI | Trả đúng FExt, MExt đã cấp theo đúng thứ tự (kiểm thứ tự độc lập)                              | B2, B3
+BO9  | Mọi trường Info khác   | KHÔNG DÙNG | Không Bus Selector nào chọn                                                                         | X2
+BP1  | m, Izz                 | DÙNG       | Đúng giá trị params.json; đổi 10 % thì đáp ứng đổi đúng tỉ lệ                                       | B0, B8
+BP2  | a, b (l_f, l_r của khối)| GIẢ ĐỊNH KHÔNG DÙNG | Mô-men do ta tính bằng l_f, l_r của params.json đưa vào MExt; a, b của khối không đổi xdot, ydot, r, a_y. Nếu sai thì l_f, l_r bị dùng hai lần | B8
+BP3  | xdot_o, ydot_o, r_o    | DÙNG       | Điều kiện đầu đúng; xdot_o khác xdotin(0) thì khối dùng cái nào (ghi lại, chính thức đặt bằng v(0))  | B1, B5
+BP4  | Cờ chế độ, Cy, Cd, Cl, Cs, Cym, Cpm | CỐ ĐỊNH | Đọc lại đúng giá trị; đối chứng âm Cs, Cym mặc định phải báo sai (K1d)                   | B0, B5
+BP5  | 62 tham số còn lại     | theo K1    | Nhóm ĐẶT, KHÔNG TÁC DỤNG, CÓ TÁC DỤNG của K1 chạy lại trong test                                    | B8
+
+Khối lốp, cấu hình: tireType External file, vertType None, plySteer off, turnslip off, hệ số theo vdb_tire_config.m (S2); bản S3 dùng preset 205/60R15 với cùng các cổng cố định.
+
+Dòng | Mục                    | Vai trò    | Giả định cần kiểm                                                                                   | Phép thử
+-----+------------------------+------------+-----------------------------------------------------------------------------------------------------+---------
+LI1  | Vx                     | DÙNG       | Vận tốc dọc hệ bánh, m/s; dải 5.5-28 m/s, trên VXLOW = 1                                            | L1, L10
+LI2  | Vy                     | DÙNG       | Vận tốc ngang hệ bánh, m/s; Alpha = atan(Vy/Vx), dấu ngược alpha của Plant                          | L1
+LI3  | Fext                   | CỐ ĐỊNH    | Tải đứng một bánh, N, nén dương; Fz ra = Fext; FZMIN, FZMAX không chặn                              | L5
+LI4  | ScaleFctrs [27]        | DÙNG (ô 3) | Chỉ ô 3 (LMUY) mang mu, đổi đỉnh Fy mà không đổi độ dốc tại 0; ô 4 = 0; các ô khác = 1. Ánh xạ 27 ô chưa kiểm từng ô | L3
+LI5  | BrkPrs                 | CỐ ĐỊNH 0  | Không phanh; Fy không đổi                                                                           | L4
+LI6  | AxlTrq                 | CỐ ĐỊNH 0  | Lăn tự do; Kappa gần 0 suốt ca; lực dọc không làm giảm Fy (trượt kết hợp)                           | L4, L6
+LI7  | Camber                 | CỐ ĐỊNH 0  | Không camber; ghi tác dụng nếu khác 0                                                               | L4
+LI8  | YawRate                | CỐ ĐỊNH 0  | Không tác dụng khi turnslip off (bánh thật có yaw rate = r, nên giả định này phải đúng)             | L4
+LI9  | Prs                    | CỐ ĐỊNH 220 kPa | Không đổi Fy (PPY* = 0); M_z có thể đổi (PPZ1), ghi cho S3                                      | L4
+LI10 | Gnd                    | CỐ ĐỊNH 0  | Không tác dụng khi vertType None                                                                    | L4
+LO1  | Fy                     | DÙNG       | Lực ngang hệ bánh, N, cùng dấu F_y của Plant; đúng Magic Formula PT(9)-(10) với mu qua LMUY; 2 nửa cầu = cả cầu | L2, L9
+LO2  | Mz                     | DÙNG ở S3  | Mô-men tự lựa, N.m, dương khi Alpha dương ở góc nhỏ; S2 không dùng                                  | L8, X1
+LO3  | Fz                     | KHÔNG DÙNG | Bằng Fext                                                                                           | L5, X1
+LO4  | Fx, Mx, My, Omega      | KHÔNG DÙNG | Báo cỡ giá trị; nối Terminator                                                                      | L7, X1
+LO5  | Info.Alpha, Info.Kappa | THEO DÕI   | Alpha để kiểm độc lập góc trượt của TireInputs; Kappa để chứng minh trượt dọc nhỏ                   | L1, L6
+LO6  | Mọi trường Info khác   | KHÔNG DÙNG | Không Bus Selector nào chọn                                                                         | X2
+LD1  | Động học Fy            | ĐÃ BIẾT    | Trễ bậc 1, hằng số 1.59 ms (FyRelFreqLwrLim), không đổi theo tốc độ; Omega khởi đầu đúng omegao      | L6
+LP1  | Hệ số đặt bởi vdb_tire_config | DÙNG | Đọc lại đúng; có tác dụng đúng như công thức (L2 là phép thử chức năng)                             | L0, L2
+LP2  | 222 tham số còn lại    | theo K1    | Như K1; nhóm M_z (QBZ1...) chỉ quan trọng khi dùng LO2                                              | L0, K1
+
+12.5 Các phép thử khối thân (test_vdb_body.m)
+B0 Cấu hình: đọc lại mọi tham số và cờ mà vdb_body_config.m đặt; đúng 4 cổng vào và 7 cổng ra với tên như 12.1; FExt, MExt kích thước 3. Đối chứng âm: đổi inputMode sang mô hình lực thì B0 báo sai.
+B1 xdotin: xdotin hằng 20 m/s, dốc 25 -> 12.5 m/s trong 13 s (như SLIP), sin 0.5 Hz biên 2 m/s quanh 20 m/s; xdot - xdotin dưới 1e-9 tương đối ở mọi bước ghi. Thêm ca xdot_o = 15 m/s với xdotin
+= 20 m/s: ghi khối theo cái nào, trả lời có hoặc không.
+B2 FExt từng thành phần, xdot hằng, không mô-men: Fy = +3000 N rồi -3000 N, đáp án ydot(t) = ydot0 + Fy*t/m, r = 0; Fx = 3000 N một mình và Fz = 3000 N một mình: xdot, ydot, r, a_y lệch dưới
+1e-9 so với ca không lực. Info.Forces.Ext phải trả đúng [Fx Fy Fz] đã cấp. Đối chứng âm: cấp Fy vào ô 1 thì phép thử Fy phải báo sai.
+B3 MExt từng thành phần: Mz = 1100 N.m, đáp án r(t) = Mz*t/Izz, ydot(t) = -xdot*Mz*t^2/(2*Izz); Mx, My một mình không tác dụng; Info.Moments.Ext trả đúng. Đối chứng âm: Mz vào ô 1.
+B4 Đồng thời Fy(t), Mz(t) dạng sin 1 Hz và xdot dốc như SLIP: so với nghiệm ODE ydot' = Fy/m - xdot*r, r' = Mz/Izz giải độc lập bằng ode45 trong file test; sai số 1e-6.
+B5 Điều kiện đầu ydot_o = 5, 25 m/s, r_o = 0.3 rad/s, không lực: nghiệm giải tích (lõi check_vdb_freebody.m). Đối chứng âm Cs, Cym mặc định phải báo sai.
+B6 WhlAngF: bậc 0.2 rad và sin 2 Hz biên 0.1 rad, mọi đầu ra dùng lệch dưới 1e-12 so với WhlAngF = 0. Đối chứng dương: Cy_f = 12000 thì phải có tác dụng (nếu không, phép thử mù vì cổng không
+nối vào đâu).
+B7 a_y và Beta: trên ca B4 (xdot đổi, có ydot) tính ba ứng viên từ trạng thái ghi được: (a) (ydot' + xdot*r)/9.80665, (b) Fy/m/9.80665, (c) bản gồm xdot'*ydot/xdot; chọn ứng viên khớp dưới
+1e-9, đối chứng bằng g = 9.81 phải lệch 3.4e-4. Ghi rõ công thức a_y của Plant (Bike2DOF) để biết hai bên có cùng định nghĩa không khi tốc độ đổi (giải thích lệch RAMP 0.1 % của S1). Beta:
+atan(ydot/xdot) hay ydot/xdot, ở ydot/xdot tới 0.2.
+B8 Tham số: m, Izz nhân 1.1 thì đáp án B2, B3 đổi đúng (Fy/m, Mz/Izz); a, b, h, NF, NR, g nhân 1.1 thì xdot, ydot, r, a_y lệch dưới 1e-9 (khẳng định BP2). Chạy lại nhóm thân của audit_vdb_params.m
+với cấu hình hiện nay.
+B9 Dải: lấy max |ydot|, max |r|, min và max xdot từ mốc chuẩn bảy ca, chạy B4 với biên 1.5 lần các giá trị đó; không cảnh báo, không chạm xdot_tol, sai số giữ 1e-6.
+B10 Truyền thẳng: đo bằng mạch thử có hồi tiếp từ từng đầu ra (xdot, ydot, r, Info.ay) về FExt(2) qua khối Gain; Simulink báo vòng đại số ở đầu ra nào thì đầu ra đó truyền thẳng. Kỳ vọng: chỉ
+a_y (chứa ydot'). Ghi lại để biết khi ghép với cảm biến và bộ điều khiển (Y7).
+B11 Bước giải: B4 với bước thay đổi MaxStep 2 ms và ode4 1 ms; sai số giữ 1e-6 (thân không có trễ nhanh nên kỳ vọng đạt cả hai).
+B12 Đầu ra không dùng: psi so với tích phân r (1e-6), FzF + FzR so với m*g (báo cáo); không phải cổng ĐẠT.
+
+12.6 Các phép thử khối lốp (test_vdb_tire.m)
+L0 Cấu hình: đọc lại tireType, vertType, plySteer, turnslip và mọi hệ số vdb_tire_config.m đặt; 10 cổng vào, 8 cổng ra; ScaleFctrs 27 phần tử. Đối chứng âm: tireType preset thì L2 phải báo
+sai (bài học N1: preset không nhận hệ số).
+L1 Góc trượt: Vx 5.5, 16.7, 28 m/s; Vy/Vx quét đều trong +-0.3; Info.Alpha so với atan(Vy/Vx) (1e-9). Rồi chạy PlantVDBS2 trên SLIP và WEAVE, ghi Info.Alpha của bánh trước và alF của TireInputs:
+phải có alF = -Info.Alpha (1e-9). Đây là phép kiểm độc lập phép quay vận tốc theo delta_f và dấu (R8 chỉ thử một điểm).
+L2 Fy: alpha 0 tới max |alpha| trong mốc chuẩn nhân 1.5 (không dưới 0.3 rad), mu 0.8, 0.5, 0.33, 0.24, 0.2, Fz = FNOMIN và 0.7, 1.3 lần FNOMIN; so với PT(9)-(10) tính trong test (Fz khác FNOMIN để biết hành vi nếu sau này có chuyển tải; khi đó đáp án dùng công thức tải của VDB với PKY2, PKY4 đã đặt). Ngưỡng 1e-6 đỉnh. Đối chứng âm: E đổi dấu.
+L3 ScaleFctrs: nhân từng ô (1 tới 27) với 1.1, các ô khác giữ; đo đỉnh Fy, độ dốc Fy tại 0, Fx, Mz. Kết quả là bảng ánh xạ 27 ô; đối chiếu với tài liệu khối R2023a (doc trong MATLAB, ghi trang
+hoặc mục). ĐẠT khi: ô 3 đổi đỉnh Fy đúng x1.1 (+-0.5 %) và độ dốc tại 0 dưới 1e-6 (Y4); mọi ô khác đổi Fy dưới 1e-9 HOẶC được ghi rõ là có tác dụng và giải thích vì sao giá trị 1 (hay 0 ở ô
+4) là đúng. Đối chứng âm: mu vào ô 2 phải báo sai.
+L4 Cổng cố định: mỗi cổng nhiễu một mình trong dải hợp lý (BrkPrs 1e5 Pa, AxlTrq +-50 N.m, Camber +-0.03 rad, YawRate +-0.5 rad/s, Prs 180 và 260 kPa, Gnd 0.01 m); đo Fy, Mz, Kappa. ĐẠT cho
+Fy theo ngưỡng cổng (1e-9) với YawRate, Prs, Gnd; với BrkPrs, AxlTrq, Camber là ghi tác dụng (kỳ vọng có, chứng tỏ giữ chúng bằng 0 là cần) và X1 xác nhận nối 0. Mz ghi riêng cho S3.
+L5 Tải: Fz ra = Fext (1e-9) ở ba mức; FZMIN, FZMAX không chặn ở dải dùng.
+L6 Động học: bậc Vy cho bậc góc trượt 0.02 rad ở ba tốc độ, khớp hàm mũ bậc 1, hằng số thời gian 1.59 ms +-2 %; sin 2 Hz: độ trễ pha khớp lý thuyết bậc 1; Omega tại t = 0 bằng omegao; Kappa
+lớn nhất suốt các ca SLIP, WEAVE của S2 dưới 1e-3 (ngưỡng đề xuất) và tác dụng của Kappa đó lên Fy dưới 0.1 %; bậc mu 0.8 -> 0.2 có tác dụng trong một bước (lõi T2c).
+L7 Đầu ra không dùng: Fx, Mx, My, Omega báo cỡ giá trị ở SLIP (chỉ báo cáo).
+L8 Mz: dấu (dương khi Alpha dương, góc nhỏ), Mz ra = Info.Mz; với lốp S2: báo cáo Mz là vô nghĩa vì hệ số Q giữ mặc định (lý do chọn T_r theo chế độ lốp, mục 8 câu 1); với preset S3: vệt -Mz/Fy
+ở alpha nhỏ, chỉ báo cáo; nêu giới hạn là hệ số Q của preset không đọc được (K2).
+L9 Hai nửa cầu: 2 x Fy(Fz/2, C_alpha/2) so với Fy cầu PT(10) với (Fz, C_alpha) tại cùng alpha, mu (giải tích cho thấy bằng nhau đúng khi B = C_alpha/(C*mu*Fz) giữ nguyên; kiểm bằng số 1e-9).
+L10 Biên: Vx 2 và 1.2 m/s (dưới dải dùng, chỉ ghi hành vi), alpha tới 1.0 rad, mu 0.2 và trượt hẳn: Fy bão hòa ở mu*Fz đúng như công thức, không nhảy.
+L11 Bước giải: L6 với bước thay đổi MaxStep 2 ms và ode4 1 ms (lõi K10); ode4 2 ms ghi lại như K10.
+
+12.7 Phép kiểm cấu trúc trên model ghép (check_vdb_wiring.m)
+X1 Mọi cổng của hai khối thân và lốp nối đúng vai trò trong sổ: DÙNG nối tới đúng nguồn (dò theo tên khối nguồn hoặc Goto tag), CỐ ĐỊNH nối Constant đúng giá trị sổ ghi, KHÔNG DÙNG nối
+Terminator; không cổng hở; compile với cảnh báo cổng hở đặt thành lỗi.
+X2 Bus Info: liệt kê OutputSignals của mọi Bus Selector nối vào Info của thân và lốp; tập trường được chọn phải nằm trong các dòng DÙNG hoặc THEO DÕI của sổ.
+X3 Không vòng đại số: AlgebraicLoopMsg = error, compile và chạy 1 s.
+X4 Băm toàn bộ DialogParameters của mỗi khối VDB trong model, so với bản băm đã duyệt lưu ở Result/PRSM/Plant_VDB/Plant_VDB_IO_params_hash.txt; đổi một tham số bất kỳ thì X4 báo, để không tham
+số nào đổi lặng lẽ (chặn lại loại lỗi Cs, Cym).
+Đối chứng âm cho X: chép model sang scratch, (i) đổi nối Vx và Vy, (ii) bỏ Terminator một đầu ra, (iii) chọn thêm một trường Info, (iv) đổi Cym; mỗi lỗi phải bị đúng một phép X báo.
+
+12.8 Đạt và sau khi đạt
+ĐẠT mục 12 khi B0-B11, L0-L11, X1-X4 ĐẠT (B12, L7 chỉ báo cáo), mọi đối chứng âm báo đúng, sổ 12.4 phủ 100 %. Dòng nào phép thử bác giả định thì sửa vai trò trong sổ, sửa cấu hình nếu cần,
+chạy lại theo 11.3, rồi mới quay về các mục chờ quyết (K1, K9, G1, T_r, ghép vòng kín, K3b).
+Sau khi đạt: test_vdb_body.m, test_vdb_tire.m, check_vdb_wiring.m gộp vào check_vdb_n1.m để chạy mỗi lần đổi cấu hình; test_plant_vdb.m của C7 gọi check_vdb_wiring.m.
+ĐÃ DUYỆT (người dùng, 2026-11-06 tối): ngưỡng 12.2 và ngưỡng Kappa 1e-3 đồng ý; KHÔNG dùng Simulink Coverage. Cách dựng chốt: hai mạch thử riêng dựng từ chuỗi thân và chuỗi lốp của VDBDemo.slx,
+mỗi cổng vào là From Workspace, mỗi cổng ra và trường bus trong sổ là To Workspace (qua Bus Selector); mỗi mạch một script chạy lần lượt bảng ca (B hay L), đáp án tính độc lập trong script. X1-X4 làm sau, khi có model ghép.
+Cần người dùng duyệt trước khi chạy: (1) ngưỡng 12.2; (2) ngưỡng Kappa 1e-3 ở L6; (3) có muốn kiểm bằng công cụ Simulink Coverage không (đo phủ nhánh bên trong khối; chưa kiểm license, và phần
+lõi khối là hàm đóng nên có thể không đo được), đề xuất: không, dùng sổ giao diện.
+
+12.9 BẢNG ÁNH XẠ CỔNG VÀ THAM SỐ: KHỐI VDB <-> KHỐI CỦA PLANT (lập 2026-11-06 tối; đây là GIẢ ĐỊNH, phép thử B, L của 12.5-12.6 sẽ xác nhận hoặc bác từng dòng)
+Cổng của Plant lấy bằng lệnh từ Bike2DOF.mdl và Tires.mdl: Bike2DOF vào F_yf, F_yr, v; ra a_y, gamma, beta. Tires vào theta2, beta, gamma, v, mu; ra F_yf, F_yr, T_r. Quy ước Plant: F_y dương
+sang trái, alpha_f = delta_f - beta - l_f*gamma/v, alpha_r = -beta + l_r*gamma/v, góc nhỏ, đơn vị m/s, rad, N, N.m.
+
+A. Thân: VDBBody (Vehicle Body 3DOF Single Track) <-> Bike2DOF của Plant
+
+Cổng hoặc tham số VDB     | Hướng | Tương ứng trong Plant                       | Biến đổi, ghi chú
+--------------------------+-------+---------------------------------------------+-----------------------------------------------------------------------------------------
+xdotin                    | vào   | v (vào Bike2DOF)                            | bằng nhau, m/s; Plant coi v là đầu vào, VDB ở chế độ áp vận tốc
+FExt(2) Fy                | vào   | F_yf + F_yr                                 | tổng lực ngang hai cầu, cùng dấu (sang trái dương); FExt(1) Fx và FExt(3) Fz không có trong Plant: nối 0
+MExt(3) Mz                | vào   | l_f*F_yf - l_r*F_yr (vế phải PT(4) nhân Iz) | Plant tính trong Bike2DOF, VDB đòi ta cấp; MExt(1), MExt(2) không có trong Plant: nối 0
+WhlAngF                   | vào   | không có (delta_f nằm ở Tires)              | nối 0; chỉ có tác dụng nếu Cy khác 0
+xdot                      | ra    | v                                           | trả lại đầu vào, dùng để kiểm
+ydot                      | ra    | v*beta                                      | beta = ydot/xdot (dạng góc nhỏ); beta của Plant là biến trạng thái x3
+r                         | ra    | gamma                                       | biến trạng thái x4, rad/s, ngược chiều kim đồng hồ dương
+Info.BdyFrm.Cg.Acc.ay     | ra    | a_y                                         | khối trả theo đơn vị g chuẩn 9.80665: a_y = 9.80665*ay (đã tìm ở K11)
+Info.BdyFrm.Cg.Ang.Beta   | ra    | beta                                        | chỉ theo dõi; có thể là atan(ydot/xdot), khác ydot/xdot ở góc lớn (B7)
+Info.Forces.Ext, Moments.Ext | ra | không có                                    | phép kiểm thứ tự thành phần của FExt, MExt
+psi, FzF, FzR             | ra    | không có (F_zf, F_zr là hằng số load_derived) | không dùng, nối Terminator
+m                         | tham số | m                                         | params.json, kg
+Izz                       | tham số | Iz                                        | params.json
+a, b                      | tham số | l_f, l_r                                  | đặt cùng giá trị, nhưng mô-men do ta tính bằng l_f, l_r nên giả định a, b không tham gia (BP2, B8)
+xdot_o, ydot_o, r_o       | tham số | v(0), v*beta(0), gamma(0)                 | Plant bắt đầu x3 = x4 = 0; đặt xdot_o = v(0), ydot_o = 0, r_o = 0
+Cy_f, Cy_r, Cd, Cl, Cs, Cym, Cpm, các cờ chế độ | tham số | không có            | đặt 0 hoặc tắt, để thân chỉ chịu lực ta cấp (bài học Cs, Cym)
+Khác biệt động học: Plant beta' = (F_yf + F_yr)/(m*v) - gamma; VDB ydot' = Fy/m - xdot*r. Hai dạng trùng khi v không đổi (ydot = v*beta); khi v đổi, VDB có thêm số hạng v'*beta (nghi nguồn
+của lệch RAMP 0.1 %, kiểm ở B7).
+
+B. Lốp: VDBTire (Combined Slip Wheel 2DOF, nửa cầu) <-> Tires của Plant
+
+Cổng hoặc tham số VDB     | Hướng | Tương ứng trong Plant                       | Biến đổi, ghi chú
+--------------------------+-------+---------------------------------------------+-----------------------------------------------------------------------------------------
+Vx                        | vào   | v (đầu vào của Tires)                       | cầu trước: Vx = v*cos(delta_f) + (v*beta + l_f*gamma)*sin(delta_f), xoay vào hệ bánh; cầu sau: Vx = v
+Vy                        | vào   | v*beta, l_f*gamma, l_r*gamma                | cầu trước: Vy = -v*sin(delta_f) + (v*beta + l_f*gamma)*cos(delta_f); cầu sau: Vy = v*beta - l_r*gamma
+(không có cổng delta_f)   | -     | theta2 -> delta_f = theta2/n_st (PT(5))     | delta_f chỉ vào qua phép xoay Vx, Vy ở trên, không có cổng riêng
+Info.Alpha                | ra    | -alpha_f (trước), -alpha_r (sau)            | VDB alpha = atan(Vy/Vx), ngược dấu Plant; Plant dùng góc nhỏ (PT(6)-(7))
+Fext                      | vào   | F_zf/2, F_zr/2                              | tải đứng một bánh, hằng số (PT(8)); khối ở chế độ vertType None
+ScaleFctrs(3) (LMUY)      | vào   | mu                                          | chỉ ô 3 mang mu; ô 4 = 0, các ô khác = 1; mu đổi giữa lúc chạy, không đổi độ cứng (Y4)
+Fy                        | ra    | F_yf/2, F_yr/2                              | nhân 2 ra lực cầu; cùng dấu F_yf Plant; không có hệ số cos(delta) (Plant không có)
+Mz                        | ra    | không có                                    | Plant không có M_z; T_r của Plant tính từ e_p (PT(13)-(14)); ở S3 dùng T_r = (e_c*F_y - M_z)/n_st
+(không có khối T_r)       | -     | T_r                                         | tự ghép: S2 theo PT(13)-(14) với alpha_f tự tính, S3 theo M_z cộng caster e_c = e_p0 - t_0
+BrkPrs, AxlTrq            | vào   | không có (Plant không có lực dọc, trượt dọc 0) | nối 0 (lăn tự do)
+Camber                    | vào   | không có                                    | nối 0
+YawRate                   | vào   | không có (có thể = gamma)                   | nối 0; giả định không tác dụng khi turnslip tắt (L4)
+Prs                       | vào   | không có                                    | nối 220 kPa, không đổi Fy khi PPY* = 0
+Gnd                       | vào   | không có                                    | nối 0, không tác dụng khi vertType None
+Omega, Fx, Fz, Mx, My, Info.Kappa | ra | không có                               | không dùng (Kappa theo dõi để chứng minh lăn tự do), nối Terminator
+FNOMIN                    | tham số | F_z một bánh                              | = F_zf/2 hoặc F_zr/2
+PCY1                      | tham số | C                                         | hệ số hình dạng PT(10)
+PDY1                      | tham số | 1                                         | mu*F_z do ScaleFctrs(3) nhân vào, không đặt trong PDY1
+PEY1                      | tham số | E                                         | PT(10)
+PKY1, PKY2, PKY4          | tham số | C_alpha                                   | PKY1 = -C_alpha_nửa/FNOMIN, PKY2 = 1, PKY4 = 2 (dấu âm vì alpha VDB ngược alpha_f)
+Các hệ số dịch, tải, camber, áp suất, trễ, lăn (PHY*, PVY*, PPY*, RBY*, QSY*...) | tham số | không có | đặt 0; trễ FyRelFreqLwrLim = trễ 1.59 ms, Plant không có
+27 ô ScaleFctrs còn lại   | vào   | không có                                    | giá trị 1; ánh xạ từng ô chưa kiểm (L3)
+Chi tiết còn nghi: (1) Plant dùng tải đứng cả cầu và C_alpha cả cầu, VDB dùng nửa cầu rồi nhân 2 (L9 kiểm bằng số); (2) alpha góc nhỏ của Plant so với atan của VDB; (3) lốp S2 chỉ ép được F_y,
+các hệ số M_z (Q*) giữ mặc định của preset nên Mz vô nghĩa ở S2.
+
+12.10 CƠ SỞ CỦA BẢNG ÁNH XẠ 12.9 VÀ THIẾT KẾ THỬ ĐỔI TỪNG CỔNG MỘT (người dùng yêu cầu 2026-11-06 tối; thay phần thử cổng của 12.5, 12.6; phần thử tham số giữ như cũ)
+Mức bằng chứng hiện có của từng dòng 12.9: ĐO TRỰC TIẾP (một phép thử nhắm đúng dòng đó), ĐO GIÁN TIẾP (chỉ suy ra vì cả mạch S1, S2 khớp Plant; hai lỗi có thể bù nhau), CHỈ TÀI LIỆU HOẶC SUY
+LUẬN (chưa đo).
+Dòng                               | Bằng chứng hiện có                                           | Mức
+-----------------------------------+--------------------------------------------------------------+--------------------------
+xdotin = v                         | N1: v bám đầu vào 1e-4 km/h, trong mạch S1                   | GIÁN TIẾP
+FExt(2) = F_yf + F_yr              | R8 Q3 một điểm (1000 N); T5 8 ca; K1c thân tự do             | TRỰC TIẾP, ít điểm
+MExt(3) = l_f*F_yf - l_r*F_yr      | R8 Q3 một điểm (1100 N.m); K1c                               | TRỰC TIẾP, ít điểm
+FExt(1), FExt(3), MExt(1), MExt(2) không tác dụng | chưa thử                                      | CHƯA ĐO
+WhlAngF không tác dụng khi Cy = 0  | tài liệu                                                     | CHƯA ĐO
+ydot = v*beta, r = gamma           | S1 khớp Plant 0.11 %                                         | GIÁN TIẾP
+ay theo g chuẩn                    | K11: tỉ số 1.000342 trên DRY, STEADY (v không đổi)           | TRỰC TIẾP khi v hằng; v đổi CHƯA ĐO
+Beta, Info.Ext                     | chưa thử                                                     | CHƯA ĐO
+a, b của khối không tác dụng       | K1 xếp vào nhóm ĐẶT nên không nhiễu loạn                     | CHƯA ĐO
+xdot_o khác xdotin(0)              | chưa thử                                                     | CHƯA ĐO
+Vx, Vy xoay theo delta_f           | R8 Q2 một điểm (0.0095 rad)                                  | TRỰC TIẾP, một điểm
+alpha VDB = -alpha_f               | R8 Q1                                                        | TRỰC TIẾP
+Fext = F_z một bánh, Fz ra = Fext  | N1                                                           | TRỰC TIẾP
+ScaleFctrs ô 3 = mu                | T2 (đỉnh, độ dốc), T2c (bậc mu)                              | TRỰC TIẾP
+26 ô ScaleFctrs còn lại            | chưa thử từng ô                                              | CHƯA ĐO
+Fy = F_y một bánh, x2 ra cầu       | T1: lệch 3e-5 N so với PT(10) ở 5 mức mu                     | TRỰC TIẾP
+BrkPrs, AxlTrq, Camber, YawRate, Prs, Gnd | chưa thử như cổng (K1 chỉ nhiễu tham số mặt nạ)       | CHƯA ĐO
+Mz vô nghĩa ở S2                   | K1: 7 hệ số Q* có tác dụng, giữ mặc định                     | TRỰC TIẾP
+Hệ số PCY1, PDY1, PEY1, PKY*       | T1 (chức năng, gộp)                                          | TRỰC TIẾP, gộp
+Kết luận: khoảng một nửa số dòng chưa đo, gồm gần hết các dòng "không tác dụng"; nhiều dòng đã đo chỉ có một điểm hoặc chỉ gián tiếp. Bảng 12.9 là giả định có cơ sở một phần, chưa phải kết quả.
+
+Nguyên tắc thiết kế (đổi một cổng mỗi lần, one-at-a-time):
+  - Mỗi khối có điểm làm việc gốc cố định. Mỗi ca chỉ đổi MỘT cổng (hay một tham số, một ô ScaleFctrs) bằng một bậc tại t_s, mọi cổng khác giữ đúng giá trị gốc. Chạy thêm ca gốc không đổi gì
+    để làm mốc.
+  - Mỗi ca ghi MỌI đầu ra của khối (kể cả các trường Info trong sổ), không chỉ đầu ra mong đợi đổi. Như vậy một ca kiểm cùng lúc tác dụng chính của cổng đó và việc nó KHÔNG tác dụng lên các
+    đầu ra khác.
+  - Đáp án của mỗi ca tính độc lập trong script từ phương trình của Plant (Bike2DOF, Tires) qua đúng dòng ánh xạ 12.9, đọc params.json. Đầu ra không được ánh xạ tới cổng đó có đáp án "bằng ca gốc".
+  - Đối chứng âm không cần chạy thêm: mỗi ca so dữ liệu với cả giả thuyết ánh xạ và một giả thuyết sai cùng loại (đổi dấu, đơn vị g = 9.81, không chia đôi lực, góc nhỏ thay atan, có hoặc không
+    có số hạng v'*beta). Ca ĐẠT khi giả thuyết ánh xạ khớp trong ngưỡng VÀ giả thuyết sai lệch vượt ngưỡng ít nhất 10 lần; nếu cả hai cùng khớp thì ca đó không phân biệt được, phải đổi biên độ bậc.
+  - Ngưỡng (đã duyệt ở 12.2): đầu ra mong đợi đổi khớp đáp án 1e-6 tương đối (tĩnh) hay so với nghiệm ODE độc lập 1e-6 (động); đầu ra mong đợi không đổi lệch dưới 1e-9 so với ca gốc.
+  - Giới hạn của đổi một cổng mỗi lần: không thấy tương tác giữa hai cổng. Bù bằng hai điểm gốc cho mỗi khối (một điểm không có trượt ngang, một điểm có), và sau cùng chạy lại S1, S2 ghép (đã
+    có) làm phép kiểm tương tác.
+
+THÂN (VDBBody), chạy 4 s, bậc tại t_s = 1 s, bước giải bước thay đổi MaxStep 2 ms như mạch chính:
+  Gốc G0, đi thẳng: xdotin = 20 m/s, FExt = 0, MExt = 0, WhlAngF = 0, xdot_o = 20, ydot_o = r_o = 0.
+  Gốc G1, cua đều 0.3 g: xdotin = 20 m/s, r_o = r0 = 0.3*g/20 = 0.147 rad/s, ydot_o = 0, FExt(2) = m*20*r0 (khoảng 4630 N), MExt = 0. Đáp án: ydot' = 0, r' = 0 suốt ca (cân bằng),
+    a_y = 0.3 g. Ca gốc tự nó là một phép thử: lệch khỏi cân bằng nghĩa là có lực ẩn.
+Ca   | Cổng đổi (mọi cổng khác giữ gốc)  | Gốc   | Đáp án theo ánh xạ (tính trong script)                                              | Giả thuyết sai để đối chứng
+-----+-----------------------------------+-------+-------------------------------------------------------------------------------------+---------------------------
+BC1  | xdotin bậc 20 -> 22 m/s           | G1    | xdot = xdotin; ydot, r, a_y theo ydot' = Fy/m - xdot*r, r' = Mz/Izz (ODE trong script); | dạng Plant beta' = F/(m*v) - gamma
+     |                                   |       | so thêm với dạng Plant để đo số hạng v'*beta                                        |
+BC2  | xdotin dốc 25 -> 12.5 m/s, 13 s   | G1    | như BC1 (dốc của ca SLIP)                                                           | như BC1
+BC3  | FExt(1) bậc +2000 N               | G0, G1| mọi đầu ra bằng ca gốc                                                              | Fx cộng vào ydot (sai thứ tự)
+BC4  | FExt(2) bậc +1000 N               | G0, G1| ydot(t), r(t), a_y theo ODE; Info.Ext.Fy = FExt(2)                                   | dấu ngược; a_y theo 9.81
+BC5  | FExt(3) bậc +2000 N               | G0, G1| mọi đầu ra bằng ca gốc (trừ FzF, FzR nếu khối cộng Fz vào tải)                       | Fz vào ydot
+BC6  | MExt(1) bậc +500 N.m              | G0, G1| mọi đầu ra bằng ca gốc                                                              | Mx vào r
+BC7  | MExt(2) bậc +500 N.m              | G0, G1| mọi đầu ra bằng ca gốc                                                              | My vào r
+BC8  | MExt(3) bậc +500 N.m              | G0, G1| r' = Mz/Izz, ydot' = -xdot*r; Info.Ext.Mz = MExt(3)                                  | dấu ngược
+BC9  | WhlAngF bậc 0.1 rad               | G0, G1| mọi đầu ra bằng ca gốc; đối chứng dương: lặp với Cy_f = 12000 phải khác gốc          | (dương: phép thử không mù)
+BC10 | xdot_o = 18 thay vì 20            | G0    | ghi khối theo xdot_o hay xdotin tại t = 0 (câu hỏi có hay không, không có đáp án)    | -
+BC11 | tham số m x 1.1                   | G1    | gốc không còn cân bằng: ydot' = Fy/(1.1m) - xdot*r0                                  | m không dùng
+BC12 | tham số Izz x 1.1                 | G1 + BC8 | r' = Mz/(1.1 Izz)                                                               | Izz không dùng
+BC13 | tham số a x 1.1                   | G1 + BC4 | mọi đầu ra bằng ca không đổi a (giả định BP2)                                    | a nhân vào mô-men
+BC14 | tham số b x 1.1                   | G1 + BC4 | như BC13                                                                         | như BC13
+Đầu ra ghi ở mọi ca: xdot, ydot, r, psi, FzF, FzR, Info ay, Beta, Ext.Fx, Fy, Fz, Mx, My, Mz. Thêm ở BC1, BC2, BC4: Beta so với atan(ydot/xdot) và ydot/xdot.
+
+LỐP (VDBTire, nửa cầu trước, cấu hình S2), chạy 1 s, bậc tại t_s = 0.5 s, đọc giá trị tại t = 0.95 s (sau trễ lốp 1.59 ms khoảng 280 lần), ghi cả quá độ để đo trễ:
+  Gốc L0, không trượt: Vx = 20, Vy = 0, Fext = F_zf/2, ScaleFctrs = [1;1;0.8;0;1...], BrkPrs = AxlTrq = Camber = YawRate = Gnd = 0, Prs = 220 kPa.
+  Gốc L1, có trượt: như L0 nhưng Vy = -20*tan(0.03) (alpha VDB = -0.03 rad, tức alpha_f Plant = +0.03 rad, vùng phi tuyến vừa của PT(10)).
+Ca   | Cổng đổi (mọi cổng khác giữ gốc)  | Gốc   | Đáp án theo ánh xạ                                                                  | Giả thuyết sai để đối chứng
+-----+-----------------------------------+-------+-------------------------------------------------------------------------------------+---------------------------
+TC1  | Vy: alpha 0.03 -> 0.06 rad        | L1    | Info.Alpha = atan(Vy/Vx); Fy = PT(10) một bánh tại alpha_f = -Alpha, mu 0.8          | dấu ngược; góc nhỏ Vy/Vx
+TC2  | Vx bậc 20 -> 25 m/s, Vy giữ       | L1    | Alpha = atan(Vy/25); Fy theo alpha mới (lốp chỉ thấy tỉ số Vy/Vx)                    | Fy không đổi (Vx không vào alpha)
+TC3  | Vx bậc 20 -> 25 m/s, Vy = 0       | L0    | mọi đầu ra bằng gốc trừ Omega (bánh tăng tốc); Kappa quá độ ghi lại                  | -
+TC4  | Fext bậc 4549 -> 5000 N           | L0, L1| Fz ra = Fext; Fy theo công thức tải của VDB với PKY2 = 1, PKY4 = 2, FNOMIN giữ      | Fy không đổi theo tải
+TC5  | ScaleFctrs ô 3: 0.8 -> 0.5        | L1    | Fy = PT(10) với mu 0.5; độ dốc tại 0 không đổi (lặp ở alpha 0.002)                   | mu vào độ cứng (B tỉ lệ mu)
+TC6-32 | ScaleFctrs ô k (k khác 3) x 1.1 (ô 4: 0 -> 0.1) | L1 | mọi đầu ra bằng gốc, HOẶC ghi ô đó tác dụng lên gì (bảng ánh xạ 27 ô)   | -
+TC33 | BrkPrs bậc 0 -> 1e5 Pa            | L1    | giả định của ta: phải giữ 0; ghi Kappa, Fx, Fy (kỳ vọng Fy giảm do trượt kết hợp)     | -
+TC34 | AxlTrq bậc 0 -> 50 N.m            | L1    | như TC33                                                                            | -
+TC35 | Camber bậc 0 -> 0.03 rad          | L0, L1| ghi tác dụng lên Fy, Mz, Mx                                                          | -
+TC36 | YawRate bậc 0 -> 0.2 rad/s        | L1    | mọi đầu ra bằng gốc (turnslip tắt)                                                  | -
+TC37 | Prs bậc 220 -> 260 kPa            | L1    | Fy bằng gốc (PPY* = 0); Mz ghi lại                                                   | -
+TC38 | Gnd bậc 0 -> 0.01 m               | L1    | mọi đầu ra bằng gốc (vertType None)                                                  | -
+TC39 | (không đổi cổng) trễ lốp          | TC1   | quá độ Fy sau bậc là hàm mũ bậc 1, hằng số 1.59 ms +-2 %                              | không trễ
+TC40 | 2 x Fy(nửa cầu) so với PT(10) cầu | L1, TC1 | 2*Fy = F_yf cầu với (F_zf, C_alpha_f)                                              | không nhân 2
+Đầu ra ghi ở mọi ca: Omega, Fx, Fy, Fz, Mx, My, Mz, Info Alpha, Kappa.
+Dòng ánh xạ không thử được trên khối đứng một mình: phép xoay Vx, Vy từ (v, beta, gamma, delta_f) và T_r là công thức của ta, không phải cổng của khối. Kiểm trên S2 ghép: Info.Alpha của lốp trước phải
+bằng -alpha_f tính từ trạng thái Plant tương ứng (atan đầy đủ) ở mọi bước của SLIP và WEAVE (TCW1), và T_r của S2 bằng PT(13)-(14) với alpha_f đó (TCW2).
+
+Thực hiện: Model/PRSM_VDB/Analyze/script/make_vdb_io_cases.m (bảng ca: mã, cổng, gốc, bậc, đáp án), run_vdb_io_body.m và run_vdb_io_tire.m (chạy VDBBody.mdl, VDBTire.mdl bằng setVariable các
+in_<cổng>, không sửa model), kết quả Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_<body|tire>_cases.csv (mỗi ca x mỗi đầu ra một dòng: đo, đáp án ánh xạ, đáp án giả thuyết sai, lệch, ĐẠT) và
+một bảng 12.9 cập nhật cột "mức bằng chứng". Số lần chạy: thân khoảng 25, lốp khoảng 45; ước 1-2 giờ cả viết lẫn chạy.

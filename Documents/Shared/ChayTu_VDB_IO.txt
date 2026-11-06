@@ -1,0 +1,84 @@
+==============================================================================================================================================================================================
+KẾ HOẠCH CHẠY TỰ ĐỘNG: THỬ ĐỔI TỪNG CỔNG MỘT CỦA HAI KHỐI VDB (THÂN 3DOF, LỐP), HAI KHUNG CHAT CHẠY SONG SONG
+==============================================================================================================================================================================================
+Lập: 2026-11-06 tối, khung COMMON. Thiết kế gốc: Documents/Shared/KeHoach_Plant_VDB.txt mục 12.2 (ngưỡng, đã duyệt), 12.9 (bảng ánh xạ cần khẳng định), 12.10 (bảng ca BC1-BC14, TC1-TC40,
+TCW1-2). File này chỉ thêm phần vận hành: ai làm gì, ghi vào đâu, khi nào dừng, cách commit. Mâu thuẫn với 12.10 thì 12.10 thắng về nội dung ca, file này thắng về vận hành.
+Hai khung: VDB_BODY (khối thân, VDBBody.mdl) và VDB_TIRE (khối lốp, VDBTire.mdl). Người dùng chỉ dán prompt; khung chạy từ đầu tới commit không cần hỏi, trừ các điểm DỪNG ở mục 5.
+
+1. PHẠM VI GHI (hai khung chạy cùng lúc nên mỗi khung chỉ ghi vào file CỦA MÌNH)
+  VDB_BODY được tạo hoặc sửa: Model/PRSM_VDB/Analyze/script/run_vdb_io_body.m (và hàm phụ đặt cuối file đó), Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_body_*, Tracking/historychat_vdb_body.md.
+  VDB_TIRE được tạo hoặc sửa: Model/PRSM_VDB/Analyze/script/run_vdb_io_tire.m (và hàm phụ cuối file), Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_tire_*, Tracking/historychat_vdb_tire.md.
+  CHỈ ĐỌC với cả hai: VDBBody.mdl, VDBTire.mdl, build_vdb_io.m, load_vdb_io_defaults.m, mọi thứ trong Model/PRSM_VDB/Plant_VDB/ (gồm vdb_body_config.m, vdb_tire_config.m, load_vdb_params.m,
+    use_sim_tmp.m, PlantVDBS2.slx), Model/PRSM/, Model/Controllers/, Model/Sim/, Model/common/, Model/data/, setup_paths.m, KeHoach_Plant_VDB.txt, DoiChieu_Plant_VDB.txt, historychat_common.md,
+    CLAUDE.md. Không lưu đè model nào (chạy bằng Simulink.SimulationInput, setVariable và setBlockParameter; không save_system).
+  Cần sửa một file chỉ đọc (ví dụ phát hiện model sai cổng) thì DỪNG, ghi vào nhật ký khung và báo cáo, không tự sửa.
+  Kết quả vào Result/PRSM/Plant_VDB/Analyze/ (thư mục con của result_dir('Plant_VDB'), tạo nếu chưa có). Việc ghép kết quả vào KeHoach_Plant_VDB.txt 12.9, 12.10 là của khung COMMON sau khi
+    hai khung xong.
+
+2. QUY ƯỚC CHẠY MATLAB (kinh nghiệm đã gặp, xem Tracking/CLAUDE.md mục 6)
+  - Gọi nền: "/c/Program Files/MATLAB/R2023a/bin/matlab" -batch "run('<đường dẫn tuyệt đối>\Model\setup_paths.m'); addpath('<repo>\Model\PRSM_VDB\Analyze\script');
+    addpath('<repo>\Model\PRSM_VDB\Analyze');
+    run_vdb_io_body" (hay _tire). Script không dùng đường dẫn cứng: tính modelDir bằng fileparts như quy ước script của Plant_VDB (Analyze/script -> lên 3 cấp là Model).
+  - Đầu script: setup_paths, addpath Model/PRSM_VDB/Plant_VDB/script, use_sim_tmp, rồi đổi thư mục cache sang thư mục con RIÊNG để hai khung không giẫm nhau: Simulink.fileGenControl('set',
+    'CacheFolder', 'D:\sim_tmp\cache_body', 'CodeGenFolder', 'D:\sim_tmp\codegen_body', 'createDir', true) (khung lốp dùng _tire). Mỗi lần sim gọi Simulink.sdi.clear.
+  - Biến vào: chạy load_vdb_io_defaults để có mọi in_<cổng> gốc, rồi mỗi ca tạo timeseries mới cho đúng MỘT cổng và đưa vào bằng in = in.setVariable('in_<cổng>', ts). Tham số mặt nạ (m, Izz,
+    a, b, Cy_f của thân; hệ số lốp) đổi bằng in.setBlockParameter. Đặt in = in.setModelParameter('ReturnWorkspaceOutputs', 'on') và đọc kết quả bằng out.get('out_Fy') v.v.
+  - Không đặt biến vòng lặp trùng tên biến base workspace (đã từng đè c, m, g). Dùng tên như iCase, kOut.
+  - CSV ghi TỪNG DÒNG (append) ngay sau mỗi ca để chạy lại được: khi chạy lại, bỏ qua mã ca đã có dòng ĐẠT hoặc KHÔNG ĐẠT. MATLAB có thể sập heap khi thoát: vô hại nếu csv đã ghi; nếu sập giữa
+    chừng thì chạy lại script (tối đa 3 lần cho cùng một ca, quá thì ghi ca đó LỖI CHẠY và đi tiếp).
+  - Timeout mỗi lệnh MATLAB 10 phút; script dài thì chia theo nhóm ca (tham số đầu vào của script: danh sách mã ca).
+
+3. CÁCH CHẤM MỘT CA (giống nhau cho hai khung; ngưỡng mục 12.2 đã duyệt, không sửa)
+  - Mỗi ca chạy cùng khoảng thời gian với ca gốc tương ứng (G0, G1 hay L0, L1). Ca gốc chạy trước và lưu tín hiệu.
+  - Đầu ra MONG ĐỢI ĐỔI: so với đáp án tính độc lập trong script từ phương trình Plant qua dòng ánh xạ 12.9 (đọc params.json qua load_vdb_params.m; ODE giải bằng ode45 RelTol 1e-10, AbsTol
+    1e-12). Sai lệch = max|đo - đáp án| / max(|đáp án|, mức tham chiếu của đầu ra đó ghi trong csv). ĐẠT khi <= 1e-6.
+  - Đầu ra MONG ĐỢI KHÔNG ĐỔI: max|đo - ca gốc| / max(|ca gốc|, mức tham chiếu). ĐẠT khi <= 1e-9.
+  - Đối chứng âm (không chạy thêm): tính đáp án của giả thuyết sai ghi ở cột cuối bảng 12.10. ĐẠT chỉ khi giả thuyết sai lệch >= 10 x ngưỡng; nếu giả thuyết sai cũng khớp thì ghi "KHÔNG PHÂN
+    BIỆT", tăng biên độ bậc gấp đôi và chạy lại một lần, vẫn không phân biệt thì ghi lại và đi tiếp.
+  - Ca chỉ ghi nhận (BC10; TC3 Kappa; TC6-32 ô có tác dụng; TC33-35, TC37 Mz): không có ĐẠT hay KHÔNG ĐẠT, ghi giá trị và kết luận một câu.
+  - Lấy mẫu để so: nội suy mọi tín hiệu về lưới đều 1 ms (thân) hay 0.1 ms (lốp, để thấy trễ 1.59 ms) trước khi so; bỏ đúng một mẫu tại thời điểm bậc.
+  - Mỗi dòng csv: ma_ca, cong_doi, goc, dau_ra, loai (doi / khong_doi / ghi_nhan), do_max, dap_an_max, sai_lech, nguong, ket_qua, sai_lech_gia_thuyet_sai, phan_biet (co / khong), ghi_chu.
+
+4. TRÌNH TỰ CỦA MỖI KHUNG
+  B1 Đọc: Tracking/CLAUDE.md, file này, KeHoach_Plant_VDB.txt mục 12.2, 12.9, 12.10, đầu file build_vdb_io.m, load_vdb_io_defaults.m, vdb_body_config.m hoặc vdb_tire_config.m, load_vdb_params.m.
+    Tạo nhật ký khung (Tracking/historychat_vdb_<body/tire>.md) theo khuôn ba phần (TRẠNG THÁI HIỆN TẠI, BẢN NÉN với dòng "Nén lần cuối: Lượt 0", NHẬT KÝ NGUYÊN VĂN), ghi Lượt 1 "bắt đầu".
+  B2 Kiểm môi trường: chạy model không đổi gì 1 s; liệt kê lại cổng bằng lệnh và so với 12.9; khác thì DỪNG.
+  B3 Viết script, chạy ca gốc (G0, G1 hay L0, L1). Ca gốc G1 và L1 có đáp án riêng (G1: ydot' = r' = 0 suốt ca, a_y = 0.3 g; L1: Fy = PT(10) một bánh tại alpha_f = 0.03, mu 0.8); ca gốc KHÔNG
+    ĐẠT thì DỪNG (mục 5).
+  B4 Chạy lần lượt mọi ca của khối mình theo bảng 12.10, ghi csv từng dòng.
+  B5 Ca KHÔNG ĐẠT: trước khi coi là phát hiện, kiểm cách đo bằng một đường độc lập (bài học: lệch giả do cách đo đã xảy ra ba lần: độ trễ khi quét, dây cung, đơn vị g). Ví dụ: đọc cùng đại
+    lượng qua trường Info thay cho cổng ra, đổi lưới nội suy, đổi biên độ bậc. Vẫn KHÔNG ĐẠT thì ghi là PHÁT HIỆN với số đo, giả thuyết nguyên nhân và đề xuất sửa ánh xạ hay cấu hình; KHÔNG
+    sửa cấu hình (vdb_*_config.m là file chỉ đọc).
+  B6 Viết báo cáo Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_<body/tire>_report.txt (tiếng Việt, độ rộng dòng 180-200 ký tự, kiểm bằng Python): bảng mỗi dòng ánh xạ 12.9 của khối mình với mức
+    bằng chứng MỚI (ĐO TRỰC TIẾP ĐẠT, KHÔNG ĐẠT, KHÔNG PHÂN BIỆT, CHỈ GHI NHẬN), mã ca làm bằng chứng, số đo; mục PHÁT HIỆN; mục giới hạn (dải đã thử, chỉ đúng R2023a, không thấy tương tác
+    giữa hai cổng); bảng 27 ô ScaleFctrs (khung lốp).
+  B7 Vẽ một hình tổng hợp (png, Visible off, -softwareopengl): mỗi ca một cột, màu theo kết quả, thang log của sai lệch so với ngưỡng. Tên Plant_VDB_IO_<body/tire>_summary.png.
+  B8 Ghi Lượt cuối trong nhật ký khung, cập nhật TRẠNG THÁI HIỆN TẠI, rồi commit (mục 6).
+
+5. ĐIỂM DỪNG (dừng hẳn, ghi lý do vào nhật ký và báo cáo, commit phần đã có rồi kết thúc lượt)
+  - Cổng hay kích thước cổng khác 12.9; model không chạy được ở B2.
+  - Ca gốc KHÔNG ĐẠT sau bước kiểm cách đo (mọi ca sau so với ca gốc nên vô nghĩa).
+  - Cần sửa một file chỉ đọc.
+  - Ổ C hoặc D còn dưới 20 GB, hoặc một lần chạy dùng trên 8 GB bộ nhớ.
+  - Quá 4 giờ kể từ lúc bắt đầu.
+  Không phải điểm dừng: ca KHÔNG ĐẠT thường (ghi PHÁT HIỆN và đi tiếp), MATLAB sập heap (chạy lại).
+
+6. COMMIT (TỰ ĐỘNG, CHỈ FILE CỦA MÌNH)
+  KHÔNG dùng tools/sync_repo.sh: nó chạy git add -A nên sẽ commit cả việc dở của khung khác (khung PAPER đang có hình và file chưa commit, khung kia đang chạy song song). Thay bằng, ở gốc
+    repo, Git Bash:
+    git add -- <đúng các đường dẫn ở mục 1 của khung mình>
+    git commit -m "[PC] VDB_<BODY/TIRE>: thử đổi từng cổng (<số ca ĐẠT>/<tổng>), <số PHÁT HIỆN> phát hiện" -m "Co-Authored-By: <dòng ghi công theo nhắc của hệ thống>"
+    git pull --rebase --autostash origin main
+    git push origin main
+  Lỗi "index.lock" hay push bị từ chối vì khung kia vừa push: chờ khoảng 30 s bằng một lệnh kiểm rồi chạy lại từ git pull, tối đa 3 lần. Xung đột khi rebase (không nên có vì hai khung ghi file
+    khác nhau): git rebase --abort, DỪNG, báo người dùng. Không dùng --force, không --no-verify. Không commit file .mat (đã trong .gitignore) và không commit scratch/.
+  Máy không phải PC (hostname khác DESKTOP-G6T192V) thì thay [PC] bằng [laptop]. Tracking/repo_history.md để khung COMMON sinh lại sau.
+
+7. SAU KHI HAI KHUNG XONG (việc của khung COMMON, không phải của hai khung)
+  Đọc hai báo cáo, ghép mức bằng chứng vào 12.9 và 12.10, cập nhật DoiChieu_Plant_VDB.txt, rồi quay lại các mục chờ quyết (K1, K9, G1, nguồn T_r, cách ghép vòng kín, K3b).
+
+8. RIÊNG KHUNG VDB_TIRE: TCW1, TCW2 TRÊN S2 GHÉP (làm sau TC1-TC40)
+  Mở PlantVDBS2.slx bằng load_system (chỉ đọc), thêm trong BỘ NHỚ một Bus Selector lấy Info.Alpha của Tire_front và To Workspace cho Alpha, xdot, ydot, r, theta2, T_r, chạy ca SLIP và WEAVE
+    (đầu vào như compare_vdb_s2.m dựng), rồi close_system(..., 0): KHÔNG lưu. Đáp án tính từ chính trạng thái S2: alpha_f = atan2(-Vy_w, Vx_w) với Vx_w, Vy_w xoay từ (xdot, ydot + l_f*r) theo
+    delta_f = theta2/n_st; TCW1 ĐẠT khi Info.Alpha = -alpha_f trong 1e-6 rad mọi mẫu; TCW2 ĐẠT khi T_r bằng PT(13)-(14) với alpha_f đó trong 1e-6 tương đối. Không cần mốc chuẩn .mat (không
+    chạy make_plant_baseline, vì nó ghi vào baseline/ ngoài phạm vi).

@@ -60,5 +60,8 @@ h += [plt.Line2D([], [], color='#555555', marker='o', ls='', markerfacecolor='wh
 ax.legend(handles=h, loc='upper right', frameon=False, ncol=2)
 fig.tight_layout()
 fig.savefig(os.path.join(out, 'Fig_7_Pareto.png'), bbox_inches='tight', facecolor='white')
+# submission files (JSTT Guide: vector PDF, or TIFF at 500 dpi or more)
+fig.savefig(os.path.join(out, 'Fig_7_Pareto.png').replace('.png', '.pdf'), bbox_inches='tight', facecolor='white')
+fig.savefig(os.path.join(out, 'Fig_7_Pareto.png').replace('.png', '.tif'), bbox_inches='tight', facecolor='white', dpi=600, pil_kwargs={'compression': 'raw'})  # LZW crashes libtiff on this PC
 plt.close(fig)
 print('wrote', os.path.join(out, 'Fig_7_Pareto.png'))

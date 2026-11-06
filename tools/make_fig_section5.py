@@ -45,6 +45,9 @@ for case in ('STEADY', 'SLIP', 'WEAVE'):
         ax.legend(handles=h, loc='upper right', ncol=2, frameon=False, handlelength=2.6, columnspacing=1.2, bbox_to_anchor=(1.0, 1.16))
         fig.tight_layout()
         fig.savefig(os.path.join(out, f'Fig_{num}_{case}_{c}.png'), bbox_inches='tight', facecolor='white')
+        # submission files (JSTT Guide: vector PDF, or TIFF at 500 dpi or more)
+        fig.savefig(os.path.join(out, f'Fig_{num}_{case}_{c}.png').replace('.png', '.pdf'), bbox_inches='tight', facecolor='white')
+        fig.savefig(os.path.join(out, f'Fig_{num}_{case}_{c}.png').replace('.png', '.tif'), bbox_inches='tight', facecolor='white', dpi=600, pil_kwargs={'compression': 'raw'})  # LZW crashes libtiff on this PC
         plt.close(fig)
         num += 1
 print('wrote Fig_8 ... Fig_13 in', out)

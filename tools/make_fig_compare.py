@@ -44,6 +44,9 @@ h = [plt.Line2D([], [], color=color[c], marker=marker[c], ls='', markersize=5, l
 fig.legend(handles=h, loc='upper center', ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.07), handletextpad=0.2)
 fig.tight_layout()
 fig.savefig(os.path.join(out, 'Fig_14_seeds.png'), bbox_inches='tight', facecolor='white')
+# submission files (JSTT Guide: vector PDF, or TIFF at 500 dpi or more)
+fig.savefig(os.path.join(out, 'Fig_14_seeds.png').replace('.png', '.pdf'), bbox_inches='tight', facecolor='white')
+fig.savefig(os.path.join(out, 'Fig_14_seeds.png').replace('.png', '.tif'), bbox_inches='tight', facecolor='white', dpi=600, pil_kwargs={'compression': 'raw'})  # LZW crashes libtiff on this PC
 plt.close(fig)
 
 print('wrote Fig_14_seeds.png')
