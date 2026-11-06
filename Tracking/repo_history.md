@@ -10,11 +10,13 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 - laptop: chạy song song phần việc chia cho nó (MapPID, một nửa Map và PID khi so mặt Pareto chung), thường đẩy lên nhánh phụ rồi gộp.
 - Commit trước 2026-10-22 chưa ghi máy (hiện "?"): lúc đó làm trên một máy; từ nay mọi commit có tag [PC] hoặc [laptop] ở đầu (tools/sync_repo.sh tự thêm).
 
-## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 136 commit)
+## Lịch sử commit theo ngày (mới nhất trước; sinh tự động từ git log, 138 commit)
 
 
-### 2026-11-06 (PC 1)
+### 2026-11-06 (PC 3)
 
+- 17:23 3b5769d [PC] Cap nhat tracking va ke hoach Plant_VDB cho may khac
+- 16:27 03d17b6 [PC] repo_history updated
 - 16:27 e4d9320 [PC] Plant_VDB: kiem tra theo rui ro (muc 11), sua a_y g chuan, them script check/audit/compare
 
 ### 2026-10-31 (? 1)
@@ -254,3 +256,4 @@ File này do `tools/update_repo_history.py` cập nhật (phần tự động đ
 - 2026-10-23 16:27 [PC] Gộp toàn bộ vào main, xóa nhánh phụ; thêm tools/update_repo_history.py và tools/sync_repo.sh. SSW (ba ca STEADY, SLIP, WEAVE) chạy xong trên PC: Result/Controllers/<Ctrl>/Cases_ssw/, tóm tắt Result/Compare/SSW_summary/.
 - 2026-10-28 01:40 [PC] Viết lại Abstract, Introduction, mục 2 và 3 theo quy tắc viết như người; hình Fig 4-6 mới ở Figures/new/main/28-10/ (chưa đưa vào docx); paper_ENG.docx chưa gen do Word khóa file; PDF chưa xuất
 - 2026-11-06 16:27 [PC] Chay lai baseline: make_plant_baseline; ket qua trong Result/PRSM/Plant_VDB, .mat khong commit
+- 2026-11-06 17:23 [PC] Doc muc 0 cua historychat_common.md va khoi TIEP TUC TU MAY KHAC o dau KeHoach_Plant_VDB.txt
