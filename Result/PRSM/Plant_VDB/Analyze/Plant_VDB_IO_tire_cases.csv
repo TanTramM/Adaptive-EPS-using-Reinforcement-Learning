@@ -1,0 +1,385 @@
+ma_ca,cong_doi,goc,dau_ra,loai,do_max,dap_an_max,sai_lech,nguong,ket_qua,sai_lech_gia_thuyet_sai,phan_biet,ghi_chu
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,1.236540e-07,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,2.838437e-06,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Fy,doi,3.33338747e+03,3.33338747e+03,1.091449e-12,1.0e-06,ĐẠT,1.832043e+00,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: dau nguoc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Mx,ghi_nhan,2.67448138e+01,1.76448873e+01,9.099927e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,1.347644e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Alpha,doi,6.00000000e-02,6.00000000e-02,0.000000e+00,1.0e-06,ĐẠT,1.201731e-03,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: goc nho Vy/Vx
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,5.963917e-06,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC39,khong doi cong: tre lop sau bac TC1,TC1,Fy_tau,doi,1.59154943e-03,1.59000000e-03,9.744852e-04,2.0e-02,ĐẠT,1.000000e+00,co,hang so thoi gian ham mu bac 1 tu hoi quy log; thoi diem dat 63.2% = 1.600e-03 s; Info.Alpha da dat 1.0000 cua bac o mau dau sau bac (Alpha nhay tuc thi neu gan 1)
+TC40,khong doi cong: 2 x Fy nua cau so voi PT(10) cau,ca goc L1,Fy_cau,doi,4.39790325e+03,4.39790325e+03,2.794307e-12,1.0e-06,ĐẠT,5.000000e-01,co,gia thuyet sai: khong nhan 2
+TC40,khong doi cong: 2 x Fy nua cau so voi PT(10) cau,ca TC1,Fy_cau,doi,6.66677494e+03,6.66677494e+03,1.191510e-12,1.0e-06,ĐẠT,5.000000e-01,co,gia thuyet sai: khong nhan 2
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Omega,ghi_nhan,4.91379989e+01,4.01764550e+01,2.439956e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Fx,ghi_nhan,4.99431578e+03,1.94345905e+03,1.372427e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Fy,doi,1.82005900e+03,1.82005900e+03,1.525704e-12,1.0e-06,ĐẠT,1.041205e-01,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Fy khong doi
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,3.039883e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Mz,ghi_nhan,5.79344865e+01,5.64437026e+01,3.930316e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Alpha,doi,2.40025920e-02,2.40025920e-02,0.000000e+00,1.0e-06,ĐẠT,1.999136e-01,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Vx khong vao alpha
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,Kappa,ghi_nhan,2.00157102e-01,2.12201368e-02,9.422343e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Omega,ghi_nhan,4.91380005e+01,4.01764550e+01,2.439956e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Fx,ghi_nhan,5.12999506e+03,2.06693712e+03,1.409712e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Fy,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Mx,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Mz,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Alpha,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,Kappa,ghi_nhan,2.00156921e-01,2.12201368e-02,9.422336e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,3.129645e-04,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Fx,ghi_nhan,2.06693712e+03,2.06693712e+03,9.904989e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Fy,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Fz,doi,5.00000000e+03,5.00000000e+03,0.000000e+00,1.0e-06,ĐẠT,9.025428e-02,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Fz khong theo Fext
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Mx,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Mz,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Alpha,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,2.048652e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,3.125422e-04,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,9.310322e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Fy,doi,2.22699537e+03,2.22699537e+03,1.821622e-12,1.0e-06,ĐẠT,7.706479e-03,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Fy khong doi theo tai
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Fz,doi,5.00000000e+03,5.00000000e+03,0.000000e+00,1.0e-06,ĐẠT,9.025428e-02,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Fz khong theo Fext
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Mx,ghi_nhan,1.96445092e+01,1.76448873e+01,1.999622e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Mz,ghi_nhan,6.32530794e+01,5.64437026e+01,6.809377e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,2.048718e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC4b,Fext,L1,Fy_Plant_style,ghi_nhan,2.22699537e+03,2.23541077e+03,2.312569e-03,NaN,GHI NHẬN,NaN,n/a,so voi cong thuc kieu Plant (do cung khong doi theo tai)
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Fy,doi,1.89129009e+03,1.89129009e+03,9.376787e-13,1.0e-06,ĐẠT,1.420576e-01,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: mu vao do cung
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,2.468371e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,2.210771e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Fx,ghi_nhan,2.06635629e+03,2.06635629e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Fy,doi,1.59867604e+02,1.59867604e+02,1.516066e-13,1.0e-06,ĐẠT,1.646061e-02,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: mu vao do cung
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Mx,ghi_nhan,1.28358821e+00,1.28358821e+00,6.482517e-06,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Mz,ghi_nhan,4.94208388e+00,4.94208388e+00,7.761538e-05,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Alpha,khong_doi,2.00000000e-03,2.00000000e-03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC5b,ScaleFctrs o 3,L1s,Fy_ratio_mu,ghi_nhan,9.99494969e-01,1.00000000e+00,5.050314e-04,NaN,GHI NHẬN,NaN,n/a,ti so Fy(mu moi)/Fy(mu 0.8) o alpha 0.002: gan 1 nghia la do doc tai 0 khong doi theo mu
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Fy,doi,2.23566235e+03,2.23566235e+03,1.793755e-12,1.0e-06,ĐẠT,1.008818e-02,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: Fy khong doi
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Mx,ghi_nhan,1.79394061e+01,1.76448873e+01,2.945188e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Mz,ghi_nhan,5.94467909e+01,5.64437026e+01,3.003088e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,1.032718e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,2.738606e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Fy,ghi_nhan,2.36192132e+03,2.19895162e+03,4.478441e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Mx,ghi_nhan,1.89523227e+01,1.76448873e+01,1.307435e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Mz,ghi_nhan,6.07737793e+01,5.64437026e+01,4.330077e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc01,ScaleFctrs o 1 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,4.980873e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,4.586940e-09,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,1.241089e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,5.958560e-08,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc02,ScaleFctrs o 2 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,2.212312e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,1.796261e-10,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,4.860130e-09,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Fy,ghi_nhan,2.19895162e+03,2.19895162e+03,4.185559e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,1.221956e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,1.227816e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc04,ScaleFctrs o 4 -> 0.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,8.663493e-09,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,9.731826e-08,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,2.849045e-06,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,3.854380e-06,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc05,ScaleFctrs o 5 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,4.693725e-06,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Fy,ghi_nhan,2.37013379e+03,2.19895162e+03,4.704121e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Mx,ghi_nhan,1.90182064e+01,1.76448873e+01,1.373319e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Mz,ghi_nhan,5.82242500e+01,5.64437026e+01,1.780547e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc06,ScaleFctrs o 6 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,9.202477e-16,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,3.552714e-16,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc07,ScaleFctrs o 7 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Fy,ghi_nhan,2.20762333e+03,2.19895162e+03,2.383002e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Mx,ghi_nhan,1.77144579e+01,1.76448873e+01,6.957062e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Mz,ghi_nhan,5.66662918e+01,5.64437026e+01,2.225893e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc08,ScaleFctrs o 8 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,5.268169e-17,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc09,ScaleFctrs o 9 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Fy,ghi_nhan,2.20991208e+03,2.19895162e+03,3.011956e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Mx,ghi_nhan,1.77328199e+01,1.76448873e+01,8.793262e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Mz,ghi_nhan,5.67250406e+01,5.64437026e+01,2.813381e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc10,ScaleFctrs o 10 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,2.077256e-05,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,5.620429e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,2.698410e-04,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc11,ScaleFctrs o 11 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,1.001875e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc12,ScaleFctrs o 12 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,4.999768e-08,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,1.352787e-06,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,6.494831e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc13,ScaleFctrs o 13 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,2.411422e-06,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc14,ScaleFctrs o 14 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc15,ScaleFctrs o 15 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc16,ScaleFctrs o 16 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Mz,ghi_nhan,6.20879986e+01,5.64437026e+01,5.644296e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc17,ScaleFctrs o 17 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc18,ScaleFctrs o 18 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,8.715518e-09,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,2.328715e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,1.115138e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc19,ScaleFctrs o 19 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,4.203554e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc20,ScaleFctrs o 20 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc21,ScaleFctrs o 21 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Mz,ghi_nhan,5.64437766e+01,5.64437026e+01,7.412797e-07,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc22,ScaleFctrs o 22 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,1.721931e-03,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,4.663829e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,2.334441e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc23,ScaleFctrs o 23 -> 1.1,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,8.315454e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Mx,ghi_nhan,1.94093760e+01,1.76448873e+01,1.764489e-02,NaN,GHI NHẬN,NaN,n/a,CO TAC DUNG: lech so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc24,ScaleFctrs o 24 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc25,ScaleFctrs o 25 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc26,ScaleFctrs o 26 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCc27,ScaleFctrs o 27 -> 1.1,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,2.015761e-04,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,7.443826e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Fy,ghi_nhan,2.19895162e+03,2.19895162e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Fz,ghi_nhan,4.54872862e+03,4.54872862e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Mz,ghi_nhan,5.67003977e+01,5.64437026e+01,2.566952e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Alpha,ghi_nhan,3.00000000e-02,3.00000000e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC33,BrkPrs 0 -> 1e5 Pa,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,9.722144e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,7.250976e-04,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,2.677337e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Fy,ghi_nhan,2.19895162e+03,2.19895162e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Fz,ghi_nhan,4.54872862e+03,4.54872862e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Mz,ghi_nhan,5.64437026e+01,5.64437026e+01,9.516987e-03,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Alpha,ghi_nhan,3.00000000e-02,3.00000000e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC34,AxlTrq 0 -> 50 N.m,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,3.497203e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Fx,ghi_nhan,2.06693712e+03,2.06693712e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Fy,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Fz,ghi_nhan,4.54872862e+03,4.54872862e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Mx,ghi_nhan,6.35661668e+01,0.00000000e+00,6.356617e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Mz,ghi_nhan,7.79868598e+00,0.00000000e+00,7.798686e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Alpha,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Fy,ghi_nhan,2.19895162e+03,2.19895162e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Fz,ghi_nhan,4.54872862e+03,4.54872862e+03,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Mx,ghi_nhan,4.59212786e+01,1.76448873e+01,6.356617e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Mz,ghi_nhan,6.66185125e+01,5.64437026e+01,1.017481e-01,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Alpha,ghi_nhan,3.00000000e-02,3.00000000e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC36,YawRate 0 -> 0.2 rad/s,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Omega,ghi_nhan,4.01764550e+01,4.01764550e+01,3.409083e-08,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Fx,ghi_nhan,1.94345905e+03,1.94345905e+03,8.987018e-07,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Mx,ghi_nhan,1.76448873e+01,1.76448873e+01,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,My,ghi_nhan,0.00000000e+00,0.00000000e+00,0.000000e+00,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Mz,ghi_nhan,5.83045863e+01,5.64437026e+01,1.860884e-02,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC37,Prs 220 -> 260 kPa,L1,Kappa,ghi_nhan,2.12201368e-02,2.12201368e-02,1.644224e-06,NaN,GHI NHẬN,NaN,n/a,chi ghi nhan: lech so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Omega,khong_doi,4.01764550e+01,4.01764550e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Fx,khong_doi,1.94345905e+03,1.94345905e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Fy,khong_doi,2.19895162e+03,2.19895162e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Fz,khong_doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Mx,khong_doi,1.76448873e+01,1.76448873e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,My,khong_doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Mz,khong_doi,5.64437026e+01,5.64437026e+01,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Alpha,khong_doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TC38,Gnd 0 -> 0.01 m,L1,Kappa,khong_doi,2.12201368e-02,2.12201368e-02,0.000000e+00,1.0e-09,ĐẠT,NaN,n/a,so voi ca goc
+TCW1_SLIP,Info.Alpha cua Tire_front tren S2 (SLIP/WEAVE),S2,Alpha,doi,2.19801388e-01,2.19801388e-01,0.000000e+00,1.0e-06,ĐẠT,3.663577e-02,co,rad tuyet doi; 52799 mau; ca SLIP; sim 76 s; gia thuyet sai: khong xoay theo delta_f
+TCW2_SLIP,T_r cua S2 so voi PT(13)-(14) voi alpha_f tinh lai,S2,T_r,doi,1.54554266e+01,1.54554266e+01,0.000000e+00,1.0e-06,ĐẠT,7.318257e-01,co,tuong doi; ca SLIP; gia thuyet sai: e_p = e_p0 khong doi
+TCW1_WEAVE,Info.Alpha cua Tire_front tren S2 (SLIP/WEAVE),S2,Alpha,doi,1.15230651e-02,1.15230651e-02,0.000000e+00,1.0e-06,ĐẠT,1.663521e-02,co,rad tuyet doi; 53087 mau; ca WEAVE; sim 33 s; gia thuyet sai: khong xoay theo delta_f
+TCW2_WEAVE,T_r cua S2 so voi PT(13)-(14) voi alpha_f tinh lai,S2,T_r,doi,4.89330575e+00,4.89330575e+00,0.000000e+00,1.0e-06,ĐẠT,1.634016e-01,co,tuong doi; ca WEAVE; gia thuyet sai: e_p = e_p0 khong doi
+GL0,ca goc L0 (khong truot),L0,Fy,doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-06,ĐẠT,NaN,n/a,dap an tinh tu phuong trinh Plant qua anh xa
+GL0,ca goc L0 (khong truot),L0,Fz,doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-06,ĐẠT,NaN,n/a,dap an tinh tu phuong trinh Plant qua anh xa
+GL0,ca goc L0 (khong truot),L0,Alpha,doi,0.00000000e+00,0.00000000e+00,0.000000e+00,1.0e-06,ĐẠT,NaN,n/a,dap an tinh tu phuong trinh Plant qua anh xa
+GL1,ca goc L1 (alpha_f = 0.03 rad),L1,Fy,doi,2.19895162e+03,2.19895162e+03,1.688534e-12,1.0e-06,ĐẠT,1.208553e+00,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: dau nguoc
+GL1,ca goc L1 (alpha_f = 0.03 rad),L1,Fz,doi,4.54872862e+03,4.54872862e+03,0.000000e+00,1.0e-06,ĐẠT,NaN,n/a,dap an tinh tu phuong trinh Plant qua anh xa
+GL1,ca goc L1 (alpha_f = 0.03 rad),L1,Alpha,doi,3.00000000e-02,3.00000000e-02,0.000000e+00,1.0e-06,ĐẠT,1.000000e-03,co,dap an tinh tu phuong trinh Plant qua anh xa; gia thuyet sai: goc sai 0.1 phan tram

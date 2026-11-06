@@ -1,0 +1,50 @@
+ma_ca,cong_doi,goc,n_cham,n_ghi,ratio,ket_qua
+TC1,Vy (alpha 0.03 -> 0.06 rad),L1,3,6,1.091449e-06,ĐẠT
+TC39,khong doi cong: tre lop sau bac TC1,TC1,1,0,0.04872426,ĐẠT
+TC40,khong doi cong: 2 x Fy nua cau so voi PT(10) cau,ca goc L1,2,0,2.794307e-06,ĐẠT
+TC2,Vx 20 -> 25 m/s; Vy giu,L1,3,6,1.525704e-06,ĐẠT
+TC3,Vx 20 -> 25 m/s; Vy = 0,L0,5,4,0,ĐẠT
+TC4a,Fext 4549 -> 5000 N (khong truot),L0,5,4,0,ĐẠT
+TC4b,Fext 4549 -> 5000 N (alpha 0.03),L1,3,7,1.821622e-06,ĐẠT
+TC5,ScaleFctrs o 3: 0.8 -> 0.5,L1,3,6,9.376787e-07,ĐẠT
+TC5b,ScaleFctrs o 3: 0.8 -> 0.5 (alpha 0.002; do doc tai 0),L1s,3,7,1.516066e-07,ĐẠT
+TC32,ScaleFctrs o 3 x 1.1 (doi chung duong: o co tac dung),L1,3,6,1.793755e-06,ĐẠT
+TCc01,ScaleFctrs o 1 -> 1.1,L1,3,6,44784410,GHI NHẬN
+TCc02,ScaleFctrs o 2 -> 1.1,L1,5,4,221.2312,GHI NHẬN
+TCc04,ScaleFctrs o 4 -> 0.1,L1,4,5,1227816,GHI NHẬN
+TCc05,ScaleFctrs o 5 -> 1.1,L1,5,4,4693.725,GHI NHẬN
+TCc06,ScaleFctrs o 6 -> 1.1,L1,6,3,47041210,GHI NHẬN
+TCc07,ScaleFctrs o 7 -> 1.1,L1,9,0,9.202477e-07,ĐẠT
+TCc08,ScaleFctrs o 8 -> 1.1,L1,6,3,2383002,GHI NHẬN
+TCc09,ScaleFctrs o 9 -> 1.1,L1,9,0,5.268169e-08,ĐẠT
+TCc10,ScaleFctrs o 10 -> 1.1,L1,6,3,3011956,GHI NHẬN
+TCc11,ScaleFctrs o 11 -> 1.1,L1,5,4,1001875,GHI NHẬN
+TCc12,ScaleFctrs o 12 -> 1.1,L1,9,0,0,ĐẠT
+TCc13,ScaleFctrs o 13 -> 1.1,L1,5,4,2411.422,GHI NHẬN
+TCc14,ScaleFctrs o 14 -> 1.1,L1,9,0,0,ĐẠT
+TCc15,ScaleFctrs o 15 -> 1.1,L1,9,0,0,ĐẠT
+TCc16,ScaleFctrs o 16 -> 1.1,L1,9,0,0,ĐẠT
+TCc17,ScaleFctrs o 17 -> 1.1,L1,8,1,56442960,GHI NHẬN
+TCc18,ScaleFctrs o 18 -> 1.1,L1,9,0,0,ĐẠT
+TCc19,ScaleFctrs o 19 -> 1.1,L1,5,4,420.3554,GHI NHẬN
+TCc20,ScaleFctrs o 20 -> 1.1,L1,9,0,0,ĐẠT
+TCc21,ScaleFctrs o 21 -> 1.1,L1,9,0,0,ĐẠT
+TCc22,ScaleFctrs o 22 -> 1.1,L1,8,1,741.2797,GHI NHẬN
+TCc23,ScaleFctrs o 23 -> 1.1,L1,5,4,83154540,GHI NHẬN
+TCc24,ScaleFctrs o 24 -> 1.1,L1,8,1,17644890,GHI NHẬN
+TCc25,ScaleFctrs o 25 -> 1.1,L1,9,0,0,ĐẠT
+TCc26,ScaleFctrs o 26 -> 1.1,L1,9,0,0,ĐẠT
+TCc27,ScaleFctrs o 27 -> 1.1,L1,9,0,0,ĐẠT
+TC33,BrkPrs 0 -> 1e5 Pa,L1,0,9,9722144,GHI NHẬN
+TC34,AxlTrq 0 -> 50 N.m,L1,0,9,34972030,GHI NHẬN
+TC35a,Camber 0 -> 0.03 rad (khong truot),L0,0,9,635661700,GHI NHẬN
+TC35b,Camber 0 -> 0.03 rad (alpha 0.03),L1,0,9,635661700,GHI NHẬN
+TC36,YawRate 0 -> 0.2 rad/s,L1,9,0,0,ĐẠT
+TC37,Prs 220 -> 260 kPa,L1,3,6,0,ĐẠT
+TC38,Gnd 0 -> 0.01 m,L1,9,0,0,ĐẠT
+TCW1_SLIP,Info.Alpha cua Tire_front tren S2 (SLIP/WEAVE),S2,1,0,0,ĐẠT
+TCW2_SLIP,T_r cua S2 so voi PT(13)-(14) voi alpha_f tinh lai,S2,1,0,0,ĐẠT
+TCW1_WEAVE,Info.Alpha cua Tire_front tren S2 (SLIP/WEAVE),S2,1,0,0,ĐẠT
+TCW2_WEAVE,T_r cua S2 so voi PT(13)-(14) voi alpha_f tinh lai,S2,1,0,0,ĐẠT
+GL0,ca goc L0 (khong truot),L0,3,0,0,ĐẠT
+GL1,ca goc L1 (alpha_f = 0.03 rad),L1,3,0,1.688534e-06,ĐẠT

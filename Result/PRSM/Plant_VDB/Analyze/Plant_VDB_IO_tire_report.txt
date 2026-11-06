@@ -1,0 +1,190 @@
+==============================================================================================================================================================================================
+BÁO CÁO THỬ ĐỔI TỪNG CỔNG MỘT CỦA KHỐI LỐP VDB (Combined Slip Wheel 2DOF, cấu hình S2), khung VDB_TIRE, 2026-11-06
+==============================================================================================================================================================================================
+Kế hoạch gốc: Documents/Shared/KeHoach_Plant_VDB.txt mục 12.2 (ngưỡng), 12.9 bảng B (ánh xạ cần khẳng định), 12.10 (ca TC1-TC40, gốc L0, L1); vận hành: Documents/Shared/ChayTu_VDB_IO.txt mục 8 (TCW1,
+TCW2). Script: Model/PRSM_VDB/Analyze/script/run_vdb_io_tire.m. Mô hình: Model/PRSM_VDB/Analyze/VDBTire.mdl, không lưu đè. Số liệu từng dòng:
+Result/PRSM/Plant_VDB/Analyze/Plant_VDB_IO_tire_cases.csv; tóm tắt từng ca: Plant_VDB_IO_tire_summary.csv; mức bằng chứng từng dòng ánh xạ: Plant_VDB_IO_tire_map.csv; 27 ô ScaleFctrs:
+Plant_VDB_IO_tire_scale27.csv; hình: Plant_VDB_IO_tire_summary.png.
+
+1. KẾT QUẢ TỔNG
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Tổng 49 mã ca (mỗi mã ca một lần chạy 1 s, một cổng đổi một bậc tại t = 0.5 s, mọi cổng khác giữ giá trị gốc; riêng TCW1, TCW2 chạy 100 s trên S2). Trong đó 31 ca có tiêu chí ĐẠT hoặc KHÔNG ĐẠT: 31
+ĐẠT, 0 KHÔNG ĐẠT, 0 KHÔNG PHÂN BIỆT. Còn 18 ca chỉ ghi nhận (không có ĐẠT hay KHÔNG ĐẠT theo ChayTu_VDB_IO.txt mục 3): 14 ô ScaleFctrs có tác dụng (TC6-TC31, mã TCc<k> với k là số thứ tự ô) và TC33,
+TC34, TC35a, TC35b.
+Các ca chấm: ca gốc GL0, GL1; TC1, TC2, TC3, TC4a, TC4b, TC5, TC5b, TC32; 12 ô ScaleFctrs không tác dụng; TC36, TC37, TC38; TC39, TC40; TCW1 và TCW2 trên SLIP và WEAVE (4 ca). Quy ước mã: TC4a, TC4b
+là TC4 ở gốc L0, L1; TC5b là TC5 lặp ở alpha 0.002; TC35a, TC35b là TC35 ở L0, L1; TC32 là ô 3 nhân 1.1 (đối chứng dương, vì ô 3 là ô mang mu) nên các ô khác là TCc01, TCc02, TCc04 ... TCc27 (26 ô, ô
+4 đổi từ 0 sang 0.1, các ô còn lại nhân 1.1).
+Cách đo: mỗi đầu vào dạng bậc (mốc thời gian lặp), mọi đầu vào của ca gốc cũng có cùng điểm gãy tại 0.5 s nên bước giải trong ca và ca gốc giống nhau; giải biến bước MaxStep 1e-4 s, RelTol 1e-9,
+AbsTol 1e-12; nội suy về lưới 0.1 ms; đầu ra mong đợi đổi đọc trong cửa sổ 0.9-1.0 s (sau khoảng 280 hằng số trễ), đầu ra mong đợi không đổi so với ca gốc trên cả 1 s trừ đúng một mẫu tại bậc.
+Ngưỡng: 1e-6 tương đối cho đầu ra đổi, 1e-9 tương đối cho đầu ra không đổi, trễ lốp ±2 %, TCW1 1e-6 rad. Mức tham chiếu của mẫu số: lực 0.8*F_zf/2 = 3639 N (F_z một bánh 4549 N), mô-men 100 N.m,
+Alpha 0.03 rad, Kappa 0.02, Omega 40 rad/s. Đối chứng âm được tính từ đáp án giả thuyết sai trên cùng dữ liệu đo, ĐẠT chỉ khi giả thuyết sai lệch từ 1e-5 trở lên.
+
+Kết quả ca KHÔNG ĐẠT: không có. Vì vậy không phải kiểm lại cách đo bằng đường độc lập (bước B5), và không có PHÁT HIỆN kiểu "ánh xạ sai". Các điểm đáng ghi ở mục 3 là điều quan sát được, không phải
+lỗi.
+
+2. BẢNG ÁNH XẠ 12.9 B VỚI MỨC BẰNG CHỨNG MỚI
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B01_Vx | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC2, sai lệch lớn nhất 1.5e-12
+    Giả định: Vx (vào) = vận tốc dọc hệ bánh, m/s; lốp chỉ thấy tỉ số Vy/Vx
+    Bằng chứng: TC2: Vx 20 -> 25, Alpha = atan(Vy/Vx) và Fy theo PT(10); giả thuyết "Vx không vào alpha" lệch 0.2 và Fy không đổi lệch 0.10 (phân biệt)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B02_Vy | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC1, sai lệch lớn nhất 1.1e-12
+    Giả định: Vy (vào) = vận tốc ngang hệ bánh, m/s, dấu ngược alpha_f
+    Bằng chứng: TC1: alpha_VDB 0.03 -> 0.06; Alpha khớp, Fy khớp PT(10) tại alpha_f = -Alpha; "dấu ngược" lệch 1.83, "góc nhỏ Vy/Vx" lệch 1.2e-3 (phân biệt)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B03_Alpha | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC1 TC2 TCW1_SLIP TCW1_WEAVE, sai lệch lớn nhất 0.0e+00
+    Giả định: Info.Alpha = -alpha_f (VDB alpha = atan(Vy/Vx))
+    Bằng chứng: TC1, TC2, và TCW1 trên S2: Info.Alpha của Tire_front bằng atan2 của vận tốc đã xoay theo delta_f = theta2/n_st, lệch 0 rad trên 52799 mẫu SLIP và 53087 mẫu
+    WEAVE; "không xoay theo delta_f" lệch 3.7e-2 rad và 1.7e-2 rad
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B04_Fext_Fz | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC4a TC4b, sai lệch lớn nhất 0.0e+00
+    Giả định: Fext = F_z một bánh, Fz ra = Fext
+    Bằng chứng: TC4a, TC4b: Fext 4549 -> 5000 N, Fz ra = Fext chính xác; "Fz không theo Fext" lệch 0.09
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B05_Fy_tai | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH (tại một mức tải) | ca TC4b, sai lệch lớn nhất 1.8e-12
+    Giả định: Fy theo tải với PKY2 = 1, PKY4 = 2, FNOMIN giữ
+    Bằng chứng: TC4b: độ dốc nhân sin(2*atan(Fz/FNOMIN)), D = mu*Fz; khớp; "Fy không đổi theo tải" lệch 7.7e-3; công thức kiểu Plant (độ cứng không đổi theo tải) lệch 2.3e-3
+    (ghi nhận)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B06_mu_o3 | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC5 TC5b TC32, sai lệch lớn nhất 1.8e-12
+    Giả định: ScaleFctrs ô 3 (LMUY) = mu
+    Bằng chứng: TC5 (0.8 -> 0.5), TC5b (alpha 0.002), TC32 (0.8 -> 0.88): Fy khớp PT(10) với mu mới; "mu vào độ cứng" lệch 1.4e-1, 1.6e-2; "Fy không đổi" lệch 1.0e-2
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B07_o3_do_doc | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: CHỈ GHI NHẬN (khớp PT(10)) | ca TC5b, sai lệch lớn nhất 5.1e-04
+    Giả định: Ô 3 không đổi độ dốc tại 0
+    Bằng chứng: TC5b: Fy(mu 0.5)/Fy(mu 0.8) = 0.99949 ở alpha 0.002, cùng độ lệch với chính PT(10) (Fy khớp công thức Plant 1.5e-13 tại điểm này); ghi nhận, không ngưỡng
+    riêng
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B08_Fy_nhan2 | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC40, sai lệch lớn nhất 2.8e-12
+    Giả định: Fy (nửa cầu) x 2 = F_y cầu của PT(10) với (F_zf, C_alpha_f)
+    Bằng chứng: TC40: lệch 2.8e-12 (L1) và 1.2e-12 (TC1); "không nhân 2" lệch 0.5
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B09_tre | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH | ca TC39, sai lệch lớn nhất 9.7e-04
+    Giả định: Trễ lốp 1.59 ms, hàm mũ bậc 1
+    Bằng chứng: TC39: hằng số thời gian từ hồi quy log 1.5915 ms (= 1/(2*pi*100 Hz)), lệch 0.097 % so với 1.59 ms; Info.Alpha nhảy tức thì (không trễ)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B10_Mz | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: CHỈ GHI NHẬN | ca TC1 TC5, sai lệch lớn nhất 2.2e-01
+    Giả định: Mz: Plant không có; S2 không dùng
+    Bằng chứng: Mz thay đổi 0.13 khi alpha 0.03 -> 0.06 (TC1) và 0.22 khi mu 0.8 -> 0.5 (TC5), tính theo hệ số Q* mặc định của preset; không có đáp án để chấm
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B11_BrkPrs | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: CHỈ GHI NHẬN | ca TC33, sai lệch lớn nhất 9.7e-03
+    Giả định: BrkPrs nối 0 (không phanh)
+    Bằng chứng: TC33: bậc 1e5 Pa đổi Kappa 9.7e-3, Fx 7.4e-3, Mz 2.6e-3, Omega 2.0e-4 (tương đối); Fy KHÔNG đổi (<= 1e-9)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B12_AxlTrq | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: CHỈ GHI NHẬN | ca TC34, sai lệch lớn nhất 3.5e-02
+    Giả định: AxlTrq nối 0 (lăn tự do)
+    Bằng chứng: TC34: bậc 50 N.m đổi Kappa 3.5e-2, Fx 2.7e-2, Mz 9.5e-3, Omega 7.3e-4; Fy KHÔNG đổi (<= 1e-9)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B13_Camber | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: CHỈ GHI NHẬN | ca TC35a TC35b, sai lệch lớn nhất 6.4e-01
+    Giả định: Camber nối 0
+    Bằng chứng: TC35a, TC35b: bậc 0.03 rad đổi Mx (6.4e-1 so với mức 100 N.m) và Mz (7.8e-2 ở L0, 1.0e-1 ở L1); Fy KHÔNG đổi (<= 1e-9)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B14_YawRate | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH (không tác dụng) | ca TC36, sai lệch lớn nhất 0.0e+00
+    Giả định: YawRate nối 0, không tác dụng khi turnslip tắt
+    Bằng chứng: TC36: bậc 0.2 rad/s, cả 9 đầu ra bằng ca gốc (<= 1e-9)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B15_Prs | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH cho Fy | ca TC37, sai lệch lớn nhất 0.0e+00
+    Giả định: Prs nối 220 kPa, Fy không đổi khi PPY* = 0
+    Bằng chứng: TC37: bậc 220 -> 260 kPa, Fy, Fz, Alpha bằng gốc (<= 1e-9); Mz đổi 1.9e-2 (ghi nhận), Omega, Fx, Kappa đổi dưới 1e-6
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B16_Gnd | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH (không tác dụng) | ca TC38, sai lệch lớn nhất 0.0e+00
+    Giả định: Gnd nối 0, không tác dụng khi vertType = None
+    Bằng chứng: TC38: bậc 0.01 m, cả 9 đầu ra bằng ca gốc (<= 1e-9)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B17_Tr | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH (dây nối) | ca TCW2_SLIP TCW2_WEAVE, sai lệch lớn nhất 0.0e+00
+    Giả định: T_r của S2 = PT(13)-(14) với alpha_f tự tính
+    Bằng chứng: TCW2 trên S2: T_r so với e_p/n_st*F_yf tính lại, lệch 0 (tương đối) ở SLIP và WEAVE; "e_p không đổi" lệch 0.73 và 0.16. Đáp án dùng cùng công thức với khối
+    TrCalc nên đây là kiểm dây nối và tín hiệu vào, không kiểm độc lập công thức
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B18_he_so | mức bằng chứng mới: ĐO TRỰC TIẾP ĐẠT | kết luận: KHẲNG ĐỊNH (gộp) | ca TC1 TC2 TC4b TC5 TC5b TC32, sai lệch lớn nhất 1.8e-12
+    Giả định: PCY1, PDY1, PEY1, PKY1, PKY2, PKY4, FNOMIN (gộp)
+    Bằng chứng: Fy khớp PT(10) trong 1.8e-12 ở sáu ca (alpha 0.002-0.06 rad, hai mức tải, ba mức mu); mọi giả thuyết sai lệch từ 7.7e-3 trở lên
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+B19_Kappa_goc | mức bằng chứng mới: CHỈ GHI NHẬN | kết luận: BÁC một phần (giả định "Kappa gần 0 suốt ca" của LI6) | ca TC1, sai lệch lớn nhất 6.0e-06
+    Giả định: Kappa gốc gần 0 suốt ca (lăn tự do)
+    Bằng chứng: Kappa(0) = 0.0212 rồi tiến về -2e-4 sau 1 s (omegao = v/(0.97*Re) không đúng bán kính lăn hiệu dụng); xem PHÁT HIỆN 3
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Tóm lại dòng được khẳng định bằng phép đo trực tiếp: B01, B02, B03, B04, B05, B06, B08, B09, B14, B15 (cho Fy), B16, B17 (dây nối), B18. Chỉ ghi nhận, không có đáp án để chấm: B07, B10, B11, B12, B13
+(nhưng với B11-B13 thấy Fy không đổi, cùng điều kiện nối 0 hiện dùng). Không dòng nào bị bác hoàn toàn; riêng giả định "Kappa gần 0 suốt ca" (LI6) bị bác một phần (B19).
+
+3. PHÁT HIỆN (điều quan sát được; không có ca KHÔNG ĐẠT)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+PHÁT HIỆN 1 (kỳ vọng ở 12.10 bị bác): TC33 và TC34 ghi kỳ vọng "Fy giảm do trượt kết hợp" khi phanh hay ga. Đo được Fy KHÔNG đổi (<= 1e-9) dù Kappa, Fx đổi. Nguyên nhân giả định: vdb_tire_config.m
+đặt RBY1 = 0 (nằm trong danh sách hệ số bị zero), nên hàm trọng số trượt kết hợp bằng 1 với mọi Kappa. Hệ quả: ở cấu hình S2, lực dọc không làm giảm Fy. Plant không có lực dọc nên không ảnh hưởng S2
+hiện tại (BrkPrs = AxlTrq = 0); nếu sau này cho phanh hay ga vào thì phải đặt lại RBY*. Đề xuất: ghi chú vào 12.9 dòng BrkPrs, AxlTrq; không sửa cấu hình.
+
+PHÁT HIỆN 2: Camber đổi Mx và Mz (Mx 63.6 N.m ở bậc 0.03 rad khi gốc không trượt) nhưng không đổi Fy (hệ số camber của Fy bằng 0 trong S2). Nối 0 vẫn đúng cho Fy; Mx, Mz không được dùng ở S2. YawRate
+và Gnd không tác dụng lên đầu ra nào; Prs chỉ đổi Mz đáng kể (1.9e-2).
+
+PHÁT HIỆN 3 (gốc không phải lăn tự do chính xác): ca gốc có Kappa(0) = 0.0212 vì omegao = v/(0.97*Re) lệch so với bán kính lăn hiệu dụng của khối; Kappa về khoảng -2e-4 sau 1 s, Fx lúc đầu 1.9e3 N.
+Fy không phụ thuộc Kappa (xem PHÁT HIỆN 1) nên không ảnh hưởng đáp án Fy ở mọi ca; ca TC2, TC3 (Vx 20 -> 25) làm Kappa lên 0.20. Ghi vào LI6: "Kappa gần 0 suốt ca" chỉ đúng sau khoảng 1 s; S2 ghép
+đặt omegao cùng công thức nên mỗi ca có quá độ trượt dọc khoảng 1 s đầu mà Fy không thấy.
+
+PHÁT HIỆN 4 (tác dụng của các ô ScaleFctrs, bảng ở mục 5): ở điểm L1, 15 trong 27 ô có tác dụng (14 ô ở TC6-TC31 cộng ô 3 là ô mu), 12 ô không tác dụng (<= 1e-9). Ô 1 và 6 đổi Fy khoảng 4.5-4.7 % khi
+nhân 1.1; ô 4 (0 -> 0.1), 8 và 10 đổi Fy 1.2e-3 đến 3e-3; ô 17 và 22 chỉ đổi Mz, ô 24 chỉ đổi Mx; ô 2, 5, 11, 13, 19, 23 chỉ đổi Fx, Omega, Kappa, Mz (đường trượt dọc), không đổi Fy. Vì vậy ô 4 phải
+giữ 0 (nó đổi Fy 1.2e-3 khi bằng 0.1), và các ô khác phải giữ đúng 1 vì nhiều ô có ảnh hưởng thật lên Fy hay lên các đầu ra khác.
+
+PHÁT HIỆN 5: độ dốc của Fy theo tải trong khối là sin(2*atan(Fz/FNOMIN)), khác kiểu Plant (độ cứng không đổi theo tải) 2.3e-3 khi tải tăng 9.9 %. S2 dùng tải cố định nên không ảnh hưởng; nếu về sau
+tải đổi (vertType khác None, hay tải truyền động) thì hai mô hình khác nhau.
+
+PHÁT HIỆN 6: hằng số trễ đo được 1.5915 ms bằng đúng 1/(2*pi*100 Hz), trùng với tần số cắt 100 Hz (giả thuyết, theo tên tham số FyRelFreqLwrLim trong 12.9: giới hạn dưới của tần số trễ), chứ không
+phải một số 1.59 ms riêng biệt; Info.Alpha không trễ. TCW1, TCW2 lệch đúng 0 vì cùng công thức atan2 và PT(13)-(14) với khối TireInputs và TrCalc của S2; kết quả này chứng tỏ dây nối và tín hiệu vào
+đúng, không phải kiểm độc lập cho công thức.
+
+4. GIỚI HẠN
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dải đã thử: alpha_VDB 0 đến -0.06 rad (alpha 0.002 cho độ dốc), Vx 20 và 25 m/s (dải 12.2 là 5.5-28 m/s, chỉ có hai điểm), F_z một bánh 4549 và 5000 N, mu 0.8, 0.5, 0.88; TCW trên 100 s của SLIP,
+WEAVE (alpha tới 0.22 rad). Hộp đóng (hàm tireMF* không đọc được) nên kết luận chỉ phủ dải này, và chỉ đúng MATLAB R2023a.
+
+Đổi từng cổng một nên không thấy tương tác giữa hai cổng (ví dụ camber cùng lúc với trượt ngang lớn, phanh cùng lúc với alpha lớn); bù một phần bằng hai điểm gốc L0, L1 và các phép ghép S1, S2 đã có.
+
+"Không tác dụng" của một ô ScaleFctrs chỉ kết luận cho điểm L1 (alpha 0.03 rad, không camber, không phanh, tải 4549 N); ô chỉ tác động khi có camber, phanh, tải khác hay turnslip có thể trông như
+không tác dụng. Ô 3 ở TC32 có giá trị 0.88 thay vì 1.1.
+
+Đầu ra Mx, Mz, Fx, Omega, Kappa chỉ ghi nhận, vì Plant không có đáp án tương ứng. Chưa kiểm tên chuẩn Pacejka của từng ô (bảng 27 ô chỉ nêu đầu ra bị đổi, không gán tên); tài liệu của khối không được
+đọc ở lượt này.
+
+Ca KHÔNG PHÂN BIỆT: không có; không ca nào phải chạy lại với bậc gấp đôi. MATLAB báo lỗi heap khi thoát (vô hại, csv đã ghi); một lần heap sập xảy ra giữa chừng sau khi chạy xong các ô ScaleFctrs lúc
+chúng đang lỗi lập trình (đưa nhầm cấu trúc rỗng làm đối số, đã sửa; các dòng LỖI CHẠY đó đã xóa và chạy lại). Máy chạy: laptop (DESKTOP-KH7N3BB), không có ổ D nên thư mục cache đặt ở thư mục tạm của
+hệ thống.
+
+5. BẢNG 27 Ô ScaleFctrs (ca TC6-TC32, điểm L1, mỗi ô một lần; "đổi" khi lệch so với ca gốc quá 1e-9 tương đối)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Ô   | Ca     | Giá trị thử | Tác dụng | Đầu ra bị đổi                   | Lệch lớn nhất | Ghi chú
+----+--------+-------------+----------+---------------------------------+---------------+------------------------------------------------------------
+1   | TCc01  | 1.1         | CÓ       | Omega Fx Fy Mx Mz Kappa         | 4.5e-02       | đổi Fy 4.5 %
+2   | TCc02  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 2.2e-07       | 
+3   | TC32   | 0.88        | CÓ       | Fy Mx Mz                        | 3.0e-02       | ô mu (LMUY): đổi đỉnh Fy, không đổi độ dốc tại 0 (TC32, TC5, TC5b)
+4   | TCc04  | 0.1         | CÓ       | Fx Fy Mx Mz Kappa               | 1.2e-03       | giữ 0; 0.1 đổi Fy 1.2e-3
+5   | TCc05  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 4.7e-06       | 
+6   | TCc06  | 1.1         | CÓ       | Fy Mx Mz                        | 4.7e-02       | đổi Fy 4.7 %
+7   | TCc07  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+8   | TCc08  | 1.1         | CÓ       | Fy Mx Mz                        | 2.4e-03       | đổi Fy 2.4e-3
+9   | TCc09  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+10  | TCc10  | 1.1         | CÓ       | Fy Mx Mz                        | 3.0e-03       | đổi Fy 3.0e-3
+11  | TCc11  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 1.0e-03       | 
+12  | TCc12  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+13  | TCc13  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 2.4e-06       | 
+14  | TCc14  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+15  | TCc15  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+16  | TCc16  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+17  | TCc17  | 1.1         | CÓ       | Mz                              | 5.6e-02       | chỉ đổi Mz
+18  | TCc18  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+19  | TCc19  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 4.2e-07       | 
+20  | TCc20  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+21  | TCc21  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+22  | TCc22  | 1.1         | CÓ       | Mz                              | 7.4e-07       | chỉ đổi Mz (7.4e-7)
+23  | TCc23  | 1.1         | CÓ       | Omega Fx Mz Kappa               | 8.3e-02       | 
+24  | TCc24  | 1.1         | CÓ       | Mx                              | 1.8e-02       | chỉ đổi Mx
+25  | TCc25  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+26  | TCc26  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+27  | TCc27  | 1.1         | KHÔNG    | không đầu ra nào                | <= 1e-9       | 
+
+Số ô có tác dụng: 15 (kể cả ô 3, 14 ô ở TC6-TC31); không tác dụng: 12. Độ lệch ở bảng là lệch lớn nhất theo thời gian của đầu ra bị đổi mạnh nhất so với ca gốc, chia cho mức tham chiếu của đầu ra đó;
+không phải so sánh với đáp án.
+
+6. TRẠNG THÁI CÁC DÒNG CHỜ
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Việc ghép mức bằng chứng vào 12.9, 12.10 và DoiChieu_Plant_VDB.txt là của khung COMMON. Hai điểm cần khung COMMON xem: (a) PHÁT HIỆN 1 (RBY1 = 0, kỳ vọng trượt kết hợp ở TC33, TC34 bị bác) và PHÁT
+HIỆN 3 (Kappa ban đầu 0.0212); (b) TCW2 chỉ kiểm dây nối của TrCalc, công thức T_r độc lập vẫn là PT(13)-(14) đã khớp ở các bước trước.
