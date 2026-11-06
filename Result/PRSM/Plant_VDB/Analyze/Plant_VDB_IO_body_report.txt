@@ -1,0 +1,92 @@
+==============================================================================================================================================================================================
+BÁO CÁO THỬ ĐỔI TỪNG CỔNG MỘT CỦA KHỐI THÂN VDB (Vehicle Body 3DOF Single Track, VDBBody.mdl), KHUNG VDB_BODY
+==============================================================================================================================================================================================
+Lập: 2026-11-06, khung VDB_BODY, theo Documents/Shared/ChayTu_VDB_IO.txt và KeHoach_Plant_VDB.txt mục 12.2, 12.9 (bảng A), 12.10 (phần THÂN). Script:
+Model/PRSM_VDB/Analyze/script/run_vdb_io_body.m (chạy bằng Simulink.SimulationInput, không lưu đè model nào). Số liệu từng dòng: Plant_VDB_IO_body_cases.csv; kiểm cách đo độc lập:
+Plant_VDB_IO_body_verify.csv; hình: Plant_VDB_IO_body_summary.png. Máy chạy: laptop (DESKTOP-KH7N3BB, không có ổ D nên thư mục tạm của Simulink nằm ở thư mục tạm hệ thống), MATLAB R2023a.
+
+==============================================================================================================================================================================================
+1. KẾT QUẢ TÓM TẮT
+==============================================================================================================================================================================================
+Môi trường: VDBBody.mdl chạy 1 s được; cổng vào WhlAngF, xdotin, FExt, MExt và cổng ra Info, xdot, ydot, psi, r, FzF, FzR khớp bảng 12.9 (không phải điểm dừng). Ca gốc G0 (đi thẳng 20 m/s)
+và G1 (cua đều 0.3 g: r_o = 0.147 rad/s, FExt(2) = m*20*r0 = 4629.3 N) ĐẠT: G1 giữ cân bằng ydot = 0 (sai lệch 0 tuyệt đối), r = 0.14715 rad/s hằng, a_y = 2.943 m/s^2 = 0.3*9.81, sai lệch
+lớn nhất 7e-14 (psi).
+Có 22 cặp (ca, gốc) có chấm điểm (G0, G1, BC1, BC2, BC3-BC9 mỗi ca hai gốc G0 và G1, BC11-BC14); BC10 chỉ ghi nhận. Kết quả: ĐẠT 14, KHÔNG ĐẠT 7, KHÔNG PHÂN BIỆT 1, LỖI CHẠY 0. Bảy ca
+KHÔNG ĐẠT (BC3 gốc G0 và G1, BC4 gốc G1, BC7 gốc G0 và G1, BC8 gốc G0 và G1) đều chỉ vì hai đầu ra FzF, FzR (kỳ vọng "bằng ca gốc" nhưng thực tế có đổi), còn mọi đầu ra chuyển động đều
+ĐẠT; nguyên nhân đã kiểm bằng mô hình chuyển tải dọc độc lập (PHÁT HIỆN F1). Ca KHÔNG PHÂN BIỆT là BC1: bậc xdotin 20 -> 22 m/s trên G1 khớp ODE 3e-12 nhưng dạng Plant sai lệch chỉ 5e-11
+(kể cả khi bậc gấp đôi), vì tại thời điểm bậc beta = 0; ca BC2 (dốc) phân biệt được (PHÁT HIỆN F2). Nếu chỉ tính đầu ra chuyển động (xdot, ydot, r, psi, a_y, Beta, Info.Ext), 21 trong 22
+cặp ĐẠT, một cặp (BC1) không phân biệt.
+
+==============================================================================================================================================================================================
+2. BẢNG ÁNH XẠ 12.9 (A, THÂN): MỨC BẰNG CHỨNG MỚI CỦA TỪNG DÒNG
+==============================================================================================================================================================================================
+- xdotin = v (m/s, áp vận tốc). Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: BC1, BC2. Số đo: xdot = xdotin: 3e-16 (dốc 25 -> 12.5 m/s), 0 (bậc); tại mẫu gốc bộ giải 3.6e-15 m/s.
+- FExt(2) = F_yf + F_yr (trái dương). Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: BC4 (G0, G1). Số đo: ydot theo ODE 3e-12 và 4e-12; dấu ngược sai lệch 2 và 14 (>= 10 lần ngưỡng).
+- MExt(3) = l_f*F_yf - l_r*F_yr. Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: BC8 (G0, G1). Số đo: r theo r = Mz/Izz: 3.5e-12 và 6.5e-11; dấu ngược sai lệch 2 và 1.56; Info.Ext.Mz = MExt(3)
+    tuyệt đối.
+- FExt(1), MExt(1), MExt(2) không tác dụng lên chuyển động. Mức: KHẲNG ĐỊNH (chuyển động); xem F1. Ca: BC3, BC6, BC7. Số đo: ydot, r, psi, a_y, Beta lệch 0 (dưới 1e-9) so với gốc; giả
+    thuyết sai (Fx vào ydot, Mx hay My vào r) sai lệch tương đối 381 và 522.
+- FExt(3) = Fz không tác dụng lên chuyển động. Mức: KHẲNG ĐỊNH (chuyển động); xem F1. Ca: BC5. Số đo: ydot, r, psi, a_y, Beta lệch 0; Fz ngoài cộng thẳng vào FzF, FzR (xem F5).
+- WhlAngF không tác dụng khi Cy = 0. Mức: KHẲNG ĐỊNH, có đối chứng dương. Ca: BC9 (G0, G1). Số đo: mọi đầu ra chuyển động lệch 0 so với gốc; lặp với Cy_f = 12000: ydot đổi 89.4 m/s (G0),
+    52.6 m/s (G1).
+- ydot = v*beta, r = gamma (dạng động học). Mức: BÁC MỘT PHẦN: VDB theo ydot' = Fy/m - xdot*r, không theo dạng Plant. Ca: BC2 (BC1 không phân biệt). Số đo: ODE VDB khớp 2e-8; dạng Plant
+    beta' = F/(m v) - gamma lệch 0.287 (tương đối) ở dốc 25 -> 12.5 m/s; trùng nhau khi v hằng (G1, BC4, BC8).
+- a_y = 9.80665 * Info.ay. Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: G1, BC4. Số đo: a_y = Fy/m: 1.5e-16 (G1), 1.7e-16 và 1.2e-16 (BC4); g = 9.81 sai lệch 3.4e-4 (>= 10 lần ngưỡng); v đổi:
+    BC2 1.5e-16.
+- Info.BdyFrm.Cg.Ang.Beta (chỉ theo dõi). Mức: KHẲNG ĐỊNH: Beta = atan(ydot/xdot). Ca: BC2, BC4. Số đo: BC2: 4.4e-8 so với atan(ydot/xdot) ODE; trên mẫu gốc lệch 0 so với atan2 của chính
+    ydot, xdot của khối; ydot/xdot (không atan) sẽ lệch 1.6 % ở Beta lớn nhất 0.217 rad.
+- Info.Forces.Ext, Moments.Ext (thứ tự thành phần). Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: BC3-BC8. Số đo: sáu trường Ext bằng đúng thành phần FExt(1..3), MExt(1..3) của cổng vào (lệch 0);
+    thành phần kế bên sai lệch >= 1.
+- m = m, Izz = Iz (tham số). Mức: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT. Ca: BC11, BC12. Số đo: ydot với m x 1.1 khớp ODE 2.7e-14 (m cũ sai lệch 1); r với Izz x 1.1 khớp 5.0e-11 (Izz cũ sai lệch
+    0.076).
+- a, b không tham gia mô-men (giả định BP2). Mức: KHẲNG ĐỊNH về chuyển động; BÁC phần FzF, FzR. Ca: BC13, BC14. Số đo: ydot, r, psi, a_y, Beta lệch 0 (dưới 1e-9) so với G1 + BC4; a, b đổi
+    tải tĩnh FzF, FzR (xem F1).
+- xdot_o = v(0). Mức: BÁC: xdot_o không có tác dụng. Ca: BC10. Số đo: xdot_o = 18 thay vì 20: xdot(0) = 20 (theo xdotin), mọi đầu ra lệch 0 so với G0 (xem F3).
+- FzF, FzR không dùng, nối Terminator. Mức: BÁC MỘT PHẦN: có đổi theo Fx, Fz, My, gia tốc dọc thân. Ca: BC1-BC8, BC11-BC14. Số đo: xem F1, F4, F5; Plant_VDB không dùng hai cổng này nên
+    không ảnh hưởng.
+Chú thích mức bằng chứng: KHẲNG ĐỊNH, ĐO TRỰC TIẾP ĐẠT = ca ĐẠT ở ngưỡng 12.2 (1e-6 cho đầu ra đổi, 1e-9 cho đầu ra không đổi) và giả thuyết sai lệch ít nhất 10 lần ngưỡng; BÁC = phép đo
+cho kết quả khác dòng ánh xạ.
+
+==============================================================================================================================================================================================
+3. PHÁT HIỆN
+==============================================================================================================================================================================================
+F1. FzF và FzR KHÔNG "bằng ca gốc" khi đổi Fx, My, Mz (qua gia tốc dọc), Fy trong cua, xdot, m, a, b: khối thân có mô hình chuyển tải dọc. Đã kiểm bằng đường độc lập
+(Plant_VDB_IO_body_verify.csv): FzF_bánh = FzF0 + (h/(2L)) * (Fx - m*ax_b) - My/(2L), với h = 0.35 m (suy ra từ BC3: dFzF*2L/Fx), L = a + b = 2.68 m, ax_b = xdot' - r*ydot (gia tốc dọc
+trong hệ thân); FzR đổi ngược dấu (dFzF + dFzR = 4.5e-13 N, chỉ chuyển tải). Khớp: BC7 (My = 500 N.m) dFzF = -93.2836 N so với dự đoán -My/(2L) = -93.2836 N, sai lệch tương đối 7e-15; BC4
+gốc G1 sai lệch 1.4e-3 N trên biên độ 28.8 N; BC8 gốc G0 1.7e-3 N trên 840 N; BC8 gốc G1 1.7e-3 N trên 1077 N; BC12 1.6e-3 N trên 909 N; BC1 1.4e-3 N trên 13.3 N (dấu ngược của ax_b cho
+sai lệch lớn hơn 1000 lần). Hệ quả: dòng "FzF, FzR bằng ca gốc" trong 12.10 là sai về chuyển tải, nhưng không có tác động lên Plant_VDB vì tải của lốp lấy hằng số F_z/2 và hai cổng này nối
+Terminator. Đề xuất: giữ Terminator, không cấp tải cho lốp từ FzF, FzR; sửa 12.9 thành "FzF, FzR: có chuyển tải dọc, không dùng".
+F2. Động học ydot của VDB là ydot' = Fy/m - xdot*r (ODE trong script khớp 2e-8 ở BC2), khác dạng Plant beta' = F/(m v) - gamma ở số hạng (v'/v)*ydot. Khi v hằng (G1, BC4, BC8) hai dạng
+trùng nhau, khi v đổi mạnh (dốc 25 -> 12.5 m/s trong 13 s) lệch 28.7 % tương đối ở ydot. BC1 (bậc của xdotin trên G1) không tách được hai dạng (5e-11 ở cả biên độ x1 và x2, vì ydot = 0 tại
+thời điểm bậc), nên bằng chứng là BC2. Đây là nguồn đã nghi của lệch RAMP 0.1 %; mức đóng góp trong ca thật (a_y 0.3 g, v đổi chậm hơn) cần đo riêng, khung này không làm.
+F3. xdot_o không có tác dụng ở chế độ áp vận tốc: xdot_o = 18 mà xdotin = 20 cho xdot(0) = 20 và toàn bộ đầu ra trùng G0. Dòng "xdot_o = v(0)" của 12.9 vì vậy không cần giữ làm tham số cần
+khớp; vận tốc ban đầu do xdotin quyết định.
+F4. FzF và FzR là tải một bánh (half axle): G0 cho 4548.73 N và 3166.84 N, bằng F_zf/2 = 9097.46/2 và F_zr/2 = 6333.67/2 của load_derived; cùng nghĩa với cổng Fext của khối lốp (nửa cầu).
+F5. Lực Fz ngoài FExt(3) được cộng thẳng vào tải: bậc 2000 N thêm 589.55 N cho FzF và 410.45 N cho FzR mỗi bánh (tổng 1000 N = Fz/2), tỉ lệ 0.5896 = FzF0/(FzF0 + FzR0) = b/(a + b). Fz
+không vào ydot (giả thuyết sai lệch tương đối 381). Không dùng trong Plant (FExt(3) nối 0).
+F6. Lệch giả do cách đo (lần thứ tư; bài học 10.9). Lần chạy đầu của BC2 cho xdot và Beta KHÔNG ĐẠT (1.28e-5 và 1.54e-5) với chấm điểm trên lưới 1 ms. Kiểm bằng đường độc lập: so trên các
+mẫu gốc của bộ giải (không nội suy) xdot lệch 3.6e-15 m/s và Beta lệch 0 so với atan2(ydot, xdot) của chính khối; trên lưới 1 ms lệch lớn nhất xảy ra đúng tại t = 1 s (góc đầu dốc) và tỉ
+lệ theo bước giải: 3.2e-4 m/s ở MaxStep 2 ms, 1.1e-4 m/s ở 0.5 ms. Nguyên nhân: bộ giải không đặt mẫu đúng tại góc, nội suy tuyến tính cắt góc. Xử lý: ca có dốc bỏ các mẫu trong 2 ms quanh
+góc (t = 1 s và 14 s) như ca có bậc bỏ một mẫu tại bậc; sau đó BC2 ĐẠT (xdot 3e-16, ydot 2e-8, Beta 4e-8). Không sửa ngưỡng, không sửa cấu hình.
+
+==============================================================================================================================================================================================
+4. GIỚI HẠN
+==============================================================================================================================================================================================
+Dải đã thử: vận tốc 12.5-25 m/s, a_y tới 0.3 g (G1), Fy tới 5629 N, Mz 500 N.m (r tới 0.67 rad/s, góc trượt lớn ở BC8, BC2 tới Beta = 0.217 rad), thời gian 4 s (BC2: 15 s). Ngoài dải này
+(trên 0.3 g, v dưới 12.5 m/s) chưa thử; khối là hộp đóng nên kết luận chỉ đúng dải đã thử. Chỉ đúng MATLAB R2023a (Vehicle Dynamics Blockset của bản này). Đổi một cổng mỗi lần nên không
+thấy tương tác giữa hai cổng (bù một phần bằng hai gốc G0, G1 và BC13, BC14 trên G1 + BC4; kiểm tương tác đầy đủ là S1, S2 ghép đã có). Đáp án độc lập là ODE tự dựng trong script (ode45
+RelTol 1e-10) theo dòng ánh xạ, cộng mô hình chuyển tải của F1 do chính phép đo suy ra h, nên F1 là suy diễn đã khớp chứ không phải đáp án có sẵn từ tài liệu; h = 0.35 m chưa đối chiếu với
+tham số mặt nạ của khối. Giả thuyết sai của BC13, BC14 (a, b là cánh tay đòn của FExt(2)) là giả thuyết do khung này tự đặt vì bảng 12.10 chỉ ghi "a nhân vào mô-men".
+
+==============================================================================================================================================================================================
+5. BẢNG 27 Ô SCALEFCTRS
+==============================================================================================================================================================================================
+Không áp dụng cho khung thân (việc của khung VDB_TIRE).
+
+==============================================================================================================================================================================================
+6. FILE
+==============================================================================================================================================================================================
+Plant_VDB_IO_body_cases.csv   : mỗi dòng một (ca, gốc, đầu ra): ma_ca, cong_doi, goc, dau_ra, loai, do_max, dap_an_max, sai_lech, nguong, ket_qua, sai_lech_gia_thuyet_sai, phan_biet, ghi_chu
+Plant_VDB_IO_body_verify.csv  : kiểm cách đo BC2 (mẫu gốc, MaxStep) và mô hình chuyển tải FzF, FzR (F1, F6)
+Plant_VDB_IO_body_summary.png : mỗi cột một (ca, gốc); thanh = sai lệch/ngưỡng lớn nhất của đầu ra chuyển động (thang log, 1 = ngưỡng), thoi = của FzF, FzR
+Model/PRSM_VDB/Analyze/script/run_vdb_io_body.m (gọi: run_vdb_io_body, hoặc với danh sách ca, {"verify"} kiểm độc lập, {"plot"} vẽ hình)

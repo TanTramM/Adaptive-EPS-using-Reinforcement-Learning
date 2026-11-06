@@ -1,0 +1,22 @@
+kiem,duong_do,gia_tri,don_vi,ghi_chu
+BC2_xdot,mau goc cua bo giai MaxStep 0.002,3.55271e-15,m/s,max|xdot - xdotin| tren cac mau goc (khong noi suy)
+BC2_Beta,mau goc MaxStep 0.002,0,rad,max|Beta - atan(ydot/xdot) cua chinh khoi| tren cac mau goc
+BC2_xdot_luoi,luoi 1 ms MaxStep 0.002,0.000320769,m/s,max|xdot - xdotin| tren luoi 1 ms
+BC2_xdot_luoi_vitri,luoi 1 ms MaxStep 0.002,1,s,thoi diem lech lon nhat (goc cua dot la 1 s va 14 s)
+BC2_xdot,mau goc cua bo giai MaxStep 0.0005,3.55271e-15,m/s,max|xdot - xdotin| tren cac mau goc (khong noi suy)
+BC2_Beta,mau goc MaxStep 0.0005,0,rad,max|Beta - atan(ydot/xdot) cua chinh khoi| tren cac mau goc
+BC2_xdot_luoi,luoi 1 ms MaxStep 0.0005,0.000112074,m/s,max|xdot - xdotin| tren luoi 1 ms
+BC2_xdot_luoi_vitri,luoi 1 ms MaxStep 0.0005,1,s,thoi diem lech lon nhat (goc cua dot la 1 s va 14 s)
+FzF_BC3_G0,h ngam tu Fx (dFzF*2L/Fx),0.35,m,do cao tam khoi luong ngam: h = dFzF_banh*2*(a+b)/Fx; L = a+b = 2.6800 m
+FzF_BC3_G0,dFzF + dFzR (bao toan tai),4.54747e-13,N,tong thay doi tai moi banh (0 = chi chuyen tai)
+FzF_BC7_G0,dFzF do My=500 N.m,-93.2836,N,do duoc; du doan -My/(2L) = -93.2836 N; sai lech tuong doi 6.86e-15
+FzF_BC4_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = +1),57.6507,N,sai lech lon nhat; bien do dFzF 28.8246 N
+FzF_BC4_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = -1),0.0013806,N,sai lech lon nhat; bien do dFzF 28.8246 N
+FzF_BC8_G0,dFzF so voi du doan chuyen tai doc (dau m*ax_b = +1),1679.94,N,sai lech lon nhat; bien do dFzF 839.973 N
+FzF_BC8_G0,dFzF so voi du doan chuyen tai doc (dau m*ax_b = -1),0.00166049,N,sai lech lon nhat; bien do dFzF 839.973 N
+FzF_BC8_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = +1),2153.42,N,sai lech lon nhat; bien do dFzF 1076.71 N
+FzF_BC8_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = -1),0.00168655,N,sai lech lon nhat; bien do dFzF 1076.71 N
+FzF_BC1_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = +1),26.6905,N,sai lech lon nhat; bien do dFzF 13.3459 N
+FzF_BC1_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = -1),0.0013806,N,sai lech lon nhat; bien do dFzF 13.3459 N
+FzF_BC12_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = +1),1818.82,N,sai lech lon nhat; bien do dFzF 909.41 N
+FzF_BC12_G1,dFzF so voi du doan chuyen tai doc (dau m*ax_b = -1),0.00163566,N,sai lech lon nhat; bien do dFzF 909.41 N

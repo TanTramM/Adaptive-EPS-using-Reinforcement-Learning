@@ -1,0 +1,320 @@
+ma_ca,cong_doi,goc,dau_ra,loai,do_max,dap_an_max,sai_lech,nguong,ket_qua,sai_lech_gia_thuyet_sai,phan_biet,ghi_chu
+G0,-,G0,xdot,doi,20,20,0,1e-06,DAT,,-,
+G0,-,G0,ydot,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,r,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,psi,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ay,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,Beta,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+G0,-,G0,FzF,ghi_nhan,4548.73,,0,,GHI NHAN,,-,FzF: min 4548.73; max 4548.73 N (F_zf tinh: 9097.46 N)
+G0,-,G0,FzR,ghi_nhan,3166.84,,0,,GHI NHAN,,-,FzR: min 3166.84; max 3166.84 N (F_zr tinh: 6333.67 N)
+G1,-,G1,xdot,doi,20,20,0,1e-06,DAT,,-,
+G1,-,G1,ydot,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,r,doi,0.14715,0.14715,0,1e-06,DAT,,-,
+G1,-,G1,psi,doi,0.5886,0.5886,7.24305e-14,1e-06,DAT,,-,
+G1,-,G1,ay,doi,2.943,2.943,1.50897e-16,1e-06,DAT,,-,
+G1,-,G1,Beta,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+G1,-,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+G1,-,G1,FzF,ghi_nhan,4548.73,,0,,GHI NHAN,,-,FzF: min 4548.73; max 4548.73 N (F_zf tinh: 9097.46 N)
+G1,-,G1,FzR,ghi_nhan,3166.84,,0,,GHI NHAN,,-,FzR: min 3166.84; max 3166.84 N (F_zr tinh: 6333.67 N)
+BC1,xdotin,G1,xdot,doi,24,24,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ydot,doi,1.7658,1.7658,3.20825e-12,1e-06,KHONG PHAN BIET,5.26381e-11,khong,bien do x2; gia thuyet sai: dang Plant beta' = F/(m v) - gamma
+BC1,xdotin,G1,r,doi,0.14715,0.14715,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,psi,doi,0.5886,0.5886,7.20532e-14,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ay,doi,2.943,2.943,1.50897e-16,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,Beta,doi,0.0734427,0.0734427,5.98983e-10,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,bien do x2; 
+BC1,xdotin,G1,FzF,ghi_nhan,4548.73,,26.6891,,GHI NHAN,,-,bien do x2; FzF: min 4522.04; max 4548.73 N (F_zf tinh: 9097.46 N)
+BC1,xdotin,G1,FzR,ghi_nhan,3193.53,,26.6891,,GHI NHAN,,-,bien do x2; FzR: min 3166.84; max 3193.53 N (F_zr tinh: 6333.67 N)
+BC3,FExt(1),G0,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC3,FExt(1),G0,ydot,khong_doi,0,0,0,1e-09,DAT,381.437,co,gia thuyet sai: Fx cong vao ydot
+BC3,FExt(1),G0,r,khong_doi,0,0,0,1e-09,DAT,,-,
+BC3,FExt(1),G0,psi,khong_doi,0,0,0,1e-09,DAT,,-,
+BC3,FExt(1),G0,ay,khong_doi,0,0,0,1e-09,DAT,,-,
+BC3,FExt(1),G0,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC3,FExt(1),G0,ExtFx,doi,2000,2000,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC3,FExt(1),G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G0,FzF,khong_doi,4679.33,4548.73,0.0287107,1e-09,KHONG DAT,,-,
+BC3,FExt(1),G0,FzR,khong_doi,3166.84,3166.84,0.041239,1e-09,KHONG DAT,,-,
+BC3,FExt(1),G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC3,FExt(1),G1,ydot,khong_doi,0,0,0,1e-09,DAT,381.437,co,gia thuyet sai: Fx cong vao ydot
+BC3,FExt(1),G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,,-,
+BC3,FExt(1),G1,psi,khong_doi,0.5886,0.5886,3.77242e-16,1e-09,DAT,,-,
+BC3,FExt(1),G1,ay,khong_doi,2.943,2.943,0,1e-09,DAT,,-,
+BC3,FExt(1),G1,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC3,FExt(1),G1,ExtFx,doi,2000,2000,0,1e-06,DAT,2.31467,co,gia thuyet sai: thanh phan ke ben
+BC3,FExt(1),G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC3,FExt(1),G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC3,FExt(1),G1,FzF,khong_doi,4679.33,4548.73,0.0287107,1e-09,KHONG DAT,,-,
+BC3,FExt(1),G1,FzR,khong_doi,3166.84,3166.84,0.041239,1e-09,KHONG DAT,,-,
+BC4,FExt(2),G0,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ydot,doi,1.90718,1.90718,3.06455e-12,1e-06,DAT,2,co,gia thuyet sai: dau Fy nguoc
+BC4,FExt(2),G0,r,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,psi,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ay,doi,0.635728,0.635728,1.74638e-16,1e-06,DAT,0.000341605,co,gia thuyet sai: doi ay sang m/s^2 voi g = 9.81
+BC4,FExt(2),G0,Beta,doi,0.0950717,0.0950717,9.97866e-10,1e-06,DAT,,-,
+BC4,FExt(2),G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ExtFy,doi,1000,1000,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC4,FExt(2),G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G0,FzF,khong_doi,4548.73,4548.73,0,1e-09,DAT,,-,
+BC4,FExt(2),G0,FzR,khong_doi,3166.84,3166.84,0,1e-09,DAT,,-,
+BC4,FExt(2),G1,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,ydot,doi,1.90718,1.90718,4.05498e-12,1e-06,DAT,14.3449,co,gia thuyet sai: dau Fy nguoc
+BC4,FExt(2),G1,r,doi,0.14715,0.14715,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,psi,doi,0.5886,0.5886,7.18646e-14,1e-06,DAT,,-,
+BC4,FExt(2),G1,ay,doi,3.57873,3.57873,1.24091e-16,1e-06,DAT,0.000341605,co,gia thuyet sai: doi ay sang m/s^2 voi g = 9.81
+BC4,FExt(2),G1,Beta,doi,0.0950717,0.0950717,9.98851e-10,1e-06,DAT,,-,
+BC4,FExt(2),G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,ExtFy,doi,5629.34,5629.34,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC4,FExt(2),G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC4,FExt(2),G1,FzF,khong_doi,4577.55,4548.73,0.00633716,1e-09,KHONG DAT,,-,
+BC4,FExt(2),G1,FzR,khong_doi,3166.84,3166.84,0.00910247,1e-09,KHONG DAT,,-,
+BC5,FExt(3),G0,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC5,FExt(3),G0,ydot,khong_doi,0,0,0,1e-09,DAT,381.437,co,gia thuyet sai: Fz vao ydot
+BC5,FExt(3),G0,r,khong_doi,0,0,0,1e-09,DAT,,-,
+BC5,FExt(3),G0,psi,khong_doi,0,0,0,1e-09,DAT,,-,
+BC5,FExt(3),G0,ay,khong_doi,0,0,0,1e-09,DAT,,-,
+BC5,FExt(3),G0,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC5,FExt(3),G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G0,ExtFz,doi,2000,2000,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC5,FExt(3),G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G0,FzF,ghi_nhan,5138.28,,589.552,,GHI NHAN,,-,FzF: min 4548.73; max 5138.28 N (F_zf tinh: 9097.46 N)
+BC5,FExt(3),G0,FzR,ghi_nhan,3577.28,,410.448,,GHI NHAN,,-,FzR: min 3166.84; max 3577.28 N (F_zr tinh: 6333.67 N)
+BC5,FExt(3),G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC5,FExt(3),G1,ydot,khong_doi,0,0,0,1e-09,DAT,381.437,co,gia thuyet sai: Fz vao ydot
+BC5,FExt(3),G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,,-,
+BC5,FExt(3),G1,psi,khong_doi,0.5886,0.5886,3.77242e-16,1e-09,DAT,,-,
+BC5,FExt(3),G1,ay,khong_doi,2.943,2.943,0,1e-09,DAT,,-,
+BC5,FExt(3),G1,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC5,FExt(3),G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC5,FExt(3),G1,ExtFz,doi,2000,2000,0,1e-06,DAT,2.31467,co,gia thuyet sai: thanh phan ke ben
+BC5,FExt(3),G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC5,FExt(3),G1,FzF,ghi_nhan,5138.28,,589.552,,GHI NHAN,,-,FzF: min 4548.73; max 5138.28 N (F_zf tinh: 9097.46 N)
+BC5,FExt(3),G1,FzR,ghi_nhan,3577.28,,410.448,,GHI NHAN,,-,FzR: min 3166.84; max 3577.28 N (F_zr tinh: 6333.67 N)
+BC6,MExt(1),G0,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,r,khong_doi,0,0,0,1e-09,DAT,522.102,co,gia thuyet sai: Mx vao r
+BC6,MExt(1),G0,psi,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,ay,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G0,ExtMx,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC6,MExt(1),G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G0,FzF,khong_doi,4548.73,4548.73,0,1e-09,DAT,,-,
+BC6,MExt(1),G0,FzR,khong_doi,3166.84,3166.84,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,3.5481,co,gia thuyet sai: Mx vao r
+BC6,MExt(1),G1,psi,khong_doi,0.5886,0.5886,3.77242e-16,1e-09,DAT,,-,
+BC6,MExt(1),G1,ay,khong_doi,2.943,2.943,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC6,MExt(1),G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G1,ExtMx,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC6,MExt(1),G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC6,MExt(1),G1,FzF,khong_doi,4548.73,4548.73,0,1e-09,DAT,,-,
+BC6,MExt(1),G1,FzR,khong_doi,3166.84,3166.84,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,r,khong_doi,0,0,0,1e-09,DAT,522.102,co,gia thuyet sai: My vao r
+BC7,MExt(2),G0,psi,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,ay,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G0,ExtMy,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC7,MExt(2),G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G0,FzF,khong_doi,4548.73,4548.73,0.0205076,1e-09,KHONG DAT,,-,
+BC7,MExt(2),G0,FzR,khong_doi,3260.12,3166.84,0.0294564,1e-09,KHONG DAT,,-,
+BC7,MExt(2),G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC7,MExt(2),G1,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,3.5481,co,gia thuyet sai: My vao r
+BC7,MExt(2),G1,psi,khong_doi,0.5886,0.5886,3.77242e-16,1e-09,DAT,,-,
+BC7,MExt(2),G1,ay,khong_doi,2.943,2.943,0,1e-09,DAT,,-,
+BC7,MExt(2),G1,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC7,MExt(2),G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC7,MExt(2),G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G1,ExtMy,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC7,MExt(2),G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC7,MExt(2),G1,FzF,khong_doi,4548.73,4548.73,0.0205076,1e-09,KHONG DAT,,-,
+BC7,MExt(2),G1,FzR,khong_doi,3260.12,3166.84,0.0294564,1e-09,KHONG DAT,,-,
+BC8,MExt(3),G0,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ydot,doi,15.6631,15.6631,1.11111e-07,1e-06,DAT,,-,
+BC8,MExt(3),G0,r,doi,0.522102,0.522102,3.50093e-12,1e-06,DAT,2,co,gia thuyet sai: dau Mz nguoc
+BC8,MExt(3),G0,psi,doi,0.783153,0.783153,1.11111e-07,1e-06,DAT,,-,
+BC8,MExt(3),G0,ay,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,Beta,doi,0.664384,0.664384,1.30974e-07,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G0,ExtMz,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC8,MExt(3),G0,FzF,khong_doi,4548.73,4548.73,0.184661,1e-09,KHONG DAT,,-,
+BC8,MExt(3),G0,FzR,khong_doi,4006.81,3166.84,0.26524,1e-09,KHONG DAT,,-,
+BC8,MExt(3),G1,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ydot,doi,15.6631,15.6631,1.11111e-07,1e-06,DAT,,-,
+BC8,MExt(3),G1,r,doi,0.669252,0.669252,6.54243e-11,1e-06,DAT,1.56026,co,gia thuyet sai: dau Mz nguoc
+BC8,MExt(3),G1,psi,doi,1.37175,1.37175,6.34349e-08,1e-06,DAT,,-,
+BC8,MExt(3),G1,ay,doi,2.943,2.943,3.01794e-16,1e-06,DAT,,-,
+BC8,MExt(3),G1,Beta,doi,0.664384,0.664384,1.30974e-07,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC8,MExt(3),G1,ExtMz,doi,500,500,0,1e-06,DAT,1,co,gia thuyet sai: thanh phan ke ben
+BC8,MExt(3),G1,FzF,khong_doi,4548.73,4548.73,0.236706,1e-09,KHONG DAT,,-,
+BC8,MExt(3),G1,FzR,khong_doi,4243.55,3166.84,0.339995,1e-09,KHONG DAT,,-,
+BC9,WhlAngF,G0,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,r,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,psi,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,ay,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,ExtFy,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G0,FzF,khong_doi,4548.73,4548.73,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,FzR,khong_doi,3166.84,3166.84,0,1e-09,DAT,,-,
+BC9,WhlAngF,G0,ydot(Cy_f=12000),doi_chung_duong,89.4385,0,8943.85,1e-06,DAT,,-,doi chung duong: ket qua phai KHAC goc (phep thu khong mu)
+BC9,WhlAngF,G0,r(Cy_f=12000),doi_chung_duong,2.1108,0,2110.8,1e-06,DAT,,-,doi chung duong: ket qua phai KHAC goc (phep thu khong mu)
+BC9,WhlAngF,G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,ydot,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,psi,khong_doi,0.5886,0.5886,3.77242e-16,1e-09,DAT,,-,
+BC9,WhlAngF,G1,ay,khong_doi,2.943,2.943,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,Beta,khong_doi,0,0,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC9,WhlAngF,G1,FzF,khong_doi,4548.73,4548.73,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,FzR,khong_doi,3166.84,3166.84,0,1e-09,DAT,,-,
+BC9,WhlAngF,G1,ydot(Cy_f=12000),doi_chung_duong,52.598,0,5259.8,1e-06,DAT,,-,doi chung duong: ket qua phai KHAC goc (phep thu khong mu)
+BC9,WhlAngF,G1,r(Cy_f=12000),doi_chung_duong,2.17875,0.14715,13.8063,1e-06,DAT,,-,doi chung duong: ket qua phai KHAC goc (phep thu khong mu)
+BC10,xdot_o,G0,xdot(t=0),ghi_nhan,20,18,2,,GHI NHAN,,-,xdot(0)=20 m/s: khoi theo xdotin=20
+BC10,xdot_o,G0,xdot,ghi_nhan,20,20,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC10,xdot_o,G0,ydot,ghi_nhan,0,0,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC10,xdot_o,G0,r,ghi_nhan,0,0,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC10,xdot_o,G0,ay,ghi_nhan,0,0,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC10,xdot_o,G0,FzF,ghi_nhan,4548.73,4548.73,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC10,xdot_o,G0,FzR,ghi_nhan,3166.84,3166.84,0,,GHI NHAN,,-,lech so voi G0 toan ca 0; xdot hoi tu ve 20 sau 0.000 s
+BC11,m,G1,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC11,m,G1,ydot,doi,1.07018,1.07018,2.69728e-14,1e-06,DAT,1,co,gia thuyet sai: m khong duoc dung
+BC11,m,G1,r,doi,0.14715,0.14715,0,1e-06,DAT,,-,
+BC11,m,G1,psi,doi,0.5886,0.5886,7.24305e-14,1e-06,DAT,,-,
+BC11,m,G1,ay,doi,2.67545,2.67545,1.65986e-16,1e-06,DAT,,-,
+BC11,m,G1,Beta,doi,0.0534581,0.0534581,1.7788e-10,1e-06,DAT,,-,
+BC11,m,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC11,m,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC11,m,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC11,m,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC11,m,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC11,m,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC11,m,G1,FzF,ghi_nhan,5003.6,,17.7927,,GHI NHAN,,-,FzF: min 4985.81; max 5003.6 N (F_zf tinh: 9097.46 N)
+BC11,m,G1,FzR,ghi_nhan,3501.31,,17.7927,,GHI NHAN,,-,FzR: min 3483.52; max 3501.31 N (F_zr tinh: 6333.67 N)
+BC12,Izz,G1,xdot,doi,20,20,0,1e-06,DAT,,-,
+BC12,Izz,G1,ydot,doi,14.2392,14.2392,1.11111e-07,1e-06,DAT,,-,
+BC12,Izz,G1,r,doi,0.621788,0.621788,5.04196e-11,1e-06,DAT,0.0763344,co,gia thuyet sai: Izz khong duoc dung
+BC12,Izz,G1,psi,doi,1.30056,1.30056,6.0825e-08,1e-06,DAT,,-,
+BC12,Izz,G1,ay,doi,2.943,2.943,3.01794e-16,1e-06,DAT,,-,
+BC12,Izz,G1,Beta,doi,0.618706,0.618706,1.27858e-07,1e-06,DAT,,-,
+BC12,Izz,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC12,Izz,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC12,Izz,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC12,Izz,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC12,Izz,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC12,Izz,G1,ExtMz,doi,500,500,0,1e-06,DAT,,-,
+BC12,Izz,G1,FzF,ghi_nhan,4548.73,,909.408,,GHI NHAN,,-,FzF: min 3639.32; max 4548.73 N (F_zf tinh: 9097.46 N)
+BC12,Izz,G1,FzR,ghi_nhan,4076.24,,909.408,,GHI NHAN,,-,FzR: min 3166.84; max 4076.24 N (F_zr tinh: 6333.67 N)
+BC13,a,G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC13,a,G1,ydot,khong_doi,1.90718,1.90718,0,1e-09,DAT,,-,
+BC13,a,G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,5.59868,co,gia thuyet sai: a la canh tay don cua FExt(2) (them 0.1*a*Fy vao mo-men)
+BC13,a,G1,psi,khong_doi,0.5886,0.5886,0,1e-09,DAT,,-,
+BC13,a,G1,ay,khong_doi,3.57873,3.57873,0,1e-09,DAT,,-,
+BC13,a,G1,Beta,khong_doi,0.0950717,0.0950717,0,1e-09,DAT,,-,
+BC13,a,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC13,a,G1,ExtFy,doi,5629.34,5629.34,0,1e-06,DAT,,-,
+BC13,a,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC13,a,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC13,a,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC13,a,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC13,a,G1,FzF,ghi_nhan,4397.08,,27.6895,,GHI NHAN,,-,FzF: min 4369.39; max 4397.08 N (F_zf tinh: 9097.46 N)
+BC13,a,G1,FzR,ghi_nhan,3346.18,,27.6895,,GHI NHAN,,-,FzR: min 3318.49; max 3346.18 N (F_zr tinh: 6333.67 N)
+BC14,b,G1,xdot,khong_doi,20,20,0,1e-09,DAT,,-,
+BC14,b,G1,ydot,khong_doi,1.90718,1.90718,0,1e-09,DAT,,-,
+BC14,b,G1,r,khong_doi,0.14715,0.14715,0,1e-09,DAT,8.04174,co,gia thuyet sai: b la canh tay don cua FExt(2) (them -0.1*b*Fy vao mo-men)
+BC14,b,G1,psi,khong_doi,0.5886,0.5886,0,1e-09,DAT,,-,
+BC14,b,G1,ay,khong_doi,3.57873,3.57873,0,1e-09,DAT,,-,
+BC14,b,G1,Beta,khong_doi,0.0950717,0.0950717,0,1e-09,DAT,,-,
+BC14,b,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC14,b,G1,ExtFy,doi,5629.34,5629.34,0,1e-06,DAT,,-,
+BC14,b,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC14,b,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC14,b,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC14,b,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC14,b,G1,FzF,ghi_nhan,4752.26,,27.2212,,GHI NHAN,,-,FzF: min 4725.04; max 4752.26 N (F_zf tinh: 9097.46 N)
+BC14,b,G1,FzR,ghi_nhan,2990.53,,27.2212,,GHI NHAN,,-,FzR: min 2963.31; max 2990.53 N (F_zr tinh: 6333.67 N)
+BC2,xdotin,G1,xdot,doi,25,25,2.84217e-16,1e-06,DAT,,-,
+BC2,xdotin,G1,ydot,doi,2.75906,2.75906,2.04157e-08,1e-06,DAT,0.286854,co,gia thuyet sai: dang Plant beta' = F/(m v) - gamma
+BC2,xdotin,G1,r,doi,0.14715,0.14715,0,1e-06,DAT,,-,
+BC2,xdotin,G1,psi,doi,2.20725,2.20725,1.42044e-13,1e-06,DAT,,-,
+BC2,xdotin,G1,ay,doi,2.943,2.943,1.50897e-16,1e-06,DAT,,-,
+BC2,xdotin,G1,Beta,doi,0.217242,0.217242,4.3817e-08,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtFx,doi,0,0,0,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtFy,doi,4629.34,4629.34,0,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtFz,doi,0,0,0,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtMx,doi,0,0,0,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtMy,doi,0,0,0,1e-06,DAT,,-,
+BC2,xdotin,G1,ExtMz,doi,0,0,0,1e-06,DAT,,-,
+BC2,xdotin,G1,FzF,ghi_nhan,4590.43,,81.7353,,GHI NHAN,,-,FzF: min 4508.69; max 4590.43 N (F_zf tinh: 9097.46 N)
+BC2,xdotin,G1,FzR,ghi_nhan,3206.87,,81.7353,,GHI NHAN,,-,FzR: min 3125.13; max 3206.87 N (F_zr tinh: 6333.67 N)
