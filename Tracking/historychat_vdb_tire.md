@@ -4,7 +4,13 @@ Khung do người dùng mở 2026-11-06. Việc: thử đổi từng cổng mộ
 
 ---
 
-## TRẠNG THÁI HIỆN TẠI (2026-11-07, sau Lượt 3)
+## TRẠNG THÁI HIỆN TẠI (2026-11-07, sau Lượt 5)
+
+- **CHẨN ĐOÁN LỆCH XONG (Lượt 4-5).** Đã có SSW seed 99999 của Map, PID, MapPID trên ba bản Plant: gốc, VDBTireLag (độ trễ lốp, T_r theo PT 17), VDBTireLagMz (có M_z). Phần lệch lớn của PID, MapPID nằm trong ba giây T_a chạm giới hạn: STEADY 9 s (đánh lái nhanh, do M_z/trail), SLIP 67 s và 87 s (mu tăng lại, do độ trễ lốp). Bỏ ba giây đó: PID, MapPID lệch +1 đến +7 %; Map STEADY +13 % khi có M_z (lệch đều, Map không có phản hồi). Thứ bậc các bộ không đổi.
+- Báo cáo tiếng Việt: `Documents/Report/VDB_tire_baocao.docx`, sinh bằng `tools/build_report_vdb_vi.py` (hình `Result/Report/VDB/VDBvi_*.png`); bản tiếng Anh cũ `VDB_tire_report.docx` giữ nguyên, chưa cập nhật phân tích mới.
+- Chờ người dùng (và thầy) chọn: (A) so sánh chính dùng VDBTireLag, bản có M_z làm phép thử độ nhạy; hoặc (B) dùng bản có M_z và giải thích PT (17) đơn giản hóa trail.
+
+### Trạng thái trước Lượt 4 (2026-11-07, sau Lượt 3)
 
 - **KHỐI LỐP VDB TẠM CHỐT (2026-11-07).** Model/ đã tái cấu trúc (shared, original, VDB; xem Tracking/CLAUDE.md). Bản lốp dùng: `Model/VDB/Blocks/Tires_VDBLagMz.slx` (độ trễ lốp thật + T_r từ M_z của lốp, hệ số trail khớp có ràng buộc vật lý, `data/vdb_trail_fit.json`), Plant `Model/VDB/Plants/Plant_VDBTireLagMz.slx`, vòng kín `Model/VDB/temp_test/<Ctrl>/Model_<Ctrl>_VDBTireLagMz.slx`.
 - Hệ số: QBZ1 11.78, QCZ1 1.083, QEZ1 -3.03, QDZ1 0.0487 (t(0) = t_0); ràng buộc QBZ1 6-12, QCZ1 1.05-1.29, QEZ1 -4..0 lấy từ Pacejka [2] Bảng 4.2, A3.1 và lốp thư viện. Hở mạch T_s lệch 1.65 / 2.03 / 1.47 % (ngưỡng 3 %).
@@ -52,3 +58,22 @@ Nén lần cuối: Lượt 0
 - SSW seed 99999 cho Map, PID, MapPID với Plant_VDBTireLagMz; kết quả cũ (hệ số không ràng buộc) chuyển sang `unbounded_fit/`. STEADY lệch nhiều nhất (+13 / +22 / +22 %, tuyệt đối +0.135 / +0.054 / +0.055 N.m); SLIP giảm; WEAVE +3 đến +6 %; thứ bậc các bộ không đổi (PID và MapPID ở SLIP chênh dưới 5 %, hòa).
 - Báo cáo thầy: `Documents/Report/VDB_tire_report.docx` (tools/build_report_vdb.py). Bài học: không tự chạy khi chưa được bảo; seed chấm là 99999 (từng chọn nhầm 99987).
 - Người dùng bảo commit hết mọi thay đổi để mở trên laptop: commit và push main.
+
+### Lượt 4 (2026-11-07, PC) - Người dùng thấy lệch so với Plant gốc lớn: chẩn đoán nguyên nhân (chỉ đọc csv đã có, không chạy mô phỏng)
+- Phân rã theo bước (Map có đủ ba biến thể): STEADY 1.058 (gốc) -> 1.058 (VDBTire) -> 1.070 (Lag) -> 1.193 (LagMz): gần hết phần lệch do bước M_z (trail); WEAVE 1.451 -> 1.452 -> 1.473 -> 1.501 (Lag và Mz mỗi bước khoảng một nửa).
+- PID, MapPID: mọi cửa sổ giữ cua của STEADY gần như trùng (vd v45a0p15l 0.0203 / 0.0204); +22 % đến từ MỘT giây t = 9-10 s (25 km/h, đánh lái 0 -> -130 độ trong 1 s, T_a nằm ở T_a,max -8.07 N.m, bộ điều khiển hết quyền), giây này chiếm 80 % bình phương e_T ngay cả trên Plant gốc; T_s của VDB lớn hơn khoảng 0.75 N.m ở đó. Bỏ giây này: PID +6.1 %, MapPID +7.1 %.
+- SLIP -17 %: MỘT giây t = 87-88 s, mu nhảy 0.2 -> 0.8 khi đang cua; lốp gốc không có độ trễ nên F_y và a_y nhảy tức thời (a_y 1.87 -> 7.24 m/s2, T_s đỉnh 7.05), lốp VDB có độ trễ nên đỉnh thấp hơn (5.2). Bỏ giây này: PID +1.8 %, MapPID +2.0 %.
+- Map STEADY +12.9 % vẫn còn khi bỏ giây đó: Map là bảng tra không có phản hồi sai số nên T_r đổi đi thẳng vào e_T ở mọi cửa sổ cua.
+- Nguyên nhân gốc đề xuất: trail MF phẳng ở alpha nhỏ, PT (17) giảm tuyến tính ngay từ 0, nên ở góc trượt nhỏ (vùng xe chạy) trail VDB lớn hơn, T_r lớn hơn. Với PID chưa tách được Lag và Mz (chưa chạy Model_PID_VDBTireLag); đề nghị người dùng cho chạy để xác nhận. Script chẩn đoán ở scratchpad (where_err.py, zoom_err.py, excl.py), không commit.
+- Lượt khung kia: lượt này chưa đọc lượt mới của khung VDB_BODY.
+
+### Lượt 5 (2026-11-07, PC) - Chạy PID, MapPID có M_z và không M_z, đánh giá chi tiết, báo cáo tiếng Việt, commit
+- Người dùng: "chạy mappid và pid trên plant mới, có mz, sau đó chạy lại bản không mz, đánh giá kết quả chi tiết, viết lại report mới bằng tiếng Việt, note hết vào tracking, commit và push" (gọi qua /loop, tự điều nhịp; giữa chừng hỏi tiến độ hai lần).
+- Chạy `run_ssw_temp(<PID|MapPID>, 'VDBTireLagMz'|'VDBTireLag', 99999)` (MATLAB nền, khoảng 14 phút mỗi bộ mỗi Plant). Bản có M_z chạy lại cho kết quả trùng từng chữ số với bản đã commit (git không thấy khác), nên phép chạy tái lập được.
+- RMS e_T gốc -> không M_z -> có M_z: PID STEADY 0.249 -> 0.251 -> 0.304, SLIP 0.205 -> 0.189 -> 0.170, WEAVE 0.203 -> 0.211 -> 0.214; MapPID STEADY 0.250 -> 0.253 -> 0.305, SLIP 0.197 -> 0.193 -> 0.171, WEAVE 0.224 -> 0.236 -> 0.237; Map (đã có từ trước) STEADY 1.058 -> 1.070 -> 1.193, SLIP 0.690 -> 0.684 -> 0.680, WEAVE 1.451 -> 1.473 -> 1.501.
+- Đánh giá: script tự tìm "giây sự kiện" (giây 1 s chiếm >= 20 % tổng |thay đổi bình phương e_T| của PID so với gốc, ở bản VDB nào cũng được): STEADY {9}, SLIP {67, 87}; cả ba giây T_a nằm sát T_a,max (8.41, 9.04, 8.63 N.m). Trên Plant gốc các giây đó đã chiếm 80 % (STEADY), 81 % (SLIP) bình phương e_T của PID. Đỉnh |T_s| PID: STEADY 9 s 5.58 / 5.67 / 6.34 (chỉ bản M_z lệch -> do trail); SLIP 87 s 7.07 / 5.31 / 5.25 (hai bản VDB như nhau -> do độ trễ lốp, lốp gốc cho a_y nhảy tức thời 1.87 -> 7.24 m/s2); SLIP 67 s 4.80 / 5.28 / 4.93 (mu 0.24 -> 0.8 khi giữ -32 độ, a_y gần 0.8 g, độ trễ làm a_y giảm chậm nên T_a ở giới hạn lâu hơn; M_z bù lại một phần vì trail MF giảm nhanh ở góc trượt lớn).
+- Bỏ các giây sự kiện, RMS e_T gốc -> không M_z -> có M_z: PID STEADY 0.110 -> 0.112 -> 0.117, SLIP 0.091 -> 0.095 -> 0.095, WEAVE 0.202 -> 0.209 -> 0.213; MapPID 0.112 -> 0.116 -> 0.120, 0.096 -> 0.102 -> 0.101, 0.223 -> 0.235 -> 0.237; Map 0.925 -> 0.937 -> 1.044, 0.497 -> 0.483 -> 0.505, 1.436 -> 1.459 -> 1.485. Cửa sổ giữ cua STEADY của PID, MapPID lệch tối đa 1.1 mN.m; Map lệch trung vị +0.036 N.m chỉ khi có M_z.
+- Điểm từng làm tôi lạ (đã giải thích): ở Lượt 4 bỏ riêng giây 87 s thì SLIP bản không M_z còn +18 %; nguyên nhân là sự kiện thứ hai 67 s cùng loại.
+- Báo cáo tiếng Việt mới: `Documents/Report/VDB_tire_baocao.docx` (`tools/build_report_vdb_vi.py`, mọi số đọc từ csv; 6 hình VDBvi_*: method, trail, rms_bars, rms_bars_excl, STEADY_event, SLIP_event; màu ba Plant lấy theo bảng màu đã kiểm của skill dataviz, slot 1-3). Mục: mục đích, đã thay gì, trail, kết quả ba Plant, phân tích chi tiết (5.1-5.4), kết luận, đề xuất A/B và bước tiếp.
+- Lỗi gặp: một chuỗi f-string mở bằng " đóng bằng ' làm script lỗi cú pháp, Word giữ bản cũ mà lệnh chạy (đã chuyển stdout về /dev/null) không báo; sửa xong chạy lại và kiểm nội dung docx. Bài học: không giấu đầu ra khi sinh file, kiểm nội dung file sau khi sinh.
+- Commit đúng các file của lượt (kết quả VDBTireLag của PID, MapPID, báo cáo, hình, script, nhật ký), push main, không dùng sync_repo.sh.
