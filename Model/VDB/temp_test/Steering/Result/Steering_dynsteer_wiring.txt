@@ -1,0 +1,125 @@
+
+===== TOP
+Add                    Sum            signs=++                      <-From22{} <-TrqIn{}
+Bus Creator            BusCreator                                   <-Signal Specification{StrgWhlAng} <-Signal Specification1{StrgWhlSpd} <-Signal Specification8{ShftAng} <-Signal Specification9{ShftSpd} <-Signal Specification2{AngLft} <-Signal Specification3{SpdLft} <-Signal Specification4{AngRght} <-Signal Specification5{SpdRght} <-Signal Specification10{TrqAst} <-Signal Specification11{PwrAst} <-Signal Specification7{PwrLoss} <-Signal Specification6{InstStrgRatio}
+Bus Selector           BusSelector                                  <-AckermanConstantRatio{}
+Goto                   Goto           tag=SpdL                      <-SpdSwitch{}
+Goto1                  Goto           tag=SpdR                      <-SpdSwitch{}
+Goto10                 Goto           tag=AngR                      <-AngSwitch{}
+Goto11                 Goto           tag=ShftAng                   <-TrqInertia{}
+Goto12                 Goto           tag=ShftSpd                   <-TrqInertia{}
+Goto13                 Goto           tag=TrqAst                    <-PowerAssist{}
+Goto4                  Goto           tag=ClmnSpd                   <-TrqInertia{}
+Goto5                  Goto           tag=InstStrngRatio            <-Bus Selector{<InstStrgRatio>}
+Goto6                  Goto           tag=PwrLoss                   <-CalPwrLoss{}
+Goto7                  Goto           tag=PwrAst                    <-PowerAssist{}
+Goto8                  Goto           tag=ClmnAng                   <-TrqInertia{}
+Goto9                  Goto           tag=AngL                      <-AngSwitch{}
+
+===== TrqInertia
+TrqEq                  Inport                                      
+TrqIn                  Inport                                      
+Add                    Sum            signs=++-                     <-Gain2{} <-TrqIn{} <-Backlash1{}
+Add4                   Sum            signs=++++                    <-Backlash1{} <-TrqEq{} <-Friction{} <-Gain1{}
+Backlash1              SubSystem                                    <-Column{} <-Shaft{} <-Column{} <-Shaft{}
+Column                 SubSystem                                    <-Add{}
+Friction               SubSystem                                    <-Shaft{}
+Gain1                  Gain           gain=-b3                      <-Shaft{}
+Gain2                  Gain           gain=-b2                      <-Column{}
+Shaft                  SubSystem                                    <-Add4{}
+ShftAng                Outport                                      <-Shaft{}
+ShftSpd                Outport                                      <-Shaft{}
+ShftAcc                Outport                                      <-Shaft{}
+ClmnAng                Outport                                      <-Column{}
+ClmnSpd                Outport                                      <-Column{}
+ClmnAcc                Outport                                      <-Column{}
+
+===== PowerAssist
+ClmnSpd                Inport                                      
+TrqMan                 Inport                                      
+VhlSpd                 Inport                                      
+Cont LPF1              SubSystem                                    <-Gain1{}
+Gain1                  Gain           gain=Eta                      <-Product1{}
+Product                Product        inputs=2                      <-Saturation1{} <-div0protect - poly{}
+Product1               Product        inputs=*/                     <-Saturation2{} <-div0protect - poly{}
+Saturation1            Saturate       up=TrqLmt lo=-TrqLmt          <-TrqAssistTbl{}
+Saturation2            Saturate       up=PwrLmt lo=-PwrLmt          <-Product{}
+TrqAssistTbl           Lookup_n-D                                   <-TrqMan{} <-VhlSpd{}
+div0protect - poly     SubSystem                                    <-ClmnSpd{}
+TrqAst                 Outport                                      <-Cont LPF1{}
+PwrAst                 Outport                                      <-Saturation2{}
+
+===== TrqInertia/Column
+In1                    Inport                                      
+Constant               Constant       value=J1                     
+Constant1              Constant       value=theta_o                
+Constant2              Constant       value=omega_o                
+Divide                 Product        inputs=*/                     <-In1{} <-div0protect - abs poly{}
+Integrator, Second-Order SecondOrderIntegrator                               <-Divide{} <-Constant1{} <-Constant2{}
+div0protect - abs poly SubSystem                                    <-Constant{}
+Spd                    Outport                                      <-Integrator, Second-Order{}
+Ang                    Outport                                      <-Integrator, Second-Order{}
+Acc                    Outport                                      <-Divide{}
+
+===== TrqInertia/Shaft
+In1                    Inport                                      
+Constant3              Constant       value=J2                     
+Constant4              Constant       value=theta_o                
+Constant5              Constant       value=omega_o                
+Divide1                Product        inputs=*/                     <-In1{} <-div0protect - abs poly1{}
+Integrator, Second-Order1 SecondOrderIntegrator                               <-Divide1{} <-Constant4{} <-Constant5{}
+div0protect - abs poly1 SubSystem                                    <-Constant3{}
+Ang                    Outport                                      <-Integrator, Second-Order1{Ang}
+Spd                    Outport                                      <-Integrator, Second-Order1{Spd}
+Acc                    Outport                                      <-Divide1{}
+
+===== TrqInertia/Backlash1
+theta1                 Inport                                      
+theta2                 Inport                                      
+theta_dot1             Inport                                      
+theta_dot2             Inport                                      
+Add                    Sum            signs=+-                      <-theta1{} <-theta2{}
+Add2                   Sum            signs=+-                      <-theta_dot1{} <-theta_dot2{}
+Subsystem              SubSystem                                    <-Add{delta} <-Add2{deltadot}
+T                      Outport                                      <-Subsystem{T}
+
+===== TrqInertia/Friction
+speed                  Inport                                      
+Abs                    Abs                                          <-speed{}
+Compare To Constant    SubSystem                                    <-Abs{}
+Data Type Conversion   DataTypeConversion                               <-Compare To Constant{}
+Gain                   Gain           gain=FricTrq                  <-Data Type Conversion{}
+Gain1                  Gain           gain=-FricTrq/0.01            <-speed{}
+Product                Product        inputs=2                      <-Unary Minus{} <-Gain{}
+Sign                   Signum                                       <-speed{}
+Switch                 Switch                                       <-Product{} <-Compare To Constant{} <-Gain1{}
+Unary Minus            UnaryMinus                                   <-Sign{}
+fricTrq                Outport                                      <-Switch{}
+
+===== TOP connections of the two sub-blocks, From tags, Info bus elements
+PowerAssist in1 <- From18 {} tag=ClmnSpd
+PowerAssist in2 <- TrqIn {}
+PowerAssist in3 <- VehSpd {}
+TrqInertia in1 <- Bus Selector {<TrqIn>}
+TrqInertia in2 <- Add {}
+AckermanConstantRatio in1 <- TrqInertia {}
+AckermanConstantRatio in2 <- TrqInertia {}
+AckermanConstantRatio in3 <- TrqSwitch {}
+AckermanConstantRatio in4 <- TrqSwitch {}
+From From     tag=ShftSpd
+From From10   tag=AngL
+From From11   tag=SpdL
+From From12   tag=AngR
+From From13   tag=SpdR
+From From17   tag=ShftAng
+From From18   tag=ClmnSpd
+From From19   tag=ShftSpd
+From From20   tag=TrqAst
+From From21   tag=PwrAst
+From From22   tag=TrqAst
+From From4    tag=ClmnSpd
+From From5    tag=InstStrngRatio
+From From7    tag=PwrLoss
+From From8    tag=ClmnAng
+From From9    tag=ClmnSpd
+BusCreator Bus Creator: StrgWhlAng, StrgWhlSpd, ShftAng, ShftSpd, AngLft, SpdLft, AngRght, SpdRght, TrqAst, PwrAst, PwrLoss, InstStrgRatio

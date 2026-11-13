@@ -1,0 +1,10 @@
+{
+  "alpha_xlabel": "Góc trượt bánh trước \\alpha_f (độ)",
+  "fy_ylabel": "Lực ngang cầu trước F_{yf} (kN)",
+  "tr_ylabel": "Mô-men phản lực T_r (N·m)",
+  "mu_label": "\\mu = ",
+  "alpha_sl_label": "\\alpha_{sl} = ",
+  "ay_xlabel": "Gia tốc ngang a_y (g)",
+  "tref_ylabel": "Mô-men mục tiêu T_{ref} (N·m)",
+  "kmh": " km/h"
+}

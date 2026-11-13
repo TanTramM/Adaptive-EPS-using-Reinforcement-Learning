@@ -1,0 +1,69 @@
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:25:13 SEAST 2026 VDBBody Map failed
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:25:54 SEAST 2026 VDBBody PID failed
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:26:33 SEAST 2026 VDBBody MapPID failed
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:27:13 SEAST 2026 VDBTireBody Map failed
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:27:51 SEAST 2026 VDBTireBody PID failed
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'run_ssw_temp'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+Wed Nov 11 01:28:31 SEAST 2026 VDBTireBody MapPID failed
+{Unrecognized function or variable 'build_temp_test'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'build_temp_test'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001
+{Unrecognized function or variable 'build_temp_test'.
+} 
+ERROR: MATLAB error Exit Status: 0x00000001

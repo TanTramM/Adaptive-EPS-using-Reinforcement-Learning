@@ -1,0 +1,5 @@
+R1 nominal rerun vs Result/Controllers/<Ctrl>/Cases_ssw, 2026-11-12 01:38
+Map     rows 34 vs 34, max rel diff RMS_eT_Nm 0, S_Nm 0 -> PASS
+PID     rows 34 vs 34, max rel diff RMS_eT_Nm 0, S_Nm 0 -> PASS
+MapPID  rows 34 vs 34, max rel diff RMS_eT_Nm 0, S_Nm 0 -> PASS
+[summarize_robust] R1 PASS

@@ -1,0 +1,70 @@
+2026-11-11 01:24:00 V0 ok
+2026-11-11 01:24:14 V0 ok
+2026-11-11 01:24:14 V1 VDBBody
+2026-11-11 01:24:14 VDBBody Map start
+2026-11-11 01:24:46 VDBBody_Map attempt 1 failed
+2026-11-11 01:24:59 VDBBody_Map attempt 2 failed
+2026-11-11 01:25:13 VDBBody_Map attempt 3 failed
+2026-11-11 01:25:13 VDBBody Map FAILED after 3 attempts
+2026-11-11 01:25:13 VDBBody PID start
+2026-11-11 01:25:27 VDBBody_PID attempt 1 failed
+2026-11-11 01:25:40 VDBBody_PID attempt 2 failed
+2026-11-11 01:25:54 VDBBody_PID attempt 3 failed
+2026-11-11 01:25:54 VDBBody PID FAILED after 3 attempts
+2026-11-11 01:25:54 VDBBody MapPID start
+2026-11-11 01:26:07 VDBBody_MapPID attempt 1 failed
+2026-11-11 01:26:20 VDBBody_MapPID attempt 2 failed
+2026-11-11 01:26:33 VDBBody_MapPID attempt 3 failed
+2026-11-11 01:26:33 VDBBody MapPID FAILED after 3 attempts
+2026-11-11 01:26:33 V2 VDBTireBody
+2026-11-11 01:26:33 VDBTireBody Map start
+2026-11-11 01:26:46 VDBTireBody_Map attempt 1 failed
+2026-11-11 01:26:59 VDBTireBody_Map attempt 2 failed
+2026-11-11 01:27:13 VDBTireBody_Map attempt 3 failed
+2026-11-11 01:27:13 VDBTireBody Map FAILED after 3 attempts
+2026-11-11 01:27:13 VDBTireBody PID start
+2026-11-11 01:27:26 VDBTireBody_PID attempt 1 failed
+2026-11-11 01:27:39 VDBTireBody_PID attempt 2 failed
+2026-11-11 01:27:51 VDBTireBody_PID attempt 3 failed
+2026-11-11 01:27:51 VDBTireBody PID FAILED after 3 attempts
+2026-11-11 01:27:51 VDBTireBody MapPID start
+2026-11-11 01:28:04 VDBTireBody_MapPID attempt 1 failed
+2026-11-11 01:28:17 VDBTireBody_MapPID attempt 2 failed
+2026-11-11 01:28:31 VDBTireBody_MapPID attempt 3 failed
+2026-11-11 01:28:31 VDBTireBody MapPID FAILED after 3 attempts
+2026-11-11 01:28:31 V3a build Plant_VDBTireLagBody
+2026-11-11 01:29:31 V3a ok
+2026-11-11 01:29:31 V3b build loops
+2026-11-11 01:29:44 V3b attempt 1 failed
+2026-11-11 01:29:57 V3b attempt 2 failed
+2026-11-11 01:30:10 V3b attempt 3 failed
+2026-11-11 01:30:10 V3b FAIL: stop
+--- restart after path fix (addpath temp_test/script, Plants/script)
+2026-11-11 02:05:15 V0 ok
+2026-11-11 02:05:15 V1 VDBBody
+2026-11-11 02:05:15 VDBBody Map start
+2026-11-11 02:09:11 VDBBody Map done
+2026-11-11 02:09:11 VDBBody PID start
+2026-11-11 02:14:36 VDBBody PID done
+2026-11-11 02:14:36 VDBBody MapPID start
+2026-11-11 02:20:02 VDBBody MapPID done
+2026-11-11 02:20:02 V2 VDBTireBody
+2026-11-11 02:20:02 VDBTireBody Map start
+2026-11-11 02:24:57 VDBTireBody Map done
+2026-11-11 02:24:57 VDBTireBody PID start
+2026-11-11 02:31:40 VDBTireBody PID done
+2026-11-11 02:31:40 VDBTireBody MapPID start
+2026-11-11 02:38:14 VDBTireBody MapPID done
+2026-11-11 02:38:15 V3a ok
+2026-11-11 02:38:15 V3b build loops
+2026-11-11 02:39:06 V3b ok
+2026-11-11 02:40:27 V3c ok:   T_s difference (Body - Lag) = -0.0001 percentage points (limit 0.1)
+2026-11-11 02:40:27 V4 VDBTireLagBody
+2026-11-11 02:40:27 VDBTireLagBody Map start
+2026-11-11 02:45:24 VDBTireLagBody Map done
+2026-11-11 02:45:24 VDBTireLagBody PID start
+2026-11-11 02:51:55 VDBTireLagBody PID done
+2026-11-11 02:51:55 VDBTireLagBody MapPID start
+2026-11-11 02:58:30 VDBTireLagBody MapPID done
+2026-11-11 02:58:30 V5 summary
+2026-11-11 02:58:45 V5 done: ALL FINISHED

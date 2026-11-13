@@ -14,6 +14,7 @@ function names = build_plant_variants(overwrite, only)
 %     Tires_VDBLag       as Tires_VDB with the real lateral relaxation length: the block clamps the relaxation frequency from below at FyRelFreqLwrLim = 200*pi rad/s (100 Hz), which
 %                        holds the lag at 1.59 ms; lowering the limit to 1 rad/s lets the block use its own relaxation length (measured 0.609 m, tau = 0.609/v, 22-109 ms at 27.8-5.6 m/s)
 %     Plant_VDBTireLag   the Plant with only Tires replaced by Tires_VDBLag
+%     Plant_VDBTireLagBody  Tires replaced by Tires_VDBLag (with lag) and Bike2DOF replaced by the VDB body (2026-11-11)
 %   build_plant_variants(overwrite, only)   only = cell array of model names to build (default: all), e.g. {'Tires_VDBLag', 'Plant_VDBTireLag'}
 %   MATLAB Function blocks are used for the slip-angle and trail formulas because they have several branches (build rules, section 5: allowed, reason stated here).
 %   Needs the Vehicle Dynamics Blockset. Run by itself (it calls load_plant_vdb).
@@ -41,7 +42,7 @@ function names = build_plant_variants(overwrite, only)
         solver(n); save_system(n, fullfile(blocksDir, [n '.slx'])); close_system(n, 0); names{end + 1} = n; %#ok<AGROW>
     end
     % --- plants: name, replace Tires?, replace Bike2DOF?
-    pl = {'Plant_VDBTire', true, false, false, false; 'Plant_VDBBody', false, true, false, false; 'Plant_VDBTireBody', true, true, false, false; 'Plant_VDBTireLag', true, false, true, false; 'Plant_VDBTireLagMz', true, false, true, true};
+    pl = {'Plant_VDBTire', true, false, false, false; 'Plant_VDBBody', false, true, false, false; 'Plant_VDBTireBody', true, true, false, false; 'Plant_VDBTireLag', true, false, true, false; 'Plant_VDBTireLagMz', true, false, true, true; 'Plant_VDBTireLagBody', true, true, true, false};
     for i = 1:size(pl, 1)
         if ~isempty(only) && ~any(strcmp(only, pl{i, 1})), continue; end
         n = pickName(plantsDir, pl{i, 1}, overwrite);

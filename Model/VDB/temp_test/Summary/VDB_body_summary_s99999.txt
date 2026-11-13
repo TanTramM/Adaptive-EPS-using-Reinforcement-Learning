@@ -1,0 +1,19 @@
+Tom tat chay Plant co than VDB, seed 99999 (RMS_eT thu bac tu tot den xau; "=" la chenh duoi 5%)
+VDBTireLag      STEADY  PID = MapPID < Map         mốc PID = MapPID < Map         -> giu
+VDBTireLag      SLIP    PID = MapPID < Map         mốc MapPID = PID < Map         -> hoa (co cap chenh duoi 5%)
+VDBTireLag      WEAVE   PID < MapPID < Map         mốc PID < MapPID < Map         -> giu
+VDBBody         STEADY  PID = MapPID < Map         mốc PID = MapPID < Map         -> giu
+VDBBody         SLIP    MapPID = PID < Map         mốc MapPID = PID < Map         -> giu
+VDBBody         WEAVE   PID < MapPID < Map         mốc PID < MapPID < Map         -> giu
+VDBTireBody     STEADY  PID = MapPID < Map         mốc PID = MapPID < Map         -> giu
+VDBTireBody     SLIP    MapPID = PID < Map         mốc MapPID = PID < Map         -> giu
+VDBTireBody     WEAVE   PID < MapPID < Map         mốc PID < MapPID < Map         -> giu
+VDBTireLagBody  STEADY  PID = MapPID < Map         mốc PID = MapPID < Map         -> giu
+VDBTireLagBody  SLIP    PID = MapPID < Map         mốc MapPID = PID < Map         -> hoa (co cap chenh duoi 5%)
+VDBTireLagBody  WEAVE   PID < MapPID < Map         mốc PID < MapPID < Map         -> giu
+
+Doi RMS_eT (%) so voi moc, theo bien the (Map/PID/MapPID) cho STEADY, SLIP, WEAVE:
+VDBTireLag      STEADY: +1.1 +0.7 +1.2 SLIP: -0.9 -7.7 -2.3 WEAVE: +1.5 +3.6 +5.0
+VDBBody         STEADY: -0.0 +0.0 -0.0 SLIP: +0.0 -0.0 +0.1 WEAVE: +0.0 -0.0 +0.0
+VDBTireBody     STEADY: +0.0 +0.0 -0.0 SLIP: +0.1 +1.4 +1.3 WEAVE: +0.1 +0.4 +0.5
+VDBTireLagBody  STEADY: +1.1 +0.7 +1.2 SLIP: -0.9 -7.6 -2.7 WEAVE: +1.5 +3.6 +5.0

@@ -1,0 +1,52 @@
+Variant,Case,Order_best_first,vs_nom
+nom,STEADY,PID = MapPID < Map,giu
+nom,SLIP,MapPID = PID < Map,giu
+nom,WEAVE,PID < MapPID < Map,giu
+Tfp20,STEADY,PID = MapPID < Map,giu
+Tfp20,SLIP,MapPID < PID < Map,khac nom
+Tfp20,WEAVE,PID < MapPID < Map,giu
+Tfm20,STEADY,PID = MapPID < Map,giu
+Tfm20,SLIP,MapPID = PID < Map,giu
+Tfm20,WEAVE,PID < MapPID < Map,giu
+Jcolp20,STEADY,PID = MapPID < Map,giu
+Jcolp20,SLIP,MapPID = PID < Map,giu
+Jcolp20,WEAVE,PID < MapPID < Map,giu
+Jcolm20,STEADY,MapPID = PID < Map,khac nom
+Jcolm20,SLIP,MapPID = PID < Map,giu
+Jcolm20,WEAVE,PID < MapPID < Map,giu
+Ccolp20,STEADY,PID = MapPID < Map,giu
+Ccolp20,SLIP,MapPID = PID < Map,giu
+Ccolp20,WEAVE,PID < MapPID < Map,giu
+Ccolm20,STEADY,PID = MapPID < Map,giu
+Ccolm20,SLIP,MapPID = PID < Map,giu
+Ccolm20,WEAVE,PID < MapPID < Map,giu
+Massp20,STEADY,PID = MapPID < Map,giu
+Massp20,SLIP,MapPID = PID < Map,giu
+Massp20,WEAVE,PID < MapPID < Map,giu
+Massm20,STEADY,PID = MapPID < Map,giu
+Massm20,SLIP,MapPID < PID < Map,khac nom
+Massm20,WEAVE,PID < MapPID < Map,giu
+Calphap20,STEADY,PID = MapPID < Map,giu
+Calphap20,SLIP,MapPID < PID < Map,khac nom
+Calphap20,WEAVE,PID < MapPID < Map,giu
+Calpham20,STEADY,PID = MapPID < Map,giu
+Calpham20,SLIP,PID = MapPID < Map,khac nom
+Calpham20,WEAVE,PID < MapPID < Map,giu
+Trailp20,STEADY,MapPID = PID < Map,khac nom
+Trailp20,SLIP,MapPID = PID < Map,giu
+Trailp20,WEAVE,PID < MapPID < Map,giu
+Trailm20,STEADY,PID = MapPID < Map,giu
+Trailm20,SLIP,MapPID < PID < Map,khac nom
+Trailm20,WEAVE,PID < MapPID < Map,giu
+Casterp20,STEADY,MapPID = PID < Map,khac nom
+Casterp20,SLIP,MapPID = PID < Map,giu
+Casterp20,WEAVE,PID < MapPID < Map,giu
+Casterm20,STEADY,PID = MapPID < Map,giu
+Casterm20,SLIP,MapPID = PID < Map,giu
+Casterm20,WEAVE,PID < MapPID < Map,giu
+Motorp20,STEADY,PID = MapPID < Map,giu
+Motorp20,SLIP,MapPID = PID < Map,giu
+Motorp20,WEAVE,PID < MapPID < Map,giu
+Motorm20,STEADY,PID = MapPID < Map,giu
+Motorm20,SLIP,MapPID = PID < Map,giu
+Motorm20,WEAVE,PID < MapPID < Map,giu

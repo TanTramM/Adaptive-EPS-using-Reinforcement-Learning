@@ -1,0 +1,230 @@
+MATLAB 9.14.0.2206163 (R2023a), block vehdynlibsteering/Dynamic Steering
+
+--- mask description
+vdynblks:vehdynDynamicSteering:blkDesc
+
+--- mask type, help, display text
+Dynamic Steering
+IconInfo = vehdynicon('vehdyndynamicsteering',gcb,'DrawCommands');
+    
+image(IconInfo.image);
+    
+for k = 1:numel(IconInfo.input)
+    port_label('input', k, IconInfo.input{k})
+end
+   
+for m = 1:numel(IconInfo.output)
+    port_label('output', m, IconInfo.output{m})
+end
+
+--- dialog parameters (37)
+StrgType       | Type:                                         | value=Ackerman | opts=
+StrgRatioType  | Parametrized by:                              | value=Constant | opts=
+PwrAst         | Power assist                                  | value=on | opts=
+Loc            | Location:                                     | value=Front | opts=
+TrckWdth       | Track width, TrckWdth [m]:                    | value=1 | opts=
+WhlBase        | Wheel base, WhlBase [m]:                      | value=1.524 | opts=
+StrgRng        | Steering range, StrgRng [rad]:                | value=1.25*pi | opts=
+StrgAngBpts    | Steering angle breakpoints, StrgAngBpts [rad]: | value=[-6.2832   -5.0265   -3.7699   -2.5133   -1.2566         0    1.2566    2.5133    3.7699    5.0265    6.2832] | opts=
+StrgRatioTbl   | Steering ratio table, StrgRatioTbl []:        | value=[13.5000   13.3750   13.2500   13.1250   13.0000   13.0000   13.0000   13.1250   13.2500   13.3750   13.5000
+] | opts=
+StrgRatio      | Steering ratio, StrgRatio []:                 | value=13.5 | opts=
+StrgArmLngth   | Steering arm length, StrgArmLngth [m]:        | value=0.1 | opts=
+RckCsLngth     | Rack casing length, RckCsLngth [m]:           | value=0.5 | opts=
+TieRodLngth    | Tie rod length, TieRodLngth [m]:              | value=0.248 | opts=
+D              | Distance between axis and rack, D [m]:        | value=0.2 | opts=
+PnnRadiusTbl   | Pinion radius table, PnnRadiusTbl [m]:        | value=[0.0055    0.0055    0.0056    0.0057    0.0057    0.0057    0.0058    0.0057    0.0056    0.0055    0.0055] | opts=
+PnnRadius      | Pinion radius, PnnRadius [m]:                 | value=0.0057 | opts=
+RodLngth       | Rod length, RodLngth [m]:                     | value=0.1 | opts=
+ParaArmLngth   | Parallel arm length, ParaArmLngth [m]:        | value=0.9 | opts=
+J1             | Steering wheel inertia, J1 [kg*m^2]:          | value=0.1 | opts=
+J2             | Steering mechanism inertia, J2 [kg*m^2]:      | value=0.01 | opts=
+beta_u         | Upper hysteresis modifier, beta_u []:         | value=0.1 | opts=
+beta_l         | Lower hysteresis modifier, beta_l []:         | value=0.1 | opts=
+b1             | Hysteresis viscous damping, b1 [N*m*s/rad]:   | value=0.001 | opts=
+k1             | Hysteresis stiffness, k1 [N*m/rad]:           | value=30 | opts=
+b2             | Steering wheel damping, b2 [N*m*s/rad]:       | value=1 | opts=
+b3             | Steering mechanism damping, b3 [N*m*s/rad]:   | value=0.001 | opts=
+theta_o        | Initial steering angle, theta_o [rad]:        | value=0 | opts=
+omega_o        | Initial steering angular velocity, omega_o [rad/s]: | value=0 | opts=
+FricTrq        | Friction torque, FricTrq [N*m]:               | value=0 | opts=
+TrqBpts        | Steering wheel torque breakpoints, TrqBpts [N*m]: | value=[-100 0 100] | opts=
+VehSpdBpts     | Vehicle speed breakpoints, VehSpdBpts [m/s]:  | value=[0 20] | opts=
+TrqTbl         | Assisting torque table, TrqTbl [N*m]:         | value=[0 -100;0 0;0 100] | opts=
+TrqLmt         | Assisting torque limit, TrqLmt [N*m]:         | value=100 | opts=
+PwrLmt         | Assisting power limit, PwrLmt [N*m/s]:        | value=1000 | opts=
+Eta            | Assisting torque efficiency, Eta []:          | value=1 | opts=
+omega_c        | Cutoff frequency, omega_c [rad/s]:            | value=200 | opts=
+aMode          |                                               | value=2 | opts=
+
+--- port counts: in=4 out=3
+IN  TrqIn (port 1)
+IN  TrqLft (port 2)
+IN  TrqRght (port 3)
+IN  VehSpd (port 4)
+OUT Info (port 1)
+OUT AngLft (port 2)
+OUT AngRght (port 3)
+
+--- inner blocks, depth 1 and 2
+vehdynlibsteering/Dynamic Steering | SubSystem
+TrqIn | Inport
+TrqLft | Inport
+TrqRght | Inport
+VehSpd | Inport
+AckermanConstantRatio | SubSystem
+AckermanConstantRatio/Ang | Inport
+AckermanConstantRatio/Spd | Inport
+AckermanConstantRatio/TrqL | Inport
+AckermanConstantRatio/TrqR | Inport
+AckermanConstantRatio/Ackerman | SubSystem
+AckermanConstantRatio/AckermanJacobian | SubSystem
+AckermanConstantRatio/Bus
+Creator | BusCreator
+AckermanConstantRatio/Constant | Constant
+AckermanConstantRatio/From | From
+AckermanConstantRatio/From1 | From
+AckermanConstantRatio/From2 | From
+AckermanConstantRatio/From3 | From
+AckermanConstantRatio/From4 | From
+AckermanConstantRatio/From5 | From
+AckermanConstantRatio/From6 | From
+AckermanConstantRatio/From8 | From
+AckermanConstantRatio/From9 | From
+AckermanConstantRatio/Gain | Gain
+AckermanConstantRatio/Gain1 | Gain
+AckermanConstantRatio/Gain2 | Gain
+AckermanConstantRatio/Goto1 | Goto
+AckermanConstantRatio/Goto2 | Goto
+AckermanConstantRatio/Goto4 | Goto
+AckermanConstantRatio/Goto7 | Goto
+AckermanConstantRatio/Goto8 | Goto
+AckermanConstantRatio/Info | Outport
+AckermanConstantRatio/Left wheel | Outport
+AckermanConstantRatio/Right wheel | Outport
+Add | Sum
+AngSwitch | SubSystem
+AngSwitch/Ang1 | Inport
+AngSwitch/Ang2 | Inport
+AngSwitch/Switch | Switch
+AngSwitch/Switch1 | Switch
+AngSwitch/Unary Minus | UnaryMinus
+AngSwitch/Unary Minus1 | UnaryMinus
+AngSwitch/index | Constant
+AngSwitch/AngL | Outport
+AngSwitch/AngR | Outport
+Bus
+Creator | BusCreator
+Bus
+Selector | BusSelector
+CalPwrLoss | SubSystem
+CalPwrLoss/Clmnspd | Inport
+CalPwrLoss/ShftSpd | Inport
+CalPwrLoss/Add | Sum
+CalPwrLoss/Add1 | Sum
+CalPwrLoss/Gain | Gain
+CalPwrLoss/Gain1 | Gain
+CalPwrLoss/Gain2 | Gain
+CalPwrLoss/Math
+Function | Math
+CalPwrLoss/Math
+Function1 | Math
+CalPwrLoss/Math
+Function2 | Math
+CalPwrLoss/PwrLoss | Outport
+From | From
+From10 | From
+From11 | From
+From12 | From
+From13 | From
+From17 | From
+From18 | From
+From19 | From
+From20 | From
+From21 | From
+From22 | From
+From4 | From
+From5 | From
+From7 | From
+From8 | From
+From9 | From
+Goto | Goto
+Goto1 | Goto
+Goto10 | Goto
+Goto11 | Goto
+Goto12 | Goto
+Goto13 | Goto
+Goto4 | Goto
+Goto5 | Goto
+Goto6 | Goto
+Goto7 | Goto
+Goto8 | Goto
+Goto9 | Goto
+PowerAssist | SubSystem
+PowerAssist/ClmnSpd | Inport
+PowerAssist/TrqMan | Inport
+PowerAssist/VhlSpd | Inport
+PowerAssist/Cont LPF1 | SubSystem
+PowerAssist/Gain1 | Gain
+PowerAssist/Product | Product
+PowerAssist/Product1 | Product
+PowerAssist/Saturation1 | Saturate
+PowerAssist/Saturation2 | Saturate
+PowerAssist/TrqAssistTbl | Lookup_n-D
+PowerAssist/div0protect - poly | SubSystem
+PowerAssist/TrqAst | Outport
+PowerAssist/PwrAst | Outport
+Signal Specification | SignalSpecification
+Signal Specification1 | SignalSpecification
+Signal Specification10 | SignalSpecification
+Signal Specification11 | SignalSpecification
+Signal Specification2 | SignalSpecification
+Signal Specification3 | SignalSpecification
+Signal Specification4 | SignalSpecification
+Signal Specification5 | SignalSpecification
+Signal Specification6 | SignalSpecification
+Signal Specification7 | SignalSpecification
+Signal Specification8 | SignalSpecification
+Signal Specification9 | SignalSpecification
+SpdSwitch | SubSystem
+SpdSwitch/Spd1 | Inport
+SpdSwitch/Spd2 | Inport
+SpdSwitch/Switch | Switch
+SpdSwitch/Switch1 | Switch
+SpdSwitch/Unary Minus | UnaryMinus
+SpdSwitch/Unary Minus1 | UnaryMinus
+SpdSwitch/index | Constant
+SpdSwitch/SpdL | Outport
+SpdSwitch/SpdR | Outport
+Terminator | Terminator
+Terminator1 | Terminator
+TrqInertia | SubSystem
+TrqInertia/TrqEq | Inport
+TrqInertia/TrqIn | Inport
+TrqInertia/Add | Sum
+TrqInertia/Add4 | Sum
+TrqInertia/Backlash1 | SubSystem
+TrqInertia/Column | SubSystem
+TrqInertia/Friction | SubSystem
+TrqInertia/Gain1 | Gain
+TrqInertia/Gain2 | Gain
+TrqInertia/Shaft | SubSystem
+TrqInertia/ShftAng | Outport
+TrqInertia/ShftSpd | Outport
+TrqInertia/ShftAcc | Outport
+TrqInertia/ClmnAng | Outport
+TrqInertia/ClmnSpd | Outport
+TrqInertia/ClmnAcc | Outport
+TrqSwitch | SubSystem
+TrqSwitch/Trq1 | Inport
+TrqSwitch/Trq2 | Inport
+TrqSwitch/Switch | Switch
+TrqSwitch/Switch1 | Switch
+TrqSwitch/Unary Minus | UnaryMinus
+TrqSwitch/Unary Minus1 | UnaryMinus
+TrqSwitch/index | Constant
+TrqSwitch/TrqL | Outport
+TrqSwitch/TrqR | Outport
+Info | Outport
+AngLft | Outport
+AngRght | Outport

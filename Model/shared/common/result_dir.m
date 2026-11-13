@@ -12,7 +12,7 @@ function p = result_dir(varargin)
 %   Change the root or the layout here only (this is the single place that knows it).
 
     parts = varargin;
-    if any(strcmp(parts{1}, {'Plant', 'Reference', 'Plant_VDB'}))      % Plant_VDB = Result/PRSM/Plant_VDB (added 2026-11-05, see Documents/Shared/KeHoach_Plant_VDB.txt)
+    if any(strcmp(parts{1}, {'Plant', 'Reference', 'Plant_VDB', 'Driver'}))      % Plant_VDB = Result/PRSM/Plant_VDB (added 2026-11-05, see Documents/Shared/KeHoach_Plant_VDB.txt)
         parts = [{'PRSM'}, parts];
     elseif ~strcmp(parts{1}, 'Compare')
         parts = [{'Controllers'}, parts];

@@ -1,0 +1,31 @@
+Q1 (SLIP, Map, two speed windows; mean of five seeds; static reference = mean of ch5_static_ramp over 45-90 km/h = 1.122 %, range 0.000 .. 2.928)
+  ramp_dn: nominal 11.59 %, Tf0 1.49 %, static 1.12 %; same sign 1; |Tf0 - static| = 0.37
+  ramp_up: nominal -9.30 %, Tf0 0.59 %, static 1.12 %; same sign 1; |Tf0 - static| = 0.53
+  ANSWER Q1: ma sat giai thich duoc
+
+Q2 (STEADY, Map; mean of five seeds)
+  v45a0p35l: nominal 32.30, Tf0 28.08, static 29.47; gap nominal 2.83 -> Tf0 1.38
+  v65a0p35r: nominal 10.78, Tf0 8.00, static 8.81; gap nominal 1.97 -> Tf0 0.81
+  v85a0p38l: nominal 19.26, Tf0 17.50, static 19.85; gap nominal 0.59 -> Tf0 2.35
+  v25a0p25r: nominal 9.53, Tf0 5.88, static 4.73; gap nominal 4.79 -> Tf0 1.14
+  ANSWER Q2: khong
+
+Q3 (CALIB, Map, five seeds 99990-99994)
+  seed 99990: nominal 26.0407 % in static_v30_apos0p30g; Tf0 6.0603 % in static_v30_apos0p30g
+  seed 99991: nominal 26.2365 % in static_v30_apos0p30g; Tf0 6.0272 % in static_v30_apos0p30g
+  seed 99992: nominal 25.8827 % in static_v30_apos0p30g; Tf0 5.9288 % in static_v30_apos0p30g
+  seed 99993: nominal 25.8697 % in static_v30_apos0p30g; Tf0 5.9926 % in static_v30_apos0p30g
+  seed 99994: nominal 25.9720 % in static_v30_apos0p30g; Tf0 6.0404 % in static_v30_apos0p30g
+  e_rel,max nominal: mean 26.0003, max 26.2365 (Table 4.5: 26.2366); Tf0: mean 6.0098, max 6.0603; analytic static maximum 5.73 -> threshold 6.73 on the mean
+  ANSWER Q3: do ma sat
+
+Q4 (report only: dERMS_pct = 100 (E_Tf0 - E_nom)/E_nom, mean of five seeds; sd in brackets)
+  Map    STEADY dERMS -49.61 % (sd 0.04)
+  Map    SLIP   dERMS -12.59 % (sd 0.02)
+  Map    WEAVE  dERMS -51.04 % (sd 0.00)
+  PID    STEADY dERMS -41.17 % (sd 0.89)
+  PID    SLIP   dERMS +26.94 % (sd 0.94)
+  PID    WEAVE  dERMS -7.17 % (sd 1.95)
+  MapPID STEADY dERMS -38.24 % (sd 1.44)
+  MapPID SLIP   dERMS +32.65 % (sd 1.48)
+  MapPID WEAVE  dERMS -5.01 % (sd 3.04)

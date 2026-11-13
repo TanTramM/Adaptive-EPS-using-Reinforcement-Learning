@@ -21,7 +21,7 @@ sharedDir = fileparts(mfilename('fullpath'));
 rootDir = fileparts(sharedDir);                                    % Model/
 addpath(sharedDir);
 addpath(fullfile(sharedDir, 'common'));
-for part = {'Plant', 'Ref', 'Sensors', 'AssistLimit', 'Actuator'}
+for part = {'Plant', 'Ref', 'Sensors', 'AssistLimit', 'Actuator', 'Driver'}
     addpath(fullfile(rootDir, 'original', 'PRSM', part{1}));
     addpath(fullfile(rootDir, 'original', 'PRSM', part{1}, 'script'));
 end

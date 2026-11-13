@@ -6,7 +6,8 @@ function names = build_temp_test(overwrite, onlyTags)
 %     Model_<Ctrl>_VDBTireBody.slx  Plant_VDBTireBody  (both replaced)
 %     Model_<Ctrl>_VDBTireLag.slx   Plant_VDBTireLag   (Tires replaced, with the real lateral relaxation length; step 1 of the realism steps, 2026-11-07)
 %     Model_<Ctrl>_VDBTireLagMz.slx Plant_VDBTireLagMz (as VDBTireLag, and T_r from the tire aligning moment Mz with fitted trail coefficients; step 2, 2026-11-07)
-%   names = build_temp_test(overwrite)   overwrite = false (default) never overwrites: an existing name gets _1, _2, ...
+%     Model_<Ctrl>_VDBTireLagBody.slx Plant_VDBTireLagBody (tire with lag as VDBTireLag, and the VDB body; 2026-11-11)
+%   names = build_temp_test(overwrite)  overwrite = false (default) never overwrites: an existing name gets _1, _2, ...
 %   Everything else is the original loop (Reference, Sensors, AssistLimit, Actuator, the controller block, scoring blocks, wiring), so the controller parameters are the ones of
 %   the original models (data/map.json, pid.json, mappid.json through load_<ctrl>.m). The original Model_<Ctrl>.mdl is only read. StopFcn is cleared so that a manual run
 %   does not write into the results of the original controller. Run load_<ctrl> and load_plant_vdb before simulating (smoke_temp_test.m does).
@@ -19,8 +20,8 @@ function names = build_temp_test(overwrite, onlyTags)
     addpath(fullfile(modelDir, 'shared')); setup_paths; use_sim_tmp;
     load_plant_vdb;
     ctrls = {'Map', 'PID', 'MapPID'};
-    plants = {'Plant_VDBTire', 'Plant_VDBBody', 'Plant_VDBTireBody', 'Plant_VDBTireLag', 'Plant_VDBTireLagMz'};
-    tags = {'VDBTire', 'VDBBody', 'VDBTireBody', 'VDBTireLag', 'VDBTireLagMz'};
+    plants = {'Plant_VDBTire', 'Plant_VDBBody', 'Plant_VDBTireBody', 'Plant_VDBTireLag', 'Plant_VDBTireLagMz', 'Plant_VDBTireLagBody'};
+    tags = {'VDBTire', 'VDBBody', 'VDBTireBody', 'VDBTireLag', 'VDBTireLagMz', 'VDBTireLagBody'};
     for p = 1:numel(plants), load_system(fullfile(vdbDir, 'Plants', [plants{p} '.slx'])); end
     load_system('vehdynlibtire'); load_system('vehdynlibeom');
     names = {};

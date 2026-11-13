@@ -1,0 +1,1 @@
+Plant_VDBTireLagBody: DRY Ta0 (t <= 100 s, sim 13 s): err a_y 0.5952 %, gamma 0.2399 %, F_yf 0.7284 %, F_yr 0.5584 %, T_r 0.7751 %, T_s 0.6584 % -> within 10 % (trial, no threshold)

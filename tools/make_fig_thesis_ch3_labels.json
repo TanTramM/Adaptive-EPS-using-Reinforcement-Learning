@@ -1,0 +1,15 @@
+{
+  "ts_xlabel_abs": "Mô-men thanh xoắn |T_s| (N·m)",
+  "ts_xlabel": "Mô-men thanh xoắn T_s (N·m)",
+  "ta_ylabel": "Mô-men trợ lực (N·m)",
+  "dead_zone": "vùng chết",
+  "kmh": " km/h",
+  "legend_map": "bản đồ M (đường liền)",
+  "legend_cal": "điểm hiệu chỉnh đường khô (đường chấm)",
+  "legend_curve": "bản đồ M(v, T_s)",
+  "legend_line": "T_r - T_s, \\mu = ",
+  "legend_ref": "mô-men mục tiêu T_{ref}",
+  "dTr_label": "\\Delta T_r = ",
+  "dTs_label": "\\Delta T_s = ",
+  "unit_Nm": " N·m"
+}

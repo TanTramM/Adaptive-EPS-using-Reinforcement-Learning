@@ -1,0 +1,18 @@
+R2 negative control and R3 completeness, 2026-11-12 02:57
+Tfp20      max rel diff of RMS_eT vs nom 0.78 -> R2 differs (OK); R3 rows OK
+Tfm20      max rel diff of RMS_eT vs nom 0.383 -> R2 differs (OK); R3 rows OK
+Jcolp20    max rel diff of RMS_eT vs nom 0.0711 -> R2 differs (OK); R3 rows OK
+Jcolm20    max rel diff of RMS_eT vs nom 0.0668 -> R2 differs (OK); R3 rows OK
+Ccolp20    max rel diff of RMS_eT vs nom 0.235 -> R2 differs (OK); R3 rows OK
+Ccolm20    max rel diff of RMS_eT vs nom 0.214 -> R2 differs (OK); R3 rows OK
+Massp20    max rel diff of RMS_eT vs nom 241 -> R2 differs (OK); R3 rows OK
+Massm20    max rel diff of RMS_eT vs nom 268 -> R2 differs (OK); R3 rows OK
+Calphap20  max rel diff of RMS_eT vs nom 4.24 -> R2 differs (OK); R3 rows OK
+Calpham20  max rel diff of RMS_eT vs nom 0.822 -> R2 differs (OK); R3 rows OK
+Trailp20   max rel diff of RMS_eT vs nom 128 -> R2 differs (OK); R3 rows OK
+Trailm20   max rel diff of RMS_eT vs nom 141 -> R2 differs (OK); R3 rows OK
+Casterp20  max rel diff of RMS_eT vs nom 131 -> R2 differs (OK); R3 rows OK
+Casterm20  max rel diff of RMS_eT vs nom 145 -> R2 differs (OK); R3 rows OK
+Motorp20   max rel diff of RMS_eT vs nom 0.0188 -> R2 differs (OK); R3 rows OK
+Motorm20   max rel diff of RMS_eT vs nom 0.0378 -> R2 differs (OK); R3 rows OK
+[summarize_robust] R2 R3 PASS

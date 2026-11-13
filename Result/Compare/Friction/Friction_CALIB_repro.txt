@@ -1,0 +1,1 @@
+B nominal: erel_max per seed [26.040675 26.236541 25.8827 25.869671 25.97203]; max over seeds 26.23654062 vs 26.23659312 of Table 4.5, relative difference 2e-06 -> REPRODUCED

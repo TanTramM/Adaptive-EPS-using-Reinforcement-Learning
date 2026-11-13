@@ -1,0 +1,33 @@
+KET QUA KIEM KHOI "Dynamic Steering" CUA VEHICLE DYNAMICS BLOCKSET (R2023a), 2026-11-10 (khung VDB_TIRE, Luot 65)
+Chi doc cau truc, KHONG chay mo phong. Nguon: Steering_dynsteer_inspect.txt, Steering_dynsteer_wiring.txt, Steering_vdb_library_blocks.txt (cung thu muc).
+Script: ../script/inspect_dynamic_steering.m, ../script/inspect_dynsteer_wiring.m.
+
+CAU HOI: co dung duoc khoi nay lam he lai DOC LAP (thay cot lai Lee cua Plant) de kiem ba bo dieu khien khong?
+
+1. CONG
+   Vao: TrqIn (mo-men NGUOI LAI dat len vo-lang), TrqLft, TrqRght (mo-men tu hai banh), VehSpd.
+   Ra: Info (bus: StrgWhlAng, StrgWhlSpd, ShftAng, ShftSpd, AngLft, SpdLft, AngRght, SpdRght, TrqAst, PwrAst, PwrLoss, InstStrgRatio), AngLft, AngRght.
+
+2. CAU TRUC BEN TRONG (doc tu day noi)
+   Cot (vo-lang): J1 * ddot(theta_c) = TrqIn + TrqAst - b2 * dot(theta_c) - T          (J1 0.1, b2 1)
+   Truc (thanh rang): J2 * ddot(theta_s) = T + TrqEq + ma sat - b3 * dot(theta_s)      (J2 0.01, b3 0.001)
+   T = mo-men phan tu xoan (Backlash1: do cung k1 30 N.m/rad, can b1, tre beta_u, beta_l) = tuong ung T_s cua ta. KHONG co cong ra cho T.
+   TrqEq = mo-men hai banh quy ve truc qua Jacobian Ackerman (TrqLft, TrqRght).
+   TrqAst = bang tra (TrqIn cua nguoi lai, VehSpd) -> chan TrqLmt -> gioi han cong suat PwrLmt -> nhan Eta -> loc bac 1 (omega_c 200 rad/s). Bang dang tra theo mo-men NGUOI LAI (TrqMan = TrqIn), khong theo mo-men phan tu xoan.
+   TrqAst cong vao TrqIn ngay o phia COT (J1), cung nut voi mo-men nguoi lai, o phia TREN phan tu xoan.
+
+3. TRA LOI BA CAU HOI
+   (1) Khoi co xuat T_s khong: KHONG. Chi tai tao gan dung duoc: T = TrqIn + TrqAst - b2*StrgWhlSpd - J1*d(StrgWhlSpd)/dt (can dao ham so), hoac k1*(StrgWhlAng - ShftAng) bo qua do tre.
+   (2) Thay tro luc trong khoi bang mo-men motor ngoai: KHONG co cong. Tro luc cua khoi nam o phia cot, phia tren phan tu xoan; Plant cua ta: mo-men motor T_a o phia truc/pinion, SAU thanh xoan (plant.txt PT (5): T_s = T_r - T_a).
+       Neu tat PwrAst va dua T_a cua ta vao TrqIn thi o xac lap T = tai tu hai banh, KHONG phu thuoc tro luc; mo-men can do khong con la T_s, nen vong hoi tiep mo-men cua ba bo dieu khien khong con y nghia nhu o Plant.
+   (3) Dau vao cua khoi la MO-MEN nguoi lai, khong phai goc vo-lang; de ep goc theta1 nhu cach cham diem hien nay can sua ben trong.
+
+4. KET LUAN
+   Khong lap truc tiep duoc. Muon dung phai bo lien ket thu vien va sua ben trong (dua tro luc ve phia truc, xuat T, them dau vao goc); khi do la mo hinh cua ta, mat gia tri "khoi chuan".
+   Khuyen nghi: BO khoi Dynamic Steering; giu cot lai Lee cua Plant.
+
+5. KHOI KHAC TRONG THU VIEN CO THE LAM THAN VA LOP DOC LAP HON (chi liet ke ten, CHUA thu)
+   Lop: Combined Slip Wheel 2DOF (Magic Formula, dang dung), Fiala Wheel 2DOF (mo hinh choi, khac Magic Formula), Dugoff Wheel 2DOF.
+   Than: Vehicle Body 3DOF Single Track (dang dung), 3DOF Dual Track (hai vet: co chuyen tai khi cua), 6DOF.
+   He treo: Independent Suspension (Double Wishbone, K and C, MacPherson, Mapped), Solid Axle..., Twist-Beam.
+   Chua kiem: cach doc mo-men tu can (M_z) tu Fiala, cach tinh T_r tu hai vet, do kho ghep vao Plant.

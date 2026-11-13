@@ -1,0 +1,14 @@
+{
+  "t_xlabel": "Thời gian (s)",
+  "v_ylabel": "v (km/h)",
+  "mu_ylabel": "\\mu",
+  "th_ylabel": "\\theta_1 (độ)",
+  "legend_static": "nhóm tĩnh (static)",
+  "legend_dyn": "nhóm động (dyn)",
+  "legend_mu": "nhóm hệ số bám (mu)",
+  "R_xlabel": "$\\bar{R}$ (\\%)",
+  "S_ylabel": "$\\bar{S}$ (N$\\cdot$m)",
+  "legend_safe": "mặt safe (điểm rỗng)",
+  "legend_full": "mặt full (điểm đặc)",
+  "legend_selected": "thiết kế được chọn"
+}

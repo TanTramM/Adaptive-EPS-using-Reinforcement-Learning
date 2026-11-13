@@ -1,0 +1,54 @@
+TÓM TẮT VIỆC B: VÌ SAO MAPPID BÁM KÉM PID Ở WEAVE (khung WEAVE, 2026-11-12)
+Kế hoạch: Documents/Shared/KeHoach_WEAVE_HaiNhanh.txt. Seed chấm 99999 (W1, W2, W3); W0 thêm 5 seed 99995-99999. Mọi số là của các lần chạy W0-W3, không lấy từ lần chạy trước.
+Code: Model/original/Controllers/MapPID/script/{analyze_weave_branches,run_weave_branches}.m. Dữ liệu: Result/Controllers/MapPID/Cases_ssw_branch/, Result/Compare/PID_vs_MapPID/.
+
+CÂU HỎI (mục 0 kế hoạch): ở WEAVE, MapPID có RMS e_T cao hơn PID 10.9 % (5 seed); khoảng cách nằm ở đâu, nhánh nào góp phần?
+
+KIỂM CHẤT LƯỢNG SỐ
+- W0: RMS e_T toàn ca (t >= 2 s) tính từ file 1 ms khớp cột 'whole case' của metrics ở cả 10 cặp (5 seed x 2 bộ), lệch 0.0000 %.
+- W1: max|u_map + u_P + u_I + u_D - T_a_cmd| = 0 N.m; max|T_s - file 1 ms cũ| = 5.1e-15 N.m (bật ghi tín hiệu không đổi lời giải).
+- W3: bộ nhớ dựng lại bảng và H bằng thiết kế đã lưu trùng biến của load_mappid (lệch 0).
+- Toàn ca 5 seed: MapPID - PID = +10.93 % +- 1.06 (độ lệch chuẩn qua seed), khớp số của bài.
+
+W0 (5 seed, trung bình +- độ lệch chuẩn; chênh MapPID - PID)
+cửa sổ   chu kỳ(s)  RMS e_T PID  MapPID   chênh RMS %     chênh biên độ T_s/T_d,ref   chênh trễ (ms, T_s sau T_d,ref)
+ctr      5          0.169        0.187    +10.5 +- 2.0    -0.04 điểm %                +0.4 +- 0.6
+lane1    2.5        0.195        0.207    +6.1 +- 2.6     -0.36                       +5.1 +- 0.5
+lane2    2.5        0.197        0.201    +2.2 +- 5.8     -0.32                       +4.7 +- 1.0
+sw0p3    3.333      0.169        0.182    +7.8 +- 1.3     -0.10                       +2.1 +- 0.1
+sw0p8    1.25       0.276        0.309    +11.9 +- 0.9    -0.54                       +2.5 +- 0.1
+sw1p5    0.667      0.462        0.522    +13.0 +- 0.7    -1.65                       +5.3 +- 0.3
+mu3      1.333      0.280        0.305    +9.0 +- 0.2     -0.71                       +3.7 +- 0.2
+(lane1, lane2 là hai chu kỳ chuyển làn, mỗi cửa sổ một chu kỳ nên độ phân tán lớn; ctr là cảnh 0.05 g.)
+
+W2 (MapPID, seed 99999, RMS N.m trong cửa sổ)
+cửa sổ   u_map   u_P    u_I    u_D    u_PID    |T_s đo|<0.3: tỉ lệ thời gian   độ dài một lần quanh điểm qua 0 (ms)   hai nhánh ngược dấu: tỉ lệ thời gian / RMS phần ngược   trễ u_map sau T_s (ms)
+ctr      0.06    0.74   1.74   0.35   1.90     10.9 %                          50                                     65 % / 0.05                                              25
+lane1    1.01    0.51   2.67   0.55   2.93     2.7 %                           38                                     51 % / 0.70                                              29
+lane2    0.98    0.51   2.74   0.55   2.99     2.7 %                           41                                     52 % / 0.69                                              30
+sw0p3    0.33    0.56   2.28   0.44   2.46     6.3 %                           72                                     53 % / 0.24                                              29
+sw0p8    0.25    0.78   2.83   0.68   3.18     8.6 %                           44                                     60 % / 0.20                                              23
+sw1p5    0.12    1.21   3.55   0.89   4.05     9.6 %                           20                                     62 % / 0.10                                              15
+mu3      0.43    0.70   3.59   0.64   3.96     5.3 %                           34                                     58 % / 0.32                                              22
+(u_PID = u_P + u_I + u_D; trễ của u_map là trễ thành phần cơ bản khớp sin, u_map phi tuyến nên chỉ là ước lượng. Độ trễ cơ bản của u_PID so với T_s không dùng được vì u_I chi phối.)
+Quanh điểm qua 0 của T_d,ref (đoạn +-0.3 chu kỳ, trung bình các lần): RMS e_T PID -> MapPID: ctr 0.172 -> 0.187; sw0p3 0.177 -> 0.188; sw0p8 0.343 -> 0.380; sw1p5 0.535 -> 0.610; mu3 0.341 -> 0.373; lane1, lane2 (mỗi cửa sổ một lần) 0.207 -> 0.193 và 0.199 -> 0.180 (MapPID thấp hơn).
+
+W3 (chẩn đoán, KHÔNG phải bộ điều khiển mới; một chỗ đổi mỗi lần, seed 99999; RMS e_T N.m, chênh so với MapPID %)
+cửa sổ   PID     MapPID   D1 (bỏ lag)        D2 (H = 1)         D3 (vùng chết 0)
+toàn ca  0.2034  0.2244   0.2223  (-0.9 %)   0.2230  (-0.6 %)   0.2238  (-0.3 %)
+ctr      0.1699  0.1846   0.1835  (-0.6 %)   0.1848  (+0.1 %)   0.1846  (-0.0 %)
+lane1    0.1908  0.1985   0.1854  (-6.6 %)   0.1942  (-2.2 %)   0.1983  (-0.1 %)
+lane2    0.1836  0.1906   0.1769  (-7.2 %)   0.1856  (-2.6 %)   0.1907  (+0.0 %)
+sw0p3    0.1648  0.1763   0.1707  (-3.2 %)   0.1772  (+0.5 %)   0.1765  (+0.1 %)
+sw0p8    0.2833  0.3186   0.3095  (-2.9 %)   0.3163  (-0.7 %)   0.3195  (+0.3 %)
+sw1p5    0.4685  0.5273   0.5174  (-1.9 %)   0.5271  (-0.0 %)   0.5293  (+0.4 %)
+mu3      0.2822  0.3079   0.2999  (-2.6 %)   0.3048  (-1.0 %)   0.3098  (+0.6 %)
+Quy tắc đọc đặt trước: biến thể "góp phần" nếu RMS e_T thấp hơn MapPID quá 5 % trong cửa sổ hoặc toàn ca. Chỉ D1 vượt ngưỡng, và chỉ ở lane1, lane2 (mỗi cửa sổ một chu kỳ); toàn ca mọi biến thể đóng được tối đa 0.9 % trong khoảng cách 10.3 %. Khoảng cách với PID còn lại 9.3 % (D1), 9.6 % (D2), 10.0 % (D3).
+
+TRẢ LỜI NGẮN
+1. Khoảng cách nằm ở biên độ hay độ trễ? Cả hai đều nhỏ và cùng chiều: MapPID có biên độ T_s thấp hơn PID 0.04-1.65 điểm phần trăm và T_s trễ hơn 0.4-5.3 ms (T_s sau T_d,ref). Chênh biên độ và trễ lớn nhất ở sw1p5 (chu kỳ 0.67 s): 1.65 điểm và 5.3 ms. RMS e_T cao hơn là hệ quả của hai chênh lệch này cộng thêm các nhọn sai số quanh điểm đổi chiều (hình zoom), nhưng dữ liệu không tách riêng được tỉ trọng của từng yếu tố.
+2. Có tăng khi chu kỳ ngắn dần không? Trong cảnh sw (cùng 70 km/h, cùng 0.1 g) có: +7.8 % (3.33 s), +11.9 % (1.25 s), +13.0 % (0.67 s); chênh biên độ -0.10, -0.54, -1.65 điểm. Các cảnh khác không cùng điều kiện (ctr 0.05 g chênh +10.5 % ở chu kỳ 5 s, lane một chu kỳ nên phân tán lớn), nên xu hướng chỉ kết luận được trong cảnh sw.
+3. Nhánh nào góp phần? Dữ liệu W3 không chỉ ra nhánh Map: bỏ lag, bỏ cả lead và lag, hay bỏ vùng chết đều đóng không quá 0.9 % khoảng cách toàn ca và gần như 0 ở cửa sổ chu kỳ ngắn (sw0p8, sw1p5). Phù hợp với W2: ở sw1p5, u_map chỉ có RMS 0.12 N.m so với 4.05 N.m của u_PID, nên T_a hầu như do nhánh PID tạo ra. Khoảng cách còn lại (9-10 % so với PID) nằm ngoài nhánh Map: giả thuyết còn lại (K3 trong kế hoạch: bộ gain PID của MapPID khác PID riêng, Kp 2.08, Kd 0.0485, Tf 1.64 ms so với Kp 2.904, Kd 0.0677, Tf 1.21 ms) CHƯA được kiểm bằng phép chạy nào; đề xuất (không nằm trong kế hoạch, chưa chạy): chạy MapPID với bảng bằng 0 (nhánh Map tắt) để tách tác động của gain PID với tác động của nhánh Map.
+4. Khả năng khác vì sao u_map nhỏ nhưng có mặt: ở lane u_map lớn (RMS 1.0 N.m), D1 giảm RMS 6.6-7.2 % ở hai cửa sổ này, nên lag có ảnh hưởng ở chuyển làn nhưng không ở lái liên tục tần số cao. Số này chỉ từ một seed và một chu kỳ mỗi cửa sổ.
+Giới hạn: W1-W3 một seed (99999); W3 chỉ đổi một chỗ mỗi lần; không có phép kiểm ý nghĩa thống kê cho W3; K3 chưa kiểm; thời điểm đỉnh |e_T| so với điểm qua 0 tính trong W0 (cột peak_dt_ms) không ổn định nên không dùng.
+Hình (png): PID_vs_MapPID_WEAVE_zoom_sw1p5_s99999.png, _zoom_lane_s99999.png, _zoom_mu3_s99999.png (bốn ô: T_d,ref và T_s; e_T; u_map và u_PID; T_a).

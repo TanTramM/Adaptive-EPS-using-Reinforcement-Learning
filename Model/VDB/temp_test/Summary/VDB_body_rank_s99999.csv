@@ -1,0 +1,13 @@
+variant,case,order_by_RMS_eT,order_baseline,verdict
+VDBTireLag,STEADY,PID = MapPID < Map,PID = MapPID < Map,giu
+VDBTireLag,SLIP,PID = MapPID < Map,MapPID = PID < Map,hoa (co cap chenh duoi 5%)
+VDBTireLag,WEAVE,PID < MapPID < Map,PID < MapPID < Map,giu
+VDBBody,STEADY,PID = MapPID < Map,PID = MapPID < Map,giu
+VDBBody,SLIP,MapPID = PID < Map,MapPID = PID < Map,giu
+VDBBody,WEAVE,PID < MapPID < Map,PID < MapPID < Map,giu
+VDBTireBody,STEADY,PID = MapPID < Map,PID = MapPID < Map,giu
+VDBTireBody,SLIP,MapPID = PID < Map,MapPID = PID < Map,giu
+VDBTireBody,WEAVE,PID < MapPID < Map,PID < MapPID < Map,giu
+VDBTireLagBody,STEADY,PID = MapPID < Map,PID = MapPID < Map,giu
+VDBTireLagBody,SLIP,PID = MapPID < Map,MapPID = PID < Map,hoa (co cap chenh duoi 5%)
+VDBTireLagBody,WEAVE,PID < MapPID < Map,PID < MapPID < Map,giu

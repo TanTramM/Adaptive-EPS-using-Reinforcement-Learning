@@ -1,0 +1,4 @@
+2026-11-11 02:40  errors % (a_y gamma F_yf F_yr T_r T_s)
+  Plant_VDBTireLag       0.5952 0.2399 0.7284 0.5584 0.7751 0.6585 
+  Plant_VDBTireLagBody   0.5952 0.2399 0.7284 0.5584 0.7751 0.6584 
+  T_s difference (Body - Lag) = -0.0001 percentage points (limit 0.1)
