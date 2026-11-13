@@ -30,3 +30,11 @@ Nén lần cuối: Lượt 0
 - Kết quả: G0, G1 ĐẠT; ĐẠT 14, KHÔNG ĐẠT 7, KHÔNG PHÂN BIỆT 1 trên 22 cặp. BC2 lần đầu KHÔNG ĐẠT (xdot 1.3e-5) là lệch giả do nội suy cắt góc dốc (kiểm bằng mẫu gốc 3.6e-15, và lệch tỉ lệ MaxStep); bỏ ±2 ms quanh góc rồi ĐẠT. Bảy ca KHÔNG ĐẠT còn lại chỉ ở FzF, FzR, đã giải thích bằng mô hình chuyển tải dọc khớp 1e-3 N.
 - Bài học: kiểm trường hợp ca có dốc thì bỏ mẫu quanh góc, không chỉ một mẫu như bậc; đầu ra "không dùng" vẫn có thể phản ứng với cổng vào (FzF, FzR).
 - Commit [laptop] chỉ các file của khung (mục 6 ChayTu_VDB_IO.txt).
+
+### Lượt 3 (2026-11-11) - khởi động KeHoach_VDB_ThanXe.txt (chế độ tiết kiệm token)
+- Đã sửa build_plant_variants.m (thêm Plant_VDBTireLagBody) và build_temp_test.m (thêm tag VDBTireLagBody); viết run_vdb_body_all.sh, check_tirelagbody_wiring.m (V3c, lỗi nếu hiệu lệch T_s > 0.1 điểm %), summarize_vdb_body.m trong Model/VDB/temp_test/script/. V0 chạy thử đạt. Khởi động script nền một lần; tiến độ ở Model/VDB/temp_test/Summary/VDB_body_progress.txt. Chưa commit.
+
+### Lượt 4 (2026-11-11) - xong KeHoach_VDB_ThanXe.txt (V0-V5)
+- Lần chạy đầu hỏng V1, V2, V3b vì setup_paths không thêm temp_test/script và Plants/script vào path; thêm addpath vào SETUP của run_vdb_body_all.sh rồi chạy lại (không đổi tham số, ca, cấu hình).
+- V3c đạt: hiệu lệch T_s (TireLagBody - TireLag) = -0.0001 điểm % (ngưỡng 0.1). Số hai dãy ở Summary/VDB_body_wiring_s99999.txt.
+- Kết quả (seed 99999, RMS_eT đổi % so với mốc, Map/PID/MapPID): VDBBody ≤0.1 % mọi ca; VDBTireBody ≤1.4 %; VDBTireLagBody STEADY +1.1/+0.7/+1.2, SLIP -0.9/-7.6/-2.7, WEAVE +1.5/+3.6/+5.0 (gần như trùng VDBTireLag). Thứ bậc giữ ở 10/12 ô, hòa ở SLIP của VDBTireLag và VDBTireLagBody (PID và MapPID chênh dưới 5 %). Bảng: Model/VDB/temp_test/Summary/VDB_body_summary_s99999.csv, _rank_, .txt. Chưa commit.

@@ -1,0 +1,96 @@
+KẾ HOẠCH VIỆC B: VÌ SAO MAPPID BÁM KÉM PID Ở WEAVE, TÁCH ĐÓNG GÓP HAI NHÁNH (KeHoach_WEAVE_HaiNhanh)
+==============================================================================================================================================================================================
+Viết 2026-11-12 (khung VDB_TIRE, Lượt 84) theo yêu cầu người dùng, để giao cho khung WEAVE chạy trên PC, SONG SONG với khung ROBUST (việc A, file Documents/Shared/KeHoach_DoBenThamSo.txt). File này tự
+đủ: khung nhận việc đọc hết file này, `Tracking/CLAUDE.md` và mục 9 của KeHoach_DoBenThamSo.txt (quy tắc chạy song song trên một máy, áp dụng y nguyên cho khung này). Mục ghi [CẦN CHỐT] phải được
+người dùng chốt trước khi chạy bước dùng tới nó. Lúc viết chưa chạy gì.
+
+==============================================================================================================================================================================================
+0. CÂU HỎI, PHẠM VI
+==============================================================================================================================================================================================
+Câu hỏi: Kết luận 6.6 và 6.9 của bài báo: ở WEAVE, MapPID có RMS sai số bám cao hơn PID 10.9 %, và bài chưa giải thích vì sao. Việc B tách lệnh trợ lực của MapPID thành nhánh Map (u_map) và nhánh PID
+(u_P, u_I, u_D), đo theo từng cửa sổ lái liên tục và quanh từng lần đổi chiều, để viết một đoạn giải thích có số (cuối mục lái liên tục của chương 5 luận văn, thay câu "cần phân tích thêm" của 6.9).
+Phạm vi: không đổi tham số bộ điều khiển; không sửa model, script dùng chung hay .json trên đĩa; phép chẩn đoán ở W3 chỉ để tìm nguyên nhân, không phải bộ điều khiển mới, không đưa vào so sánh chính.
+Không viết văn bản bài báo (việc của người dùng và khung PAPER); khung này chỉ ra bảng, hình và bản tóm tắt số.
+
+Thông tin cấu trúc (đọc từ file, kiểm lại khi làm):
+  - Model_MapPID.mdl, subsystem MapPID: khối Sum_Ta có 4 cổng vào (u_map và ba thành phần PID) ra T_a_cmd; subsystem 'Cal u_map' tính u_map; các khối nhánh PID có tên Prod_P, Int_uI, Prod_Ki,
+    Prod_Kaw, Sum_d, UD_d... (khung tự dò khối nguồn của từng dây vào Sum_Ta, ghi tên vào nhật ký).
+  - u_map = H sgn(T_s) M(v, |T_s|): vùng chết T_s0 = 0.3 N.m, Kmax 6.77, lead z 33.5 p 673 rad/s, lag z1 28.1 p1 10.7 rad/s (map.json, design). Nhánh PID (mappid.json, design): Kp 2.08, Ki 86.7, Kd
+    0.0485, Tf 1.64 ms.
+  - Ca WEAVE (make_cases('SSW'), hàm buildWEAVES): cảnh ctr 95 km/h, 0.05 g, chu kỳ 5 s; cảnh lane 80 km/h, hai lần chuyển làn 0.2 g chu kỳ 2.5 s, lần hai qua vũng mu 0.2 (cửa sổ lane_ref, lane_in,
+    lane_rec); cảnh sw 70 km/h, sin 0.1 g chu kỳ 3.33 s, 1.25 s, 0.67 s (cửa sổ sw0p3, sw0p8, sw1p5); cảnh mu3 60 km/h trên mu 0.3, 0.15 g chu kỳ 1.33 s. Thời điểm tuyệt đối trong ca 100 s do fit100
+    đặt: LẤY từ S.win của make_cases('SSW'), không gõ tay.
+
+==============================================================================================================================================================================================
+1. CÁC BƯỚC
+==============================================================================================================================================================================================
+W0 (không mô phỏng, vài phút) Đo từ file 1 ms có sẵn: Result/Controllers/PID/Cases_ssw_1ms/PID_WEAVE_sig1ms_s99999.csv và Result/Controllers/MapPID/Cases_ssw_1ms/MapPID_WEAVE_sig1ms_s99999.csv (cột t,
+   v_mps, mu, T_s, T_d_ref, e_T, T_a).
+  - Với mỗi cửa sổ có sin (ctr, sw0p3, sw0p8, sw1p5, mu3) và hai lần chuyển làn: RMS e_T; tỉ số biên độ và độ trễ thời gian (ms) của T_s so với T_d_ref, bằng bình phương tối thiểu với sin và cos đúng
+    chu kỳ của cửa sổ (chu kỳ biết trước từ make_cases); đỉnh |e_T| và thời điểm của nó so với lần T_d_ref đi qua 0 gần nhất.
+  - Kiểm: RMS e_T toàn ca (t >= 2 s) tính lại từ file 1 ms khớp cột RMS_eT_Nm dòng 'whole case' của Result/Controllers/<Ctrl>/Cases_ssw/<Ctrl>_metrics_s99999.csv (lệch tương đối < 0.1 %).
+  - Ra: Result/Compare/PID_vs_MapPID/PID_vs_MapPID_WEAVE_windows_s99999.csv. Câu hỏi: khoảng cách MapPID - PID có tăng khi chu kỳ ngắn dần không, và nằm ở biên độ hay ở độ trễ.
+W0b (mô phỏng, khoảng 10-30 phút) [CẦN CHỐT, đề xuất làm] Bài báo báo trung bình 5 seed 99995-99999 (Bảng 14), file 1 ms hiện chỉ có seed 99999. Chạy export_ssw_signals('PID', s) và
+    export_ssw_signals('MapPID', s) với s = 99995..99998 (sau load_pid, load_mappid tương ứng; hàm có sẵn, ghi vào Cases_ssw_1ms, không đè file có sẵn vì khác seed), rồi lặp W0 cho 5 seed, báo trung
+    bình +- độ lệch chuẩn.
+W1 (một lần mô phỏng) Ghi tín hiệu từng nhánh của MapPID trên WEAVE seed 99999. Script run_weave_branches.m:
+  - load_mappid; load_system('Model_MapPID'); bật ghi tín hiệu (DataLogging = on, đặt tên log) trên cổng ra của 'Model_MapPID/MapPID/Cal u_map' (u_map), trên bốn dây vào 'Model_MapPID/MapPID/Sum_Ta'
+    (đặt tên u_map_in, u_P, u_I, u_D theo khối nguồn) và cổng ra Sum_Ta (T_a_cmd); SignalLogging on; CHỈ trong bộ nhớ.
+  - Chạy ca WEAVE đúng như hàm con runCase của run_cases.m (gán sc_theta1, sc_v, sc_mu từ make_cases('SSW'); setVariable các biến của sensor_noise_vars(99999); StopTime = t cuối), lấy thêm log_T_s,
+    log_T_d_ref, log_e_T, log_T_a.
+  - close_system('Model_MapPID', 0): KHÔNG lưu. Simulink.sdi.clear.
+  - Kiểm: (a) u_map + u_P + u_I + u_D = T_a_cmd (lệch lớn nhất < 1e-9 N.m); (b) T_s trùng file 1 ms có sẵn của seed 99999 (lệch lớn nhất < 1e-9 N.m; nếu không trùng thì việc bật ghi tín hiệu đã đổi
+    lời giải: DỪNG, ghi nhật ký).
+  - Ra: Result/Controllers/MapPID/Cases_ssw_branch/MapPID_WEAVE_branch_s99999.csv (t, T_s, T_d_ref, e_T, u_map, u_P, u_I, u_D, T_a_cmd, T_a; mỗi 1 ms).
+W2 (không mô phỏng) Phân tích, script analyze_weave_branches.m, trên từng cửa sổ của W0 và quanh mỗi lần T_d_ref đi qua 0 (khoảng +- 0.3 chu kỳ):
+  (a) RMS của từng thành phần u_map, u_P, u_I, u_D;
+  (b) tỉ lệ thời gian |T_s| < T_s0 = 0.3 N.m (nhánh Map bằng 0 do vùng chết) và độ dài trung bình (ms) của mỗi lần quanh điểm đổi chiều;
+  (c) tỉ lệ thời gian u_map và u_PID = u_P + u_I + u_D ngược dấu, và RMS phần ngược dấu (hai nhánh kéo ngược nhau);
+  (d) độ trễ (ms) của u_map so với T_s và của T_s so với T_d_ref (phép khớp sin như W0);
+  (e) Hình (png, Visible off): PID_vs_MapPID_WEAVE_zoom_sw1p5_s99999.png, bốn ô chung trục thời gian: (1) T_d_ref, T_s của PID và của MapPID; (2) e_T của hai bộ; (3) u_map, u_PID của MapPID; (4) T_a
+      của hai bộ. Tương tự cho cửa sổ lane (_zoom_lane_) và mu3 (_zoom_mu3_).
+W3 (chẩn đoán, tùy chọn, ba lần chạy WEAVE seed 99999) [CẦN CHỐT: có làm không; đề xuất làm D1, D2; D3 chỉ làm nếu đổi được mà không sửa file]: chạy MapPID đã đổi MỘT chỗ, đổi bằng biến base
+   (setVariable), không sửa file:
+  - D1 bỏ khâu lag của nhánh Map (H chỉ còn lead);
+  - D2 bỏ cả lead và lag (H = 1);
+  - D3 vùng chết bằng 0 (dựng lại bảng bằng mappid_design_variables với Ts0 = 0 trong bộ nhớ; khung tự kiểm cách hàm dựng bảng; nếu không làm được mà không sửa file dùng chung thì bỏ D3 và ghi lý do).
+  Hệ số MapPID_H_num, MapPID_H_den (do load_mappid đặt) là chỗ đổi cho D1, D2; khung tự kiểm tên biến và cách rời rạc Tustin 1 ms trong load_mappid/mappid_design_variables trước khi đặt.
+  Báo RMS e_T của các cửa sổ sw0p3, sw0p8, sw1p5, lane, mu3 và toàn ca cho D1, D2, D3 cạnh MapPID và PID. Đọc: thay đổi nào làm khoảng cách với PID giảm hơn 5 % (ngưỡng hòa) thì chỗ đó góp phần vào
+  khoảng cách; ghi trung thực nếu không thay đổi nào giải thích được. Bộ D1-D3 KHÔNG được chọn làm thiết kế, không chấm ổn định, không đưa vào so sánh chính; chỉ ghi là phép chẩn đoán.
+
+==============================================================================================================================================================================================
+2. HƯỚNG XEM (ĐẶT TRƯỚC, KHÔNG PHẢI KẾT LUẬN)
+==============================================================================================================================================================================================
+Ba khả năng có thể cùng góp phần; dữ liệu W0-W3 quyết định, kể cả khi không khả năng nào đúng:
+  K1 khâu lag (và lead) của nhánh Map làm u_map trễ so với T_s ở chu kỳ ngắn, nhánh PID phải bù phần trễ đó;
+  K2 vùng chết làm nhánh Map tắt quanh lúc T_s đổi chiều rồi bật lại với độ dốc lớn, tạo xung trợ lực;
+  K3 tham số PID của MapPID được chọn khi đã có nhánh Map nên khác PID riêng (Kp 2.08 so với PID riêng), phần bám động do cả hai nhánh chia nhau.
+Không dùng số của các lần chạy trước làm lý do (quy tắc trong CLAUDE.md); chỉ dùng số của W0-W3.
+
+==============================================================================================================================================================================================
+3. ĐẶT FILE, TÊN, NHẬT KÝ, COMMIT
+==============================================================================================================================================================================================
+Code (tiếng Anh, Model/original/Controllers/MapPID/script/ vì chỉ phân tích MapPID): run_weave_branches.m (W1, W3), analyze_weave_branches.m (W0, W2, hình), fit_sine_window.m chỉ khi cần dùng ở hai
+file (nếu không thì đặt làm hàm con cuối analyze_weave_branches.m). Đầu script theo quy ước modelDir của CLAUDE.md (script trong original/Controllers/<Ctrl>/script tính modelDir bằng 4 lần fileparts).
+Kết quả: Result/Controllers/MapPID/Cases_ssw_branch/ (tín hiệu nhánh, chẩn đoán D1-D3: MapPID_WEAVE_branch_s99999.csv, MapPID_WEAVE_diag_<D1|D2|D3>_s99999.csv); Result/Compare/PID_vs_MapPID/ (bảng cửa
+sổ, hình zoom, PID_vs_MapPID_WEAVE_summary_s99999.txt là bản tóm tắt số bằng tiếng Việt: bảng W0, các số W2, kết quả W3, câu trả lời ngắn cho câu hỏi ở mục 0).
+Nhật ký: Tracking/historychat_weave.md (người dùng thêm khung WEAVE vào Tracking/CLAUDE.md trước khi giao). Ghi Lượt TRƯỚC khi chạy và SAU mỗi bước W0-W3.
+Commit: chỉ các file của khung này, khi người dùng bảo; không dùng sync_repo.sh; ghi nhật ký trước khi commit.
+
+==============================================================================================================================================================================================
+4. CHẠY SONG SONG
+==============================================================================================================================================================================================
+Theo mục 9 của Documents/Shared/KeHoach_DoBenThamSo.txt: một tiến trình MATLAB riêng; Simulink.fileGenControl đặt CacheFolder và CodeGenFolder riêng 'D:\sim_cache\weave'; use_sim_tmp;
+Simulink.sdi.clear sau mỗi lần mô phỏng; không mở model trong giao diện; không lưu model; chỉ ghi thư mục của mình. Khung ROBUST cũng chạy Model_MapPID cùng lúc: hai tiến trình nạp model riêng trong
+bộ nhớ nên việc bật ghi tín hiệu của W1 không ảnh hưởng khung kia, miễn là KHÔNG lưu model.
+Lệnh gọi (Git Bash): "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch
+"run('C:\Users\Admin\OneDrive\Desktop\git\Adaptive-EPS-using-Reinforcement-Learning\Model\shared\setup_paths.m'); run_weave_branches('W1')".
+
+==============================================================================================================================================================================================
+5. BÁO CÁO KHI XONG (khung WEAVE điền, người dùng đọc mục này đầu tiên)
+==============================================================================================================================================================================================
+Xong 2026-11-12 (khung WEAVE). Số đầy đủ: Result/Compare/PID_vs_MapPID/PID_vs_MapPID_WEAVE_summary_s99999.txt. Kiểm đạt: RMS toàn ca khớp metrics (lệch 0.0000 %, 10 cặp), W1 tổng nhánh = T_a_cmd (lệch 0), T_s trùng file cũ (5e-15 N.m).
+  - W0b làm bằng chạy riêng ca WEAVE (cùng mã runCase), không dùng export_ssw_signals cho STEADY, SLIP vì không cần. Toàn ca 5 seed: MapPID - PID = +10.93 % +- 1.06.
+  - Khoảng cách theo chu kỳ (cảnh sw, 70 km/h, 0.1 g): +7.8 % (3.33 s), +11.9 % (1.25 s), +13.0 % (0.67 s); biên độ T_s thấp hơn PID 0.1, 0.5, 1.65 điểm %; T_s trễ hơn PID 2.1, 2.5, 5.3 ms. Cảnh khác: ctr +10.5 %, mu3 +9.0 %, lane +6.1 và +2.2 % (một chu kỳ mỗi cửa sổ, phân tán lớn).
+  - Nhánh: ở sw1p5, RMS u_map 0.12 N.m so với u_PID 4.05 N.m. W3 (seed 99999, chỉ chẩn đoán): bỏ lag (D1) -0.9 % toàn ca, bỏ lead và lag (D2) -0.6 %, vùng chết 0 (D3) -0.3 %; theo quy tắc đặt trước (giảm quá 5 %) chỉ D1 ở hai cửa sổ lane. Nhánh Map không giải thích khoảng cách ở lái liên tục; giả thuyết K3 (gain PID của MapPID khác PID riêng) chưa kiểm.
+  - Hình: PID_vs_MapPID_WEAVE_zoom_{sw1p5,lane,mu3}_s99999.png. Chưa commit.

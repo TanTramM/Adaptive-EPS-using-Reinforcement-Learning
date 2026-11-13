@@ -1,0 +1,103 @@
+KẾ HOẠCH: CHẠY BA BỘ ĐIỀU KHIỂN TRÊN PLANT CÓ THÂN XE VDB (B1, B2) VÀ BẢN LỐP TRỄ + THÂN VDB (B3), CHẠY LIÊN TỤC
+==============================================================================================================================================================================================
+Viết 2026-11-11 (khung VDB_TIRE, Lượt 74) theo yêu cầu người dùng, giao cho khung VDB_BODY chạy trên cùng PC, có thể chạy bằng /loop. File tự đủ: khung nhận việc đọc hết file này là làm được, không
+cần đọc lại hội thoại cũ. Người dùng đã chốt (2026-11-11): bỏ chuyển tải dọc (B4) và thân hai vết (B5); chạy B1, B2 rồi làm luôn B3 (lốp có độ trễ + thân VDB).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0. MỤC TIÊU VÀ PHẠM VI
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Thầy chốt ngày 05/11: thử thay Plant bằng Vehicle Dynamics Blockset (VDB) trước, ổn thì thêm một bộ điều khiển. Phần lốp VDB đã chạy (TireLag, TireLagMz). Phần thân xe VDB mới kiểm hở mạch (lệch
+0.0013 % ở DRY) và kiểm từng cổng (đêm 06/11), CHƯA chạy vòng kín. Kế hoạch này chạy vòng kín ba ca SSW (STEADY, SLIP, WEAVE) cho Map, PID, MapPID trên ba Plant:
+  B1  Plant_VDBBody          chỉ thay thân (Vehicle Body 3DOF Single Track, cấu hình khớp Plant)           đã có Plant và vòng kín
+  B2  Plant_VDBTireBody      thay lốp (cấu hình khớp, KHÔNG trễ) và thân                                  đã có Plant và vòng kín
+  B3  Plant_VDBTireLagBody   thay lốp CÓ độ trễ (như Plant_VDBTireLag) và thân                            PHẢI DỰNG MỚI
+Ý nghĩa khi viết: B1, B2 là kiểm chứng cài đặt (cùng giả thiết thì phải trùng Plant gốc); B3 là bản "thay Plant bằng VDB" cuối cùng, chỉ gồm hiệu ứng có căn cứ (độ trễ lốp, chiều dài thả lỏng 0.609 m
+khớp Pacejka Fig. 7.8; thân không xấp xỉ góc nhỏ). Không gọi là "hệ chuẩn", không phải kiểm chứng với xe thật.
+KHÔNG làm: chuyển tải dọc (FzF, FzR giữ nối Terminator, lốp dùng tải tĩnh), thân hai vết, khí động, bản M_z (TireLagMz). KHÔNG sửa tham số bộ điều khiển (dùng load_<ctrl>.m như cũ), không sửa ca
+(make_cases('SSW')), không sửa Plant gốc, Model_<Ctrl>.mdl gốc, file .json, cấu hình lốp (vdb_tire_config.m) hay thân (vdb_body_config.m).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. FILE VÀ HÀM CÓ SẴN (đọc trước khi làm)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Model/VDB/Plants/script/build_plant_variants.m: dựng các Plant VDB; bảng pl ở khoảng dòng 44 có dạng {tên, thay lốp, thay thân, có trễ, có M_z}, ví dụ {'Plant_VDBTireLag', true, false, true, false};
+gọi build_plant_variants(overwrite, only) với only là danh sách tên cần dựng.
+Model/VDB/Plants/script/compare_plant_variant.m: so hở mạch một Plant VDB với Plant gốc (đọc đầu file để biết cách gọi).
+Model/VDB/temp_test/script/build_temp_test.m: dựng vòng kín Model_<Ctrl>_<tag>.slx (Model_<Ctrl>.mdl gốc, chỉ thay khối Plant); danh sách plants và tags ở đầu hàm; gọi build_temp_test(overwrite,
+onlyTags).
+Model/VDB/temp_test/script/run_ssw_temp.m: run_ssw_temp(ctrl, tag, seed) chạy ba ca SSW, ghi Model/VDB/temp_test/<Ctrl>/Result/<Ctrl>_<tag>_metrics_s<seed>.csv và tín hiệu 10 ms, 1 ms.
+Model/VDB/temp_test/script/smoke_temp_test.m: chạy thử ngắn các vòng kín temp_test (đọc đầu file).
+Mốc so sánh (Plant gốc, seed 99999): Result/Controllers/<Ctrl>/Cases_ssw/<Ctrl>_metrics_s99999.csv. Kết quả đã có để đối chiếu: Model/VDB/temp_test/<Ctrl>/Result/<Ctrl>_VDBTireLag_metrics_s99999.csv.
+Hàm tiện ích: Model/VDB/Blocks/script/use_sim_tmp.m (TEMP và cache Simulink sang ổ D).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. CÁC BƯỚC (chạy liên tục, mỗi bước xong thì sang bước sau; không chờ người dùng duyệt giữa chừng, trừ khi gặp điều kiện dừng ở mục 3)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Seed 99999 cho mọi lần chạy. Mọi lần chạy là "chạy lại được": nếu file <Ctrl>_<tag>_metrics_s99999.csv đã có và đọc được thì bỏ qua lần chạy đó.
+V0. Chuẩn bị: đọc mục 1; kiểm có đủ Model/VDB/Plants/Plant_VDBBody.slx, Plant_VDBTireBody.slx, Plant_VDBTireLag.slx và Model/VDB/temp_test/<Ctrl>/Model_<Ctrl>_VDBBody.slx, Model_<Ctrl>_VDBTireBody.slx
+    cho Map, PID, MapPID; kiểm ba file mốc ở mục 1. Thiếu file nào thì dừng và báo.
+V1. (B1) run_ssw_temp(ctrl, 'VDBBody', 99999) cho ctrl = Map, PID, MapPID.
+V2. (B2) run_ssw_temp(ctrl, 'VDBTireBody', 99999) cho ba bộ.
+V3. Dựng B3:
+    (a) build_plant_variants.m: thêm một dòng vào bảng pl {'Plant_VDBTireLagBody', true, true, true, false} và cập nhật comment đầu file; dựng bằng build_plant_variants(false,
+        {'Plant_VDBTireLagBody'}) (không ghi đè).
+    (b) build_temp_test.m: thêm 'Plant_VDBTireLagBody' vào plants và 'VDBTireLagBody' vào tags, cập nhật comment; dựng bằng build_temp_test(false, {'VDBTireLagBody'}).
+    (c) Kiểm nối dây trước khi chạy dài (hở mạch, ca DRY): compare_plant_variant(model, 'DRY', 0) so một Plant VDB với mốc Plant gốc và in lệch tương đối của a_y, gamma, F_yf, F_yr, T_r, T_s. Chạy
+        cho cả 'Plant_VDBTireLag' và 'Plant_VDBTireLagBody' (cùng lốp trễ, chỉ khác thân khớp). Hai dãy số lệch phải gần như bằng nhau; hiệu giữa hai lệch T_s phải cùng bậc với lệch của riêng thân
+        (0.0013 %). Ghi cả hai dãy số vào nhật ký. Hiệu lệch T_s vượt 0.1 điểm phần trăm thì dừng (mục 3).
+    (d) smoke_temp_test chỉ chạy các vòng kín đã khai báo trong nó; nếu chưa có tag mới thì bỏ bước này, chạy run_ssw_temp luôn (không sửa smoke_temp_test).
+V4. (B3) run_ssw_temp(ctrl, 'VDBTireLagBody', 99999) cho ba bộ.
+V5. Tổng hợp: viết Model/VDB/temp_test/script/summarize_vdb_body.m (tiếng Anh, tự chứa) đọc dòng "whole case" của từng ca (STEADY, SLIP, WEAVE) trong các file metrics của: Plant gốc (mốc), VDBTireLag,
+VDBBody, VDBTireBody,
+    VDBTireLagBody; ghi Model/VDB/temp_test/Summary/VDB_body_summary_s99999.csv với các cột: biến thể, bộ, ca, RMS_eT_Nm, S_Nm, % đổi RMS_eT so với mốc, % đổi S so với mốc; và một bảng thứ bậc: theo
+    từng
+    (biến thể, ca), xếp ba bộ theo RMS_eT, so với thứ bậc ở mốc; hai bộ chênh dưới 5 % (|A - B| / max(A, B)) coi là hòa; kết luận "giữ", "đổi" hoặc "hòa". Ghi thêm VDB_body_summary_s99999.txt (tiếng
+    Việt
+    không dấu hoặc có dấu, ngắn): số chính và kết luận từng biến thể.
+V6. Báo cáo: ghi nhật ký, báo người dùng một bảng ngắn (RMS_eT ba ca x ba bộ x các biến thể, % đổi, thứ bậc), dừng vòng lặp.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. ĐIỀU KIỆN DỪNG VÀ XỬ LÝ LỖI (không ai trông)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Thiếu file ở V0, hoặc dựng B3 lỗi ở V3 (a), (b): dừng, báo người dùng.
+- Kiểm nối dây V3 (c) có hiệu lệch T_s vượt 0.1 điểm phần trăm: dừng, báo số; không chỉnh gì để cho khớp. (Ngưỡng 0.1 % là của kế hoạch này, đặt trước khi chạy; theo quy ước Plant_VDB được sửa sau khi
+  thấy kết quả nhưng phải
+  ghi số cũ,
+  số mới, lý do, thời điểm vào nhật ký.)
+- MATLAB chết giữa chừng: mở lại và chạy tiếp từ file đã có (mỗi lần chạy độc lập), tối đa 3 lần cho cùng một lần chạy; quá thì ghi lỗi, bỏ qua, chạy tiếp các lần khác.
+- Mô phỏng báo lỗi solver hoặc mất ổn định ở một ca: ghi thời điểm và thông báo vào Model/VDB/temp_test/Summary/VDB_body_errors_s99999.txt, chạy tiếp; không đổi solver, MaxStep hay tham số để chữa.
+  (Kinh nghiệm cũ: bảng Cs, Cym mặc định của khối thân từng gây mất ổn định ở SLIP 69.4 s; vdb_body_config đã đặt bằng 0. Nếu gặp lại, kiểm cấu hình đã được áp chưa, KHÔNG sửa vdb_body_config.)
+- Ổ đĩa: gọi use_sim_tmp đầu mỗi phiên MATLAB, Simulink.sdi.clear sau mỗi lần sim (ổ C từng đầy vì file *.dmr).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. CHẠY NỀN, THỜI GIAN, PHỐI HỢP HAI KHUNG
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MATLAB chạy nền theo Tracking/CLAUDE.md mục 6: "/c/Program Files/MATLAB/R2023a/bin/matlab" -batch "run('<đường dẫn TUYỆT ĐỐI>\Model\shared\setup_paths.m'); ..." (run_ssw_temp tự gọi setup_paths và
+use_sim_tmp).
+Nên mỗi lần chạy một tiến trình MATLAB riêng (một bộ, một biến thể) để MATLAB chết thì chỉ mất một lần chạy. Thời gian theo lần đo cũ: ba ca SSW cho một bộ trên lốp VDB khoảng 14 phút; thân VDB riêng
+nhanh
+hơn. Tổng chín lần chạy cộng dựng B3: khoảng 1.5 đến 3 giờ. Không chạy song song hai tiến trình MATLAB trên cùng một model.
+Khung VDB_TIRE không chạy MATLAB và không sửa build_plant_variants.m, build_temp_test.m trong lúc khung VDB_BODY làm kế hoạch này. Khung VDB_BODY chỉ ghi: hai file build nói trên (đúng phần ở V3),
+file mới
+summarize_vdb_body.m, các model và kết quả mới trong Model/VDB/Plants/ và Model/VDB/temp_test/, và nhật ký Tracking/historychat_vdb_body.md. Không ghi file của khung khác, không commit trừ khi người
+dùng bảo,
+không dùng sync_repo.sh.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. NHẬT KÝ THAY ĐỔI KẾ HOẠCH
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-11-11: viết lần đầu (khung VDB_TIRE, Lượt 74). Lượt 75: thêm mục 6 chế độ tiết kiệm token.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. CHẾ ĐỘ TIẾT KIỆM TOKEN (thêm 2026-11-11 Lượt 75: người dùng còn 65 % hạn mức 5 giờ, 4 giờ nữa mới đặt lại; công việc không được dừng giữa chừng khi hết token)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Nguyên tắc: phần chạy máy KHÔNG phụ thuộc vào khung chat. Khung chat chỉ viết script một lần, khởi động một lần, rồi kiểm thưa; nếu khung hết token thì MATLAB vẫn chạy tiếp đến hết, kết quả nằm trên
+đĩa.
+(1) Viết Model/VDB/temp_test/script/run_vdb_body_all.sh (Git Bash): lần lượt V1, V2, V3 (a)(b)(c), V4, V5; mỗi lần chạy là một lệnh matlab -batch riêng; bỏ qua lần chạy đã có file metrics; mỗi lần
+    chạy thử lại tối đa 3 lần nếu MATLAB thoát lỗi; V3 (c) viết thành hàm MATLAB trả lỗi (exit khác 0) khi hiệu lệch T_s vượt 0.1 điểm phần trăm, khi đó script bỏ V4 và ghi lý do; mỗi bước ghi một
+    dòng ngắn (giờ, bước, kết quả) vào Model/VDB/temp_test/Summary/VDB_body_progress.txt.
+(2) Trước khi khởi động: chạy thử script với một lệnh rẻ (ví dụ chỉ V0) để chắc cú pháp đúng.
+(3) Khởi động MỘT lần bằng chạy nền (nohup hoặc run_in_background), rồi dùng /loop kiểm mỗi 30 đến 45 phút; mỗi lần kiểm chỉ đọc tail của VDB_body_progress.txt và danh sách file metrics, không đọc
+file csv lớn,
+    không đọc lại kế hoạch hay nhật ký dài, trả lời một hai dòng.
+(4) Nhật ký: ghi MỘT mục Lượt khi khởi động và MỘT mục khi xong (không ghi mỗi lần kiểm).
+(5) Nếu khung hết token giữa chừng: khi có lại token chỉ cần đọc VDB_body_progress.txt, chạy lại run_vdb_body_all.sh (tự bỏ qua phần đã xong) hoặc chỉ chạy V5 nếu V4 đã xong.

@@ -1,0 +1,154 @@
+KẾ HOẠCH: NGƯỜI LÁI THEO LỰC TAY (PHƯƠNG ÁN C) CHO PHẦN MÔ PHỎNG NHÌN TỪ TRÊN XUỐNG
+==============================================================================================================================================================================================
+Viết 2026-11-09 (khung VDB_TIRE, Lượt 42) theo yêu cầu người dùng, để giao cho một khung chat khác chạy trên CÙNG máy PC. File này tự đủ: khung nhận việc đọc hết file này, không cần đọc lại
+hội thoại cũ. Người dùng đã chốt (2026-11-09): người lái phương án C; dùng Plant gốc (không dùng lốp VDB); phần hiển thị làm sau, nhìn từ trên xuống, đường hai làn, Map và MapPID chạy song song.
+Mọi chỗ ghi [CẦN CHỐT] phải được người dùng chốt trước khi chạy bước dùng tới nó.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0. MỤC TIÊU VÀ PHẠM VI
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mục tiêu: cho thấy bằng quỹ đạo xe sự khác nhau giữa Map và MapPID khi hệ số bám mu đổi. Plant hiện tại nhận góc vô-lăng theta1 cho trước (người lái cứng vô hạn), nên mọi bộ điều khiển chạy
+cùng một quỹ đạo (đã đo: Map và MapPID lệch nhau tối đa 2.4 m trong cả ca SLIP 100 s) và video không thấy khác biệt. Phương án C thay người lái giữ góc bằng người lái cho trước LỰC TAY T_h(t),
+giống nhau cho mọi bộ: vô-lăng có quán tính và cản, theta1 trở thành biến trạng thái; bộ nào trợ lực khác thì vô-lăng quay khác nên xe đi khác. Vòng hở: người lái không sửa lái theo quỹ đạo.
+Diễn giải khi viết: khoảnh khắc trước khi người lái kịp phản ứng (ví dụ lúc vào vũng nước).
+
+Phạm vi: chỉ phần người lái và phép thử quyết định (mục 4, bước D0-D7). KHÔNG làm phần vẽ (giao sau cho khung hiển thị, mục 6). KHÔNG sửa Plant.mdl, Model_<Ctrl>.mdl, build_closed_loop.m,
+các file .json của bộ điều khiển, tham số bộ điều khiển (dùng đúng tham số đã chọn trong map.json, mappid.json). Không chọn lại tham số nào cho đẹp kết quả.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1. PHƯƠNG TRÌNH
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plant gốc (Documents/Thesis/plant.txt mục 2.2) đã viết đủ khối vô-lăng nhưng bỏ đi vì theta1 cho trước:
+  (2)  J_sw*theta1_ddot = T_d - C_sw*theta1_dot - K*(theta1 - theta2)
+  (4)  T_s = K*(theta1 - theta2)
+Phương án C dùng lại đúng PT (2), với T_d = T_h(t) cho trước và T_s lấy từ Plant:
+  (D1) J_h*theta1_ddot = T_h - C_h*theta1_dot - K_h*theta1 - T_s
+J_h, C_h là quán tính và cản của vô-lăng (cộng tay người lái nếu chọn, mục 2); K_h là độ cứng của tay quanh vị trí giữa (bằng 0 nếu không chọn). Plant giữ nguyên bốn cổng vào (theta1, T_a, v, mu);
+khối Driver đặt ngoài Plant, ra theta1. Không có vòng đại số: theta1 là đầu ra của tích phân, T_s tính từ theta1 và theta2 là trạng thái.
+
+Hệ quả cần biết trước khi đọc kết quả: ở trạng thái xác lập (D1) cho T_s = T_h - K_h*theta1, tức T_s bị ép gần bằng lực tay bất kể trợ lực (plant.txt mục 1 đã nêu đúng điều này khi giải thích vì
+sao luận văn chọn người lái giữ góc). Vì vậy trong phương án C, sai số T_s không còn là đại lượng so sánh; khác biệt giữa các bộ hiện ở góc vô-lăng theta1 và quỹ đạo. Dự đoán (CHƯA kiểm, phải kiểm
+ở D5): MapPID chỉnh trợ lực cho tới khi a_y đạt mức mà T_d,ref(v, a_y) = T_s (cùng lực tay cho cùng đáp ứng xe dù mu đổi, trong giới hạn bám); Map không có phản hồi nên a_y đổi theo mu; ở mu = 0.2
+cả hai có thể cùng bão hòa lốp nên khác biệt nhỏ.
+
+Hai kiểu người lái là hai đầu của cùng một cơ chế (thêm 2026-11-09, Lượt 45): người lái CỨNG (góc cho trước, cách chấm điểm của luận văn) giữ theta1, nên trợ lực thừa hiện ra ở T_s và đo bằng e_T;
+người lái LỰC với K_h = 0 giữ T_s, nên trợ lực thừa hiện ra ở góc vô-lăng và quỹ đạo; tay người thật có độ cứng hữu hạn (thả lỏng 4.17, gồng 78.63 N.m/rad, mục 2) nên cùng một sai lệch được chia giữa
+mô-men và góc theo K_h. Vì vậy kế hoạch chạy cả hai kiểu trên cùng cảnh (D5), quét K_h (D6) và so thứ bậc theo tiêu chí ghi trước (D0, D7) để kiểm phần minh họa có cùng chiều với điểm chấm hay không.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. THAM SỐ NGƯỜI LÁI (có nguồn, đã đọc trong PDF)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Bộ W (chỉ vô-lăng): [1] Lee, Kim, Kim 2018, PT (14) trang 3: J1 = 0.044 kg.m2, C1 = 0.25 N.m.s/rad (cùng bảng nhận dạng với K = 143.24, J2 = 0.11, C2 = 1.35 mà Plant đang dùng); K_h = 0.
+Bộ H (vô-lăng + tay thả lỏng): Pick và Cole 2007 (Proc. IMechE D 221(12):1475-1486), lấy qua Mehrabi 2014 (luận án TS Waterloo, Bảng 4.4 trang 81, File References/Dynamics and Model-Based Control
+of Electric Power Steering Systems (Mehrabi 2014 PhD thesis).pdf): J = 0.130 kg.m2 (gồm cả vô-lăng), B = 0.35 N.m.s/rad, K = 4.17 N.m/rad. Bộ tay gồng: J 0.130, B 1.08, K 78.63 (chỉ báo cáo).
+Lưu ý: Pick và Cole là trích gián tiếp (không có bản gốc); Schenk 2021 (References/, Vehicles 3(1)) cho vô-lăng J_str 0.03 kg.m2, b_str 0.065 N.m.s/rad, chỉ để kiểm chéo bậc độ lớn.
+[ĐÃ CHỐT 2026-11-09, Lượt 53] bộ chính: bộ H với K_h = 4.17 (người lái đặt tay trên vô-lăng là thực tế hơn; tay có độ cứng nên vô-lăng không trôi khi đi thẳng); bộ W là điểm K_h = 0 của quét D6.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3. CA THỬ VÀ ĐƯỜNG
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lực tay lấy từ đường mô-men mong muốn đã có (không tự đặt số): chọn một quỹ đạo dự định a_y,tgt(t) ở vận tốc v(t), rồi
+  (D2) T_h(t) = T_d,ref(v(t), a_y,tgt(t))          (bảng Ref, đọc qua load_ref.m; cộng K_h*theta1_tgt nếu K_h > 0, theta1_tgt lấy từ trạng thái xác lập của Plant trên đường khô)
+nghĩa là người lái đặt đúng lực mà cảm giác lái mong muốn đòi cho thao tác định làm. Tim đường (đường dự định) tính từ a_y,tgt và v, độc lập với mọi bộ điều khiển:
+  (D3) psi_tgt = int(a_y,tgt / v) dt,   X_tgt = int(v cos psi_tgt) dt,   Y_tgt = int(v sin psi_tgt) dt
+Cảnh [ĐÃ CHỐT 2026-11-09, Lượt 53: ba cảnh của SSW dưới đây, 'stair' giữ nguyên không tách] (sửa ở Lượt 52 sau khi đọc Model/shared/Sim/script/make_cases.m): bản đầu của kế hoạch tả ba cảnh pud, down,
+up của SLIP v1 (make_cases('DREWS_V1'): pud 80 km/h, chuyển làn 0.2 g, 0.4 Hz, vũng nước mu 0.2 trong 0.4 s; up 60 km/h, 0.15 g, mu 0.3 -> 0.8; down 100 km/h, 0.3 g, mu 0.8 -> 0.3), nhưng bộ ca chấm
+hiện hành là SSW (make_cases('SSW'), 2026-10-23), nên phép so với người lái cứng ở D5, D7 dùng cảnh của SSW. Ba cảnh có mu đổi của SSW: SLIP 'stair' (60 km/h, 0.3 g, mu 0.8 -> 0.5 -> 0.33 -> 0.24, mỗi
+mức 5 s, mức dùng bám mục tiêu 0.6, 0.91, 1.25), SLIP 'pud' (80 km/h, 0.25 g, vũng nước mu 0.2 trong 2 s, mức dùng bám 1.25) và WEAVE 'lane' (80 km/h, hai chu kỳ chuyển làn 0.2 g, 0.4 Hz, chu kỳ thứ
+hai qua vũng nước mu 0.2 trong 0.4 s); không lấy SLIP 'ramp' (mu không đổi). Mức mu 0.5 của 'stair' (mức dùng bám 0.6, lốp còn bám) đã đóng vai cảnh mu vừa phải, nên KHÔNG thêm cảnh mu 0.4-0.5 tự đặt.
+Mỗi cảnh lấy nguyên vận tốc, a_y, tần số và mu như trong make_cases('SSW'), bắt đầu bằng đoạn thẳng T_h = 0 và chạy thành một ca ngắn riêng (người lái vòng hở nên ca dài sẽ tích lũy trôi). 'stair'
+(29.5 s) giữ nguyên, không tách theo mức mu: để cảnh trùng với ca chấm (so được ở D7) và không tự đặt thêm thứ tự cảnh mới; phần trôi vòng hở dài hơn được trừ bằng Delta_y (so với bản mu 0.8). Mỗi
+cảnh có hai bản: bản mu như ca gốc và bản đối chứng mu = 0.8 suốt cảnh.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4. CÁC BƯỚC VÀ ĐIỂM KIỂM (mỗi bước nộp file vào thư mục kết quả, ghi nhật ký, chờ người dùng xem rồi mới sang bước sau)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Không đặt ngưỡng đạt/không đạt (người dùng chốt 2026-11-09 nghiêng về bỏ ngưỡng số): mỗi bước nộp hình và bảng số, người dùng tự đánh giá. Seed 99999 (so nhiều bộ), cảm biến lý tưởng cho các phép kiểm
+D2, D3; tham số bộ điều khiển đúng như trong json. Hai kiểu người lái dùng trong kế hoạch: người lái CỨNG = góc vô-lăng cho trước như mọi ca chấm điểm hiện nay (Model_Map, Model_MapPID gốc, không
+sửa); người lái LỰC = khối Driver theo phương án C (D2, D3).
+
+D0. ĐÃ CHỐT (người dùng, 2026-11-09, khung VDB_TIRE Lượt 53: "làm hết như đề xuất"). Khung nhận việc KHÔNG hỏi lại năm điểm dưới đây, chỉ chép chúng vào nhật ký của mình trước lần chạy đầu tiên; không
+    đổi sau khi thấy kết quả:
+    (a) bộ tham số tay chính: H thả lỏng (J_h 0.130, C_h 0.35, K_h 4.17; mục 2). (b) thư mục: Model/original/PRSM/Driver/ và Result/PRSM/Driver/ (mục 5). (c) bộ cảnh: ba cảnh SSW là SLIP 'stair', SLIP
+        'pud', WEAVE 'lane'; 'stair' giữ nguyên không tách (mục 3).
+    (d) Tiêu chí so thứ bậc giữa hai kiểu người lái (dùng ở D7): so riêng từng cảnh (stair, pud, lane), không gộp thành một số. Đại lượng của người lái cứng: RMS e_T trên cả ca
+        ngắn của cảnh (cùng cách chấm như ca chấm). Đại lượng của người lái lực: lệch do mu Delta_y = khoảng cách ngang lớn nhất giữa quỹ đạo bản mu như ca gốc và quỹ đạo bản đối chứng mu 0.8 của CÙNG
+        bộ điều khiển (trừ được phần trôi vòng hở không do mu). "Cùng chiều" khi hiệu Map - MapPID của hai đại lượng cùng dấu; "hòa" khi |A - B| / max(A, B) < 5 % (ngưỡng hòa chung của CLAUDE.md) ở ít
+        nhất một đại lượng; còn lại là "ngược chiều".
+    (e) Dãy độ cứng tay cho D6 (J_h, C_h, K_h mỗi điểm): ba điểm có nguồn: W = vô-lăng không có tay (J_h 0.044, C_h 0.25, K_h 0; Lee [1]); H thả lỏng (0.130, 0.35, 4.17; Pick và Cole); H gồng (0.130,
+        1.08, 78.63; Pick và Cole). Không thêm điểm tự đặt (điểm CỨNG K_h 1432 của Lượt 45 bỏ ở Lượt 52 vì hệ số 10 không có căn cứ; việc kiểm công thức lực tay của nó chuyển sang D5).
+
+D1. Dữ liệu: Model/shared/data/driver.json (J_h, C_h, K_h của bộ W, H thả lỏng, H gồng; mỗi số có trường ref ghi nguồn và trang như params.json) và load_driver.m (script nạp biến Driver_J, Driver_C,
+    Driver_K của một bộ vào base workspace). Nộp: nội dung json.
+D2. Khối Driver: build_driver.m sinh Driver.slx (subsystem gốc tên Driver; cổng vào T_h, T_s; cổng ra theta1; khối Product, Sum, Integrator theo "Quy tắc dựng model Simulink" của CLAUDE.md; tham số
+    đọc thẳng biến base). test_driver.m tự chứa: đặt T_s = K_s*theta1 (lò xo giả) và T_h bậc, so theta1 của Simulink với nghiệm ode45 tính độc lập từ driver.json; in [Driver] TEST PASS. Nộp: hình
+    theta1 hai lời giải chồng nhau, sai số lớn nhất.
+D3. Vòng kín: build_closed_loop_driver.m (viết mới, chép cấu trúc của build_closed_loop.m, KHÔNG sửa file đó) sinh Model_<Ctrl>_DriverC cho Map và MapPID: thay From Workspace sc_theta1 bằng khối
+    Driver (vào sc_Th và T_s thật của Plant; ra theta1 đi vào Plant và Sensors). Phép kiểm ngược: chạy Model_Map gốc trên cảnh pud (cảm biến lý tưởng), tính T_d(t) = J_h*theta1_ddot + C_h*theta1_dot +
+    K_h*theta1 + T_s theo PT (5) mở rộng, đưa T_d vào Model_Map_DriverC làm T_h; theta1 phải lặp lại theta1 gốc (lệch chỉ do sai số số). Nộp: hình theta1 gốc và lặp lại, lệch lớn nhất. Bước này chứng
+    minh nối dây đúng trước khi dùng lực tay mới.
+D4. Ca và đường: make_driver_cases.m sinh các cảnh mục 3 (t, v, mu, a_y,tgt, theta1_tgt, T_h, X_tgt, Y_tgt, psi_tgt), cả bản mu như ca gốc và bản đối chứng mu 0.8; theta1_tgt(t) là góc vô-lăng xác lập
+    của Plant trên đường khô mu 0.8 ứng với v(t), a_y,tgt(t) (make_cases.m đã có cách tính: theta1_ss = n_st*delta_f + T_d,ref/K), dùng cho T_h khi K_h > 0 (mục 3) và làm đầu vào của người lái cứng ở
+    D5; T_h tính cho từng điểm của D0(e). Nộp: hình T_h(t), theta1_tgt(t), tim đường X_tgt-Y_tgt.
+D5. Phép thử quyết định: chạy Map và MapPID với bộ tham số chính, seed 99999, mọi cảnh, cả hai bản, với HAI kiểu người lái. Người lái lực (Model_<Ctrl>_DriverC): ghi cho mỗi lần chạy file vị trí theo
+    giao diện của Documents/Shared/3D_modelling_plan.txt mục 2 (t, X, Y, psi, beta ghi thẳng từ Plant, gamma, v, mu, theta1, delta_f, theta2, a_y, T_s, T_d_ref, e_T, T_a), và bảng: lệch ngang so với
+    tim đường e_y(t) (khoảng cách có dấu từ xe tới tim đường), lớn nhất |e_y| mỗi cảnh, Delta_y của D0(d), lệch ngang giữa Map và MapPID, theta1 lớn nhất, tỉ lệ thời gian T_a ở giới hạn T_a,max, có
+    dao động hay không (theta1, T_a). Người lái cứng (Model_Map, Model_MapPID gốc, sc_theta1 = theta1_tgt của D4): RMS e_T và max|e_T| mỗi cảnh. Bảng chung đặt hai đại lượng của D0(d) cạnh nhau. Bản
+    đối chứng mu 0.8 cho biết phần lệch do vòng hở tự trôi, không do mu. Kiểm công thức lực tay (thay điểm CỨNG đã bỏ): ở bản đối chứng mu 0.8, báo theta1 - theta1_tgt theo thời gian và giá trị lớn
+    nhất trong các đoạn giữ cua; mu không đổi nên theta1 phải bám gần theta1_tgt, lệch lớn hoặc ngược dấu nghĩa là công thức T_h hay theta1_tgt sai (D3 không kiểm được điều này vì dùng T_d tính
+    ngược). Nộp: hình quỹ đạo hai xe trên tim đường (tô vùng mu thấp), hình theta1, a_y, T_a theo thời gian, hình theta1 - theta1_tgt của bản mu 0.8, bảng số.
+D6. Quét độ cứng tay (LUÔN chạy sau D5; thay bước độ nhạy bộ W cũ, vì bộ W là điểm K_h = 0): chạy người lái lực cho Map và MapPID ở ba điểm của D0(e), mọi cảnh, cả hai bản, seed 99999 (với ba cảnh: 3
+    x 2 x 3 x 2 = 36 lần chạy ngắn). Mục đích: (1) kiểm kết luận thứ bậc không phụ thuộc vào kiểu tay; (2) cho thấy xu hướng: K_h tăng thì sai lệch chuyển dần từ quỹ đạo (Delta_y) sang mô-men (e_T)
+    (dự đoán, CHƯA kiểm); điểm lớn nhất 78.63 chỉ bằng khoảng 55 % độ cứng thanh xoắn nên hình chỉ cho thấy xu hướng tiến về phía người lái cứng, không nối liền tới đó. Nộp: bảng mỗi điểm (RMS e_T,
+    Delta_y, max|theta1 - theta1_tgt|, có dao động hay không), hình hai ô theo K_h (trục log, điểm K_h = 0 vẽ riêng ở mép trái): RMS e_T và Delta_y, hai đường Map, MapPID, kèm vạch ngang giá trị của
+    người lái cứng.
+D7. Tổng hợp: bảng thứ bậc theo đúng tiêu chí D0(d) cho từng cảnh, ở bộ tham số chính và ở mọi điểm của D6: cùng chiều, hòa hay ngược chiều. Ngược chiều thì báo thẳng (không đổi tiêu chí, không bỏ
+    cảnh, không chỉnh tham số). Người dùng xem bảng rồi quyết có làm phần vẽ hay chỉnh ca (để tham khảo: kế hoạch 3D coi hai vết phân biệt được khi cách nhau từ 0.5 m).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5. NƠI ĐẶT FILE, ĐẶT TÊN, PHỐI HỢP HAI KHUNG TRÊN CÙNG MÁY
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[ĐÃ CHỐT Lượt 53] thư mục: Model/original/PRSM/Driver/ (Driver là một phần môi trường như Plant, Ref, Sensors; không sửa phần nào có sẵn): Driver.slx, load_driver.m, script/ (build_driver.m,
+test_driver.m, build_closed_loop_driver.m, make_driver_cases.m, run_driver_cases.m), vòng kín Model_Map_DriverC.slx, Model_MapPID_DriverC.slx đặt trong script/../ cùng thư mục Driver; kết quả
+ở Result/PRSM/Driver/ qua result_dir (thêm nhánh 'Driver' vào result_dir.m nếu cần, ghi vào nhật ký). Đường dẫn trong code: script trong original/PRSM/Driver/script/ tính modelDir bằng 4 lần
+fileparts; đầu script addpath(fullfile(modelDir, 'shared')); setup_paths; (thêm thư mục Driver vào setup_paths.m nếu cần, ghi vào nhật ký vì là file dùng chung). Tên file kết quả theo CLAUDE.md
+mục 5: <Chủ>_<CA>_<nội dung>_<sens>, ví dụ Map_vs_MapPID_DRIVERpud_path_s99999.png, MapPID_DRIVERpud_pose_s99999.csv. Code và comment .m bằng tiếng Anh; build_* không ghi đè (overwrite=false).
+
+Khung nhận việc: đặt tên khung DRIVER, nhật ký riêng Tracking/historychat_driver.md (TRẠNG THÁI HIỆN TẠI, BẢN NÉN, NHẬT KÝ NGUYÊN VĂN, nén mỗi 10 lượt), ghi nhật ký trước khi commit, tự commit
+đúng file của mình (không dùng sync_repo.sh), chỉ commit khi người dùng bảo; người dùng tự thêm khung DRIVER vào Tracking/CLAUDE.md.
+Hai khung trên cùng máy: khung DRIVER không sửa file của khung VDB_TIRE (Model/VDB/, Documents/Shared/3D_modelling_plan.txt, Tracking/historychat_vdb_tire.md) và ngược lại; không mở cùng một .slx
+ở hai phiên MATLAB; mỗi phiên MATLAB dùng thư mục cache Simulink riêng (Simulink.fileGenControl('set', 'CacheFolder', <thư mục tạm riêng>, 'CodeGenFolder', <như trên>) để slprj không đè nhau);
+TEMP sang ổ D bằng use_sim_tmp (Model/VDB/Blocks/script/use_sim_tmp.m) và gọi Simulink.sdi.clear sau mỗi lần sim (đã từng đầy ổ C); MATLAB chạy nền theo CLAUDE.md mục 6.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. SAU KHI CÓ KẾT QUẢ D7 (không thuộc kế hoạch này)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Nếu người dùng thấy khác biệt đủ rõ: khung hiển thị vẽ 2D nhìn từ trên xuống (Python): đường hai làn theo tim đường X_tgt-Y_tgt, mỗi xe một làn (dời ngang đúng bề rộng làn, phép dời cứng giữ nguyên
+khác biệt), khung hình đi theo và xoay theo hướng đường để đường luôn dọc màn hình, vùng mu thấp đổi màu, bản đồ nhỏ cả quỹ đạo ở góc, đồ thị theta1, T_a, mu bên cạnh. Trên video ghi rõ "minh họa,
+người lái giữ lực tay T_h(t), vòng hở" và trong bài kèm bảng D7. Kế hoạch 3D_modelling_plan.txt (viết cho Unreal và người lái giữ góc) sẽ được viết lại theo hướng này ở khung VDB_TIRE.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. RỦI RO ĐÃ BIẾT
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Ổn định: Map và MapPID được chọn với người lái giữ góc; khi vô-lăng tự do (J_h, C_h nhỏ) vòng kín có thêm một khối quán tính, có thể dao động (Lee 2018 PT (19)-(21) có đúng cấu trúc này). D5 phải
+  báo dao động nếu có; không chỉnh tham số bộ điều khiển để chữa, chỉ báo cáo và hỏi người dùng.
+- Trôi vòng hở: không có người lái sửa lái nên sai số nhỏ tích lũy thành lệch hướng; giữ cảnh ngắn, có bản đối chứng mu 0.8, và K_h > 0 (bộ H) giảm trôi.
+- Bão hòa: ở mu 0.2 cả hai xe có thể cùng trượt, khác biệt nhỏ; T_a chạm T_a,max làm MapPID mất tác dụng ở đúng lúc đó (đã thấy ở các giây sự kiện của SSW).
+- Mâu thuẫn bề ngoài với luận văn: plant.txt mục 1 nói người lái cho trước mô-men làm bài toán điều khiển T_s mất ý nghĩa. Phương án C chỉ dùng cho phần minh họa và phải giải thích: với lực tay
+  cho trước, tác dụng của bộ điều khiển chuyển từ T_s sang góc vô-lăng và quỹ đạo, đúng nghĩa "cảm giác lái" (cùng lực tay, xe đáp ứng thế nào). Không dùng phương án C để chấm điểm các bộ.
+- Tham số tay Pick và Cole là trích gián tiếp qua Mehrabi 2014; nếu dùng trong bài phải ghi rõ.
+- Hai kiểu người lái cho thứ bậc ngược chiều ở D7: báo thẳng và xem lại giả thiết người lái vòng hở; không chỉnh ca, tiêu chí hay tham số để hai bên khớp nhau.
+- Hai xe có thể gần trùng nhau ở các mức mu thấp (mức dùng bám mục tiêu 0.91-1.25, cả hai cùng trượt); theo quy tắc không thêm cảnh sau khi thấy kết quả, nên mức mu 0.5 của 'stair' (mức dùng bám 0.6)
+  là chỗ chính để thấy khác biệt khi lốp còn bám.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8. NHẬT KÝ THAY ĐỔI KẾ HOẠCH
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-11-09: viết lần đầu (khung VDB_TIRE, Lượt 42).
+2026-11-09 (Lượt 45): thêm người lái cứng trên cùng cảnh vào D5, tiêu chí so thứ bậc D0(d) và dãy độ cứng tay D0(e), bước quét K_h D6 (gộp bước độ nhạy bộ W cũ), bước tổng hợp D7 (thay D6 cũ); sửa mục
+0, 1, 2, 6, 7. D0(d), D0(e) là đề xuất, chờ người dùng chốt.
+2026-11-09 (Lượt 53): người dùng chốt hết D0 theo đề xuất: (a) H thả lỏng, (b) Model/original/PRSM/Driver/ và Result/PRSM/Driver/, (c) ba cảnh SSW (stair không tách), (d) tiêu chí như ghi, (e) ba điểm
+W, H thả lỏng, H gồng. Việc của người dùng còn lại: thêm khung DRIVER vào Tracking/CLAUDE.md.
+2026-11-09 (Lượt 52): đọc make_cases.m: cảnh ở mục 3 bản đầu là SLIP v1, đề xuất đổi sang các cảnh có mu đổi của SSW (SLIP stair, SLIP pud, WEAVE lane) [CẦN CHỐT]; bỏ cảnh mu 0.4-0.5 (mức 0.5 của
+stair đã có); bỏ điểm CỨNG, chuyển việc kiểm công thức lực tay sang D5 (theta1 - theta1_tgt ở bản mu 0.8); D6 còn ba điểm có nguồn và luôn chạy; thay rủi ro dao động giả của điểm CỨNG bằng rủi ro hai
+xe trùng nhau ở mu thấp.

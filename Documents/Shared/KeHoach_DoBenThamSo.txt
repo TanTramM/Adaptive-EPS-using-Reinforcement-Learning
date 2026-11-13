@@ -1,0 +1,150 @@
+KẾ HOẠCH VIỆC A: ĐỘ BỀN CỦA MAP, PID, MAPPID KHI THAM SỐ XE SAI LỆCH (KeHoach_DoBenThamSo)
+==============================================================================================================================================================================================
+Viết 2026-11-12 (khung VDB_TIRE, Lượt 84) theo yêu cầu người dùng, để giao cho khung ROBUST chạy trên PC, SONG SONG với khung WEAVE (việc B, file Documents/Shared/KeHoach_WEAVE_HaiNhanh.txt). File này
+tự đủ: khung nhận việc đọc hết file này, `Tracking/CLAUDE.md` và mục 9 (chạy song song), không cần đọc hội thoại cũ. Mục ghi [CẦN CHỐT] phải được người dùng chốt trước khi chạy bước dùng tới nó. Lúc
+viết chưa chạy gì.
+
+==============================================================================================================================================================================================
+0. CÂU HỎI, PHẠM VI
+==============================================================================================================================================================================================
+Câu hỏi: Map được hiệu chỉnh cho MỘT xe danh định (bảng trợ lực và lead-lag trong map.json); PID và MapPID chọn tham số trên CALIB với cùng xe đó. Khi xe thật khác xe danh định (tham số Plant sai
+lệch), bộ nào giữ mô-men tay lái gần mục tiêu, bộ nào trợ lực thừa hay thiếu, thứ hạng ba bộ có đổi không. Kết luận 6.8 của bài báo ghi đây là việc còn thiếu. Kết quả dùng cho luận văn, chương 6 "Kiểm
+tra độ vững của kết quả", mục sai lệch tham số (cạnh mục VDB).
+
+Phạm vi: CHỈ đổi tham số Plant. KHÔNG đổi tham số bộ điều khiển (map.json, pid.json, mappid.json), bảng Ref (T_d,ref, T_a,max), Sensors, ca SSW, seed. KHÔNG sửa Plant.mdl, Model_<Ctrl>.mdl,
+build_closed_loop.m, run_cases.m, make_cases.m, load_*.m, các file .json. Không chọn lại tham số nào. Lý do giữ bộ điều khiển và Ref: ngoài đời bộ điều khiển không biết xe đã khác; T_d,ref là mô-men
+tay lái mong muốn theo v và a_y, không phụ thuộc xe.
+
+Không phải: không phải kiểm chứng với xe thật, không phải thiết kế bền vững, không thêm bộ điều khiển.
+
+==============================================================================================================================================================================================
+1. BIẾN THỂ (CHỐT TRƯỚC KHI CHẠY)
+==============================================================================================================================================================================================
+Mỗi biến thể đổi MỘT nhóm tham số, mức +-20 % so với danh định [CẦN CHỐT: một mức chung 20 % cho mọi nhóm; lý do: đơn giản, dễ giải thích, cùng cỡ sai số tham số thường gặp, không có số đo riêng cho
+từng tham số; đề xuất giữ].
+
+Mã      | Tham số đổi (biến base workspace)            | Danh định, nguồn                                  | Cách đổi
+--------+----------------------------------------------+---------------------------------------------------+-----------------------------------------------------------------
+Tf      | T_f (ma sát khô cột lái)                      | 2 N.m, [1] Lee 2018                              | T_f x (1 +- 0.2)
+Jcol    | J_col (quán tính cột lái quy đổi)             | 0.11 kg.m2, [1]                                  | J_col x (1 +- 0.2)
+Ccol    | C_col (cản cột lái)                           | 1.35 N.m.s/rad, [1]                              | C_col x (1 +- 0.2)
+Mass    | m và Iz cùng tỉ lệ                            | 1573 kg, 2873 kg.m2, [5] Li và Xia               | m, Iz x (1 +- 0.2); F_zf, F_zr tính lại bằng load_derived
+Calpha  | C_alpha_f và C_r cùng tỉ lệ                   | 160000 N/rad mỗi cầu, [5]                        | cả hai x (1 +- 0.2)
+Trail   | t_0 (vệt bánh khí nén), giữ e_c               | 25 mm, tự chọn                                   | t_0' = t_0 (1 +- 0.2); e_p0' = e_c + t_0' với e_c = 0.023 m
+Caster  | e_c (vệt caster), giữ t_0                     | 23 mm = e_p0 - t_0, tự chọn (e_p0 48 mm)         | e_p0' = 0.023 (1 +- 0.2) + t_0
+Motor   | motor_wm (băng thông motor)                   | 2 pi 100 rad/s, actuator.json, Lee 2018          | motor_wm x (1 +- 0.2)
+
+Tên biến thể: <Mã>p20 (tăng 20 %), <Mã>m20 (giảm 20 %), và nom (danh định). Tổng 8 x 2 + 1 = 17 biến thể. Bảng này ghi đúng một chỗ trong code: robust_variants.m (mục 8).
+[CẦN CHỐT] Mass: đổi Iz cùng tỉ lệ với m (giữ bán kính quán tính, đề xuất) hay giữ Iz.
+[CẦN CHỐT, đề xuất BỎ] Biến thể gộp "xe chở nặng, lốp mềm, ma sát cao" (Massp20 + Calpham20 + Tfp20); nếu làm thì đặt ngay bây giờ, không đặt theo kết quả.
+Không đổi: K (thanh xoắn cũng là cảm biến mô-men, đổi K là đổi cảm biến), n_st, l_f, l_r, C, E, c (hệ số làm mịn tanh, tự chọn để chống rung số), g.
+
+==============================================================================================================================================================================================
+2. BỘ ĐIỀU KHIỂN, CA, SEED
+==============================================================================================================================================================================================
+Ba bộ Map, PID, MapPID (load_map, load_pid, load_mappid; model Model_Map, Model_PID, Model_MapPID). Ba ca SSW: STEADY, SLIP, WEAVE, mỗi ca 100 s (make_cases('SSW')). Seed 99999 (seed chung khi so
+nhiều bộ). Mọi biến thể dùng cùng seed nên chuỗi nhiễu cảm biến giống hệt: chênh lệch giữa biến thể và nom là do tham số, không do nhiễu.
+Số lần chạy: 17 biến thể x 3 bộ x 3 ca = 153 ca, tức 51 lần gọi run_cases.
+[CẦN CHỐT, đề xuất làm sau cùng] Chạy thêm 5 seed 99995-99999 cho những biến thể mà thứ hạng đổi hoặc chênh nằm trong 5-7 % (sát ngưỡng hòa), để có trung bình +- độ lệch như bài báo. Danh sách biến
+thể chạy thêm lấy theo quy tắc này, không chọn tay.
+
+==============================================================================================================================================================================================
+3. CÁCH ĐỔI THAM SỐ (KHÔNG SỬA MODEL)
+==============================================================================================================================================================================================
+Plant đọc tham số từ base workspace (load_plant.m nạp params.json, load_derived.m tính F_zf = m g l_r/(l_f + l_r), F_zr, e_c = e_p0 - t_0; load_actuator.m đặt motor_wm). Trình tự cho mỗi (biến thể,
+bộ):
+  (1) evalin('base', 'load_<ctrl>'): nạp lại toàn bộ PRSM và bộ điều khiển về danh định (load_<ctrl> chạy load_plant, load_ref, load_sensors, load_assistlimit, load_actuator).
+  (2) assignin('base', <tên>, <giá trị mới>) cho các biến của biến thể (mục 1).
+  (3) evalin('base', 'load_derived'): tính lại F_zf, F_zr, e_c từ biến mới.
+  (4) run_cases(<Ctrl>, 99999, 'SSW', outDir) với outDir = Result/Compare/Robust/<biến thể>/ (run_cases có sẵn tham số outDir, không phải sửa run_cases).
+  (5) Simulink.sdi.clear sau mỗi lần gọi run_cases (run_cases không tự xóa; dữ liệu SDI từng làm đầy ổ C).
+Bẫy đã biết: (a) load_<ctrl> chạy lại load_plant nên phải đổi biến SAU bước (1); (b) không đặt biến vòng lặp trùng tên biến base của model (đã từng đè c, độ dốc ma sát); (c) không dùng Fast Restart;
+(d) kiểm bằng grep rằng load_map, load_pid, load_mappid, load_ref, load_assistlimit không tính gì từ m, C_alpha_f, T_f... (nếu có thì bảng của bộ điều khiển đổi theo xe, sai phạm vi mục 0: dừng, ghi
+vào nhật ký, hỏi người dùng).
+
+==============================================================================================================================================================================================
+4. KIỂM TRƯỚC VÀ SAU KHI CHẠY (CÓ TIÊU CHÍ ĐẠT)
+==============================================================================================================================================================================================
+R0 Kiểm biến (không mô phỏng): với từng biến thể, sau bước (2)-(3) in giá trị mọi biến của mục 1 và F_zf, F_zr, e_c. ĐẠT khi: Massp20 cho F_zf, F_zr đúng 1.2 lần danh định (sai số tương đối < 1e-12)
+   và Iz đúng theo mục 1; Trailp20 cho t_0 = 0.030, e_c = 0.023; Casterp20 cho e_c = 0.0276, t_0 = 0.025; Motorp20 cho motor_wm = 1.2 x 2 pi 100; mọi biến không thuộc biến thể đúng danh định. Ghi bảng
+   ra Result/Compare/Robust/Robust_R0_variables.txt.
+R1 Tái lập danh định: chạy nom cho ba bộ. ĐẠT khi metrics của nom trùng file đã có Result/Controllers/<Ctrl>/Cases_ssw/<Ctrl>_metrics_s99999.csv (RMS_eT_Nm và S_Nm mọi dòng lệch tương đối < 1e-6).
+   Không trùng thì DỪNG, tìm nguyên nhân (thường do biến base sót lại), không chạy tiếp. Ghi thời gian thật của mỗi lần gọi run_cases để ước lượng tổng thời gian.
+R2 Đối chứng âm (sau khi chạy hết): mỗi biến thể phải khác nom ở ít nhất một bộ (RMS_eT_Nm lệch tương đối > 1e-6 ở ít nhất một ca). Biến thể nào trùng hệt nom: biến đó không vào được model (bị che bởi
+   model workspace hoặc giá trị cứng), ghi lỗi, không đưa biến thể đó vào bảng kết quả.
+R3 Kiểm trùng lặp: mỗi file metrics có đủ 3 ca và đủ số cửa sổ như file nom.
+
+==============================================================================================================================================================================================
+5. CHẠY
+==============================================================================================================================================================================================
+Script run_robust_cases(variantList) (mục 8): vòng ngoài biến thể, vòng trong bộ. Có file metrics của (biến thể, bộ) rồi thì bỏ qua (chạy tiếp được khi bị ngắt). Ghi tiến độ vào
+Result/Compare/Robust/Robust_progress.txt (giờ bắt đầu, giờ xong từng (biến thể, bộ), RMS_eT ba ca). variantList cho phép chia việc cho hai tiến trình MATLAB nếu cần (ví dụ tiến trình 1 chạy Tf, Jcol,
+Ccol, Mass; tiến trình 2 chạy Calpha, Trail, Caster, Motor); mặc định chạy MỘT tiến trình vì khung WEAVE chạy cùng lúc.
+Thứ tự: R0, rồi nom (R1), rồi 16 biến thể, rồi R2, R3, rồi mục 6. Thời gian: chưa đo; Plant gốc khoảng 1 s mỗi ca khi chạy riêng, vòng kín có bộ điều khiển 1 ms chậm hơn; ước lượng 1-3 giờ một tiến
+trình, sửa lại sau R1.
+Lệnh gọi (Git Bash): "/c/Program Files/MATLAB/R2023a/bin/matlab" -softwareopengl -batch
+"run('C:\Users\Admin\OneDrive\Desktop\git\Adaptive-EPS-using-Reinforcement-Learning\Model\shared\setup_paths.m'); run_robust_cases({'nom'})". MATLAB có thể sập heap giữa các lệnh nối nhau; chạy từng
+nhóm, csv ghi từng (biến thể, bộ) nên chạy lại không mất gì.
+
+==============================================================================================================================================================================================
+6. CHỈ SỐ, BẢNG, HÌNH
+==============================================================================================================================================================================================
+Đọc từ metrics csv của run_cases (không tính lại):
+  - Toàn ca: RMS_eT_Nm (E_RMS), S_Nm (độ ồn trợ lực), Light_s (thời gian tay nhẹ |T_s| < 0.9 |T_d,ref|, dấu hiệu trợ lực thừa), Heavy_s (tay nặng).
+  - Cửa sổ: Mean_eT_signed_pct_of_Tdref (epsilon_w; âm = tay lái nhẹ hơn mục tiêu = trợ lực thừa) ở các cửa sổ giữ cua của STEADY và các cửa sổ mu thấp của SLIP.
+Đại lượng báo: Delta% = 100 (X_biến thể - X_nom)/X_nom cho E_RMS và S; Delta epsilon = epsilon_biến thể - epsilon_nom (điểm %); max |epsilon_w| mỗi ca.
+Thứ hạng E_RMS mỗi (biến thể, ca): quy ước "=" khi chênh < 5 % (ngưỡng hòa QuyChuan 6.4); so với thứ hạng nom, ghi "giữ", "hòa", "đổi" (cùng cách viết với
+Model/VDB/temp_test/Summary/VDB_body_summary_s99999.txt để hai mục của chương 6 đọc cùng một kiểu).
+File ra (Result/Compare/Robust/): Robust_summary_s99999.csv (dòng = biến thể x bộ x ca: E_RMS, S, Light_s, Heavy_s, max |epsilon|, các Delta); Robust_rank_s99999.csv; Robust_summary_s99999.txt (tóm
+tắt bằng chữ không dấu như VDB_body_summary).
+Hình (png, Visible off, -softwareopengl):
+  - Robust_tornado_<CASE>_s99999.png, mỗi ca một hình: mỗi nhóm tham số một hàng, hai mức +-20 %, ba bộ ba màu, trục Delta E_RMS (%).
+  - Robust_bias_STEADY_s99999.png: epsilon_w của Map, PID, MapPID ở các cửa sổ STEADY, nom so với từng biến thể.
+  - Robust_worst_<CASE>_resp_s99999.png: T_s và T_d,ref theo thời gian của biến thể làm E_RMS của Map đổi nhiều nhất (|Delta E_RMS| lớn nhất, quy tắc đặt trước), Map và MapPID chồng lên nhau.
+
+==============================================================================================================================================================================================
+7. CÂU HỎI CẦN TRẢ LỜI KHI VIẾT (KHÔNG PHẢI GIẢ THUYẾT ĐỂ CHỨNG MINH)
+==============================================================================================================================================================================================
+Q1 Nhóm tham số nào làm E_RMS của từng bộ đổi nhiều nhất? Q2 Sai lệch tĩnh epsilon của Map đổi bao nhiêu theo tham số, của PID và MapPID đổi bao nhiêu? Q3 Thứ hạng ba bộ có giữ ở mọi biến thể không;
+   chỗ nào hòa, chỗ nào đổi? Q4 Hai tham số tự chọn (t_0, e_c) có làm đổi kết luận không? Kết quả nào cũng báo, kể cả khi MapPID kém hơn PID hay Map. Không viết lý do theo kết quả của các lần chạy
+   trước (quy tắc "không lập luận từ lần chạy trước" trong CLAUDE.md).
+
+==============================================================================================================================================================================================
+8. ĐẶT FILE, TÊN, NHẬT KÝ, COMMIT
+==============================================================================================================================================================================================
+Code (tiếng Anh, Model/shared/Sim/script/ vì là khung thử dùng chung cho ba bộ): robust_variants.m (bảng biến thể của mục 1, nguồn duy nhất), run_robust_cases.m, check_robust_variables.m (R0),
+summarize_robust.m (R1-R3 và bảng mục 6), plot_robust.m. Đầu mỗi script theo quy ước modelDir của CLAUDE.md (script trong shared/Sim/script tính modelDir bằng 3 lần fileparts).
+Kết quả: Result/Compare/Robust/<biến thể>/<Ctrl>_metrics_s99999.csv và <Ctrl>_<CASE>_sig_s99999.csv (do run_cases ghi); tổng hợp và hình ở Result/Compare/Robust/.
+Nhật ký: Tracking/historychat_robust.md (người dùng thêm khung ROBUST vào Tracking/CLAUDE.md trước khi giao). Ghi Lượt TRƯỚC khi chạy (giờ bắt đầu, biến thể dự kiến) và SAU mỗi giai đoạn (R0, R1, chạy
+xong, R2-R3, bảng).
+Commit: chỉ các file của khung này, khi người dùng bảo; không dùng sync_repo.sh; ghi nhật ký trước khi commit.
+
+==============================================================================================================================================================================================
+9. CHẠY SONG SONG TRÊN MỘT MÁY (CHUNG CHO VIỆC A VÀ VIỆC B)
+==============================================================================================================================================================================================
+Một PC là đủ: việc A ước lượng 1-3 giờ máy (một tiến trình), việc B dưới 1 giờ; không cần laptop. Mỗi khung chạy MỘT tiến trình MATLAB riêng (matlab -batch), hai khung chạy cùng lúc được nếu giữ các
+điều sau:
+  (1) Bộ đệm biên dịch Simulink: hai tiến trình cùng biên dịch Model_MapPID sẽ ghi vào cùng slprj/ và .slxc. Đầu script mỗi khung đặt thư mục riêng: Simulink.fileGenControl('set', 'CacheFolder',
+      'D:\sim_cache\<robust|weave>', 'CodeGenFolder', 'D:\sim_cache\<robust|weave>', 'createDir', true).
+  (2) TEMP sang ổ D: gọi use_sim_tmp (Model/VDB/Blocks/script/use_sim_tmp.m, cần addpath thư mục đó); Simulink.sdi.clear sau mỗi lần mô phỏng; trước khi chạy kiểm ổ C và ổ D còn trống (ghi số GB vào
+      nhật ký), dừng nếu ổ C dưới 10 GB.
+  (3) Không mở các model này trong giao diện Simulink khi đang chạy batch; không lưu model (khung WEAVE đóng bằng close_system(<mdl>, 0)).
+  (4) Mỗi khung chỉ ghi thư mục kết quả và nhật ký của mình; không sửa file dùng chung (run_cases, make_cases, load_*, .json, .mdl, setup_paths, result_dir).
+  (5) Tối đa 3 tiến trình MATLAB cùng lúc trên máy (ước lượng theo RAM, chưa đo); nếu máy chậm rõ thì chạy lần lượt, việc A trước.
+  (6) Repo nằm trong OneDrive: tạm dừng đồng bộ OneDrive khi chạy; không cho máy ngủ.
+
+==============================================================================================================================================================================================
+10. BÁO CÁO KHI XONG (khung ROBUST điền, người dùng đọc mục này đầu tiên)
+==============================================================================================================================================================================================
+Khung ROBUST, chạy 2026-11-12 (PC), seed 99999 cho 17 biến thể; thêm 5 seed 99995-99999 cho nom và 8 biến thể sát ngưỡng. Thời gian thật: nom 10 phút (mỗi bộ 2,7-3,7 phút), 16 biến thể 01:39-02:56 (khoảng 1,3 giờ, có
+lúc MATLAB sập heap 0xc0000374 nên chạy lặp, script bỏ qua phần đã có), seed phụ khoảng 2,5 giờ (xong 05:21). Không sửa Plant, Model, load_*, .json, tham số bộ điều khiển.
+ĐẠT: R0 (mọi biến lệch < 1e-12), R1 (nom trùng Cases_ssw s99999, sai số tương đối 0), R2 (cả 16 biến thể khác nom), R3 (đủ hàng). Không có mục không đạt. Cảnh báo "transport delay zero" của Delay_ctrl là có sẵn.
+Số chính (seed 99999; Delta E_RMS lớn nhất theo trị tuyệt đối trên 16 biến thể): STEADY Map 29,7 %, PID 35,6 %, MapPID 35,5 %; SLIP Map 33,3 %, PID 71,7 %, MapPID 76,6 %; WEAVE Map 9,9 %, PID 6,6 %, MapPID 6,0 %.
+Q1: Mass đổi E_RMS nhiều nhất ở STEADY (cả ba bộ) và SLIP; Caster và Trail cũng lớn ở SLIP (PID, MapPID tăng 70 % và 39 %); WEAVE đổi nhiều nhất theo Tf (6-10 %). Jcol và Motor đổi dưới 3 % (Motor dưới 1 %).
+Q2: sai lệch tĩnh STEADY: Map trung bình epsilon từ -5,6 % đến +29,7 %, max |epsilon| đến 92 % (Massp20); PID từ -0,09 đến -0,02 %, max 0,56 %; MapPID từ -0,09 đến -0,01 %, max 0,54 %. PID và MapPID ngang nhau,
+cùng nhỏ nhất; SLIP: max |epsilon| Map 20-72 %, PID 2,7-16,8 %, MapPID 2,2-16,6 %.
+Q3: thứ hạng nom (E_RMS, "=" khi chênh < 5 %): STEADY PID = MapPID < Map; SLIP MapPID = PID < Map; WEAVE PID < MapPID < Map. Map luôn đứng cuối ở STEADY và SLIP; WEAVE không đổi ở mọi biến thể. Với trung bình 5 seed,
+SLIP có MapPID < PID (chênh trên 5 %) ở Calphap20, Massm20, Tfp20, Trailm20; STEADY chỉ đổi giữa "PID = MapPID" và "MapPID = PID". MapPID không kém PID ở biến thể nào về E_RMS; độ lệch giữa seed (sd/mean) của PID, MapPID 0,3-5,4 %.
+Q4: t_0 và e_c đổi nhiều nhất cùng nhóm Mass (SLIP: Trailp20 +39/+41 %, Casterp20 +70/+74 % cho PID/MapPID); không đảo vị trí Map cuối, kết luận về thứ hạng không đổi khi t_0, e_c sai +-20 %.
+Giới hạn: một xe mô phỏng, sai lệch từng tham số một, +-20 % chung, bộ điều khiển không chọn lại.
+File: Result/Compare/Robust/ (Robust_summary_s99999.csv/.txt, Robust_rank_s99999.csv, Robust_seeds_summary.csv/.txt, Robust_R0/R1/R2R3, Robust_tornado_*, Robust_bias_STEADY, Robust_worst_*); code Model/shared/Sim/script/*robust*.m.
