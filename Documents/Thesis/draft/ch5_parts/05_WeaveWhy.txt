@@ -1,0 +1,69 @@
+5.6. Vì sao MapPID bám kém PID ở chuỗi lái liên tục
+
+5.6.1. Câu hỏi và cách tách
+
+Ở WEAVE, MapPID có $E_{RMS}$ cao hơn PID 10.9 % (Bảng 5.6 và 5.8), dù lệnh của nó là tổng của nhánh bản đồ và một nhánh PID cùng loại với PID riêng. Mục này tìm khoảng cách đó nằm ở đâu và nhánh nào góp phần; đây là câu hỏi mà mục 5.4 để ngỏ. Có ba khả năng, đặt ra trước khi phân tích và không phải kết luận. Khả năng K1: khâu sớm pha và trễ pha của nhánh Map làm $u_{map}$ trễ so với $T_s$ ở chu kỳ đánh lái ngắn, và nhánh PID phải bù phần trễ đó. Khả năng K2: vùng chết làm nhánh Map tắt quanh lúc $T_s$ đổi chiều rồi bật lại với độ dốc lớn, tạo xung trợ lực. Khả năng K3: các hệ số PID của MapPID được chọn khi đã có nhánh Map nên khác PID riêng (Bảng 4.4: $K_p$ bằng 2.08 so với 2.90, $K_d$ bằng 0.0485 so với 0.0677 s, $\tau_f$ bằng 1.64 so với 1.21 ms), và phần bám động do hai nhánh chia nhau.
+
+Cách tách có bốn bước, đều dùng đúng thiết kế của Bảng 4.4 và chuỗi WEAVE. Bước một đo khoảng cách theo từng cửa sổ có đánh lái hình sin và hai lần chuyển làn, trên năm seed; với mỗi cửa sổ có thêm tỉ số biên độ và độ trễ của $T_s$ so với $T_{ref}$, tính bằng khớp bình phương tối thiểu với sin và cos đúng chu kỳ của cửa sổ. Bước hai ghi riêng bốn thành phần của lệnh MapPID, $u_{map}$, $u_P$, $u_I$ và $u_D$ trong (3.19) và (3.20), trong một lần chạy seed 99999, chỉ trong bộ nhớ và không đổi model; tổng bốn thành phần bằng $T_{a,cmd}$ (lệch lớn nhất 0 N·m) và $T_s$ trùng bản ghi 1 ms của cùng seed (lệch lớn nhất $5\times10^{-15}$ N·m), nên việc bật ghi không đổi lời giải. Bước ba đo độ lớn của hai nhánh. Bước bốn chạy ba phép chẩn đoán trên MapPID, mỗi lần đổi một chỗ, ở seed 99999: D1 bỏ khâu trễ pha của nhánh Map, D2 bỏ cả khâu sớm pha và trễ pha, D3 đặt vùng chết bằng không. Ba phép này chỉ để tìm nguyên nhân, không phải bộ điều khiển mới và không đưa vào so sánh chính. Quy tắc đọc được đặt trước: một phép chẩn đoán được coi là góp phần nếu nó làm RMS của $e_T$ thấp hơn MapPID quá 5 % trong một cửa sổ hoặc trên toàn chuỗi; ngưỡng 5 % là lựa chọn của luận văn. Kiểm: RMS toàn chuỗi tính lại từ bản ghi 1 ms khớp cột toàn chuỗi của số liệu chấm ở cả 10 cặp (năm seed, hai bộ).
+
+5.6.2. Khoảng cách theo cửa sổ
+
+Bảng 5.9 cho bảy cửa sổ phân tích. Hai cửa sổ chuyển làn ở đây dài một chu kỳ 2.5 s, khác với hai cửa sổ 0.4 s của mục 5.4, nên dùng tên riêng trong bảng này.
+
+Bảng 5.9: RMS của $e_T$ (N·m) trong bảy cửa sổ của WEAVE, khoảng cách (5.3) của MapPID so với PID, hiệu tỉ số biên độ $T_s/T_{ref}$ (MapPID trừ PID, điểm phần trăm) và hiệu độ trễ của $T_s$ so với $T_{ref}$ (MapPID trừ PID, ms). Hai cột RMS là trung bình năm seed; ba cột còn lại là trung bình ± độ lệch chuẩn mẫu của các hiệu tính theo từng cặp seed.
+Cửa sổ | Chu kỳ (s) | RMS PID | RMS MapPID | Khoảng cách (%) | Hiệu biên độ (điểm %) | Hiệu độ trễ (ms)
+Quanh tâm | 5 | 0.1693 | 0.1871 | +10.5 ± 2.0 | −0.04 ± 0.05 | +0.4 ± 0.6
+Chuyển làn 1 | 2.5 | 0.1953 | 0.2074 | +6.1 ± 2.6 | −0.36 ± 0.02 | +5.1 ± 0.5
+Chuyển làn 2 | 2.5 | 0.1970 | 0.2012 | +2.2 ± 5.8 | −0.32 ± 0.02 | +4.7 ± 1.0
+70 km/h | 3.3333 | 0.1690 | 0.1822 | +7.8 ± 1.3 | −0.10 ± 0.03 | +2.1 ± 0.1
+70 km/h | 1.2500 | 0.2761 | 0.3088 | +11.9 ± 0.9 | −0.54 ± 0.10 | +2.5 ± 0.1
+70 km/h | 0.6667 | 0.4622 | 0.5224 | +13.0 ± 0.7 | −1.65 ± 0.17 | +5.3 ± 0.3
+60 km/h, $\mu=0.3$ | 1.3333 | 0.2798 | 0.3049 | +9.0 ± 0.2 | −0.71 ± 0.02 | +3.7 ± 0.2
+Toàn chuỗi | - | 0.1998 | 0.2217 | +10.9 ± 1.1 | - | -
+
+[Hình 5.6: Hiệu giữa MapPID và PID trong bảy cửa sổ của WEAVE, trung bình trên năm seed, thanh sai số là độ lệch chuẩn mẫu: (a) RMS của $e_T$ theo phần trăm, (b) tỉ số biên độ $T_s/T_{ref}$ theo điểm phần trăm, (c) độ trễ của $T_s$ so với $T_{ref}$ theo ms. Số trong ngoặc ở nhãn là chu kỳ đánh lái. | Documents/Thesis/figures/Hinh_5_6_WeaveGap.png@16.0]
+
+Khoảng cách dương ở cả bảy cửa sổ, từ +2.2 đến +13.0 %. Hai cửa sổ chuyển làn có độ phân tán lớn (độ lệch chuẩn 2.6 và 5.8 điểm) vì mỗi cửa sổ chỉ chứa một chu kỳ. Ở đoạn 70 km/h, 0.10 g, nơi chỉ chu kỳ đổi, khoảng cách tăng từ +7.8 lên +11.9 rồi +13.0 % khi chu kỳ ngắn lại, kèm hiệu biên độ −0.10, −0.54 và −1.65 điểm và hiệu độ trễ +2.1, +2.5 và +5.3 ms. Ở chu kỳ 0.67 s, cả hai bộ chỉ tạo được khoảng 0.70 biên độ mục tiêu (0.70 với PID, 0.69 với MapPID). Các cảnh còn lại không cùng điều kiện (0.05 g ở cảnh quanh tâm, một chu kỳ mỗi cửa sổ ở chuyển làn), nên xu hướng theo chu kỳ chỉ kết luận được ở đoạn 70 km/h. Chênh lệch về biên độ và về độ trễ đều nhỏ và cùng chiều: $T_s$ của MapPID có biên độ thấp hơn và trễ hơn PID đôi chút. $E_{RMS}$ cao hơn là hệ quả của hai chênh lệch đó cộng với các nhọn sai số quanh điểm đổi chiều (Hình 5.7), nhưng dữ liệu không tách được tỉ trọng của từng yếu tố.
+
+5.6.3. Độ lớn của hai nhánh
+
+Bảng 5.10 cho RMS của từng thành phần lệnh MapPID trong cùng bảy cửa sổ, một lần chạy seed 99999.
+
+Bảng 5.10: RMS (N·m) của các thành phần lệnh của MapPID trong bảy cửa sổ của WEAVE, seed 99999, và tỉ lệ thời gian mô-men đo nằm trong vùng chết ($|T_s|<T_{s0}=0.3$ N·m), khi nhánh Map bằng không. $u_{PID}=u_P+u_I+u_D$.
+Cửa sổ | Chu kỳ (s) | $u_{map}$ | $u_P$ | $u_I$ | $u_D$ | $u_{PID}$ | $|T_s|<T_{s0}$ (%)
+Quanh tâm | 5 | 0.06 | 0.74 | 1.74 | 0.35 | 1.90 | 10.9
+Chuyển làn 1 | 2.5 | 1.01 | 0.51 | 2.67 | 0.55 | 2.93 | 2.7
+Chuyển làn 2 | 2.5 | 0.98 | 0.51 | 2.74 | 0.55 | 2.99 | 2.7
+70 km/h | 3.3333 | 0.33 | 0.56 | 2.28 | 0.44 | 2.46 | 6.3
+70 km/h | 1.2500 | 0.25 | 0.78 | 2.83 | 0.68 | 3.18 | 8.6
+70 km/h | 0.6667 | 0.12 | 1.21 | 3.55 | 0.89 | 4.05 | 9.6
+60 km/h, $\mu=0.3$ | 1.3333 | 0.43 | 0.70 | 3.59 | 0.64 | 3.96 | 5.3
+
+[Hình 5.7: Cửa sổ chu kỳ 0.67 s của WEAVE (70 km/h, 0.10 g), từ 59 đến 61 s, seed 99999, số liệu 1 ms: $T_s$ và $T_{ref}$, sai lệch $e_T$, hai nhánh của MapPID ($u_{PID}=u_P+u_I+u_D$) và mô-men trợ lực $T_a$ của PID và MapPID. | Documents/Thesis/figures/Hinh_5_7_WeaveZoom.png@16.0]
+
+Nhánh Map nhỏ ở mọi cửa sổ trừ hai lần chuyển làn. Ở cửa sổ 0.67 s, $u_{map}$ có RMS 0.12 N·m so với 4.05 N·m của $u_{PID}$, tức 3 %, nên $T_a$ hầu như do nhánh PID tạo ra: Hình 5.7 cho thấy $u_{map}$ gần phẳng và $T_a$ của hai bộ gần chồng lên nhau (RMS của hiệu 0.38 N·m trên RMS 3.96 N·m). Lý do là mô-men mục tiêu ở các cửa sổ này, biên độ cơ bản từ 1.6 đến 2.5 N·m ngoài hai lần chuyển làn, nằm ở đầu dưới của bản đồ: bảng hiệu chỉnh bắt đầu từ 0.1 g và, ví dụ ở 60 km/h, chỉ cho trợ lực 0.57 N·m tại $T_s=2.1$ N·m, rồi tăng đến 4.84 N·m khi $T_s$ lên 2.8 N·m (mục 3.1.2). Hai lần chuyển làn, 0.2 g, có mô-men mục tiêu lớn hơn (biên độ cơ bản 3.2 N·m), chạm đoạn dốc của bản đồ nên $u_{map}$ có RMS 1.0 N·m. Trong các thành phần PID, $u_I$ lớn nhất: khâu tích phân giữ phần mô-men phản lực mà bản đồ không cấp, theo (3.21).
+
+Nhánh Map chỉ bằng không do vùng chết trong 2.7 đến 10.9 % thời gian, mỗi lần qua vùng chết kéo dài 20 đến 72 ms. $u_{map}$ và $u_{PID}$ ngược dấu trong 51 đến 65 % thời gian, nhưng phần ngược dấu có RMS nhỏ, từ 0.05 đến 0.71 N·m, và lớn nhất ở hai cửa sổ chuyển làn (0.71 N·m), nơi nhánh Map đủ lớn để nhánh PID phải triệt bớt.
+
+5.6.4. Ba phép chẩn đoán
+
+Bảng 5.11 cho RMS của $e_T$ ở seed 99999 của PID, MapPID và ba phép chẩn đoán, kèm thay đổi của từng phép so với MapPID.
+
+Bảng 5.11: RMS của $e_T$ (N·m) ở seed 99999 của PID, MapPID và ba phép chẩn đoán D1 (bỏ khâu trễ pha), D2 (bỏ khâu sớm pha và trễ pha), D3 (vùng chết bằng không); trong ngoặc là thay đổi so với MapPID. Ở seed này khoảng cách MapPID so với PID trên toàn chuỗi là 10.3 %.
+Cửa sổ | PID | MapPID | D1 | D2 | D3
+Toàn chuỗi | 0.2034 | 0.2244 | 0.2223 (−0.9 %) | 0.2230 (−0.6 %) | 0.2238 (−0.3 %)
+Quanh tâm (5 s) | 0.1699 | 0.1846 | 0.1835 (−0.6 %) | 0.1848 (+0.1 %) | 0.1846 (−0.0 %)
+Chuyển làn 1 (2.5 s) | 0.1908 | 0.1985 | 0.1853 (−6.6 %) | 0.1942 (−2.2 %) | 0.1983 (−0.1 %)
+Chuyển làn 2 (2.5 s) | 0.1836 | 0.1906 | 0.1769 (−7.2 %) | 0.1856 (−2.6 %) | 0.1907 (+0.0 %)
+70 km/h (3.3333 s) | 0.1648 | 0.1763 | 0.1707 (−3.2 %) | 0.1772 (+0.5 %) | 0.1765 (+0.1 %)
+70 km/h (1.2500 s) | 0.2833 | 0.3186 | 0.3095 (−2.9 %) | 0.3163 (−0.7 %) | 0.3195 (+0.3 %)
+70 km/h (0.6667 s) | 0.4685 | 0.5273 | 0.5174 (−1.9 %) | 0.5271 (−0.0 %) | 0.5293 (+0.4 %)
+60 km/h, $\mu=0.3$ (1.3333 s) | 0.2822 | 0.3079 | 0.2999 (−2.6 %) | 0.3048 (−1.0 %) | 0.3098 (+0.6 %)
+
+Theo quy tắc đọc đặt trước, chỉ D1 góp phần, và chỉ ở hai cửa sổ chuyển làn, nơi $u_{map}$ lớn (−6.6 và −7.2 %); ở đó khâu trễ pha có ảnh hưởng. Trên toàn chuỗi phép nào cũng chỉ giảm RMS tối đa 0.9 % (D1), trong khoảng cách 10.3 %, và ở hai cửa sổ có khoảng cách lớn nhất (chu kỳ 1.25 và 0.67 s) các thay đổi nằm trong khoảng −2.9 đến +0.4 %. Điều này phù hợp với Bảng 5.10: $u_{map}$ nhỏ nên bỏ hay đổi nhánh Map ít thay đổi $T_a$.
+
+5.6.5. Kết luận của mục
+
+Khoảng cách 9 đến 13 % giữa MapPID và PID ở đánh lái liên tục không nằm ở nhánh Map. Ba phép chẩn đoán không đóng được nó, và nhánh Map có đóng góp nhỏ vào lệnh ở các cửa sổ đó, nên K1 chỉ có ảnh hưởng ở hai lần chuyển làn và K2 không có dấu hiệu đóng góp. Giả thuyết còn lại là K3, bộ hệ số PID của MapPID khác PID riêng; K3 chưa được kiểm bằng phép chạy nào. Một phép thử khả thi, chưa chạy, là MapPID với bảng bản đồ bằng không (nhánh Map tắt) để tách tác động của hệ số PID khỏi tác động của nhánh Map; luận văn để phép thử này ở hướng phát triển. Cũng cần nhớ rằng cửa sổ 0.67 s ứng với 1.5 Hz, cao hơn tần số lớn nhất của các sin trong CALIB (chu kỳ 1 s, 1 Hz, mục 4.2.1), nên các thiết kế được chọn chưa gặp kích thích này; luận văn không kiểm xem điều đó có góp phần không.
+
+Giới hạn của mục: các bước hai đến bốn chỉ dùng một seed (99999) và mỗi cửa sổ chuyển làn chỉ chứa một chu kỳ; ba phép chẩn đoán đổi từng chỗ một nên không bắt được tác động kết hợp, và không có kiểm định thống kê cho chúng.

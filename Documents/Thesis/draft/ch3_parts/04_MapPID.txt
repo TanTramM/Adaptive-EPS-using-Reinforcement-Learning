@@ -1,0 +1,34 @@
+3.4. Bộ điều khiển MapPID
+
+3.4.1. Ý tưởng và lý do mắc song song
+
+MapPID dựa trên một ý đơn giản: giữ nguyên Map và để một nhánh PID làm việc bên cạnh. Bản đồ và khâu bù lead-lag của mục 3.1 giữ đúng như đã hiệu chỉnh, kể cả $K_{max}$, $T_{s0}$ và các hằng số thời gian của khâu bù; nhánh PID của mục 3.3 được mắc song song (Hình 3.5). Chỉ bốn tham số của nhánh được chỉnh trong khi bản đồ bị đóng băng, nên nhánh có thể gắn vào một bộ hiệu chỉnh sẵn có mà không động đến bản đồ đang giữ cảm giác lái trên đường khô. Lệnh trước khâu giới hạn là tổng hai đầu ra:
+
+(3.19)  T_a,cmd = u_map + u_PID
+[ T_{a,cmd}=u_{map}+u_{PID} ]
+
+(3.20)  u_PID = u_P + u_I + u_D
+[ u_{PID}=u_P+u_I+u_D ]
+
+trong đó $u_{map}$ lấy từ (3.5)-(3.6) và $u_{PID}$ từ (3.13)-(3.15).
+
+[Hình 3.5: Sơ đồ vòng kín của bộ điều khiển MapPID. Lệnh $T_{a,cmd}$ là tổng của đầu ra $u_{map}$ của bản đồ và khâu bù lead-lag (Hình 3.1), được giữ nguyên, và đầu ra $u_{PID}$ của nhánh PID (Hình 3.4); tổng đi qua một khâu giới hạn trợ lực. Thành phần vi phân tác dụng lên $T_{s,m}$ như ở mục 3.3.3. Vận tốc đo là $v_m=H_v(v)$. | Documents/Thesis/figures/Hinh_3_5_MapPID.png]
+
+Luận văn chọn mắc song song vì ba lý do. Thứ nhất, đây là cách các hệ EPS thực tế thêm một logic phụ: mô-men của logic phụ được cộng vào mô-men chính do bản đồ và khâu ổn định tạo ra [9, mục 1]; theo [9], Williams (2009) cũng đề xuất một thiết bị gắn thêm lên xe sẵn có, cấp thêm mô-men từ một motor lắp vào cột lái (ý này trích lại qua [9]). Thứ hai, đường tín hiệu của nhánh bản đồ không bị sửa, nên ở những điểm bản đồ đi đúng qua điểm hiệu chỉnh thì nhánh PID không phải cấp gì ở trạng thái xác lập (mục 3.4.2). Thứ ba, nhánh PID có khâu tích phân nên đưa sai lệch xác lập về không bất kể độ dốc hay hiệu chỉnh của bản đồ. Điểm khác với [7]: ở [7] bộ PID bám mô-men trợ lực do đường đặc tính yêu cầu, còn ở MapPID nhánh PID bám mô-men mục tiêu của người lái và chạy song song với bản đồ.
+
+3.4.2. Trạng thái xác lập của nhánh PID
+
+Trạng thái xác lập của nhánh suy từ (3.7). Khi có nhánh, cân bằng của cột lái thành $T_s+M(v,T_s)+u_{PID}=T_r(v,a_y,\mu)$. Nếu vòng ổn định và motor không bão hòa, khâu tích phân chỉ có thể dừng ở $e_T=0$, tức $T_s=T_{ref}$, và nhánh dừng ở
+
+(3.21)  u_PID,ss = T_r(v, a_y, mu) - T_ref(v, a_y) - M(v, T_ref)
+[ u_{PID,ss}=T_r(v,a_y,\mu)-T_{ref}(v,a_y)-M(v,T_{ref}) ]
+
+Từ (3.21) có hai tính chất. Thứ nhất, độ chính xác xác lập không còn phụ thuộc bản đồ, vì khâu tích phân dừng ở $e_T=0$ bất kể độ dốc hay hiệu chỉnh của bản đồ. Thứ hai, nhánh chỉ cấp phần bản đồ để lại. Ở chỗ bản đồ đi đúng qua điểm hiệu chỉnh, (3.2) cho $M(v,T_{ref})=T_r(v,a_y,0.8)-T_{ref}$, nên $u_{PID,ss}=T_r(v,a_y,\mu)-T_r(v,a_y,0.8)$: bằng không trên đường khô, và âm khi hệ số bám giảm, với độ lớn bằng mức giảm của mô-men phản lực, tức nhánh rút bớt đúng lượng trợ lực thừa. Ở chỗ giới hạn độ dốc làm bản đồ thấp hơn điểm hiệu chỉnh, $u_{PID,ss}$ còn gánh phần thiếu đó. Bản đồ vì vậy vẫn chịu trách nhiệm về trợ lực trên đường khô, còn nhánh PID xử lý hệ số bám thay đổi, bão hòa lốp và phần thiếu do giới hạn độ dốc. Với PID đứng một mình thì $M=0$ và $u_{PID,ss}=T_r-T_{ref}$: toàn bộ trợ lực xác lập do khâu tích phân gánh, phần việc mà ở MapPID bản đồ đã làm sẵn trên đường khô.
+
+Hai điều kiện để các kết quả trên đúng. Thứ nhất, lệnh không chạm giới hạn. $T_{a,max}(v)$ ở (2.23) được đặt theo nhu cầu trợ lực trên đường khô, và ở cùng $a_y$ mô-men phản lực giảm khi $\mu$ giảm (mục 2.3.4), nên nhu cầu xác lập $T_{a,req}$ của (2.21) trên đường trơn không vượt $T_{a,max}$ với mọi $a_y\le a_{y,lim}(v)$; giới hạn vì thế không chặn ở trạng thái xác lập, chỉ chặn ở các quá độ. Thứ hai, khi $T_r<T_{ref}$ thì nhánh PID có thể cho trợ lực âm, tức motor cản lại; (2.20) cho phép điều này, và tỉ lệ thời gian có trợ lực ngược được báo cáo ở mục 4.2.
+
+3.4.3. Nhánh PID và bản đồ, và việc lắp vào xe có sẵn bản đồ
+
+Bản đồ không trung hòa với động học của nhánh. Với độ lệch nhỏ quanh điểm làm việc, bản đồ nhân mô-men đo với độ dốc $s_m$ trước khâu bù, còn nhánh PID chạy song song, nên đường từ mô-men đo tới mô-men trợ lực là tổng hai đóng góp. Bản đồ cấp một phần trợ lực khi tay lái đổi chậm, có thể giảm phần hiệu chỉnh tỉ lệ mà nhánh cần cấp; nhưng bản đồ cũng làm phản ứng với dao động của cột lái mạnh hơn và có thể làm mất ổn định vòng. Đáp ứng vòng kín của nhánh vì thế phụ thuộc bản đồ bên dưới, nên bốn tham số của nhánh được chỉnh cho từng xe trên cả vòng, với bản đồ và khâu bù bị đóng băng và mô hình đối tượng khớp với xe đó (Chương 4), và bốn tham số của MapPID không trùng với bốn tham số của PID đứng một mình. Khâu giới hạn trợ lực (2.20) dùng chung cho cả ba bộ và tác dụng lên lệnh $T_{a,cmd}$, là $u_{map}$ ở Map, theo (3.16) ở PID và theo (3.19) ở MapPID.
+
+Khi áp dụng, Map của luận văn đại diện cho bản đồ và khâu bù đã cài trên xe. Cặp đó được coi là cho trước, đối tượng được điều chỉnh theo xe, và bốn tham số PID được tìm trên đó cho từng xe. Mô-men mục tiêu phải tái tạo mô-men vô-lăng xác lập trên đường khô của chính bản đồ xe đó, như (3.1) làm cho bản đồ của luận văn. Lý do suy từ (3.21): nhánh PID chỉ yên lặng trên đường khô khi $T_{ref}+M(v,T_{ref})=T_r(v,a_y,0.8)$, tức khi $T_{ref}$ đúng bằng mô-men mà bản đồ tự cân bằng trên đường khô; nếu mô-men mục tiêu khác đi thì nhánh phải cấp hoặc rút phần chênh ngay cả trên đường khô và đổi cảm giác lái tĩnh mà bản đồ đã định. Ở động học, nhánh PID vẫn cộng thêm mô-men theo sai lệch khi lái, nên cảm giác lái động có thể đổi; mức đổi này được đo bằng các chỉ tiêu ở Chương 5.

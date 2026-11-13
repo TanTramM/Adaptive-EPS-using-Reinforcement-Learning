@@ -1,0 +1,190 @@
+@@SECTION cover
+@@CB14 ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH
+@@CB14 TRƯỜNG ĐẠI HỌC BÁCH KHOA
+@@SP 6
+@@CB15 TRẦN MINH TÂN
+@@SP 3
+@@TITLE
+@@SP 3
+@@CB14 LUẬN VĂN THẠC SĨ
+@@SP 10
+@@CB13 TP. HỒ CHÍ MINH – NĂM 2026
+@@PAGEBREAK
+@@CB14 ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH
+@@CB14 TRƯỜNG ĐẠI HỌC BÁCH KHOA
+@@SP 4
+@@CB15 TRẦN MINH TÂN
+@@SP 2
+@@TITLE
+@@SP 2
+@@C13 Chuyên ngành: [điền theo quyết định giao đề tài]
+@@C13 Mã số chuyên ngành: [điền theo quyết định giao đề tài]
+@@SP 1
+@@CB14 LUẬN VĂN THẠC SĨ
+@@SP 3
+@@I Người hướng dẫn khoa học:
+@@I TS. Phùng Thanh Huy
+@@SP 5
+@@CB13 TP. HỒ CHÍ MINH – NĂM 2026
+
+@@SECTION front
+@@H NHIỆM VỤ LUẬN VĂN THẠC SĨ
+
+@@C13 [Chèn bản Nhiệm vụ luận văn thạc sĩ do Phòng Đào tạo Sau đại học cấp, có chữ ký và dấu.]
+
+@@H LỜI CAM ĐOAN
+
+Tôi cam đoan luận văn này là công trình nghiên cứu của riêng tôi, được thực hiện dưới sự hướng dẫn của TS. Phùng Thanh Huy. Các kết quả mô phỏng và số liệu trình bày trong luận văn là trung thực và do chính tôi thực hiện. Các công thức và thông số lấy từ tài liệu đã công bố được trích dẫn đầy đủ trong danh mục tài liệu tham khảo, và mọi giá trị do tôi tự chọn được ghi rõ là lựa chọn của luận văn. Một phần nội dung của luận văn có trong bản thảo bài báo do tôi và người hướng dẫn cùng viết (xem danh mục công trình ở cuối luận văn).
+
+@@R TP. Hồ Chí Minh, ngày      tháng      năm 2026
+
+@@R Học viên
+
+@@SP 3
+
+@@R Trần Minh Tân
+
+@@H LỜI CẢM ƠN
+
+Tôi xin bày tỏ lòng biết ơn sâu sắc đến TS. Phùng Thanh Huy, người đã trực tiếp hướng dẫn, định hướng đề tài và góp ý cho tôi trong suốt quá trình thực hiện luận văn.
+
+Tôi xin cảm ơn quý thầy cô Trường Đại học Bách khoa, Đại học Quốc gia Thành phố Hồ Chí Minh, đã giảng dạy và tạo điều kiện cho tôi học tập. Tôi cũng xin cảm ơn gia đình và bạn bè đã động viên tôi trong thời gian học tập và hoàn thành luận văn.
+
+@@H TÓM TẮT
+
+Trong hệ trợ lực lái điện có motor đặt trên cột lái (C-EPS), bộ điều khiển thông thường dùng một bản đồ trợ lực để đổi mô-men thanh xoắn và vận tốc xe thành mô-men trợ lực. Bản đồ không có mô-men mục tiêu để bám, nên khi hệ số bám giữa lốp và mặt đường giảm, nó chỉ bù một phần của lượng giảm mô-men phản lực: mô-men thanh xoắn thay đổi $\Delta T_r/(1+s_m)$, với $s_m$ là độ dốc của bản đồ. Tăng độ dốc để bù nhiều hơn làm vòng điều khiển kém ổn định và khuếch đại nhiễu cảm biến, nên độ dốc không thể tăng tùy ý, và trên mặt đường trơn người lái nhận trợ lực thừa.
+
+Luận văn đề xuất MapPID, một nhánh PID mắc song song với bản đồ trợ lực và khâu bù lead-lag đã có. Nhánh PID bám mô-men mục tiêu tính từ vận tốc xe và gia tốc ngang, hai đại lượng đo được trên xe, nên không cần ước lượng hệ số bám và không phải sửa bản đồ; với mỗi xe chỉ cần chỉnh bốn tham số của nhánh PID. Luận văn lập một mô hình phi tuyến liên kết cột lái, lốp và thân xe một vết, thiết kế ba bộ điều khiển Map, PID và MapPID, và chọn tham số của cả ba theo cùng một quy tắc trên mặt Pareto của sai số bám và độ ồn mô-men trợ lực. Ba bộ được đánh giá trên ba chuỗi mô phỏng độc lập với ca chọn tham số, dưới nhiễu cảm biến với năm chuỗi nhiễu khác nhau.
+
+Kết quả cho thấy MapPID giảm sai số bám toàn chuỗi của Map 4.24 lần khi giữ cua ổn định, 3.51 lần khi đổi vận tốc và hệ số bám, và 6.54 lần khi lái liên tục, và giữ sai lệch xác lập trong 0.43 % mô-men mục tiêu ở chuỗi giữ cua. Cái giá là độ ồn của mô-men trợ lực tăng. Sai số xác lập lớn của Map chủ yếu do giới hạn độ dốc của bản đồ và ma sát khô của cột lái, một đại lượng mà bản đồ cố định không biết. So với PID đứng một mình, MapPID cho độ ồn thấp hơn nhưng không bám tốt hơn một cách nhất quán: bám ngang khi giữ cua, tốt hơn 4.6 % khi đổi hệ số bám và kém 10.9 % khi lái liên tục. Khi tham số của xe lệch ±20 % và khi lốp và thân xe được thay bằng khối của thư viện động lực học xe VDB, thứ hạng của ba bộ gần như giữ nguyên. Các kết luận thuộc một xe mô phỏng với góc vô-lăng cho trước và chưa được đối chiếu với số đo trên xe thật.
+
+@@C13 Từ khóa: trợ lực lái điện cột lái; bản đồ trợ lực; phản hồi mô-men; bộ điều khiển PID; hệ số bám của mặt đường; gia tốc ngang.
+
+@@H ABSTRACT
+
+In column-type electric power steering (C-EPS), a conventional controller converts the torsion-bar torque and the vehicle speed into an assist torque through an assist map. The map has no target torque to follow, so when the friction between tire and road falls, it compensates only part of the drop in the road reaction torque: the torsion-bar torque changes by $\Delta T_r/(1+s_m)$, where $s_m$ is the slope of the map. A steeper map would compensate more, but it makes the control loop less stable and amplifies sensor noise, so the slope cannot be raised freely and the driver receives too much assist on slippery roads.
+
+This thesis proposes MapPID, a PID branch connected in parallel with the existing assist map and lead-lag compensator. The PID branch tracks a target torque computed from the vehicle speed and the lateral acceleration, which are both measured on the vehicle. It therefore needs no estimate of road friction and leaves the map unchanged, and each vehicle needs only four PID parameters. A nonlinear model of the steering column, the tires and a single-track vehicle body is built, three controllers (Map, PID and MapPID) are designed, and their parameters are selected with one common rule on the Pareto front of tracking error and assist-torque noise. The three controllers are evaluated on three simulated sequences that are independent of the sequence used for parameter selection, under sensor noise with five noise realizations.
+
+MapPID reduces the whole-sequence tracking error of Map by a factor of 4.24 in steady cornering, 3.51 when speed and friction change, and 6.54 in continuous steering, and it keeps the steady-state deviation within 0.43 % of the target torque in steady cornering. The cost is a higher assist-torque noise. The large steady-state error of Map comes mainly from the slope limit of the map and from the dry friction of the steering column, which a fixed map cannot know. Compared with PID alone, MapPID gives lower noise but does not track better in every case: the two are equal in steady cornering, MapPID is 4.6 % better when friction changes and 10.9 % worse in continuous steering. When the vehicle parameters are shifted by ±20 % and when the tire and body models are replaced by blocks of the Vehicle Dynamics Blockset (VDB), the ranking of the three controllers is almost unchanged. The conclusions apply to one simulated vehicle with a prescribed steering-wheel angle and have not been compared with measurements on a real vehicle.
+
+@@C13 Keywords: electric power steering; assist map; torque feedback; PID control; road friction; lateral acceleration.
+
+@@TOC MỤC LỤC
+
+@@LOF DANH MỤC HÌNH
+
+@@LOT DANH MỤC BẢNG
+
+@@H DANH MỤC KÝ HIỆU
+
+@@TAB
+Ký hiệu | Ý nghĩa | Đơn vị
+$\theta_1$ | Góc vô-lăng, đầu vào do người lái đặt | rad
+$\theta_2$ | Góc trục lái dưới | rad
+$K$ | Độ cứng thanh xoắn | N·m/rad
+$J_{col}$ | Quán tính cột lái quy đổi | kg·m²
+$C_{col}$ | Hệ số cản của cột lái | N·m·s/rad
+$T_f$ | Biên độ ma sát khô của cột lái | N·m
+$c$ | Hệ số làm mịn của hàm tanh trong ma sát khô | s/rad
+$n_{st}$ | Tỉ số truyền từ trục lái dưới tới góc bánh xe trước | –
+$T_s$ | Mô-men thanh xoắn | N·m
+$T_a$ | Mô-men trợ lực của motor | N·m
+$T_r$ | Mô-men phản lực mặt đường quy đổi về trục lái | N·m
+$T_{ref}$ | Mô-men mục tiêu | N·m
+$e_T$ | Sai lệch mô-men, $e_T=T_s-T_{ref}$ | N·m
+$T_{a,cmd}$ | Lệnh mô-men trợ lực của bộ điều khiển | N·m
+$T_{a,lim}$ | Lệnh đã bị chặn bởi giới hạn trợ lực, đưa vào motor | N·m
+$T_{a,max}$ | Giới hạn mô-men trợ lực | N·m
+$T_{a,req}$ | Nhu cầu trợ lực, $T_r-T_{ref}$ | N·m
+$\tau_m$ | Hằng số thời gian của motor | s
+$f_m$ | Băng thông của motor | Hz
+$T_{s,m}$, $v_m$, $a_{y,m}$ | Tín hiệu đo của $T_s$, $v$, $a_y$ (có nhiễu, lượng tử hóa, chu kỳ cập nhật) | như đại lượng gốc
+$\Delta$ | Bước lượng tử của cảm biến | như đại lượng đo
+$T_u$ | Chu kỳ cập nhật của cảm biến | s
+$\sigma$ | Độ lệch chuẩn của nhiễu cảm biến (mục 2.8) | như đại lượng đo
+$\sigma$ | Chiều dài thả lỏng của lốp (mục 5.8) | m
+$\tau_{lag}$ | Hằng số thời gian trễ của lực ngang lốp, $\sigma/v$ | s
+$v$ | Vận tốc dọc của xe | m/s
+$\mu$ | Hệ số bám giữa lốp và mặt đường | –
+$a_y$ | Gia tốc ngang của xe | m/s²
+$a_{y,lim}$ | Gia tốc ngang dùng để tính giới hạn trợ lực | m/s²
+$a_{y,max}$ | Gia tốc ngang xác lập lớn nhất mà mô hình đạt | m/s²
+$\beta$ | Góc trượt hông của thân xe | rad
+$\gamma$ | Tốc độ quay của xe quanh trục đứng | rad/s
+$\delta_f$ | Góc bẻ bánh trước | rad
+$\alpha_f$, $\alpha_r$ | Góc trượt của cầu trước, cầu sau | rad
+$m$ | Khối lượng xe | kg
+$I_z$ | Mô-men quán tính của xe quanh trục đứng | kg·m²
+$l_f$, $l_r$ | Khoảng cách từ trọng tâm đến cầu trước, cầu sau | m
+$g$ | Gia tốc trọng trường | m/s²
+$F_{yf}$, $F_{yr}$ | Lực ngang của cầu trước, cầu sau | N
+$F_{zf}$, $F_{zr}$ | Tải tĩnh trên cầu trước, cầu sau | N
+$C_{\alpha f}$, $C_{\alpha r}$ | Độ cứng góc trượt của cầu trước, cầu sau | N/rad
+$B_i$, $C$, $D_i$, $E$ | Hệ số độ cứng, hình dạng, đỉnh lực và độ cong của công thức lực ngang lốp (Magic Formula) | –, –, N, –
+$t_0$ | Vệt khí nén ở góc trượt bằng không | m
+$t_p$ | Vệt khí nén theo góc trượt | m
+$e_c$ | Vệt caster | m
+$e_{p0}$ | Cánh tay đòn tổng ở góc trượt bằng không | m
+$e_{eff}$ | Cánh tay đòn hiệu dụng của lực ngang | m
+$K_{max}$ | Độ dốc lớn nhất của bản đồ trợ lực | –
+$T_{s0}$ | Ngưỡng vùng chết của bản đồ trợ lực | N·m
+$M$ | Bản đồ trợ lực, mô-men trợ lực theo $v$ và $T_s$ | N·m
+$s_m$ | Độ dốc của bản đồ tại điểm làm việc | –
+$\bar{s}$ | Độ dốc trung bình của bản đồ giữa hai nghiệm | –
+$\Delta T_r$, $\Delta T_s$ | Thay đổi của $T_r$ và của $T_s$ khi hệ số bám đổi | N·m
+$\tau_{j,in}$, $\tau_{j,out}$ | Hằng số thời gian vào và ra của khâu bù $j$ ($j=1$ sớm pha, $j=2$ trễ pha) | s
+$g_{min}$ | Mức làm chậm cho phép của khâu trễ pha | –
+$w$ | Đầu ra của khâu sớm pha | N·m
+$u_{map}$ | Đầu ra của khâu bù, lệnh của nhánh Map | N·m
+$K_p$ | Hệ số tỉ lệ của PID | –
+$T_i$, $T_d$ | Thời gian tích phân và thời gian vi phân của PID | s
+$K_i$, $K_d$ | Hệ số tích phân $K_p/T_i$ và hệ số vi phân $K_pT_d$ | 1/s, s
+$N$ | Hệ số lọc của khâu vi phân, $\tau_f=T_d/N$ | –
+$\tau_f$ | Hằng số thời gian của bộ lọc khâu vi phân | s
+$T_{s,f}$ | Mô-men đo sau bộ lọc của khâu vi phân | N·m
+$T_t$, $K_{aw}$ | Hằng số thời gian chống bão hòa tích phân và nghịch đảo của nó, $K_{aw}=1/T_t$ | s, 1/s
+$u_P$, $u_I$, $u_D$ | Thành phần tỉ lệ, tích phân, vi phân của nhánh PID | N·m
+$u_{PID}$ | Lệnh của nhánh PID, $u_P+u_I+u_D$ | N·m
+$u_{PID,ss}$ | Giá trị xác lập của lệnh nhánh PID | N·m
+$R_g$ | Sai số bám của nhóm cửa sổ $g$ trong CALIB, tính theo phần trăm mô-men mục tiêu | %
+$R$ | Độ bám của một lần chạy CALIB, trung bình nhân của ba nhóm | %
+$S$ | Độ ồn của mô-men trợ lực, RMS của phần còn lại sau lọc thông thấp | N·m
+$\bar{R}$, $\bar{S}$ | Giá trị trung bình của $R$ và $S$ trên năm seed | %, N·m
+$J$ | Tích $\bar{R}\bar{S}$, tiêu chí chọn điểm cuối | %·N·m
+$e_{rel}$, $e_{rel,max}$ | Sai số xác lập tương đối của một cửa sổ và lớn nhất trên các cửa sổ | %
+$\rho_{gain}$, $\rho_{delay}$ | Tỉ số của $R$ khi có nhiễu loạn motor so với danh định | –
+$E_{RMS}$ | Căn trung bình bình phương của $e_T$ trên khoảng 2 đến 100 s | N·m
+$\epsilon_w$ | Độ lệch tương đối có dấu của $T_s$ so với $T_{ref}$ trong cửa sổ $w$ | %
+$\Delta(A,B)$ | Chênh lệch tương đối của một chỉ tiêu giữa bộ A và bộ B | %
+
+@@H DANH MỤC VIẾT TẮT
+
+@@TAB
+Viết tắt | Nghĩa
+ANFIS | Adaptive Neuro-Fuzzy Inference System, hệ suy diễn mờ nơ-ron thích nghi
+BP | Back Propagation, mạng truyền ngược
+C-EPS | Column-type Electric Power Steering, hệ trợ lực lái điện có motor đặt trên cột lái
+CALIB | Tên ca mô phỏng dài 140 s dùng để chọn tham số
+CAN | Controller Area Network, mạng truyền tín hiệu giữa các bộ điều khiển trên xe
+DOB | Disturbance Observer, bộ quan sát nhiễu
+ECU | Electronic Control Unit, bộ điều khiển điện tử
+EPS | Electric Power Steering, hệ trợ lực lái điện
+ESC | Electronic Stability Control, hệ ổn định điện tử
+FHWA | Federal Highway Administration, Cục Đường cao tốc Liên bang Hoa Kỳ
+HIL | Hardware-in-the-Loop, thử có phần cứng trong vòng
+HILS | Hardware-In-the-Loop Simulation, mô phỏng có phần cứng trong vòng
+JND | Just Noticeable Difference, ngưỡng phân biệt: độ chênh nhỏ nhất mà người lái nhận ra
+LQG | Linear Quadratic Gaussian, điều khiển tuyến tính bậc hai kèm bộ ước lượng Gauss
+Map | Bộ điều khiển gồm bản đồ trợ lực và khâu bù lead-lag
+MapPID | Bộ điều khiển giữ nguyên Map và cộng thêm một nhánh PID song song
+PCHIP | Đa thức Hermite bậc ba từng đoạn giữ đơn điệu
+PID | Proportional-Integral-Derivative, tỉ lệ - tích phân - vi phân
+RL | Reinforcement Learning, học tăng cường
+RMS | Root Mean Square, căn trung bình bình phương
+SLIP, STEADY, WEAVE | Tên ba ca mô phỏng dài 100 s dùng để chấm: đổi vận tốc và hệ số bám, giữ cua ổn định, lái liên tục
+D1, D2, D3 | Ba phép chẩn đoán trên MapPID ở mục 5.6
+K1, K2, K3 | Ba giả thuyết về khoảng cách giữa MapPID và PID ở mục 5.6
+VDB | Vehicle Dynamics Blockset, thư viện động lực học xe của MathWorks cho MATLAB và Simulink
+
+@@SECTION body

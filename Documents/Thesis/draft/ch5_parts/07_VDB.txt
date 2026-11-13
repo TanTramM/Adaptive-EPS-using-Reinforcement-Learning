@@ -1,0 +1,56 @@
+5.8. Kiểm tra bằng khối thư viện VDB
+
+5.8.1. Mục đích và cách thay khối
+
+Các mục trước chạy trên đối tượng do luận văn tự viết ở Chương 2. Phương trình của nó lấy từ [1], [12] và [13], nhưng phần cài đặt là của luận văn, nên có hai câu hỏi: nếu cùng các phương trình đó được cài bằng một thư viện độc lập thì kết quả có trùng không, và các kết luận còn giữ không khi thêm một hiệu ứng mà đối tượng tự viết bỏ qua. Câu hỏi thứ nhất là kiểm chứng cài đặt (verification: phương trình có được giải đúng không), khác với xác thực (validation: phương trình có mô tả đúng xe thật không). Mục này chỉ làm kiểm chứng cài đặt và đo một khác biệt mô hình; xác thực cần số đo trên xe thật mà luận văn chưa có.
+
+Thư viện dùng là Vehicle Dynamics Blockset (VDB), thư viện động lực học xe của MATLAB và Simulink do MathWorks cung cấp, bản R2023a [27]. Hai khối của đối tượng được thay bằng khối VDB, và mỗi khối mới có đúng các cổng của khối cũ. Khối lốp của Chương 2 (mục 2.3) được thay bằng khối Combined Slip Wheel 2DOF, mô tả hành vi dọc và ngang kết hợp của lốp bằng các phương trình Magic Formula [27]; mỗi bánh một khối, lực ngang nhân đôi để thành một cầu, góc trượt vẫn tính bằng các phương trình của mục 2.3.1, và mô-men phản lực $T_r$ vẫn tính bằng các phương trình vệt khí nén (2.10) đến (2.12) vì luận văn không dùng mô-men tự lựa của khối. Khối thân xe một vết của Chương 2 (mục 2.4) được thay bằng khối Vehicle Body 3DOF Single Track, một thân xe cứng hai cầu ba bậc tự do (chuyển động dọc, ngang và quay) cấu hình một vết [27]. Cột lái, motor và cảm biến giữ nguyên, vì luận văn không dùng khối VDB nào cho các phần đó.
+
+Để hai phía có cùng giả thiết, lốp VDB được đặt Magic Formula với cùng $C$, $E$ và độ cứng góc trượt $C_\alpha$ của Bảng 2.4, mọi hệ số phụ bằng không, tải bằng tải tĩnh $F_{zi}$ và hệ số bám $\mu$ vào qua hệ số tỉ lệ của lực ngang (LMUY) [27]. Thân VDB nhận lực lốp từ ngoài, vận tốc đặt từ ngoài, chuyển tải và các bảng khí động đặt bằng không. Ở cấu hình mặc định khối giữ độ trễ của lực ngang ở 1.59 ms vì chặn tần số thả lỏng từ dưới ở 100 Hz, nhỏ đến mức coi như không có trễ. Khi hạ cận đó, khối dùng chiều dài thả lỏng riêng của nó, $\sigma=0.609$ m (đo trên khối), và lực ngang đi tới giá trị xác lập qua một khâu bậc nhất theo
+
+(5.4)  tau_lag = sigma/v
+[ \tau_{lag}=\frac{\sigma}{v} ]
+
+[12, PT (7.7), tr. 341], tức 22, 37 và 88 ms ở 100, 60 và 25 km/h. Lốp thật cần một quãng lăn để tạo lực nên có độ trễ kiểu này, còn đối tượng tự viết cho lực ngang tức thời. Giá trị 0.609 m cùng cỡ chiều dài thả lỏng đo ở tải 4000 N, khoảng 0.6 m ở góc trượt nhỏ [12, Hình 7.8, tr. 352]. Hình đó cũng cho thấy chiều dài này giảm mạnh khi góc trượt tăng, còn cỡ 0.1 m ở 3° với tải 4000 N; luận văn không kiểm khối có giữ $\sigma$ không đổi theo góc trượt hay không.
+
+Có bốn biến thể (Bảng 5.14). Mỗi biến thể là vòng kín của ba bộ điều khiển với đối tượng đổi khối, giữ nguyên thiết kế của Bảng 4.4, ba chuỗi và seed 99999.
+
+Bảng 5.14: Bốn biến thể của đối tượng dùng khối VDB.
+Biến thể | Khối lốp | Khối thân xe | Độ trễ của lực ngang
+Thân VDB | Của đối tượng tự viết | VDB | không có
+Lốp và thân VDB | VDB, cùng giả thiết | VDB | 1.59 ms
+Lốp có trễ | VDB, $\sigma=0.609$ m | Của đối tượng tự viết | $\sigma/v$ (5.4)
+Lốp có trễ và thân VDB | VDB, $\sigma=0.609$ m | VDB | $\sigma/v$ (5.4)
+
+5.8.2. Cùng giả thiết thì trùng đối tượng tự viết
+
+Khi đối tượng chạy riêng, với cùng đầu vào (góc vô-lăng, vận tốc và hệ số bám) trên một chuỗi giữ cua trên đường khô và mô-men trợ lực bằng không, mô-men thanh xoắn $T_s$ của bản có thân VDB lệch 0.0013 % so với đối tượng tự viết, của bản có lốp VDB lệch 0.0212 %, và của bản có cả lốp và thân VDB cũng lệch 0.0212 %. Độ lệch ở đây là căn của trung bình bình phương hiệu chia cho giá trị lớn nhất của tín hiệu của đối tượng tự viết. Gia tốc ngang lệch 0.0011 %, 0.0169 % và 0.0170 % theo cùng thứ tự. Trong vòng kín, thay khối thân làm $E_{RMS}$ đổi từ −0.01 % đến +0.06 % ở cả ba bộ và ba chuỗi, và thay cả lốp lẫn thân (cùng giả thiết) làm đổi từ −0.02 % đến +1.35 %, lớn nhất ở SLIP với PID (+1.35 %) và MapPID (+1.28 %); vì thân VDB riêng chỉ lệch tối đa 0.06 %, độ lệch này đến từ khối lốp. Độ ồn $S$ đổi tối đa 0.43 %. Kết quả này xác nhận cài đặt và cấu hình, không phải một phép so với mô hình độc lập hay với xe thật: hai phía dùng cùng họ phương trình, Magic Formula cho lốp và mô hình xe một vết cho thân, với cùng hệ số.
+
+5.8.3. Ảnh hưởng của độ trễ lốp
+
+Độ trễ lốp là khác biệt có căn cứ duy nhất giữa hai đối tượng mà luận văn đo được. Bảng 5.15 cho thay đổi của $E_{RMS}$ so với đối tượng tự viết ở cả bốn biến thể, và Hình 5.9 vẽ cùng số liệu.
+
+Bảng 5.15: Thay đổi của $E_{RMS}$ (5.3) so với đối tượng tự viết ở các biến thể dùng khối VDB, đơn vị %, seed 99999.
+Biến thể | Chuỗi | Map | PID | MapPID
+Thân VDB | STEADY | 0.00 | +0.01 | −0.01
+Thân VDB | SLIP | 0.00 | 0.00 | +0.06
+Thân VDB | WEAVE | 0.00 | 0.00 | +0.01
+Lốp và thân VDB | STEADY | +0.03 | +0.01 | −0.02
+Lốp và thân VDB | SLIP | +0.15 | +1.35 | +1.28
+Lốp và thân VDB | WEAVE | +0.08 | +0.43 | +0.49
+Lốp có trễ | STEADY | +1.09 | +0.74 | +1.23
+Lốp có trễ | SLIP | −0.87 | −7.67 | −2.35
+Lốp có trễ | WEAVE | +1.54 | +3.57 | +4.99
+Lốp có trễ và thân VDB | STEADY | +1.09 | +0.74 | +1.24
+Lốp có trễ và thân VDB | SLIP | −0.87 | −7.64 | −2.72
+Lốp có trễ và thân VDB | WEAVE | +1.54 | +3.57 | +5.03
+
+[Hình 5.9: Thay đổi của $E_{RMS}$ so với đối tượng tự viết khi thay khối bằng khối VDB, seed 99999, ở bốn biến thể của Bảng 5.14. | Documents/Thesis/figures/Hinh_5_9_VDB.png@16.0]
+
+Với độ trễ, $E_{RMS}$ đổi từ −7.7 % đến +5.0 %, và độ ồn $S$ đổi tối đa 2.4 %. Ở STEADY mức tăng nhỏ, từ 0.7 đến 1.2 %. Ở WEAVE $E_{RMS}$ tăng 1.5 % với Map, 3.6 % với PID và 5.0 % với MapPID, phù hợp với việc phản lực mặt đường đến chậm hơn so với góc đánh lái khi chu kỳ ngắn; MapPID chịu nhiều hơn PID. Ở SLIP $E_{RMS}$ giảm, mạnh nhất với PID (−7.7 %). Một cách đọc phù hợp với số liệu: độ trễ làm dịu bước nhảy của phản lực khi hệ số bám trở lại, nên đỉnh của $T_s$ ở 87 s giảm từ 12.78 xuống 11.44 N·m với Map, từ 7.07 xuống 5.31 N·m với PID và từ 6.69 xuống 5.42 N·m với MapPID; ngược lại cực trị ở 66.5 s sâu hơn đôi chút (với PID từ −4.80 xuống −5.28 N·m). Luận văn không tách thêm cơ chế.
+
+Thứ hạng giữ ở 10 trong 12 ô (bốn biến thể nhân ba chuỗi): Map đứng cuối ở mọi ô, hai bộ phản hồi ngang nhau ở STEADY và PID tốt hơn MapPID ở WEAVE. Ở hai ô còn lại, SLIP với hai biến thể có trễ, thứ tự trong cặp ngang nhau đảo: ở đối tượng tự viết MapPID thấp hơn PID 3.8 %, còn với lốp có trễ PID thấp hơn MapPID 1.7 % (1.3 % khi có thân VDB), cả hai đều trong ngưỡng 5 %. Kết luận về thứ hạng của ba bộ vì vậy không phụ thuộc vào cài đặt tự viết, và độ trễ lốp chỉ làm đổi $E_{RMS}$ vài phần trăm.
+
+5.8.4. Giới hạn
+
+Mục này không phải là xác thực. Các khác biệt còn lại giữa hai đối tượng chưa được xét hoặc không độc lập. Mô-men phản lực vẫn do phương trình vệt khí nén của luận văn tính; khối lốp VDB có mô-men tự lựa $M_z$ riêng, nhưng bản dùng $M_z$ đó có hệ số được khớp theo (2.10), nên không phải một nguồn độc lập và không được báo ở đây. Chuyển tải, lắc thân và thân hai vết không được xét, vì khối thân một vết ba bậc tự do cũng không có chúng. Cột lái, motor và cảm biến là của luận văn ở mọi biến thể. Bốn biến thể chỉ chạy ở seed 99999. Cuối cùng, nếu khối giữ $\sigma$ không đổi theo góc trượt thì độ trễ ở các quá độ góc trượt lớn, như ở 66.5 và 87 s của SLIP, bị phóng đại so với [12, Hình 7.8]; luận văn không kiểm điều này.

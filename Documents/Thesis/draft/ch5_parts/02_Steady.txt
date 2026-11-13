@@ -1,0 +1,34 @@
+5.2. STEADY: giữ cua ổn định trên đường khô
+
+STEADY giữ $\mu=0.8$ và đặt 11 mức đánh lái ở bốn vận tốc của Bảng 5.1. Mỗi mức có 1 s vào, 4 s giữ, 1 s trả và 1 s đi thẳng; giây cuối của đoạn giữ là cửa sổ chấm. Ba mức mạnh nhất là 0.35 g ở 45 và 65 km/h và 0.38 g ở 85 km/h. Bảng 5.2 cho chỉ tiêu toàn chuỗi, và Hình 5.2 vẽ mô-men thanh xoắn $T_s$ cùng mô-men mục tiêu $T_{ref}$ của ba bộ.
+
+Bảng 5.2: Chỉ tiêu toàn chuỗi của STEADY trên khoảng 2 đến 100 s. Trung bình ± độ lệch chuẩn mẫu trên năm seed.
+Bộ | $E_{RMS}$ (N·m) | $S$ (N·m)
+Map | 1.0585 ± 0.0007 | 0.1982 ± 0.0009
+PID | 0.2496 ± 0.0039 | 0.5649 ± 0.0044
+MapPID | 0.2498 ± 0.0049 | 0.5146 ± 0.0065
+
+[Hình 5.2: Mô-men thanh xoắn $T_s$ (đường liền) và mô-men mục tiêu $T_{ref}$ (nét đứt) của Map, PID và MapPID trong STEADY, seed 99999. (a) Cả chuỗi. (b) Phóng đại quanh mức 45 km/h, +0.35 g, giữ từ 35 đến 39 s. | Documents/Thesis/figures/Hinh_5_2_STEADY.png@16.0]
+
+Hình 5.2 vẽ ba bộ trên ba ô cùng thang. Ở thang chung PID và MapPID gần như chồng lên nhau, và ba ô riêng cho phép kiểm điều đó bằng mắt: $E_{RMS}$ toàn chuỗi của hai bộ chênh nhau 0.0002 N·m ở STEADY và nhiều nhất 0.022 N·m ở hai chuỗi còn lại (mục 5.3, 5.4), trong khi trục của Hình 5.2 trải rộng cỡ 15 N·m. Thứ hạng của hai bộ vì vậy dựa vào bảng và vào mục 5.5, không dựa vào việc đọc hình.
+
+Map chỉ đạt mức mục tiêu một cách gần đúng. Sau mỗi bước lớn, mô-men của Map vọt quá rồi giảm dần chậm: ở 45 km/h và +0.35 g đỉnh là 6.06 N·m so với mục tiêu 2.51 N·m (Hình 5.2b), và ở giây cuối của đoạn giữ mô-men vẫn cao hơn mục tiêu 32.30 % (Bảng 5.3). Cùng chiều lệch đó có ở 65 và 85 km/h với 10.78 % và 19.26 %, và ở mức nhẹ hơn là 9.53 % ở 25 km/h, −0.25 g. Theo mốc 10.2 đến 18 % của [26] (mục 5.1.2), hai mức mạnh nhất vượt mốc, 65 km/h nằm trong khoảng mốc và 25 km/h nằm sát dưới mốc.
+
+Bảng 5.3: Độ lệch tương đối có dấu $\epsilon_w$ (5.2) trong các cửa sổ chấm ở ba mức mạnh nhất và ở 25 km/h, đơn vị %. Các cột mô phỏng là trung bình ± độ lệch chuẩn mẫu trên năm seed. Cột phân tích tĩnh của Map tính theo mục 3.2 cho cùng điều kiện, không có ma sát cột lái và không có động học.
+Điều kiện | Map (mô phỏng) | Map (phân tích tĩnh) | PID | MapPID
+45 km/h, +0.35 g | 32.3002 ± 0.0029 | 29.47 | −0.0185 ± 0.0610 | −0.0358 ± 0.0456
+65 km/h, −0.35 g | 10.7759 ± 0.0185 | 8.81 | −0.0334 ± 0.1016 | −0.0441 ± 0.0843
+85 km/h, +0.38 g | 19.2623 ± 0.0232 | 19.85 | −0.0264 ± 0.0571 | −0.0373 ± 0.0634
+25 km/h, −0.25 g | 9.5274 ± 0.3183 | 4.73 | −0.1037 ± 0.1664 | −0.0886 ± 0.1392
+
+Phân tích tĩnh của mục 3.2 giải thích phần lớn các độ lệch của Map. Cột thứ hai của Bảng 5.3 giải cân bằng $T_s+M(v,T_s)=T_r$ với bản đồ của Bảng 4.4 ($K_{max}=6.77$) và cho 29.47 %, 8.81 % và 19.85 % ở ba mức mạnh nhất, 4.73 % ở 25 km/h, cùng cỡ với mô phỏng. Ở cả bốn điều kiện đó độ dốc tự nhiên của bảng hiệu chỉnh tại điểm làm việc (17.70, 14.00, 16.54 và 13.82) lớn hơn nhiều giới hạn $K_{max}$, nên bản đồ nằm thấp hơn đường hiệu chỉnh và motor cấp thiếu so với nhu cầu của đường khô; mô-men thanh xoắn phải cao hơn mục tiêu để bù. Ở bảy điều kiện còn lại phân tích tĩnh cho độ lệch dưới 1.3 %, và $|\epsilon_w|$ của Map trong mô phỏng cũng từ 0.015 đến 1.21 %. Điều này cũng cho thấy mức 0.35 và 0.38 g, ngoài dải 0.1 đến 0.3 g của CALIB (mục 4.2.1), là chỗ Map lệch nhiều nhất trong STEADY. Phần chênh giữa phân tích tĩnh và mô phỏng không quá 4.8 điểm phần trăm. Hai nguyên nhân có thể là ma sát khô của cột lái ($T_f=2$ N·m, Bảng 2.4), mà phân tích tĩnh bỏ qua, và việc giây cuối của đoạn giữ chưa hẳn là trạng thái xác lập, vì mô-men của Map còn đang giảm dần (Hình 5.2b). Luận văn không tách hai nguyên nhân này.
+
+Ở năm mức nhẹ hơn, độ lệch của Map đã dưới 0.06 % và RMS trong cửa sổ của nó, từ 0.0010 đến 0.0016 N·m, nhỏ hơn RMS của PID (0.011 đến 0.024 N·m) và của MapPID (0.007 đến 0.020 N·m). Ở đó phản hồi không có độ lệch nào để khử, và phù hợp với việc nhiễu cảm biến đi vào lệnh qua nhánh phản hồi nên làm RMS cửa sổ của hai bộ này lớn hơn.
+
+PID và MapPID giữ mô-men ở mức mục tiêu ở cả 11 mức. Sau mỗi bước có một dao động ngắn tắt dần trong đoạn giữ; độ lệch ở giây cuối nhỏ hơn 0.05 % ở ba mức mạnh nhất và nhỏ hơn 0.43 % ở cả 11 cửa sổ, với cả hai bộ. Điều này phù hợp với khâu tích phân dừng ở $e_T=0$ khi vòng ổn định và motor không bão hòa (mục 3.4.2), nhưng cửa sổ 1 s ở cuối đoạn giữ 4 s chưa chứng tỏ một trạng thái xác lập thật.
+
+Ở đoạn đi thẳng cuối chuỗi, từ 95 đến 100 s, mô-men mục tiêu gần bằng không. Ở đó $T_s$ của Map phẳng với độ lệch chuẩn 0.003 N·m, còn của MapPID dao động với 0.13 N·m và của PID với 0.11 N·m (trung bình năm seed). Điều này phù hợp với việc vùng chết của bản đồ giữ trợ lực ở mức không khi mô-men gần không, trong khi nhánh phản hồi phản ứng với nhiễu của mô-men đo, và cũng khớp với $S$ của MapPID lớn hơn của Map trong Bảng 5.2: 0.5146 so với 0.1982 N·m.
+
+$E_{RMS}$ của PID và MapPID, khoảng 0.25 N·m, lớn hơn nhiều so với sai số giữ (RMS cửa sổ từ 0.004 đến 0.024 N·m). Nguyên nhân là một sự kiện duy nhất: ở giây 9 đến 10, vô-lăng được quay nhanh tới −130° ở 25 km/h. Trong quá độ này nhu cầu trợ lực vượt khả năng của motor; lệnh trợ lực nằm ở giới hạn $T_{a,max}$ (8.07 N·m ở 25 km/h theo (2.23); giới hạn tra theo vận tốc đo nên dao động theo nhiễu của cảm biến vận tốc) trong khoảng 0.6 s, và $T_s$ lệch tới −5.58 N·m so với mục tiêu −1.66 N·m. Giây này đóng góp 81 % tổng bình phương sai lệch của PID và của MapPID, và 23 % của Map. Bỏ giây này, $E_{RMS}$ của PID và MapPID còn 0.110 N·m, và của Map là 0.935 N·m. Vì vậy hai bộ phản hồi ngang nhau ở $E_{RMS}$ phần lớn do chúng cùng chịu một quá độ bị giới hạn bởi motor, và $E_{RMS}$ toàn chuỗi của STEADY không phân biệt được chúng ở chế độ giữ cua.
+
+Về độ ồn, Map có $S$ nhỏ nhất và $E_{RMS}$ lớn nhất. MapPID có $S$ nhỏ hơn PID 8.9 % (0.5146 so với 0.5649 N·m), nhiều hơn độ lệch chuẩn giữa các seed của cả hai bộ (0.0065 và 0.0044 N·m); mục 5.5 xem lại chênh lệch này theo từng cặp seed.

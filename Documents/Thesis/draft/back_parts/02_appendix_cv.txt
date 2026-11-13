@@ -1,0 +1,236 @@
+PHỤ LỤC A. CỬA SỔ CHẤM ĐIỂM
+
+A.1. Các cửa sổ của CALIB
+
+Ca CALIB (mục 4.2) có 68 cửa sổ chấm điểm. Bảng A.1 liệt kê thời điểm bắt đầu và kết thúc của từng cửa sổ trên trục thời gian của ca, theo thứ tự thời gian, cùng nhóm mà cửa sổ thuộc về khi tính $R$ (mục 4.2). Nhãn static_v<v>_a<a> là cửa sổ 1 s cuối của mức giữ cua có gia tốc ngang danh nghĩa <a> g ở <v> km/h, và trans_v<v>_a<a> là đoạn quá độ 2 s gồm đoạn tăng gia tốc ngang lên mức đó và 1 s đầu của mức. Nhãn sine_v<v>_f0p5 và sine_v<v>_f1 là các đoạn đánh lái hình sin qua không có chu kỳ 2 s và 1 s. mu_drop và mu_rise là hai giây sau mỗi bậc đổi hệ số bám.
+
+@@W 36 9 9 11
+Bảng A.1: Các cửa sổ chấm điểm của CALIB (68 cửa sổ, theo thứ tự thời gian).
+Cửa sổ | Từ (s) | Đến (s) | Nhóm
+trans_v20_apos0p10g | 2 | 4 | dyn
+static_v20_apos0p10g | 4 | 5 | static
+trans_v20_apos0p18g | 5 | 7 | dyn
+static_v20_apos0p18g | 7 | 8 | static
+trans_v30_apos0p10g | 11 | 13 | dyn
+static_v30_apos0p10g | 13 | 14 | static
+trans_v30_apos0p20g | 14 | 16 | dyn
+static_v30_apos0p20g | 16 | 17 | static
+trans_v30_apos0p30g | 17 | 19 | dyn
+static_v30_apos0p30g | 19 | 20 | static
+trans_v40_apos0p10g | 23 | 25 | dyn
+static_v40_apos0p10g | 25 | 26 | static
+trans_v40_apos0p20g | 26 | 28 | dyn
+static_v40_apos0p20g | 28 | 29 | static
+trans_v40_apos0p30g | 29 | 31 | dyn
+static_v40_apos0p30g | 31 | 32 | static
+sine_v40_f0p5 | 32 | 34 | dyn
+sine_v40_f1 | 35 | 38 | dyn
+trans_v50_apos0p10g | 38 | 40 | dyn
+static_v50_apos0p10g | 40 | 41 | static
+trans_v50_apos0p20g | 41 | 43 | dyn
+static_v50_apos0p20g | 43 | 44 | static
+trans_v50_apos0p30g | 44 | 46 | dyn
+static_v50_apos0p30g | 46 | 47 | static
+sine_v50_f0p5 | 47 | 49 | dyn
+sine_v50_f1 | 50 | 53 | dyn
+trans_v60_apos0p10g | 53 | 55 | dyn
+static_v60_apos0p10g | 55 | 56 | static
+trans_v60_apos0p20g | 56 | 58 | dyn
+static_v60_apos0p20g | 58 | 59 | static
+trans_v60_apos0p30g | 59 | 61 | dyn
+static_v60_apos0p30g | 61 | 62 | static
+mu_drop | 62 | 64 | mu
+mu_rise | 68 | 70 | mu
+sine_v60_f0p5 | 72 | 74 | dyn
+sine_v60_f1 | 75 | 78 | dyn
+trans_v70_apos0p10g | 78 | 80 | dyn
+static_v70_apos0p10g | 80 | 81 | static
+trans_v70_apos0p20g | 81 | 83 | dyn
+static_v70_apos0p20g | 83 | 84 | static
+trans_v70_apos0p30g | 84 | 86 | dyn
+static_v70_apos0p30g | 86 | 87 | static
+sine_v70_f0p5 | 87 | 89 | dyn
+sine_v70_f1 | 90 | 93 | dyn
+trans_v80_apos0p10g | 93 | 95 | dyn
+static_v80_apos0p10g | 95 | 96 | static
+trans_v80_apos0p20g | 96 | 98 | dyn
+static_v80_apos0p20g | 98 | 99 | static
+trans_v80_apos0p30g | 99 | 101 | dyn
+static_v80_apos0p30g | 101 | 102 | static
+sine_v80_f0p5 | 102 | 104 | dyn
+sine_v80_f1 | 105 | 108 | dyn
+trans_v90_apos0p10g | 108 | 110 | dyn
+static_v90_apos0p10g | 110 | 111 | static
+trans_v90_apos0p20g | 111 | 113 | dyn
+static_v90_apos0p20g | 113 | 114 | static
+trans_v90_apos0p30g | 114 | 116 | dyn
+static_v90_apos0p30g | 116 | 117 | static
+sine_v90_f0p5 | 117 | 119 | dyn
+sine_v90_f1 | 120 | 123 | dyn
+trans_v100_apos0p10g | 123 | 125 | dyn
+static_v100_apos0p10g | 125 | 126 | static
+trans_v100_apos0p20g | 126 | 128 | dyn
+static_v100_apos0p20g | 128 | 129 | static
+trans_v100_apos0p30g | 129 | 131 | dyn
+static_v100_apos0p30g | 131 | 132 | static
+sine_v100_f0p5 | 132 | 134 | dyn
+sine_v100_f1 | 135 | 138 | dyn
+
+A.2. Các cửa sổ của STEADY, SLIP và WEAVE
+
+Bảng A.2 liệt kê 31 cửa sổ chấm của ba chuỗi đánh giá (mục 5.1): 11 của STEADY, 12 của SLIP và 8 của WEAVE. Ở STEADY, nhãn v<v>a<a><l|r> là giây cuối của mức giữ cua ở <v> km/h, gia tốc ngang danh nghĩa <a> g, l là gia tốc ngang dương và r là âm. Với SLIP và WEAVE, cột cuối ghi nội dung của cửa sổ theo Bảng 5.1.
+
+@@W 12 14 9 9 38
+Bảng A.2: Các cửa sổ chấm điểm của STEADY, SLIP và WEAVE.
+Chuỗi | Cửa sổ | Từ (s) | Đến (s) | Nội dung
+STEADY | v25a0p15l | 6 | 7 | giây cuối của mức giữ, 25 km/h, +0.15 g
+STEADY | v25a0p25r | 13 | 14 | giây cuối của mức giữ, 25 km/h, −0.25 g
+STEADY | v45a0p15l | 24 | 25 | giây cuối của mức giữ, 45 km/h, +0.15 g
+STEADY | v45a0p25r | 31 | 32 | giây cuối của mức giữ, 45 km/h, −0.25 g
+STEADY | v45a0p35l | 38 | 39 | giây cuối của mức giữ, 45 km/h, +0.35 g
+STEADY | v65a0p15r | 49 | 50 | giây cuối của mức giữ, 65 km/h, −0.15 g
+STEADY | v65a0p25l | 56 | 57 | giây cuối của mức giữ, 65 km/h, +0.25 g
+STEADY | v65a0p35r | 63 | 64 | giây cuối của mức giữ, 65 km/h, −0.35 g
+STEADY | v85a0p15l | 74 | 75 | giây cuối của mức giữ, 85 km/h, +0.15 g
+STEADY | v85a0p25r | 81 | 82 | giây cuối của mức giữ, 85 km/h, −0.25 g
+STEADY | v85a0p38l | 88 | 89 | giây cuối của mức giữ, 85 km/h, +0.38 g
+SLIP | ramp_hi | 3 | 4 | ở 90 km/h, trước khi giảm tốc
+SLIP | ramp_dn | 5 | 17 | giảm tốc từ 90 xuống 45 km/h
+SLIP | ramp_lo | 18 | 20 | giữ ở 45 km/h
+SLIP | ramp_up | 21 | 33 | tăng tốc từ 45 lên 90 km/h
+SLIP | stair_ref | 49.5 | 51.5 | μ = 0.8, trước thang hệ số bám (đối chứng)
+SLIP | stair_m0p5 | 54.5 | 56.5 | 2 s cuối của bậc μ = 0.5
+SLIP | stair_m0p33 | 59.5 | 61.5 | 2 s cuối của bậc μ = 0.33
+SLIP | stair_m0p24 | 64.5 | 66.5 | 2 s cuối của bậc μ = 0.24
+SLIP | stair_rec | 66.5 | 72.5 | 6 s sau khi μ trở về 0.8
+SLIP | pud_ref | 83 | 85 | trước vũng nước (đối chứng)
+SLIP | pud_in | 85 | 87 | trong vũng nước, μ giảm xuống 0.2 trong 2 s
+SLIP | pud_rec | 87 | 90 | 3 s sau khi μ trở về 0.8
+WEAVE | ctr | 3 | 22 | đánh lái quanh tâm, 95 km/h, chu kỳ 5 s
+WEAVE | lane_ref | 30.8 | 31.2 | chuyển làn thứ nhất, đường khô (đối chứng)
+WEAVE | lane_in | 35.3 | 35.7 | chuyển làn thứ hai, trong vũng μ = 0.2 dài 0.4 s
+WEAVE | lane_rec | 35.7 | 39 | sau vũng nước của chuyển làn thứ hai
+WEAVE | sw0p3 | 48 | 54.67 | đánh lái hình sin, 70 km/h, chu kỳ 3.3333 s
+WEAVE | sw0p8 | 54.67 | 58.42 | đánh lái hình sin, 70 km/h, chu kỳ 1.2500 s
+WEAVE | sw1p5 | 58.42 | 61.75 | đánh lái hình sin, 70 km/h, chu kỳ 0.6667 s
+WEAVE | mu3 | 72.5 | 82.67 | đánh lái hình sin, 60 km/h, μ = 0.3, chu kỳ 1.3333 s
+
+PHỤ LỤC B. KẾT QUẢ BỔ SUNG
+
+B.1. Kết quả theo từng seed
+
+Bảng B.1 cho $E_{RMS}$ và $S$ toàn chuỗi (khoảng 2 đến 100 s) của từng seed trong năm seed 99995 đến 99999, là số liệu mà các bảng 5.2, 5.4 và 5.6 lấy trung bình và độ lệch chuẩn.
+
+@@W 11 9 10 10 10 10 10 10
+Bảng B.1: $E_{RMS}$ và $S$ toàn chuỗi của từng seed, đơn vị N·m.
+Chuỗi | Seed | $E_{RMS}$ Map | $S$ Map | $E_{RMS}$ PID | $S$ PID | $E_{RMS}$ MapPID | $S$ MapPID
+STEADY | 99995 | 1.0594 | 0.1977 | 0.2542 | 0.5671 | 0.2555 | 0.5175
+STEADY | 99996 | 1.0583 | 0.1980 | 0.2494 | 0.5671 | 0.2492 | 0.5131
+STEADY | 99997 | 1.0591 | 0.1997 | 0.2513 | 0.5628 | 0.2522 | 0.5172
+STEADY | 99998 | 1.0577 | 0.1984 | 0.2437 | 0.5582 | 0.2423 | 0.5041
+STEADY | 99999 | 1.0580 | 0.1974 | 0.2493 | 0.5693 | 0.2498 | 0.5210
+SLIP | 99995 | 0.6896 | 0.2019 | 0.2070 | 0.4868 | 0.1974 | 0.4787
+SLIP | 99996 | 0.6892 | 0.2034 | 0.2067 | 0.4915 | 0.1968 | 0.4825
+SLIP | 99997 | 0.6894 | 0.2041 | 0.2060 | 0.4875 | 0.1966 | 0.4824
+SLIP | 99998 | 0.6896 | 0.2023 | 0.2038 | 0.4848 | 0.1928 | 0.4737
+SLIP | 99999 | 0.6895 | 0.2024 | 0.2052 | 0.4992 | 0.1973 | 0.4926
+WEAVE | 99995 | 1.4509 | 0.2888 | 0.2006 | 0.8957 | 0.2229 | 0.7592
+WEAVE | 99996 | 1.4511 | 0.2896 | 0.1983 | 0.8886 | 0.2215 | 0.7557
+WEAVE | 99997 | 1.4511 | 0.2901 | 0.2038 | 0.8885 | 0.2285 | 0.7621
+WEAVE | 99998 | 1.4510 | 0.2902 | 0.1930 | 0.8862 | 0.2113 | 0.7437
+WEAVE | 99999 | 1.4509 | 0.2894 | 0.2034 | 0.8911 | 0.2244 | 0.7580
+
+B.2. Sai số bám của các biến thể tham số xe ở seed 99999
+
+Các bảng B.2 đến B.4 cho $E_{RMS}$ của ba bộ trong 17 biến thể của mục 5.7 (một nhóm tham số lệch −20 % hoặc +20 %), ở seed 99999, cho STEADY, SLIP và WEAVE; đây là số liệu của Hình 5.8. Cột cuối là thứ tự từ nhỏ đến lớn theo $E_{RMS}$, không áp ngưỡng ngang nhau.
+
+@@W 22 11 11 12 34
+Bảng B.2: $E_{RMS}$ (N·m) của ba bộ ở STEADY trong 17 biến thể, seed 99999.
+Biến thể | Map | PID | MapPID | Thứ tự
+Danh định | 1.0580 | 0.2493 | 0.2498 | PID < MapPID < Map
+$T_f$ −20 % | 0.9277 | 0.2215 | 0.2237 | PID < MapPID < Map
+$T_f$ +20 % | 1.1977 | 0.2783 | 0.2794 | PID < MapPID < Map
+$J_{col}$ −20 % | 1.0678 | 0.2517 | 0.2513 | MapPID < PID < Map
+$J_{col}$ +20 % | 1.0491 | 0.2478 | 0.2483 | PID < MapPID < Map
+$C_{col}$ −20 % | 0.9903 | 0.1960 | 0.1968 | PID < MapPID < Map
+$C_{col}$ +20 % | 1.1324 | 0.3080 | 0.3081 | PID < MapPID < Map
+$m$, $I_z$ −20 % | 0.9679 | 0.1758 | 0.1781 | PID < MapPID < Map
+$m$, $I_z$ +20 % | 1.3720 | 0.3380 | 0.3384 | PID < MapPID < Map
+$C_\alpha$ −20 % | 1.0086 | 0.2383 | 0.2397 | PID < MapPID < Map
+$C_\alpha$ +20 % | 1.1027 | 0.2573 | 0.2582 | PID < MapPID < Map
+$t_0$ −20 % | 0.9777 | 0.2078 | 0.2089 | PID < MapPID < Map
+$t_0$ +20 % | 1.2233 | 0.2961 | 0.2960 | MapPID < PID < Map
+$e_c$ −20 % | 0.9734 | 0.2062 | 0.2073 | PID < MapPID < Map
+$e_c$ +20 % | 1.2380 | 0.2984 | 0.2982 | MapPID < PID < Map
+$f_m$ −20 % | 1.0581 | 0.2496 | 0.2500 | PID < MapPID < Map
+$f_m$ +20 % | 1.0579 | 0.2492 | 0.2495 | PID < MapPID < Map
+
+@@W 22 11 11 12 34
+Bảng B.3: $E_{RMS}$ (N·m) của ba bộ ở SLIP trong 17 biến thể, seed 99999.
+Biến thể | Map | PID | MapPID | Thứ tự
+Danh định | 0.6895 | 0.2052 | 0.1973 | MapPID < PID < Map
+$T_f$ −20 % | 0.6578 | 0.2175 | 0.2128 | MapPID < PID < Map
+$T_f$ +20 % | 0.7398 | 0.1868 | 0.1751 | MapPID < PID < Map
+$J_{col}$ −20 % | 0.6907 | 0.2002 | 0.1922 | MapPID < PID < Map
+$J_{col}$ +20 % | 0.6896 | 0.2095 | 0.2025 | MapPID < PID < Map
+$C_{col}$ −20 % | 0.6871 | 0.2098 | 0.2014 | MapPID < PID < Map
+$C_{col}$ +20 % | 0.6928 | 0.2013 | 0.1938 | MapPID < PID < Map
+$m$, $I_z$ −20 % | 0.6066 | 0.1134 | 0.1078 | MapPID < PID < Map
+$m$, $I_z$ +20 % | 0.9190 | 0.3524 | 0.3485 | MapPID < PID < Map
+$C_\alpha$ −20 % | 0.6159 | 0.1448 | 0.1453 | PID < MapPID < Map
+$C_\alpha$ +20 % | 0.7244 | 0.1970 | 0.1875 | MapPID < PID < Map
+$t_0$ −20 % | 0.6443 | 0.1426 | 0.1357 | MapPID < PID < Map
+$t_0$ +20 % | 0.7776 | 0.2846 | 0.2772 | MapPID < PID < Map
+$e_c$ −20 % | 0.5999 | 0.1273 | 0.1232 | MapPID < PID < Map
+$e_c$ +20 % | 0.8991 | 0.3488 | 0.3420 | MapPID < PID < Map
+$f_m$ −20 % | 0.6900 | 0.2069 | 0.1987 | MapPID < PID < Map
+$f_m$ +20 % | 0.6892 | 0.2043 | 0.1966 | MapPID < PID < Map
+
+@@W 22 11 11 12 34
+Bảng B.4: $E_{RMS}$ (N·m) của ba bộ ở WEAVE trong 17 biến thể, seed 99999.
+Biến thể | Map | PID | MapPID | Thứ tự
+Danh định | 1.4509 | 0.2034 | 0.2244 | PID < MapPID < Map
+$T_f$ −20 % | 1.3077 | 0.1899 | 0.2108 | PID < MapPID < Map
+$T_f$ +20 % | 1.5781 | 0.2159 | 0.2373 | PID < MapPID < Map
+$J_{col}$ −20 % | 1.4375 | 0.1976 | 0.2166 | PID < MapPID < Map
+$J_{col}$ +20 % | 1.4616 | 0.2105 | 0.2342 | PID < MapPID < Map
+$C_{col}$ −20 % | 1.4216 | 0.2004 | 0.2214 | PID < MapPID < Map
+$C_{col}$ +20 % | 1.4788 | 0.2071 | 0.2278 | PID < MapPID < Map
+$m$, $I_z$ −20 % | 1.4906 | 0.2031 | 0.2249 | PID < MapPID < Map
+$m$, $I_z$ +20 % | 1.4189 | 0.2031 | 0.2235 | PID < MapPID < Map
+$C_\alpha$ −20 % | 1.4812 | 0.2050 | 0.2274 | PID < MapPID < Map
+$C_\alpha$ +20 % | 1.4273 | 0.2035 | 0.2235 | PID < MapPID < Map
+$t_0$ −20 % | 1.4834 | 0.2042 | 0.2257 | PID < MapPID < Map
+$t_0$ +20 % | 1.4208 | 0.2031 | 0.2231 | PID < MapPID < Map
+$e_c$ −20 % | 1.4835 | 0.2042 | 0.2257 | PID < MapPID < Map
+$e_c$ +20 % | 1.4209 | 0.2032 | 0.2233 | PID < MapPID < Map
+$f_m$ −20 % | 1.4514 | 0.2049 | 0.2259 | PID < MapPID < Map
+$f_m$ +20 % | 1.4506 | 0.2027 | 0.2231 | PID < MapPID < Map
+
+PHỤ LỤC C. TÁI LẬP KẾT QUẢ
+
+C.1. Cấu trúc mã nguồn
+
+Mã nguồn và kết quả của luận văn nằm trong cùng một kho mã với luận văn. Thư mục Model chứa mô hình MATLAB và Simulink. Model/shared có setup_paths.m, nơi duy nhất khai báo các thư mục mã, các hàm dùng chung, các file dữ liệu .json (tham số xe, bảng mô-men mục tiêu, cảm biến, motor và tham số của từng bộ điều khiển) và khung thử Sim, gồm các hàm dựng vòng kín, sinh ca, chạy ca và chấm điểm. Model/original chứa đối tượng, gồm các khối Plant (cột lái, lốp và thân xe), Ref (mô-men mục tiêu và giới hạn trợ lực), Sensors, AssistLimit và Actuator, cùng ba bộ điều khiển Map, PID và MapPID. Model/VDB chứa các khối VDB có cùng cổng với khối gốc và các biến thể đối tượng của mục 5.8. Thư mục Result chứa kết quả các lần chạy, theo bố cục Result/Controllers/<bộ điều khiển>/ cho từng bộ và Result/Compare/ cho các so sánh. Thư mục tools chứa các script Python và MATLAB tạo số liệu và hình của luận văn, và Documents/Thesis chứa luanvan.txt, nguồn duy nhất của luận văn, cùng các hình.
+
+C.2. Cách chạy lại
+
+Phần mềm dùng là MATLAB R2023a với Simulink và Vehicle Dynamics Blockset R2023a, và Python 3 với các thư viện pandas và numpy cho các bảng. Đầu mỗi phiên MATLAB chạy Model/shared/setup_paths.m. Với mỗi bộ điều khiển, load_map, load_pid hoặc load_mappid nạp tham số vào không gian làm việc, build_closed_loop sinh mô hình vòng kín Model_<bộ điều khiển>, calib_run chạy ca CALIB và chấm R, S và sai số xác lập, và run_cases(ctrl, seed, 'SSW', thư mục) chạy ba chuỗi STEADY, SLIP và WEAVE. Seed 99990 đến 99994 dùng để chọn tham số và seed 99995 đến 99999 dùng để chấm. Các phép thử của mục 5.7 và 5.8 chạy bằng run_robust_cases và các script trong Model/VDB. Các số trong chương 5 sinh bằng tools/make_ch5_numbers.py từ các file csv trong Result, và hình sinh bằng các script make_fig_thesis_ch<n>.m trong tools.
+
+C.3. Tham số đã chọn
+
+Tham số đã chọn của ba bộ điều khiển nằm trong trường design của map.json, pid.json và mappid.json ở Model/shared/data, và được liệt kê ở Bảng 4.4.
+
+LÝ LỊCH TRÍCH NGANG
+
+Họ và tên: Trần Minh Tân
+
+Ngày sinh: [điền]
+
+Nơi sinh: [điền]
+
+Địa chỉ liên lạc: [điền]
+
+Quá trình đào tạo: [điền]
+
+Quá trình công tác: [điền]

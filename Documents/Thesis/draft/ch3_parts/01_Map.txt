@@ -1,0 +1,69 @@
+CHƯƠNG 3. CHIẾN LƯỢC ĐIỀU KHIỂN
+
+Trên xe thật, bộ điều khiển của hệ trợ lực lái điện thường có ba phần: bản đồ mô-men, khâu ổn định và các logic phụ để chỉnh thêm cảm giác lái; mô-men do các logic phụ tính được cộng vào mô-men trợ lực chính do bản đồ và khâu ổn định tạo ra [9, mục 1]. Bản đồ là bảng tra mô-men trợ lực theo mô-men thanh xoắn đo được và vận tốc xe. Vì phần lớn mô-men trợ lực do bản đồ quyết định, bản đồ là yếu tố ảnh hưởng nhiều nhất đến cảm giác lái [9, mục 1]. Bản đồ không dùng riêng được: độ lợi trợ lực cao và tính phi tuyến của nó có thể làm hệ mất ổn định, gây rung hoặc phân kỳ ở cột lái, nên bản đồ luôn đi kèm một khâu bù ổn định [1].
+
+Ba bộ điều khiển của luận văn bám theo cấu trúc đó. Map là bản đồ cùng khâu bù ổn định, đại diện cho bộ điều khiển đã có trên xe (mục 3.1). Mục 3.2 chỉ ra giới hạn tĩnh của Map khi hệ số bám thay đổi, là lý do để thêm phản hồi mô-men. PID bỏ bản đồ và chỉ phản hồi sai lệch giữa mô-men thanh xoắn và mô-men mục tiêu (mục 3.3). MapPID giữ nguyên Map và mắc song song một nhánh PID, đóng vai một logic phụ theo cách gọi của [9] (mục 3.4). Mục 3.5 so sánh cấu trúc của ba bộ.
+
+Các bộ điều khiển chỉ dùng các tín hiệu đo của Chương 2: mô-men thanh xoắn $T_{s,m}$, vận tốc $v_m$ và gia tốc ngang $a_{y,m}$ (Bảng 2.3). Đầu ra là lệnh mô-men trợ lực $T_{a,cmd}$, đi qua khâu giới hạn (2.20) rồi tới motor (2.24). Khâu giới hạn và motor giống nhau ở cả ba bộ, nên điểm khác giữa các bộ chỉ nằm ở cách tính $T_{a,cmd}$. Bộ điều khiển chạy với chu kỳ 1 ms; cách rời rạc hóa ghi ở mục 4.1.
+
+3.1. Bộ điều khiển Map
+
+3.1.1. Cấu trúc và lý do chọn làm chuẩn so sánh
+
+Map có cấu trúc mà Lee và cộng sự [1, mục III.A] mô tả cho EPS: một bản đồ mô-men, tức quan hệ một-một từ mô-men cảm biến sang mô-men motor và thay đổi theo vận tốc xe, rồi một khâu bù lead-lag đặt sau bản đồ (Hình 3.1). Khâu bù gồm một khâu sớm pha (lead) và một khâu trễ pha (lag), vai trò của từng khâu nêu ở mục 3.1.4. Luận văn chọn cấu trúc này làm chuẩn so sánh vì ba lý do. Thứ nhất, đây là cấu trúc điển hình của bộ điều khiển EPS truyền thống [1,9]. Thứ hai, [1] có đủ cả thiết kế bản đồ, tiêu chí ổn định và thiết kế khâu bù, và đã được thử trên một xe thật (ở trạng thái đỗ xe). Thứ ba, mô hình cột lái của Chương 2 cũng lấy từ [1], nên bộ điều khiển và đối tượng có cùng một nguồn.
+
+[Hình 3.1: Sơ đồ vòng kín của bộ điều khiển Map. $H_T$ và $H_v$ là mô hình cảm biến mô-men và cảm biến vận tốc (2.25), $T_{s,m}=H_T(T_s)$ và $v_m=H_v(v)$. Khối bộ điều khiển gồm bản đồ $M$ ở (3.4) và khâu bù lead-lag ở (3.5)-(3.6); đầu ra $u_{map}$ là lệnh $T_{a,cmd}$. Lệnh qua khâu giới hạn trợ lực (2.20), chặn bởi $T_{a,max}(v_m)$, và lệnh đã chặn $T_{a,lim}$ điều khiển motor. | Documents/Thesis/figures/Hinh_3_1_Map.png]
+
+3.1.2. Hiệu chỉnh bản đồ trên đường khô
+
+Bản đồ trên xe thật được chỉnh bằng thử nghiệm để người lái cảm nhận một mô-men mong muốn (mục 1.4). Luận văn làm việc đó bằng tính toán: ép bản đồ cho đúng mô-men mục tiêu $T_{ref}$ của mục 2.6 tại các điểm làm việc trên đường khô. Cách tính cùng ý với [5, tr. 404]: mô-men vô-lăng khi không có trợ lực trừ đi mô-men lý tưởng của người lái là mô-men mà EPS phải cấp. Khi cột lái đứng yên, (2.16) cho $T_s=T_r-T_a$, nên tại mỗi vận tốc $v$ và gia tốc ngang $a_y$, để mô-men thanh xoắn bằng mô-men mục tiêu thì motor phải cấp phần còn lại của mô-men phản lực:
+
+(3.1)  T_s,cal = T_ref(v, a_y)
+[ T_{s,cal}=T_{ref}(v,a_y) ]
+
+(3.2)  T_a,cal = T_r(v, a_y, 0.8) - T_ref(v, a_y)
+[ T_{a,cal}=T_r(v,a_y,0.8)-T_{ref}(v,a_y) ]
+
+Vế phải của (3.2) chính là $T_{a,req}$ của (2.21) ở $\mu=0.8$. Hệ số bám 0.8 được chọn vì bản đồ truyền thống được thiết kế cho điều kiện đầy tải và hệ số bám cao, $\mu=0.8$ [3]. Ở cùng gia tốc ngang, mô-men phản lực trên đường khô lớn nhất nên nhu cầu trợ lực cũng lớn nhất, và đó cũng là lý do khi $\mu$ giảm thì bản đồ cho trợ lực thừa.
+
+Lưới hiệu chỉnh gồm 17 vận tốc từ 20 đến 100 km/h, cách nhau 5 km/h. Ở mỗi vận tốc, $a_y$ chạy với bước 0.005 g từ 0.1 g (hàng nhỏ nhất của Bảng 2.1, dưới đó không có số liệu) đến $a_{y,lim}(v)$ của (2.22), tức giá trị nhỏ hơn trong 0.4 g (hàng lớn nhất của bảng) và gia tốc ngang lớn nhất xe đạt được trên đường khô ở vận tốc đó. Mô-men phản lực $T_r$ tính ở trạng thái quay vòng xác lập như ở mục 2.7: lực ngang cầu trước $F_{yf}=m\,a_y\,l_r/(l_f+l_r)$, rồi (2.8) đến (2.12) cho $T_r$. Mỗi vận tốc có từ 21 đến 61 điểm.
+
+Hai điểm hiệu chỉnh liền nhau cho một độ dốc tự nhiên $(T_{a,cal,k}-T_{a,cal,k-1})/(T_{s,cal,k}-T_{s,cal,k-1})$, là độ dốc mà bản đồ cần có để đi qua cả hai điểm. Độ dốc này lớn, vì mô-men mục tiêu tăng chậm theo gia tốc ngang còn mô-men phản lực tăng gần tỉ lệ với nó. Ví dụ ở 60 km/h, khi $a_y$ tăng từ 0.1 lên 0.3 g thì $T_{ref}$ chỉ đi từ 2.1 đến 2.8 N·m, còn $T_r$ đi từ 2.67 đến 7.64 N·m, nên phần trợ lực cần thêm 4.27 N·m (từ 0.57 đến 4.84 N·m) phải do một thay đổi chỉ 0.7 N·m của $T_s$ tạo ra. Trên 17 vận tốc, độ dốc tự nhiên lớn nhất trong dải 0.1 đến 0.3 g nằm từ 7.87 (ở 70 km/h) đến 16.22 (ở 25 km/h).
+
+3.1.3. Dựng bảng: vùng chết, giới hạn độ dốc và nội suy
+
+Từ các điểm hiệu chỉnh, bảng của mỗi vận tốc được dựng bằng ba quy tắc.
+
+Quy tắc thứ nhất là vùng chết: bản đồ cho trợ lực bằng không khi $|T_s|\le T_{s0}$, với $T_{s0}=0.3$ N·m. Vùng chết dùng để hệ không phản ứng quá nhạy với mô-men tay lái [1, mục III.A, PT (15)]; [3] cũng không cấp trợ lực khi mô-men tay lái dưới 2 N·m ở xe thương mại, và [14, tr. 61] nêu vùng chết là một sửa đổi thông dụng của đặc tính bộ điều khiển. Luận văn thêm một lý do về nhiễu: mô-men đo $T_{s,m}$ có sai số do nhiễu (độ lệch chuẩn 0.01 N·m) cộng sai số lượng tử $\Delta/\sqrt{12}=0.003$ N·m (Bảng 2.3), tổng độ lệch chuẩn cỡ 0.0104 N·m; nếu bản đồ cấp trợ lực ngay từ $T_s=0$ thì khi đi thẳng nhiễu thành lệnh giật liên tục. Giá trị $T_{s0}$ bị kẹp giữa hai cận. Cận dưới là vài lần độ lệch chuẩn nhiễu. Cận trên là mô-men mục tiêu nhỏ nhất của Bảng 2.1, 1.0 N·m ở 20 km/h và 0.1 g, vì với vùng chết rộng hơn thì bản đồ không thể cấp trợ lực tại điểm đó. Giá trị 2 N·m của [1] (xe đỗ, Bảng III) và của [3] (xe thương mại) vượt cận trên này nên không dùng được; $T_{s0}=0.3$ N·m, bằng 28.8 lần độ lệch chuẩn nhiễu và nhỏ hơn 1.0 N·m, là lựa chọn của luận văn và được đặt trước khi chạy mô phỏng.
+
+Quy tắc thứ hai là giới hạn độ dốc. Trong vòng kín, độ dốc của bản đồ là độ lợi của đường phản hồi qua $T_s$: mô-men đo tăng một đơn vị thì trợ lực tăng thêm một lượng bằng độ dốc. Độ dốc càng lớn thì vòng càng khó ổn định và càng khuếch đại nhiễu cảm biến [1, mục I và III.D]; [1, mục III.D] cũng lấy chỗ bản đồ dốc nhất làm trường hợp xấu nhất khi thiết kế khâu bù. Vì độ dốc tự nhiên (7.87 đến 16.22) lớn như trên, bản đồ không bám theo mọi điểm hiệu chỉnh mà bị chặn bởi một độ dốc lớn nhất $K_{max}$. Gọi $T_{s,0}=T_{s0}$ và $T_{s,k}=T_{s,cal,k}$ ($k=1,\ldots,n$) là các điểm hiệu chỉnh của một vận tốc theo thứ tự tăng của $T_s$, và $\bar{M}_k$ là giá trị bản đồ tại $T_{s,k}$; khi đó
+
+(3.3)  Mbar_0 = 0,  Mbar_k = max(0, min(T_a,cal,k, Mbar_(k-1) + K_max*(T_s,k - T_s,k-1))),  k = 1, ..., n
+[ \bar{M}_0=0,\qquad \bar{M}_k=\max\paren{0,\;\min\paren{T_{a,cal,k},\;\bar{M}_{k-1}+K_{max}(T_{s,k}-T_{s,k-1})}},\quad k=1,\ldots,n ]
+
+Tại mỗi điểm, bản đồ đi đúng qua điểm hiệu chỉnh nếu độ dốc tự nhiên không vượt $K_{max}$, và nằm thấp hơn nếu vượt; chênh lệch so với điểm hiệu chỉnh cộng dồn theo $T_s$. Đây là chỗ Map chấp nhận một sai số xác lập trên đường khô để đổi lấy ổn định và độ êm. Luận văn dùng một $K_{max}$ chung cho mọi vận tốc để chỉ có một trường hợp xấu nhất (độ lợi vòng lớn nhất) cho khâu bù, theo cách [1, mục III.D] thiết kế khâu bù cho trường hợp dốc nhất. $K_{max}$ là biến thiết kế của Chương 4; giá trị chọn là 6.77, nhỏ hơn độ dốc tự nhiên lớn nhất ở cả 17 vận tốc.
+
+Quy tắc thứ ba: trên điểm hiệu chỉnh cuối, bản đồ giữ giá trị cuối. Dữ liệu mục tiêu của Bảng 2.1 dừng ở 0.4 g, và luận văn không ngoại suy những giá trị chưa được công bố (cùng nguyên tắc với mục 2.6).
+
+Bản đồ được lưu thành bảng $\bar{M}(v,|T_s|)$ ở 17 vận tốc và ở các $|T_s|$ từ 0 đến 5 N·m cách nhau 0.005 N·m, nội suy tuyến tính theo $T_s$ và theo vận tốc, và lấy đối xứng theo dấu của $T_s$:
+
+(3.4)  M(v, T_s) = sgn(T_s)*Mbar(v, |T_s|)
+[ M(v,T_s)=\operatorname{sgn}(T_s)\,\bar{M}(v,\abs{T_s}) ]
+
+Bảng không giảm theo $|T_s|$ ở cả 17 vận tốc (đã kiểm). Hình 3.2 vẽ bản đồ ở ba vận tốc. Ở 20 km/h đường liền gần như trùng đường chấm. Ở 60 và 100 km/h đường chấm vượt lên đường liền ở gia tốc ngang lớn, chỗ độ dốc tự nhiên vượt $K_{max}$; ví dụ ở 60 km/h tại cuối bảng ($a_y=0.4$ g) bản đồ chỉ cấp 5.46 N·m trong khi điểm hiệu chỉnh đòi 7.02 N·m. Ở 60 km/h, đoạn thoải đầu tiên nối vùng chết với điểm hiệu chỉnh đầu tiên, từ điểm (0.3; 0) đến điểm (2.1; 0.57) N·m; trợ lực chỉ tăng nhanh sau điểm đó, trong một dải $T_s$ hẹp từ 2.1 đến 2.9 N·m.
+
+[Hình 3.2: Bản đồ trợ lực $M(v,|T_s|)$ của Map ở ba vận tốc (đường liền) và các điểm hiệu chỉnh trên đường khô mà bản đồ được dựng từ đó (đường chấm). Vùng xám là vùng chết $|T_s|\le T_{s0}=0.3$ N·m. Độ dốc của đường liền không vượt $K_{max}=6.77$; ở gia tốc ngang lớn đường chấm vượt lên trên đường liền vì độ dốc tự nhiên vượt $K_{max}$, và trên điểm hiệu chỉnh cuối đường liền giữ giá trị cuối. | Documents/Thesis/figures/Hinh_3_2_Map.png@10.0]
+
+3.1.4. Khâu bù lead-lag
+
+Đầu ra của bản đồ đi qua khâu bù lead-lag [1, mục III.A, PT (16)] đặt trước khâu giới hạn trợ lực, gồm một khâu sớm pha với đầu ra $w$ rồi một khâu trễ pha. Đầu vào là bản đồ tính với tín hiệu đo, $M(v_m,T_{s,m})$:
+
+(3.5)  tau_1,out*w_dot + w = tau_1,in*d/dt M(v_m,T_s,m) + M(v_m,T_s,m)
+[ \tau_{1,out}\dot w+w=\tau_{1,in}\frac{d}{dt}M(v_m,T_{s,m})+M(v_m,T_{s,m}) ]
+
+(3.6)  tau_2,out*u_map_dot + u_map = tau_2,in*w_dot + w
+[ \tau_{2,out}\dot u_{map}+u_{map}=\tau_{2,in}\dot w+w ]
+
+Trong (3.5) và (3.6), $\tau_{j,in}$ và $\tau_{j,out}$ là các hằng số thời gian, đơn vị giây, nhân với đạo hàm của đầu vào và của đầu ra của khâu $j$; $j=1$ là khâu sớm pha, $\tau_{1,in}>\tau_{1,out}$, $j=2$ là khâu trễ pha, $\tau_{2,in}<\tau_{2,out}$; $u_{map}$ là đầu ra của khâu bù. [1] viết hai khâu này bằng hàm truyền (tỉ số đầu ra trên đầu vào trong miền tần số), $(s/z_i+1)/(s/p_i+1)$ với $\tau_{in}=1/z_i$ và $\tau_{out}=1/p_i$; (3.5) và (3.6) là cùng quan hệ viết ở miền thời gian. Theo (3.5), khâu sớm pha cộng vào $M$ một phần tỉ lệ với tốc độ thay đổi của nó, nên lệnh trợ lực đi trước bản đồ một chút; [1, mục III.A] cho biết khâu sớm pha tăng dự trữ pha của vòng, tức khoảng còn lại trước khi vòng mất ổn định tính theo pha, nhờ đó vòng ổn định. Khâu trễ pha làm lệnh mượt hơn và hạ độ lợi ở tần số cao nên nhiễu nhanh bị yếu đi, tránh khuếch đại nhiễu [1, mục III.A].
+
+Hai khâu có độ lợi một chiều bằng 1: ở trạng thái xác lập các đạo hàm bằng không, $w=M$ và $u_{map}=w$, nên khâu bù không đổi đặc tính tĩnh của bản đồ và các phân tích tĩnh ở mục 3.2 chỉ cần bản đồ. Khâu bù đặt sau bản đồ [1, mục III.A] để bản đồ nhận mô-men đo nguyên vẹn, còn khâu bù chỉ tạo hình động học cho lệnh. Khâu trễ pha phải chậm hơn khâu sớm pha để không triệt tiêu phần pha sớm, nhưng không được chậm đến mức làm méo cảm giác lái, vì bộ lọc gây lệch pha làm sai lệch cảm giác lái mà bản đồ định ra [1, mục III.D; 9, mục 1]. Chương 4 cụ thể hóa điều kiện thứ hai bằng một ràng buộc đo với đầu vào hình sin chu kỳ 0.5 s (mục 4.3), và chọn bốn hằng số thời gian cùng với $K_{max}$ (mục 4.4).

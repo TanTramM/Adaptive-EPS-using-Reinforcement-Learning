@@ -1,0 +1,53 @@
+CHƯƠNG 5. KẾT QUẢ ĐÁNH GIÁ
+
+Chương 4 đã cố định ba thiết kế của Bảng 4.4 trên ca CALIB. Chương này chấm chúng trên ba chuỗi khác để trả lời hai câu hỏi. Câu hỏi thứ nhất: nhánh phản hồi mô-men của PID và MapPID đưa mô-men thanh xoắn lại gần mô-men mục tiêu hơn Map bao nhiêu khi vận tốc, mức đánh lái và hệ số bám thay đổi, và phải trả giá bằng bao nhiêu độ ồn của mô-men trợ lực. Câu hỏi thứ hai: kết luận đó còn đúng không khi tham số của xe lệch khỏi giá trị danh định (mục 5.7) hoặc khi các khối của mô hình được thay bằng khối thư viện (mục 5.8).
+
+Ba chuỗi chấm khác ca CALIB về thời điểm và về tổ hợp vận tốc, mức đánh lái và hệ số bám, và dùng năm seed nhiễu cảm biến khác với năm seed của CALIB, để kết quả không phụ thuộc vào cách tham số được chọn. Các thiết kế của Bảng 4.4 được giữ nguyên trong cả chương. Chương gồm mục 5.1 về giao thức và chỉ tiêu, các mục 5.2 đến 5.4 về kết quả của từng chuỗi, mục 5.5 tổng hợp theo seed, mục 5.6 tìm nguyên nhân MapPID bám kém PID ở chuỗi lái liên tục, mục 5.7 về sai lệch tham số xe, mục 5.8 về khối thư viện VDB, và mục 5.9 kết luận.
+
+5.1. Giao thức đánh giá
+
+5.1.1. Ba chuỗi và năm seed
+
+Mỗi chuỗi dài 100 s. STEADY (giữ cua ổn định) giữ hệ số bám $\mu=0.8$ và đặt 11 mức đánh lái ở bốn vận tốc. SLIP (đổi vận tốc và hệ số bám) có hai đoạn đổi vận tốc khi đang cua, một thang giảm hệ số bám theo từng bậc và một vũng nước dài 2 s. WEAVE (lái liên tục) có đánh lái quanh tâm, hai lần chuyển làn, chu kỳ lái ngắn dần và đánh lái liên tục ở hệ số bám thấp. Bảng 5.1 liệt kê các đoạn, và Hình 5.1 vẽ vận tốc, hệ số bám và góc vô-lăng đặt của từng chuỗi cùng các cửa sổ chấm điểm. Hình này để đọc đáp ứng ở các mục sau, vì đáp ứng chỉ hiểu được khi biết điều kiện đầu vào ở từng thời điểm, cùng lý do với Hình 4.1 của CALIB.
+
+Bảng 5.1: Các đoạn của ba chuỗi chấm. Gia tốc ngang danh nghĩa chỉ dùng để sinh góc vô-lăng đặt; gia tốc ngang thực và $T_{ref}$ do đối tượng quyết định. Ba chuỗi có 11, 12 và 8 cửa sổ chấm.
+Chuỗi | Đoạn | Điều kiện đặt
+STEADY | 11 mức giữ cua | Đường khô; vận tốc 25, 45, 65 và 85 km/h; gia tốc ngang danh nghĩa từ 0.15 đến 0.38 g về độ lớn; mỗi mức gồm 1 s vào, 4 s giữ, 1 s trả và 1 s đi thẳng
+SLIP | Giảm và tăng tốc | Từ 90 xuống 45 km/h trong 13 s, giữ 3 s, tăng lại 90 km/h trong 13 s; $\mu=0.8$; góc theo bảng cân bằng đường khô ở 0.20 g
+SLIP | Thang hệ số bám | 60 km/h, góc ứng với −0.30 g; $\mu$ lần lượt 0.8, 0.5, 0.33, 0.24 rồi về 0.8; mỗi mức giữ 5 s, chấm 2 s cuối của mức
+SLIP | Vũng nước | 80 km/h, góc ứng với +0.25 g; $\mu$ giảm từ 0.8 xuống 0.2 trong 2 s
+WEAVE | Quanh tâm | 95 km/h, 0.05 g, chu kỳ 5 s, bốn chu kỳ, đường khô
+WEAVE | Chuyển làn đôi | 80 km/h, 0.20 g, chu kỳ 2.5 s, hai lần giống nhau; lần hai có vũng $\mu=0.2$ dài 0.4 s ngay sau đỉnh đánh lái
+WEAVE | Chu kỳ ngắn dần | 70 km/h, 0.10 g, chu kỳ 3.3333, 1.2500 và 0.6667 s
+WEAVE | Hệ số bám thấp | 60 km/h, 0.15 g, $\mu=0.3$, chu kỳ 1.3333 s, tám chu kỳ
+
+[Hình 5.1: Ba chuỗi chấm STEADY, SLIP và WEAVE: vận tốc, hệ số bám và góc vô-lăng đặt. Các dải xám trên đồ thị góc là cửa sổ chấm điểm. | Documents/Thesis/figures/Hinh_5_1_Profile.png@16.0]
+
+Góc vô-lăng được đặt từ trước và như nhau cho cả ba bộ điều khiển, nên cả ba chạy trên cùng một đầu vào, cùng một đối tượng phi tuyến, cùng giới hạn trợ lực và cùng mô hình cảm biến. Khi hệ số bám giảm trong lúc góc giữ nguyên, gia tốc ngang thực và mô-men mục tiêu thay đổi theo lực mà lốp còn tạo được; hệ số bám giảm vì vậy đổi cả phản lực mặt đường lẫn $T_{ref}$. Chỉ tiêu được tính từ các đại lượng thật của mô hình ở lưới 1 ms, còn bộ điều khiển nhận số đo có nhiễu và lượng tử (mục 2.8). Các hình vẽ từ bản ghi 10 ms của lần chạy seed 99999.
+
+Năm seed là 99995 đến 99999, chung cho ba bộ và tách khỏi năm seed 99990 đến 99994 của CALIB (mục 4.2.2). Kết quả báo dưới dạng trung bình và độ lệch chuẩn mẫu (chia cho $n-1$, $n=5$) trên năm lần chạy. Năm lần chạy chỉ khác nhau ở chuỗi nhiễu, nên độ lệch chuẩn đo độ nhạy với nhiễu cảm biến của một xe, không phải độ nhạy với xe khác. Vì ba bộ nhận cùng chuỗi nhiễu ở mỗi seed, hiệu của hai bộ tính riêng cho từng seed loại bỏ được phần nhiễu chung; mục 5.5 dùng cách này.
+
+5.1.2. Chỉ tiêu
+
+Tính bám toàn chuỗi được đo bằng căn của trung bình bình phương sai lệch $e_T$ (2.19), bỏ 2 s đầu:
+
+(5.1)  E_RMS = sqrt( (1/|I|)*sum over k in I of e_T[k]^2 ),  I = {k: 2 s <= t_k <= 100 s}
+[ E_{RMS}=\sqrt{\frac{1}{|\mathcal I|}\sum_{k\in\mathcal I}e_T[k]^2},\qquad \mathcal I=\{k:2\,\mathrm{s}\le t_k\le100\,\mathrm{s}\} ]
+
+trong đó $|\mathcal I|$ là số mẫu được chấm. Khác với $R$ của CALIB (4.2), $E_{RMS}$ không chia cho độ lớn mục tiêu và có đơn vị N·m, để các số của ba chuỗi so được trực tiếp với nhau và với mô-men mục tiêu 1.0 đến 3.4 N·m (Bảng 2.1). Độ ồn $S$ giữ nguyên định nghĩa (4.3) và (4.4) nhưng tính trên khoảng 2 đến 100 s của (5.1). Phần dư này gồm cả dao động do nhiễu cảm biến lẫn phản ứng với những lần đảo chiều lái nhanh, nên $S$ nhỏ hơn không tự nó có nghĩa là bám tốt hơn hay cảm giác lái êm hơn.
+
+$E_{RMS}$ trộn sai lệch xác lập với sai lệch trong quá độ, nên ở các cửa sổ mà mô-men mục tiêu có trung bình khác không và giữ nguyên chiều, luận văn báo thêm độ lệch tương đối có dấu:
+
+(5.2)  eps_w = 100*sgn(mean_w T_ref)*mean_w(e_T)/mean_w(|T_ref|)
+[ \epsilon_w=100\,\operatorname{sgn}\paren{\operatorname{mean}_w T_{ref}}\frac{\operatorname{mean}_w(e_T)}{\operatorname{mean}_w(|T_{ref}|)} ]
+
+Đây là tỉ số của (4.5) nhưng giữ dấu và tính riêng từng cửa sổ, nên đọc được chiều của sai lệch: $\epsilon_w>0$ nghĩa là mô-men thanh xoắn lớn hơn mức yêu cầu, người lái thấy vô-lăng nặng hơn; $\epsilon_w<0$ nghĩa là nhẹ hơn, tức trợ lực nhiều hơn mức mặt đường đòi hỏi. Với các cửa sổ có đảo chiều lái, trung bình có dấu có thể che sai lệch ngược dấu, nên các cửa sổ đó được đánh giá chủ yếu bằng RMS trong cửa sổ.
+
+Chênh lệch tương đối của một chỉ tiêu $E$ giữa hai bộ A và B được tính theo
+
+(5.3)  Delta(A,B) = 100*(E_A - E_B)/E_B
+[ \Delta(A,B)=100\,\frac{E_A-E_B}{E_B} ]
+
+và âm nghĩa là A có chỉ tiêu nhỏ hơn B. Một chênh lệch chỉ được coi là có ý nghĩa khi vượt độ phân tán giữa các seed của chính hai bộ; chênh lệch nhỏ hơn mức đó được ghi là ngang nhau.
+
+Để biết một độ lệch tương đối lớn hay nhỏ so với cảm nhận của người lái, luận văn lấy mốc từ [26, tr. 5]. Thí nghiệm đó đo ngưỡng phân biệt (JND, Just Noticeable Difference, độ chênh nhỏ nhất mà người lái nhận ra, ở xác suất trả lời đúng 79.4 %) của mô-men vô-lăng ở mô-men tham chiếu 1, 3 và 5 N·m: từ 14.8 % (theo chiều kim đồng hồ) và 18 % (ngược chiều) ở 1 N·m xuống 10.2 % và 12.7 % ở 5 N·m. Như vậy độ lệch tương đối khoảng 10 % trở xuống ít có khả năng nhận ra được trong điều kiện của [26], còn độ lệch vượt 18 % thì có. Mốc này chỉ có giá trị tham khảo vì [26] đo ở người lái không lái và với mô-men tĩnh; luận văn không đo cảm nhận của người lái và không kết luận về cảm giác lái.

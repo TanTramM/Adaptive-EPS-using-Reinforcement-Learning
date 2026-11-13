@@ -1,0 +1,46 @@
+3.2. Giới hạn tĩnh của Map
+
+Bản đồ được hiệu chỉnh trên đường khô nên khó còn đúng trên đường trơn; phân tích tĩnh cho biết sai lệch lớn đến đâu. Luận văn dùng phép phân tích tĩnh của hệ phản hồi trong [14, mục 3.2]: điểm cân bằng là giao điểm của đặc tính tĩnh của đối tượng với đặc tính của bộ điều khiển, và giao điểm là duy nhất nếu hai đặc tính đơn điệu [14, tr. 63]. Với điều khiển tỉ lệ, [14, tr. 64, PT (3.8)] cho sai lệch xác lập bằng $1/(1+K_pK)$ lần một độ lệch ban đầu, với $K_p$ là độ dốc của đặc tính tĩnh của đối tượng và $K$ là độ lợi của bộ điều khiển; độ lệch càng nhỏ khi độ lợi vòng $K_pK$ càng lớn. Ở đây đặc tính tĩnh của đối tượng là $T_s=T_r-T_a$ (độ dốc $-1$ theo $T_a$) và đặc tính của bộ điều khiển là bản đồ $T_a=M(v,T_s)$.
+
+Khi cột lái đứng yên, (2.16) cho $T_s=T_r-T_a$, và khâu bù không đổi giá trị xác lập (mục 3.1.4), nên ở vận tốc và gia tốc ngang cho trước Map thỏa
+
+(3.7)  T_s + M(v, T_s) = T_r(v, a_y, mu)
+[ T_s+M(v,T_s)=T_r(v,a_y,\mu) ]
+
+Vế trái tăng nghiêm ngặt theo $T_s$ vì $M$ không giảm, nên (3.7) có đúng một nghiệm với mỗi $T_r$. Phương trình này giả thiết vòng ổn định, motor không bão hòa và bỏ qua ma sát khô của cột lái; ma sát có thể lệch nghiệm một lượng tới $T_f/(1+s_m)$, tức 0.26 N·m với $T_f=2$ N·m và độ dốc 6.77 ($s_m$ định nghĩa ở (3.10)), nên sai số trong mô phỏng có thể lớn hơn phân tích này.
+
+Giả sử hệ số bám giảm làm mô-men phản lực đổi từ $T_{r1}$ sang $T_{r2}$ trong khi $v$ và $a_y$ không đổi, và nghiệm của (3.7) đổi từ $T_{s1}$ sang $T_{s2}$. Trừ hai phương trình (3.7) rồi đặt $\bar{s}=[M(v,T_{s2})-M(v,T_{s1})]/(T_{s2}-T_{s1})$, độ dốc trung bình của bản đồ giữa hai nghiệm, ta được
+
+(3.8)  dT_s = dT_r/(1 + sbar)
+[ \Delta T_s=\frac{\Delta T_r}{1+\bar{s}} ]
+
+với $\Delta T_s=T_{s2}-T_{s1}$ và $\Delta T_r=T_{r2}-T_{r1}$. Kết quả này đúng cho mọi thay đổi hữu hạn, không có phép gần đúng nào. Theo (3.3), mọi đoạn của bản đồ có độ dốc từ 0 đến $K_{max}$ (bằng 0 trong vùng chết và trên điểm cuối), nên $0\le\bar{s}\le K_{max}$. Khi thay đổi nhỏ, $\bar{s}$ tiến tới độ dốc $s_m$ của bản đồ tại điểm làm việc, và (3.8) thành dạng tuyến tính hóa
+
+(3.9)  dT_s = dT_r/(1 + s_m)
+[ \Delta T_s=\frac{\Delta T_r}{1+s_m} ]
+
+(3.10)  s_m = dM(v, T_s)/dT_s
+[ s_m=\frac{\partial M(v,T_s)}{\partial T_s} ]
+
+Người lái chỉ cảm nhận phần $1/(1+s_m)$ của $\Delta T_r$; bản đồ đã bù phần còn lại $s_m/(1+s_m)$, đúng như đã nêu ở mục 1.2.3. Vì mô-men mục tiêu chỉ phụ thuộc $v$ và $a_y$ nên không đổi, và sai lệch bám đổi đúng bằng $\Delta T_s$:
+
+(3.11)  de_T = dT_s = dT_r/(1 + sbar)
+[ \Delta e_T=\Delta T_s=\frac{\Delta T_r}{1+\bar{s}} ]
+
+Khi hệ số bám giảm, lốp bão hòa sớm hơn và vệt khí nén ngắn lại, nên ở cùng gia tốc ngang mô-men phản lực giảm, $\Delta T_r<0$ (mục 2.3.4). Vì $0\le\bar{s}\le K_{max}$, $\Delta T_s$ và $\Delta e_T$ cùng dấu với $\Delta T_r$ và $|\Delta T_s|\ge|\Delta T_r|/(1+K_{max})$. Mô-men thanh xoắn vì thế thấp hơn giá trị trên đường khô, tức trợ lực quá cao so với mặt đường, và không bản đồ nào có $K_{max}$ hữu hạn khử được sai lệch này.
+
+Bảng 3.1 tính (3.7) ở 60 km/h khi hệ số bám giảm từ 0.8 xuống 0.35, đúng giá trị thấp của ca chọn tham số (mục 4.2), với $K_{max}=6.77$; Hình 3.3 vẽ lời giải đồ thị cho dòng 0.3 g. Đây là phép tính tĩnh từ các phương trình của Chương 2 và bảng của mục 3.1.3, không phải kết quả mô phỏng.
+
+Bảng 3.1: Thay đổi mô-men thanh xoắn của Map khi hệ số bám giảm từ 0.8 xuống 0.35 ở cùng gia tốc ngang, 60 km/h, $K_{max}=6.77$ ($\bar{s}$ là độ dốc trung bình của bản đồ giữa hai điểm cân bằng).
+$a_y$ (g) | $T_{ref}$ (N·m) | $\Delta T_r$ (N·m) | $\bar{s}$ | $\Delta T_s$ theo (3.8) (N·m) | $\Delta T_s/\Delta T_r$ | $\Delta T_s$ theo (3.9) (N·m)
+0.1 | 2.100 | −0.078 | 0.32 | −0.059 | 76.0 % | −0.059
+0.2 | 2.400 | −0.344 | 6.77 | −0.044 | 12.9 % | −0.044
+0.3 | 2.800 | −1.047 | 5.62 | −0.158 | 15.1 % | −0.135
+
+[Hình 3.3: Lời giải đồ thị của cân bằng tĩnh (3.7) ở 60 km/h và 0.3 g, theo cách của [14, hình 3.5]. Điểm cân bằng là giao của đường bản đồ $M(v,T_s)$ với đường $T_r-T_s$ (độ dốc −1). Khi $\mu$ giảm từ 0.8 xuống 0.35, đường $T_r-T_s$ dịch xuống $|\Delta T_r|=1.047$ N·m còn giao điểm chỉ dịch 0.158 N·m theo $T_s$, vì bản đồ dốc. Đường chấm đứng là mô-men mục tiêu $T_{ref}=2.80$ N·m. | Documents/Thesis/figures/Hinh_3_3_Static.png@10.0]
+
+Ở 0.2 và 0.3 g bản đồ bù 87 % và 85 % lượng giảm của $T_r$, nên người lái chỉ cảm nhận 12.9 % và 15.1 %. Ở 0.1 g điểm làm việc nằm trên đoạn thoải của bản đồ (độ dốc 0.32) nên bản đồ bù rất ít, nhưng lượng giảm của $T_r$ ở đó chỉ 0.078 N·m. Dạng tuyến tính hóa (3.9), với độ dốc tại điểm trên đường khô, khớp với (3.8) ở 0.1 và 0.2 g và nhỏ hơn 15 % về độ lớn ở 0.3 g, vì điểm cân bằng mới nằm trên một đoạn có độ dốc nhỏ hơn $K_{max}$. Ở 0.3 g, sai lệch còn lại 0.158 N·m bằng 5.6 % mô-men mục tiêu 2.80 N·m. Về mặt tĩnh, Map vì vậy bù khá nhiều ở các điểm này, nhưng chỉ nhờ độ dốc 6.77, và độ dốc đó có hai chi phí.
+
+Chi phí thứ nhất là nhiễu. Để $|\Delta T_s|$ nhỏ hơn 0.05 N·m ở 0.3 g thì (3.8) đòi $\bar{s}\ge19.9$, gần ba lần $K_{max}$. Nhiễu của $T_{s,m}$ (độ lệch chuẩn cỡ 0.0104 N·m, mục 3.1.3) đi qua bản đồ được nhân với độ dốc ngoài vùng chết: 0.07 N·m ở độ dốc 6.77 và 0.21 N·m ở độ dốc 19.9, chưa kể khâu sớm pha còn khuếch đại thêm phần nhiễu nhanh; độ dốc cao cũng làm vòng khó ổn định hơn [1]. Chi phí thứ hai là sai số trên đường khô: nơi độ dốc tự nhiên vượt $K_{max}$, bản đồ nằm dưới điểm hiệu chỉnh, $M(v,T_{ref})<T_{a,cal}$, và (3.7) ở $\mu=0.8$ cho $T_s>T_{ref}$, tức tay lái nặng hơn mục tiêu. Ở 60 km/h sai lệch này là 0.049 N·m ở 0.2 g (2.0 %) và 0.007 N·m ở 0.3 g (0.3 %), nhưng ở cuối bảng (0.4 g) bản đồ cấp 5.46 N·m so với 7.02 N·m cần có (Hình 3.2).
+
+Ngược lại, nếu sai lệch $e_T$ được phản hồi qua một khâu có thành phần tích phân thì sai lệch xác lập về không với mọi độ dốc của bản đồ, vì tích phân buộc sai lệch xác lập bằng không [14, tr. 67]. Đó là nội dung của hai mục sau.

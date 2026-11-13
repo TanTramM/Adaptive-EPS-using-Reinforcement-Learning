@@ -1,0 +1,63 @@
+4.2. Ca chọn tham số CALIB và hai chỉ tiêu
+
+4.2.1. Ca CALIB
+
+Tham số được chọn trên một chuỗi mô phỏng dài 140 s gọi là CALIB (CALIBration, hiệu chỉnh). Chuỗi gồm chín khối vận tốc từ 20 đến 100 km/h, cách nhau 10 km/h (Hình 4.1). Góc vô-lăng lấy từ bảng cân bằng trên đường khô ở các mức gia tốc ngang danh định; đối tượng sau đó tự tạo ra gia tốc ngang của nó, và giá trị này đi vào mô-men mục tiêu của bộ điều khiển qua mô hình cảm biến. Bảng 4.1 liệt kê 68 cửa sổ chấm điểm.
+
+Chuỗi có ba phần, mỗi phần trả lời một câu hỏi. Các bậc giữ không đổi, từ 0.10 đến 0.30 g, cho biết độ chính xác tĩnh: bộ điều khiển có đưa mô-men về mục tiêu khi cua ổn định hay không. Mức 0.10 g là hàng nhỏ nhất của Bảng 2.1; ở 20 km/h đối tượng chỉ đạt 0.20 g nên ở đó chỉ dùng 0.10 và 0.18 g. Các đoạn lái hình sin cho biết đáp ứng động: bộ điều khiển có bám khi người lái đang lái hay không. Chu kỳ 2 s và 1 s (0.5 và 1 Hz) nằm trong dải đánh lái của người lái, khoảng 0.2 đến 2.0 Hz và không vượt 5.0 Hz, trong đó dải hay gặp nhất là 0.2 đến 1.0 Hz [11, tr. 19]; 1 Hz cũng là tần số của kịch bản nhanh nhất trong [11, tr. 19-20]. Bậc hệ số bám từ 0.8 xuống 0.35 rồi về 0.8 ở 60 km/h là điều kiện mà bài toán của luận văn nhắm tới (mục 1.2). Dưới 40 km/h không có đoạn sin vì góc vô-lăng lớn mà đoạn sin cần sẽ làm quán tính cột lái chịu tải nặng hơn; hai khối thấp thay vào đó có một đoạn chuyển 3 s đưa góc vô-lăng về không.
+
+Mỗi mức bậc mở đầu bằng một đoạn dốc 1 s rồi giữ 2 s; giây cuối của đoạn giữ thuộc nhóm tĩnh (static), và 2 s đầu của mức thuộc nhóm động (dyn). Khoảng đó là cửa sổ chấm điểm, kể cả khi một ứng viên chậm vẫn đang xác lập trong đó. Từ khối 40 km/h, sau mỗi dãy bậc có 1.25 chu kỳ sin chu kỳ 2 s rồi 3.5 chu kỳ sin chu kỳ 1 s; đoạn đầu bắt đầu ở đỉnh để nối liền với mức giữ trước đó không nhảy, và vận tốc tăng 10 km/h trong 6 s đó (trừ sau dãy bậc 100 km/h). Chấm điểm dùng một chu kỳ của sin 2 s và ba chu kỳ cuối của sin 1 s. Khối 60 km/h còn có thêm 10 s giữ ở góc ứng với 0.30 g cho phép thử hệ số bám: hệ số bám giảm từ 0.8 xuống 0.35 trong 6 s rồi trở về 0.8 trong 4 s. Cả chuỗi bắt đầu và kết thúc bằng 2 s đi thẳng.
+
+[Hình 4.1: Chuỗi CALIB dài 140 s: vận tốc, hệ số bám và góc vô-lăng đặt. Các dải màu trên đồ thị góc vô-lăng là 68 cửa sổ chấm điểm của ba nhóm (Bảng 4.1). | Documents/Thesis/figures/Hinh_4_1_CALIB.png@14.0]
+
+Bảng 4.1: Các cửa sổ chấm điểm của CALIB. Mức gia tốc ngang xác định góc đặt, vận tốc xác định khối.
+Kích thích | Điều kiện danh định | Số cửa sổ | Thời lượng mỗi cửa sổ | Nhóm
+Bậc, phần giữ | 0.10 và 0.18 g ở 20 km/h, rồi 0.10, 0.20 và 0.30 g ở 30-100 km/h | 26 | 1 s | static
+Bậc, phần vào | 2 s đầu của mỗi mức | 26 | 2 s | dyn
+Lái liên tục | Các khối từ 40 km/h: chu kỳ 2 s ở 0.30 g, rồi chu kỳ 1 s ở 0.15 g | 14 | 2 s cho chu kỳ 2 s, 3 s cho chu kỳ 1 s | dyn
+Đổi hệ số bám | 60 km/h, góc ứng với 0.30 g, $\mu=0.8\rightarrow0.35\rightarrow0.8$ | 2 | 2 s sau mỗi lần đổi | mu
+
+4.2.2. Độ bám $R$, độ êm $S$ và độ chính xác tĩnh $e_{rel}$
+
+Độ bám đo bằng sai lệch bám $e_T$ của (2.19), tính với tín hiệu thật của đối tượng (mục 4.1). Với mỗi nhóm $g$ trong ba nhóm static, dyn và mu của Bảng 4.1, các mẫu của mọi cửa sổ thuộc nhóm được gộp lại, và căn của trung bình bình phương (RMS) của $e_T$ được chia cho độ lớn trung bình của mô-men mục tiêu:
+
+(4.1)  R_g = 100*RMS_g(e_T)/mean_g(|T_ref|)
+[ R_g=100\frac{\operatorname{RMS}_g(e_T)}{\operatorname{mean}_g(|T_{ref}|)} ]
+
+Chia cho độ lớn mục tiêu để sai lệch là phần trăm của mô-men mà người lái cần cảm nhận, nên so được giữa các vận tốc và mức gia tốc ngang khác nhau (mô-men mục tiêu từ 1.0 đến 3.4 N·m, Bảng 2.1). Chỉ tiêu chung là trung bình nhân của ba nhóm, mỗi nhóm có sàn 1 %:
+
+(4.2)  R = [ prod over g in {static, dyn, mu} of max(R_g, 1) ]^(1/3)
+[ R=\brack{\prod_{g\in\{\mathrm{static},\mathrm{dyn},\mathrm{mu}\}}\max(R_g,1)}^{1/3} ]
+
+Trung bình nhân cho ba nhóm trọng số như nhau bất kể độ dài (nhóm động có 87 s, nhóm tĩnh 26 s, nhóm hệ số bám 4 s). Nó cũng đổi theo tỉ lệ: giảm sai số của một nhóm 10 % làm $R$ giảm 3.4 % dù nhóm đó có sai số lớn hay nhỏ, và cùng dạng không thứ nguyên với $J=\bar{R}\bar{S}$ ở mục 4.4. Trung bình cộng thì ngược lại: nhóm có sai số lớn lấn át nhóm có sai số nhỏ. Sàn 1 % cần vì trung bình nhân của một số tiến về không cũng tiến về không; sàn ngăn một nhóm có sai số gần không làm mất ý nghĩa của hai nhóm còn lại, và khi sai số của một nhóm đã dưới 1 % thì giảm thêm không đổi $R$. Cả hai là lựa chọn của luận văn.
+
+Độ ồn của mô-men trợ lực được đo trên mô-men trợ lực thực $T_a$ sau động học motor, vì $T_a$ là tín hiệu mà motor tạo ra và người lái cảm nhận qua tay lái, và nhiễu cảm biến đi vào $T_a$ qua bộ điều khiển (mục 3.2). Một bộ lọc bậc nhất với hằng số thời gian $\tau_S=31.8310$ ms tách phần chậm của tín hiệu bằng hệ thức truy hồi
+
+(4.3)  T_a,LP[k] = (1-alpha)*T_a,LP[k-1] + alpha*T_a[k],  alpha = dt/(tau_S + dt)
+[ T_{a,LP}[k]=(1-\alpha)T_{a,LP}[k-1]+\alpha T_a[k],\qquad \alpha=\frac{\Delta t}{\tau_S+\Delta t} ]
+
+với $\Delta t=0.001$ s và trạng thái lọc bắt đầu bằng không. $S$ là RMS của phần dư còn lại trên cả chuỗi sau 2 s đầu:
+
+(4.4)  S = RMS over 2 s <= t_k <= 140 s of (T_a[k] - T_a,LP[k]),  t_k = k*dt
+[ S=\operatorname{RMS}_{2\,\mathrm{s}\le t_k\le140\,\mathrm{s}}\paren{T_a[k]-T_{a,LP}[k]},\qquad t_k=k\Delta t ]
+
+Hằng số $\tau_S=1/(2\pi\cdot5\ \mathrm{Hz})$ đặt tần số cắt của bộ lọc ở 5 Hz. Mốc 5 Hz là cận trên của dải đánh lái của người lái [11, tr. 19], nên phần dư chỉ chứa dao động nằm ngoài dải lái, tức phần mà người lái cảm nhận là rung hay ồn chứ không phải phản ứng với lệnh lái. Phần dư gồm cả dao động do cảm biến lẫn đáp ứng với lái nhanh. Hai giây đầu bị bỏ vì là quá độ khởi động.
+
+Độ chính xác tĩnh đo bằng sai lệch trung bình tương đối lớn nhất trên 26 cửa sổ static, tập $\mathcal{W}$ trong công thức dưới:
+
+(4.5)  e_rel = 100*max over w in W of |mean_w(e_T)|/mean_w(|T_ref|)
+[ e_{rel}=100\max_{w\in\mathcal W}\frac{|\operatorname{mean}_w(e_T)|}{\operatorname{mean}_w(|T_{ref}|)} ]
+
+Khác với $R$, $e_{rel}$ dùng trung bình có dấu của $e_T$ trong cửa sổ, tức sai lệch xác lập chứ không phải RMS, nên bắt được sai lệch tĩnh mà RMS lẫn với dao động.
+
+Mỗi ứng viên được chạy với năm seed nhiễu chung 99990 đến 99994, và điểm của nó là trung bình cộng của $R$ và $S$ trên năm lần chạy:
+
+(4.6)  R_bar = (1/5)*sum_q R_q,  S_bar = (1/5)*sum_q S_q
+[ \bar{R}=\frac{1}{5}\sum_{q=1}^{5}R_q,\qquad \bar{S}=\frac{1}{5}\sum_{q=1}^{5}S_q ]
+
+Độ chính xác được kiểm bằng trường hợp xấu nhất trên cùng năm lần thực hiện:
+
+(4.7)  e_rel,max = max over q of e_rel,q
+[ e_{rel,max}=\max_{q=1,\ldots,5}e_{rel,q} ]
+
+Chạy nhiều seed vì nhiễu cảm biến là ngẫu nhiên: một seed duy nhất có thể làm một điểm trông tốt hay xấu do may rủi, trung bình năm seed giảm độ phân tán đó, và lấy giá trị lớn nhất của $e_{rel}$ để cổng chính xác không bị lọt do một seed thuận lợi. Năm seed này chỉ dùng để chọn tham số; các ca chấm ở Chương 5 dùng năm seed khác (99995 đến 99999) để kết quả đánh giá độc lập với kết quả chọn. Hai chỉ tiêu phụ cũng được ghi: tổng biến thiên của $T_a$ trên giây, và tỉ lệ thời gian có trợ lực ngược, tức tỉ lệ mẫu trong khoảng 2 đến 140 s có $|T_s|\ge0.5$ N·m và $T_aT_s<0$; ngưỡng 0.5 N·m là lựa chọn của luận văn và chỉ để báo cáo.

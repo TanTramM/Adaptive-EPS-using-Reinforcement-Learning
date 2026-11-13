@@ -1,0 +1,32 @@
+4.4. Tìm tham số và chọn điểm cuối
+
+Bảng 4.2 cho cận tìm kiếm của vòng ngoài. Map có hai biến ngoài: giới hạn độ dốc $K_{max}$ và tỉ số biên độ nhỏ nhất $g_{min}$ mà khâu trễ pha cho qua với đầu vào hình sin chu kỳ 0.5 s khi đã xác lập (mục 4.3); $g_{min}=1$ nghĩa là bỏ khâu trễ pha. Cận trên của $K_{max}$ là 30, gần gấp đôi độ dốc tự nhiên lớn nhất 16.22 (mục 3.1.2), nên lưới phủ cả trường hợp bản đồ không bị chặn trong dải 0.1 đến 0.3 g. Với mỗi cặp hai giá trị này, một lưới trong tìm các hằng số thời gian của hai khâu bù sao cho bước nhảy ban đầu của lệnh sau một bước đơn vị của mô-men đo, ở độ dốc $K_{max}$, là nhỏ nhất, với các ràng buộc tổng hợp của mục 4.3; các điểm hòa được xếp theo sàng lọc tuyến tính. Bước nhảy ban đầu bằng $K_{max}\,\tau_{1,in}\tau_{2,in}/(\tau_{1,out}\tau_{2,out})$, cũng là độ lợi tần số cao của Map, nên cực tiểu hóa nó là giảm khuếch đại nhiễu cảm biến.
+
+Bảng 4.2: Cận tìm kiếm của vòng ngoài. Mọi tọa độ theo thang logarit.
+Bộ | Biến | Cận dưới | Cận trên
+Map | $K_{max}$ | 1 | 30
+Map | $g_{min}$ | $1/\sqrt{2}$ | 1
+PID và MapPID | $K_p$ | 0.01 | 30
+PID và MapPID | $T_i$ (s) | 0.002 | 10
+PID và MapPID | $T_d$ (s) | 0.020 | 0.796
+PID và MapPID | $N$ | 8 | 20
+
+Lưới thô của khâu thứ nhất, (3.5), cho $\tau_{1,in}$ từ 2 đến 200 ms và tỉ số $\tau_{1,in}/\tau_{1,out}$ từ 1.2 đến 300. Với khâu thứ hai, (3.6), $\tau_{2,in}$ từ 8.33333 đến 125 ms và tỉ số $\tau_{2,in}/\tau_{2,out}$ từ 0.1 đến 0.9. Tinh chỉnh cục bộ được phép mở rộng các khoảng này trong giới hạn $\tau_{1,out}\ge0.318310$ ms và $\tau_{2,out}\le333.333$ ms. Cận dưới của $\tau_{1,out}$ bằng $\Delta t/\pi$: cực của khâu sớm pha không được vượt tần số Nyquist $\pi/\Delta t=3142$ rad/s của chu kỳ 1 ms, vì trên mức đó khâu không thực hiện được ở chu kỳ này; cận trên của $\tau_{2,out}$ là giới hạn độ chậm của khâu trễ pha và là lựa chọn của luận văn.
+
+MapPID giữ bản đồ và khâu bù đã chọn và chỉ biến thiên bốn tham số PID. PID dùng cùng cận, và $K_i$, $K_d$ và $\tau_f$ suy từ các quan hệ của dạng chuẩn ở mục 3.3. Khoảng của $N$ lấy từ [14, tr. 77] (8 đến 20); [25, tr. 129] cũng cho hằng số bộ lọc $\alpha=1/N$ thường từ 0.05 đến 0.2, tức $N$ từ 5 đến 20, và hay dùng $\alpha=0.1$. Cận dưới $T_d=20$ ms giữ $\tau_f=T_d/N$ không nhỏ hơn một chu kỳ điều khiển trong cả hộp ($20$ ms$/20=1$ ms). Các cận còn lại xác định miền hữu hạn được xét trong so sánh.
+
+Mỗi tọa độ được quy về đoạn $[0,1]$ trước khi tìm từ thô đến mịn. Lưới thô có 13 mức trên mỗi trục của Map (169 cặp) và bốn mức trên mỗi biến của PID và MapPID (256 tổ hợp mỗi bộ). Seed nhiễu cục bộ là 00000 cho Map, 10000 cho PID và 30000 cho MapPID; mỗi bộ có dải seed riêng nên các bộ không dùng chung chuỗi nhiễu khi tìm. Với PID và MapPID, tinh chỉnh quanh thiết kế có tích $RS$ nhỏ nhất trong các thiết kế qua kiểm tra cấu trúc, kiểm tra tuyến tính và độ chính xác cục bộ. Lưới mịn đặt ba giá trị trên mỗi trục, với bước đầu 1/24 cho Map và 1/6 cho hai cấu trúc PID, di chuyển theo mỗi cải thiện và giảm nửa bước khi điểm tốt nhất không đổi. Việc tìm dừng sau sáu lớp tinh chỉnh hoặc khi bước nhỏ hơn 0.02. Luận văn dùng lưới thay cho các bộ tối ưu có yếu tố ngẫu nhiên vì kết quả của lưới tái lập được, và vì hàm mục tiêu có chỗ gãy (vùng chết, khâu chặn, cổng loại) nơi phương pháp dựa trên đạo hàm khó dùng.
+
+Hồ chung gồm mọi thiết kế đã mô phỏng cục bộ và qua sàng lọc tuyến tính, kể cả những thiết kế trượt ngưỡng chính xác 10 %. Một điểm là Pareto-tối ưu trong một tập nếu không điểm nào khác của tập giảm được một trong hai chỉ tiêu $R$ và $S$ mà không làm tăng chỉ tiêu kia. Ở giai đoạn 1, mặt tìm được ở seed cục bộ được đánh giá lại trên năm seed chung của mục 4.2. Với mỗi bộ, $\sigma_R$ và $\sigma_S$ là trung vị của hệ số biến thiên (độ lệch chuẩn chia cho trung bình trên năm seed) của các điểm trên mặt này. Giai đoạn 2 nhận thêm các điểm khác, trừ khi có một điểm $f$ của giai đoạn 1 thỏa cả hai bất đẳng thức sau với ứng viên $p$:
+
+(4.9)  R_0,f*(1+3*sigma_R) <= R_0,p,  S_0,f*(1+3*sigma_S) <= S_0,p
+[ R_{0,f}(1+3\sigma_R)\le R_{0,p},\qquad S_{0,f}(1+3\sigma_S)\le S_{0,p} ]
+
+Chỉ số dưới 0 ghi điểm ở seed cục bộ, và biên ba sigma tính đến độ phân tán giữa các seed nhiễu; nói cách khác, một ứng viên chỉ bị loại mà không phải chạy năm seed khi đã có một điểm tốt hơn nó ở cả hai chỉ tiêu với biên ba sigma. Mọi điểm của giai đoạn 1 đều vào tập đánh giá.
+
+Từ kết quả trên seed chung, hai mặt được dựng. Mặt safe bỏ điều kiện chính xác, còn mặt full đòi thêm $e_{rel,max}\le10\%$. Các điểm không bị trội sau đó chịu phép thử chấp nhận phi tuyến của mục 4.3; điểm trượt bị loại và mặt được tính lại cho đến khi mọi điểm còn lại đều qua. Điểm cuối được chọn trên mặt full, và trên mặt safe nếu mặt full rỗng. Tiêu chí cân bằng là
+
+(4.10)  J = R_bar*S_bar
+[ J=\bar{R}\,\bar{S} ]
+
+Các điểm trong 3 % của $J$ nhỏ nhất trên mặt đã chọn được coi là hòa, và điểm cuối chọn trong số đó theo thứ hạng của sàng lọc tuyến tính (dự trữ pha lớn hơn được ưu tiên). Tích $J$ đổi một phần trăm độ êm lấy một phần trăm độ bám, không có đơn vị và không có ngưỡng tự chọn; một tổng có trọng số $aR+bS$ thì phải chọn $a$, $b$ và phụ thuộc đơn vị. Trên mặt phẳng lấy logarit cả hai trục, các đường $J$ không đổi là những đường thẳng dốc $-1$, và điểm được chọn là chỗ mặt Pareto chạm đường thấp nhất. Ngưỡng hòa 3 % là lựa chọn của luận văn. Ba cấu trúc dùng chung quy tắc này, và các thiết kế chọn được cố định cho đánh giá độc lập ở Chương 5.

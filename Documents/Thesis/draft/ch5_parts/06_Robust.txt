@@ -1,0 +1,52 @@
+5.7. Độ bền theo sai lệch tham số của xe
+
+5.7.1. Câu hỏi và cách thử
+
+Các mục 5.2 đến 5.5 dựa trên một bộ tham số của xe, trong đó nhiều giá trị lấy từ tài liệu hoặc tự chọn vì không có số đo (Bảng 2.4). Một xe thật sẽ lệch khỏi bộ đó. Mục này hỏi: khi tham số của đối tượng lệch khỏi giá trị danh định, mô-men thanh xoắn của mỗi bộ điều khiển lệch khỏi mục tiêu thêm bao nhiêu, sai lệch tĩnh đổi ra sao, và thứ hạng của ba bộ có giữ không. Đây là phép thử độ nhạy, không phải thiết kế bền vững và không phải kiểm chứng bằng xe thật.
+
+Mỗi biến thể đổi một nhóm tham số một lượng ±20 % so với danh định, theo Bảng 5.12. Mức 20 % chung cho mọi nhóm là lựa chọn của luận văn: nó dễ giải thích và không có số đo riêng cho từng tham số. Các tham số không đổi gồm $K$, vì thanh xoắn cũng là cảm biến mô-men nên đổi $K$ là đổi cảm biến, cùng $n_{st}$, $l_f$, $l_r$, $C$, $E$, $c$ và $g$. Ba bộ điều khiển giữ nguyên thiết kế của Bảng 4.4, và bảng $T_{ref}$ cùng giới hạn $T_{a,max}$ (2.23) vẫn tính cho xe danh định, vì trên xe thật bộ điều khiển không biết xe đã khác, và $T_{ref}$ là mô-men tay lái mong muốn theo $v$ và $a_y$, không phụ thuộc xe. Cảm biến, ba chuỗi và seed không đổi.
+
+Bảng 5.12: Tám nhóm tham số của phép thử độ nhạy. Mỗi nhóm được đổi −20 % và +20 %, tạo 16 biến thể cùng một biến thể danh định.
+Nhóm | Tham số đổi | Giá trị danh định | Nguồn danh định
+$T_f$ | Ma sát khô của cột lái | 2 N·m | [1], Bảng III
+$J_{col}$ | Quán tính cột lái quy đổi | 0.11 kg·m² | [1], PT (14)
+$C_{col}$ | Hệ số cản của cột lái | 1.35 N·m·s/rad | [1], PT (14)
+$m$, $I_z$ | Khối lượng và mô-men quán tính, đổi cùng tỉ lệ; tải tĩnh $F_{zf}$, $F_{zr}$ tính lại | 1573 kg; 2873 kg·m² | [13], tr. 48
+$C_\alpha$ | Độ cứng góc trượt của hai cầu, đổi cùng tỉ lệ | 160 000 N/rad mỗi cầu | [13], tr. 48
+$t_0$ | Vệt khí nén, giữ $e_c$ | 25 mm | chọn, không có số đo
+$e_c$ | Vệt caster, giữ $t_0$ | 23 mm | chọn, không có số đo
+$f_m$ | Băng thông motor, kéo theo $\tau_m=1/(2\pi f_m)$ | 100 Hz | [1], Bảng III
+
+Mỗi biến thể chạy ba bộ trên ba chuỗi ở seed 99999, tổng cộng 17 biến thể nhân 3 bộ nhân 3 chuỗi, tức 153 lần chạy. Mọi biến thể dùng cùng chuỗi nhiễu nên chênh lệch giữa biến thể và danh định là do tham số, không do nhiễu. Sau đó danh định và tám biến thể mà thứ hạng ở seed 99999 khác thứ hạng danh định được chạy lại với năm seed 99995 đến 99999 để lấy trung bình. Kiểm: mỗi biến thể chỉ đổi các tham số của nhóm mình, mỗi biến thể cho $E_{RMS}$ khác danh định, và danh định trùng kết quả của các mục 5.2 đến 5.4 ở seed 99999 (sai số tương đối 0).
+
+5.7.2. Mức thay đổi của $E_{RMS}$
+
+Hình 5.8 vẽ thay đổi của $E_{RMS}$ khi mỗi nhóm lệch −20 % và +20 %, theo phần trăm của giá trị danh định của chính bộ đó.
+
+[Hình 5.8: Thay đổi của $E_{RMS}$ so với danh định khi một nhóm tham số của xe lệch −20 % (vòng rỗng) và +20 % (vòng đặc), seed 99999. Mỗi nhóm có ba hàng ứng với Map, PID và MapPID; mỗi ô có thang ngang riêng. | Documents/Thesis/figures/Hinh_5_8_Robust.png@16.0]
+
+PID và MapPID có độ nhạy gần như giống nhau ở mọi nhóm và mọi chuỗi (hai hàng gần chồng nhau trong Hình 5.8). Thay đổi lớn nhất của $E_{RMS}$ theo nhóm, tính trên cả hai bộ và ba chuỗi, giảm dần như sau: $m$ và $I_z$ 76.6 %, $e_c$ 73.3 %, $t_0$ 40.5 %, $C_\alpha$ 29.5 %, $C_{col}$ 23.5 %, $T_f$ 13.2 %, $J_{col}$ 4.4 % và $f_m$ 0.84 %. Ba nhóm đứng đầu đổi trực tiếp mô-men phản lực hoặc lực ngang của lốp, và ảnh hưởng nhất ở STEADY và SLIP; ở WEAVE mức thay đổi nhỏ hơn, tối đa 9.9 % với Map và 6.6 % với PID, 6.0 % với MapPID, và lớn nhất ở nhóm $T_f$. Tính theo phần trăm, Map đổi ít hơn PID và MapPID ở STEADY và SLIP (tối đa 29.7 và 33.3 %, so với 35.6 và 71.7 % của PID, và 35.5 và 76.6 % của MapPID), nhưng đó là vì sai số nền của Map lớn hơn nhiều. Tính theo N·m, mức thay đổi lớn nhất của Map là 0.314, 0.230 và 0.143 N·m ở STEADY, SLIP và WEAVE, so với 0.089, 0.147 và 0.014 N·m của PID và 0.089, 0.151 và 0.014 N·m của MapPID.
+
+Mức tăng lớn của PID và MapPID ở SLIP cho thấy phản hồi không loại bỏ mọi ảnh hưởng của tham số: $E_{RMS}$ của PID tăng 38.7 % khi $t_0$ tăng 20 %, 70.0 % khi $e_c$ tăng 20 % và 71.7 % khi $m$ tăng 20 %, còn của MapPID các số tương ứng là 40.5 %, 73.3 % và 76.6 %. Một cách đọc phù hợp với số liệu là giới hạn $T_{a,max}$ (2.23) tính cho xe danh định nên bị chạm nhiều hơn khi mô-men phản lực lớn hơn: tỉ lệ thời gian lệnh nằm ở giới hạn của PID tăng từ 0.79 % lên 1.74 % ở STEADY khi $m$ tăng 20 %, và từ 0.77 % lên 1.71 % ở SLIP khi $e_c$ tăng 20 %, còn khi $m$ giảm 20 % thì giảm xuống 0.55 % và 0.42 %. Luận văn không tách riêng ảnh hưởng của giới hạn này.
+
+Sai lệch tĩnh cho thấy rõ nhất lợi ích của phản hồi. Ở STEADY, $\epsilon_w$ trung bình của Map nằm từ −5.6 % đến +29.7 % qua 17 biến thể, và độ lệch lớn nhất theo trị tuyệt đối trên các cửa sổ lên tới 92.0 % (khi $m$ tăng 20 %). Với PID, $\epsilon_w$ trung bình nằm từ −0.092 % đến −0.023 % và độ lệch lớn nhất không quá 0.56 %; với MapPID các số tương ứng là từ −0.090 % đến −0.005 % và 0.54 %. Điều này phù hợp với (3.21): khâu tích phân dừng ở $e_T=0$ nên độ chính xác xác lập không phụ thuộc tham số của đối tượng khi motor không bão hòa. Ở SLIP, độ lệch lớn nhất theo trị tuyệt đối trên các cửa sổ nằm từ 19.9 % đến 72.4 % với Map, từ 2.7 % đến 16.8 % với PID và từ 2.2 % đến 16.6 % với MapPID; các cửa sổ ở đó gồm cả quá độ, nên con số của PID và MapPID lớn hơn ở STEADY. Độ ồn $S$ đổi ít hơn: tối đa 3.1 % với PID, 5.0 % với MapPID và 13.2 % với Map.
+
+5.7.3. Thứ hạng và giới hạn
+
+Bảng 5.13 cho thứ hạng của ba bộ theo $E_{RMS}$ trung bình năm seed, ở danh định và tám biến thể. Hai bộ chênh nhau dưới 5 % được ghi bằng dấu bằng; ngưỡng 5 % là lựa chọn của luận văn và trùng với mục 5.6.
+
+Bảng 5.13: Thứ hạng theo $E_{RMS}$ trung bình năm seed 99995 đến 99999, từ nhỏ đến lớn. Dấu "=" là hai bộ chênh nhau dưới 5 %; trong một cặp ngang nhau, bộ có giá trị nhỏ hơn được ghi trước.
+Biến thể | STEADY | SLIP | WEAVE
+Danh định | PID = MapPID < Map | MapPID = PID < Map | PID < MapPID < Map
+$T_f$ +20 % | PID = MapPID < Map | MapPID < PID < Map | PID < MapPID < Map
+$J_{col}$ −20 % | MapPID = PID < Map | MapPID = PID < Map | PID < MapPID < Map
+$m$, $I_z$ −20 % | PID = MapPID < Map | MapPID < PID < Map | PID < MapPID < Map
+$C_\alpha$ −20 % | PID = MapPID < Map | MapPID = PID < Map | PID < MapPID < Map
+$C_\alpha$ +20 % | MapPID = PID < Map | MapPID < PID < Map | PID < MapPID < Map
+$t_0$ −20 % | PID = MapPID < Map | MapPID < PID < Map | PID < MapPID < Map
+$t_0$ +20 % | MapPID = PID < Map | MapPID = PID < Map | PID < MapPID < Map
+$e_c$ +20 % | MapPID = PID < Map | MapPID = PID < Map | PID < MapPID < Map
+
+Map đứng cuối ở cả 27 điều kiện (chín biến thể nhân ba chuỗi), và $E_{RMS}$ của nó luôn lớn hơn ít nhất 4.13, 2.63 và 7.12 lần bộ tốt hơn trong hai bộ còn lại ở STEADY, SLIP và WEAVE. Giữa PID và MapPID, thứ hạng ở danh định giữ qua các biến thể. Ở STEADY hai bộ ngang nhau ở cả chín điều kiện (chênh từ −0.10 đến +0.54 %). Ở SLIP MapPID không kém PID ở điều kiện nào (chênh từ −7.8 đến −1.0 %), và tốt hơn PID quá 5 % ở bốn biến thể, $T_f$ +20 %, $m$ và $I_z$ −20 %, $C_\alpha$ +20 % và $t_0$ −20 %. Ở WEAVE PID tốt hơn MapPID ở cả chín điều kiện (chênh từ +9.8 đến +11.6 %), nên khoảng cách của mục 5.6 không phải là đặc trưng riêng của bộ tham số danh định.
+
+Các giới hạn của mục: một xe mô phỏng; từng nhóm tham số được đổi riêng, chưa thử các lệch kết hợp, như xe chở nặng cùng lốp mềm; mức 20 % chung và không có số đo; ba bộ không được chọn lại tham số cho xe lệch; và năm seed chỉ cho tám biến thể. Kết quả cho biết các kết luận của chương này nhạy với tham số của xe đến mức nào, chưa so với số đo trên xe thật.

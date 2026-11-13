@@ -1,0 +1,83 @@
+KẾ HOẠCH TÁCH ẢNH HƯỞNG CỦA MA SÁT KHÔ CỘT LÁI (BIẾN THỂ T_f = 0)
+==============================================================================================================================================================================================
+Soạn: khung VDB_TIRE, 2026-11-13. Khung chạy: khung được người dùng dán prompt (đề nghị khung ROBUST, vì đã có sẵn cách chạy biến thể Plant trong run_robust_cases.m). Kết quả dùng để sửa luận văn
+mục 3.2, 4.5, 5.2, 5.3 (khung VDB_TIRE sửa, khung chạy không sửa luanvan.txt).
+
+==============================================================================================================================================================================================
+0. CÂU HỎI
+==============================================================================================================================================================================================
+Q1 (SLIP): ở hai cửa sổ đổi vận tốc khi đang cua của SLIP, độ lệch tương đối có dấu của Map đổi dấu theo chiều đổi vận tốc (+11.6 % và -9.3 %, trung bình năm seed), trong khi phân tích tĩnh
+(Documents/Thesis/figures/ch5_static_ramp.csv) cho 0 đến 2.9 % và luôn dương. Có phải do ma sát khô cột lái T_f không?
+Q2 (STEADY): ở bốn mức STEADY, độ lệch của Map trong mô phỏng là 32.30, 10.78, 19.26 và 9.53 %, phân tích tĩnh (ch5_static.csv) cho 29.47, 8.81, 19.85 và 4.73 %, chênh tới 4.8 điểm. Phần chênh đó
+có do T_f không?
+Q3 (CALIB): e_rel,max của Map trên CALIB là 26.2366 % (luận văn Bảng 4.5), còn phân tích tĩnh cho 26 cửa sổ tĩnh của CALIB tối đa 5.73 % (tools/make_fig_thesis_ch3.m). Cửa sổ nào cho 26.2 %, và
+chênh lệch có do T_f không?
+Q4 (chỉ báo cáo): E_RMS của PID và MapPID đổi bao nhiêu khi T_f = 0.
+
+==============================================================================================================================================================================================
+1. BIẾN THỂ (CHỐT TRƯỚC KHI CHẠY)
+==============================================================================================================================================================================================
+Một biến thể duy nhất, tên Tf0: T_f = 0 (danh định 2 N.m, [1] Lee 2018). Lý do tắt hẳn mà không giảm 20 %: câu hỏi là phần đóng góp toàn phần của ma sát khô; mức +-20 % đã có ở mục 5.7 (biến thể
+Tfp20, Tfm20).
+Giữ nguyên mọi thứ khác: hệ số làm mịn c của tanh, cản nhớt C_col, quán tính, xe, lốp, bộ điều khiển (map.json, pid.json, mappid.json), bảng Ref và T_a,max (ref.json, đã gồm dự phòng F = T_f danh
+định; không sinh lại, vì câu hỏi chỉ về Plant: ngoài đời bộ trợ lực không biết ma sát thật), Sensors, ca, seed.
+Cách gán giống run_robust_cases.m: load_<ctrl> (giá trị danh định) -> assignin('base', 'T_f', 0) -> load_derived -> chạy. Với CALIB dùng calib_run(mdl, seed, struct('T_f', 0)) (setVariable chỉ
+cho lần chạy đó).
+KHÔNG sửa robust_variants.m, run_robust_cases.m, Plant.mdl, Model_<Ctrl>.mdl, build_closed_loop.m, run_cases.m, calib_run.m, make_cases.m, load_*.m, mọi file .json; không ghi vào
+Result/Compare/Robust/ hay Cases_ssw/.
+
+==============================================================================================================================================================================================
+2. PHẦN CHẠY
+==============================================================================================================================================================================================
+R0 (kiểm tái lập, chạy trước): chạy Map danh định trên SSW ở seed 99999 bằng script mới (ra thư mục tạm Result/Compare/Friction/R0/), so E_RMS và độ lệch từng cửa sổ với
+Result/Controllers/Map/Cases_ssw/Map_metrics_s99999.csv. Khớp tới 1e-6 tương đối thì dùng dữ liệu danh định có sẵn cho phần A; không khớp thì DỪNG, ghi số khác vào nhật ký và báo người dùng
+(không tự chạy lại danh định).
+Phần A (SSW): ba bộ Map, PID, MapPID x năm seed 99995-99999 x biến thể Tf0, ba ca STEADY, SLIP, WEAVE (make_cases('SSW')). Tổng 15 lần gọi run_cases(ctrl, seed, 'SSW', outDir), outDir =
+Result/Compare/Friction/Tf0/. Thứ tự: Map trước (năm seed), rồi PID, MapPID; bỏ qua cặp đã có file metrics để chạy tiếp được.
+Phần B (CALIB, chỉ Map): calib_run('Model_Map', seed, []) và calib_run('Model_Map', seed, struct('T_f', 0)) với năm seed chung 99990-99994 (10 lần). Trước hết tái lập 26.2366 % từ lần chạy danh
+định theo đúng cách gộp đã dùng cho Bảng 4.5 (tra script sinh Documents/Thesis/figures/ch4_numbers.csv và ch4_selected.csv); không tái lập được thì DỪNG và báo.
+Script mới (tiếng Anh, Model/shared/Sim/script/): run_friction_check.m (phần R0, A, B; chép phần vệ sinh máy của run_robust_cases.m), summarize_friction.m (bảng ở mục 3). Không cần hình; hình
+luận văn do khung VDB_TIRE vẽ bằng MATLAB nếu cần.
+Vệ sinh máy (như run_robust_cases.m): use_sim_tmp; CacheFolder và CodeGenFolder D:\sim_cache\friction; TEMP, TMP D:\sim_tmp\friction; Simulink.sdi.clear sau mỗi lần chạy; close_system(..., 0);
+dừng nếu ổ C còn dưới 10 GB; ghi tiến độ vào Result/Compare/Friction/Friction_progress.txt.
+
+==============================================================================================================================================================================================
+3. BẢNG RA (Result/Compare/Friction/)
+==============================================================================================================================================================================================
+Friction_SSW_whole.csv: Ctrl, Case, Seed, ERMS_nom, ERMS_Tf0, dERMS_pct; thêm hàng mean và sd (mẫu, n-1) theo Ctrl và Case.
+Friction_SSW_windows.csv: Ctrl, Case, Window, Seed, eps_nom_pct, eps_Tf0_pct (độ lệch tương đối có dấu, đúng định nghĩa PT (5.2) và cửa sổ của Result/Compare/SSW_summary/SSW_windows.csv); kèm
+eps_static_pct ở các cửa sổ có phân tích tĩnh (bốn mức STEADY trong ch5_static.csv, hai cửa sổ đổi vận tốc trong ch5_static_ramp.csv).
+Map_CALIB_erel_friction.csv: Label (static_v<km/h>_a<g>), Seed, erelSigned_nom, erelSigned_Tf0, erel_static (26 cửa sổ, phân tích tĩnh tính bằng cùng hàm với make_fig_thesis_ch3.m); thêm hàng
+tổng kết: cửa sổ cho e_rel,max ở mỗi seed, giá trị trung bình năm seed của e_rel,max cho nom và Tf0.
+
+==============================================================================================================================================================================================
+4. QUY TẮC ĐỌC (CHỐT TRƯỚC KHI CHẠY)
+==============================================================================================================================================================================================
+Ngưỡng 1 điểm phần trăm: khoảng một phần mười ngưỡng phân biệt mô-men vô-lăng nhỏ nhất đo được, 10.2 % ở 5 N.m (Deborne và cộng sự 2014, tài liệu [26] của luận văn), nên chênh dưới mức này không
+có ý nghĩa với người lái. Mọi so sánh dùng trung bình năm seed.
+Q1: "ma sát giải thích được" nếu với Tf0, ở CẢ HAI cửa sổ đổi vận tốc, độ lệch của Map cùng dấu với phân tích tĩnh và |eps_Tf0 - eps_static| <= 1 điểm. "Giải thích một phần" nếu hết đổi dấu nhưng
+còn chênh hơn 1 điểm. "Không" nếu vẫn đổi dấu.
+Q2: "giải thích được" nếu |eps_Tf0 - eps_static| <= 1 điểm ở cả bốn mức STEADY; "một phần" nếu chênh giảm ít nhất một nửa ở cả bốn mức; còn lại "không".
+Q3: báo cửa sổ cho e_rel,max (danh định). "Do ma sát" nếu e_rel,max của Tf0 <= 5.73 + 1 = 6.73 %; còn lại báo cửa sổ và ghi "nguyên nhân khác, chưa rõ", không đoán thêm.
+Q4: báo dERMS_pct của PID và MapPID ở ba ca, không kết luận theo ngưỡng.
+Báo mọi kết quả, kể cả khi không ủng hộ giả thuyết ma sát. Không đổi quy tắc đọc sau khi thấy số; nếu buộc phải đổi thì ghi số cũ, số mới, lý do và thời điểm vào mục 6 của file này.
+
+==============================================================================================================================================================================================
+5. GIAO LẠI
+==============================================================================================================================================================================================
+Khung chạy ghi kết quả vào nhật ký của chính nó (câu trả lời Q1-Q4 theo mục 4 kèm số) và ghi kết quả ngắn vào mục 6 dưới đây. Không sửa Documents/Thesis/, Documents/Paper/. Không commit trừ khi
+người dùng bảo, không dùng sync_repo.sh.
+
+==============================================================================================================================================================================================
+6. NHẬT KÝ THỰC HIỆN (khung chạy ghi)
+==============================================================================================================================================================================================
+Chạy 2026-11-13 16:29-16:54 (khung ROBUST), script Model/shared/Sim/script/run_friction_check.m và summarize_friction.m; bảng ở Result/Compare/Friction/ (Friction_SSW_whole.csv, Friction_SSW_windows.csv,
+Map_CALIB_erel_friction.csv, thêm Map_CALIB_erel_friction_summary.csv và Friction_answers.txt). Không sửa quy tắc đọc ở mục 4.
+R0 PASS (lệch tương đối lớn nhất 0). Phần B tái lập Bảng 4.5: max qua năm seed 26.23654 so với 26.23659 (lệch 2e-6).
+Điểm bổ sung chốt trước khi thấy số (kế hoạch chưa nêu): mốc tĩnh của ramp_dn, ramp_up = trung bình ch5_static_ramp trên 45-90 km/h (1.12 %, khoảng 0 .. 2.93); bốn mức Q2 = v45a0p35l, v65a0p35r,
+v85a0p38l, v25a0p25r; Q3 so trung bình năm seed của e_rel,max với 6.73 %.
+Q1: GIẢI THÍCH ĐƯỢC. ramp_dn: danh định +11.59 %, Tf0 +1.49 %, tĩnh 1.12 %; ramp_up: -9.30 %, Tf0 +0.59 %, tĩnh 1.12 %; hết đổi dấu, chênh tĩnh 0.37 và 0.53 điểm.
+Q2: KHÔNG (theo quy tắc: mức 85 km/h chênh tăng từ 0.59 lên 2.35 điểm nên không đủ "giảm một nửa ở cả bốn mức", và không đủ <= 1 điểm ở cả bốn). Số (danh định, Tf0, tĩnh): 45 km/h 0.35 g 32.30, 28.08, 29.47;
+65 0.35 10.78, 8.00, 8.81; 85 0.38 19.26, 17.50, 19.85; 25 0.25 9.53, 5.88, 4.73. Ba mức chênh giảm (2.83->1.38, 1.97->0.81, 4.79->1.14) nhưng mức thứ tư xấu đi.
+Q3: DO MA SÁT. Cửa sổ cho e_rel,max là static_v30_apos0p30g ở cả năm seed; danh định trung bình 26.00 % (max 26.24), Tf0 trung bình 6.01 % (max 6.06) <= 6.73.
+Q4 (dERMS %, trung bình năm seed): Map STEADY -49.61, SLIP -12.59, WEAVE -51.04; PID -41.17, +26.94, -7.17; MapPID -38.24, +32.65, -5.01.

@@ -1,0 +1,26 @@
+5.3. SLIP: đổi vận tốc và hệ số bám
+
+SLIP gồm ba đoạn (Bảng 5.1). Đoạn đầu giảm vận tốc từ 90 xuống 45 km/h rồi tăng lại, với $\mu=0.8$ và góc vô-lăng theo bảng cân bằng đường khô ở 0.20 g. Đoạn thứ hai giữ 60 km/h và góc ứng với −0.30 g trong khi $\mu$ giảm theo bậc từ 0.8 xuống 0.5, 0.33 và 0.24 rồi trở về 0.8; mỗi mức thấp giữ 5 s và 2 s cuối được chấm. Đoạn cuối là vũng nước: $\mu$ giảm từ 0.8 xuống 0.2 trong 2 s ở 80 km/h với góc ứng với +0.25 g. Vì góc vô-lăng giữ nguyên ở hai đoạn sau, gia tốc ngang thực và mô-men mục tiêu phụ thuộc vào lực mà lốp còn tạo được. Bảng 5.4 cho chỉ tiêu toàn chuỗi, và Hình 5.3 vẽ mô-men thanh xoắn của ba bộ.
+
+Bảng 5.4: Chỉ tiêu toàn chuỗi của SLIP trên khoảng 2 đến 100 s. Trung bình ± độ lệch chuẩn mẫu trên năm seed.
+Bộ | $E_{RMS}$ (N·m) | $S$ (N·m)
+Map | 0.6895 ± 0.0001 | 0.2028 ± 0.0009
+PID | 0.2057 ± 0.0013 | 0.4900 ± 0.0057
+MapPID | 0.1962 ± 0.0019 | 0.4820 ± 0.0069
+
+[Hình 5.3: Mô-men thanh xoắn $T_s$ (đường liền) và mô-men mục tiêu $T_{ref}$ (nét đứt) của Map, PID và MapPID trong SLIP, seed 99999. Vùng xám là các khoảng $\mu<0.8$, từ 51.5 đến 66.5 s và từ 85 đến 87 s. (a) Cả chuỗi. (b) Phóng đại quanh vũng nước, từ 83 đến 91 s. | Documents/Thesis/figures/Hinh_5_3_SLIP.png@16.0]
+
+Trong hai đoạn đổi vận tốc, mô-men của Map lệch khỏi mục tiêu (Hình 5.3a): cao hơn khi xe chậm lại và thấp hơn khi xe nhanh lên. RMS trong hai cửa sổ là 0.2986 và 0.2503 N·m, với độ lệch +11.6 % và −9.3 %, nên gộp hai cửa sổ sẽ che mất phần lớn sai lệch. Các giá trị tương ứng của MapPID là 0.0140 và 0.0124 N·m, và của PID là 0.0205 và 0.0180 N·m. Chiều lệch đổi dấu theo chiều đổi vận tốc, nên nó không đến từ sai lệch tĩnh của bản đồ: phân tích tĩnh của mục 3.2 ở 0.20 g cho Map lệch từ 0 đến 2.9 % trên dải 45 đến 90 km/h và luôn dương. Một nguyên nhân khả dĩ là ma sát khô của cột lái, đổi dấu cùng chiều quay của vô-lăng: góc đặt tăng từ 12° lên 35° khi xe chậm lại và giảm về 12° khi xe nhanh lên, nên chiều ma sát đổi theo. Luận văn không tách nguyên nhân này. Hai bộ có phản hồi khử được phần lệch đó.
+
+Khi hệ số bám giảm theo bậc, độ lệch của Map tăng dần từ −1.52 % ở $\mu=0.5$ lên −6.42 % ở 0.33 và −13.94 % ở 0.24, nên mô-men thanh xoắn nhẹ hơn mục tiêu ngày càng nhiều. Chiều lệch này đúng với (3.11): khi $\mu$ giảm, mô-men phản lực giảm, bản đồ chỉ bù một phần của lượng giảm đó và $T_s$ giảm phần còn lại. Mô-men thấp hơn mục tiêu nghĩa là trợ lực lớn hơn mức mặt đường trơn đòi hỏi, tức đúng hiện tượng trợ lực thừa của mục 1.2. Ở mức cuối Map lệch −13.94 %, nằm trong khoảng mốc 10.2 đến 18 % của [26]; trong Hình 5.3a mô-men của Map nhỏ hơn mục tiêu về độ lớn suốt mức cuối, còn MapPID và PID chồng lên mục tiêu. PID và MapPID giữ độ lệch trong ±0.16 % ở cả ba mức.
+
+Bảng 5.5: Độ lệch tương đối có dấu $\epsilon_w$ (5.2) trong hai cửa sổ của SLIP, đơn vị %. Cửa sổ thứ nhất là 2 s cuối của mức $\mu=0.24$; cửa sổ thứ hai là 2 s của vũng nước, kể cả quá độ. Trung bình ± độ lệch chuẩn mẫu trên năm seed.
+Cửa sổ | Map | PID | MapPID
+Góc giữ nguyên, $\mu=0.24$ | −13.9400 ± 0.0097 | 0.1251 ± 0.1255 | 0.1234 ± 0.1141
+Vũng nước | −12.5616 ± 0.0188 | −0.8428 ± 0.0786 | −0.5141 ± 0.0655
+
+Độ lệch lớn nhất ở cả ba bộ xảy ra ngay khi hệ số bám trở lại, ở 66.5 và 87 s. Ở 87 s mô-men của Map đạt 12.78 N·m so với mục tiêu 3.30 N·m, còn của MapPID lên 6.69 N·m (Hình 5.3b); bước ở 66.5 s có cùng dạng, với cực trị −8.19 N·m của Map và −4.80 N·m của MapPID. Hai bộ có phản hồi lệch ít hơn nhưng không hết. Một cách đọc phù hợp với mục 3.4.2: với Map, trợ lực chỉ tăng sau khi $T_s$ đã tăng vì bản đồ phản ứng với $T_s$, nên $T_s$ vọt cao; với PID và MapPID, khâu tích phân đã rút bớt trợ lực cho mặt trơn theo (3.21), nên khi mô-men phản lực tăng đột ngột trợ lực còn thiếu cho tới khi tích phân phục hồi. Luận văn không kiểm cách đọc này bằng phép thử riêng.
+
+Trong chính vũng nước, độ lệch là −12.56 % với Map, −0.84 % với PID và −0.51 % với MapPID (Bảng 5.5), và RMS trong cửa sổ giảm từ 0.3836 N·m của Map xuống 0.0875 N·m của PID và 0.0462 N·m của MapPID. RMS này gồm cả quá độ khi hệ số bám đổi nên không phải sai số xác lập.
+
+Trên cả chuỗi, MapPID giảm $E_{RMS}$ từ 0.6895 N·m của Map xuống 0.1962 N·m, tức 3.51 lần, mà không nhận ước lượng hệ số bám của mặt đường. Chênh lệch so với PID nhỏ, −4.6 %, nhưng lớn hơn độ lệch chuẩn giữa các seed của hai bộ (0.0019 và 0.0013 N·m). $S$ của MapPID và PID, 0.4820 và 0.4900 N·m, chênh nhau 1.6 %, cỡ độ lệch chuẩn giữa các seed (0.0069 và 0.0057 N·m).

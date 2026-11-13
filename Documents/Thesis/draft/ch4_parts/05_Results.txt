@@ -1,0 +1,52 @@
+4.5. Kết quả hiệu chỉnh
+
+Bảng 4.3 tóm tắt số ứng viên và số điểm trên hai mặt Pareto cuối. Cột về độ chính xác đếm số điểm của tập seed chung qua điều kiện $e_{rel,max}\le10\%$ trước khi loại bằng phép thử chấp nhận, nên các điểm đó không nhất thiết nằm trên mặt full.
+
+Bảng 4.3: Ứng viên tìm được và hai mặt Pareto cuối. Mọi điểm trên các mặt đã qua phép thử chấp nhận phi tuyến.
+Bộ | Mô phỏng cục bộ | Tập seed chung | Qua điều kiện chính xác trong tập | Mặt safe | Mặt full
+Map | 149 | 80 | 17 | 58 | 0
+PID | 184 | 134 | 99 | 44 | 31
+MapPID | 225 | 187 | 142 | 33 | 22
+
+Với Map, cả 17 điểm đạt yêu cầu 10 % đều trượt phép thử chấp nhận phi tuyến, nên mặt full rỗng và thiết kế của Map được lấy từ mặt safe. Hình 4.2 vẽ hai mặt của ba bộ. Mặt full của PID và MapPID cũng khác nhau ở cùng mục tiêu bám: với $\bar{R}\le3\%$, $\bar{S}$ nhỏ nhất là 0.8713 N·m ở PID và 0.7486 N·m ở MapPID; với $\bar{R}\le6\%$ là 0.6685 và 0.6059 N·m. Tuy nhiên PID có các thiết kế full êm hơn ở sai số bám lớn hơn, tới $\bar{S}=0.477$ N·m ở $\bar{R}=11.5\%$, nên bộ nào có lợi thế còn tùy đoạn nào của mặt được xét.
+
+[Hình 4.2: Mặt Pareto của Map, PID và MapPID trên tập seed chung. Điểm đặc nằm trên mặt full, điểm rỗng chỉ nằm trên mặt safe; vòng tròn đen là thiết kế chọn theo (4.10). Trục hoành theo thang logarit. | Documents/Thesis/figures/Hinh_4_2_Pareto.png@13.0]
+
+Bảng 4.4 liệt kê các thiết kế được chọn bằng (4.10) và quy tắc hòa của nó. Hai cột bản đồ giống nhau của Map và MapPID cho thấy các tham số nào được đóng băng khi nhánh song song được chỉnh, và $K_{aw}$ theo (3.18) ở cả hai cấu trúc PID.
+
+Bảng 4.4: Tham số của các thiết kế được chọn. Dấu gạch là không áp dụng.
+Tham số | Map | PID | MapPID
+$K_{max}$ | 6.77455 | - | 6.77455
+$T_{s0}$ (N·m) | 0.300 | - | 0.300
+$\tau_{1,in}$ (ms) | 29.8499 | - | 29.8499
+$\tau_{1,out}$ (ms) | 1.48530 | - | 1.48530
+$\tau_{2,in}$ (ms) | 35.5523 | - | 35.5523
+$\tau_{2,out}$ (ms) | 93.5587 | - | 93.5587
+$K_p$ | - | 2.90376 | 2.08008
+$T_i$ (ms) | - | 34.1995 | 23.9826
+$T_d$ (ms) | - | 23.3180 | 23.3180
+$N$ | - | 19.2508 | 14.1841
+$K_i$ ($\mathrm{s}^{-1}$) | - | 84.9065 | 86.7330
+$K_d$ (s) | - | 0.0677100 | 0.0485034
+$\tau_f$ (ms) | - | 1.21127 | 1.64395
+$K_{aw}$ ($\mathrm{s}^{-1}$) | - | 35.4115 | 42.2869
+
+Hai thời gian vi phân, cỡ 23.3 ms, nằm sát cận dưới 20 ms của miền tìm kiếm, nên kết quả chọn có điều kiện theo miền này. Bảng 4.5 cho các chỉ tiêu tương ứng.
+
+Bảng 4.5: Chỉ tiêu của các thiết kế được chọn trên CALIB. Trung bình và độ lệch lớn nhất tính trên năm seed, các tỉ số nhiễu loạn tính ở seed 99990.
+Đại lượng | Map | PID | MapPID
+$\bar{R}$ (%) | 12.0719 | 3.2241 | 2.5330
+$\bar{S}$ (N·m) | 0.4397 | 0.7782 | 0.7953
+$J$ (%·N·m) | 5.3085 | 2.5089 | 2.0145
+$e_{rel,max}$ (%) | 26.2366 | 2.0861 | 1.8056
+$\rho_{gain}$ | 1.931 | 0.698 | 0.810
+$\rho_{delay}$ | 1.000 | 1.029 | 1.028
+Mặt dùng để chọn | safe | full | full
+
+So với Map, MapPID giảm $\bar{R}$ khoảng 79 %, trong khi thành phần nhanh của mô-men trợ lực tăng. Map có $\bar{S}$ nhỏ nhất nhưng sai số lớn nhất của cửa sổ tĩnh lên tới 26.2 %; phản hồi thêm vào đưa sai số này xuống dưới ngưỡng 10 % mà không đổi bản đồ đã hiệu chỉnh. So với PID, điểm MapPID được chọn giảm $J$ khoảng 19.7 % và tăng $\bar{S}$ 2.2 %. Quy tắc chung vì vậy dừng ở một cân bằng giữa sai số và nhiễu khác nhau cho mỗi cấu trúc. Sai số tĩnh 26.2 % của Map lớn hơn nhiều mức mà phân tích tĩnh ở mục 3.2 dự báo cho 26 cửa sổ tĩnh của CALIB, tối đa 5.73 %; phân tích đó bỏ qua ma sát khô của cột lái, vốn có thể lệch mô-men thanh xoắn tới 0.26 N·m (mục 3.2), nhưng luận văn chưa tách riêng nguyên nhân bằng mô phỏng. Đây là kết quả hiệu chỉnh cho một xe mô phỏng, và các bộ tham số cố định là cơ sở của các phép thử ở Chương 5.
+
+4.6. Kết luận chương
+
+Chương này đặt ra một quy trình chọn tham số chung cho ba bộ điều khiển: một ca CALIB dài 140 s với 68 cửa sổ chấm điểm, ba chỉ tiêu là độ bám $R$, độ ồn $S$ và độ chính xác tĩnh $e_{rel}$, các ràng buộc và phép thử chấp nhận trước khi chọn, việc tìm từ thô đến mịn, và chọn điểm cuối bằng $J=\bar{R}\bar{S}$ trên mặt Pareto của năm seed chung. Mỗi mốc có lý do và nguồn, hoặc được nêu thẳng là lựa chọn của luận văn: chu kỳ 1 ms và dải đánh lái 0.2 đến 2.0 Hz cùng mốc 5 Hz theo [11], dự trữ ổn định theo [25] và [1], rời rạc hóa theo [25], khoảng của $N$ theo [14] và [25].
+
+Kết quả hiệu chỉnh là PID và MapPID đạt $e_{rel,max}$ dưới 10 % còn Map phải chọn trên mặt safe; MapPID có $\bar{R}$ và $J$ nhỏ nhất, với $\bar{S}$ lớn hơn của Map. Chương có những giới hạn cần nhớ. Kết quả thuộc một xe mô phỏng. Các ngưỡng 10 % và 3 %, hệ số 2 của tỉ số nhiễu loạn, hệ số ba sigma và các cận của lưới là lựa chọn của luận văn. Hai thời gian vi phân nằm sát cận dưới của miền tìm kiếm. Chương 5 đánh giá ba thiết kế đã chọn trên các ca độc lập với ca chọn tham số.

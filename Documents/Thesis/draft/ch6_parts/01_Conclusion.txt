@@ -1,0 +1,45 @@
+CHƯƠNG 6. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
+
+Chương này tóm tắt kết quả của luận văn theo năm nội dung đã đặt ra ở mục 1.5, nêu các giới hạn của kết quả, và đề xuất những hướng làm tiếp. Mọi con số trong chương đã có ở các chương trước và được dẫn lại kèm mục chứa chúng.
+
+6.1. Kết luận
+
+Nội dung thứ nhất là mô hình. Luận văn lập một mô hình phi tuyến liên kết cột lái, lốp và thân xe một vết (Chương 2), trong đó hệ số bám của mặt đường đi tới vô-lăng qua mô-men phản lực của lốp, cùng mô-men mục tiêu theo vận tốc và gia tốc ngang và giới hạn trợ lực tính cho đường khô. Mỗi công thức được dẫn từ tài liệu gốc kèm số phương trình và trang, và mỗi tham số được ghi là lấy từ tài liệu, tự chọn hay do quy trình chọn tham số tạo ra (Bảng 2.4).
+
+Nội dung thứ hai là thiết kế ba bộ điều khiển (Chương 3). Map gồm bản đồ trợ lực hiệu chỉnh trên đường khô và khâu bù lead-lag; PID là luật PID chuẩn có khâu vi phân lấy trên số đo, lọc khâu vi phân và chống bão hòa tích phân; MapPID giữ nguyên Map và cộng một nhánh PID song song. Phân tích tĩnh cho thấy khi hệ số bám giảm ở cùng gia tốc ngang, mô-men thanh xoắn của Map giảm $\Delta T_r/(1+\bar{s})$ với $\bar{s}\le K_{max}$, nên Map không khử được sai lệch khi độ dốc của bản đồ bị chặn. PID và MapPID có thêm khâu tích phân, nên sai lệch xác lập về không với điều kiện vòng ổn định và motor không bão hòa.
+
+Nội dung thứ ba là chọn tham số (Chương 4). Ba bộ được chọn tham số theo cùng một quy tắc trên mặt Pareto của độ bám $R$ và độ ồn $S$ của ca CALIB dài 140 s, với năm seed chung, các ràng buộc và phép thử chấp nhận đặt trước khi chạy. PID và MapPID đạt sai số tĩnh lớn nhất 2.1 % và 1.8 %, còn Map phải chọn trên mặt chỉ qua cổng ổn định, với sai số 26.2 %. Chạy lại Map với ma sát khô của cột lái bằng không đưa sai số này về 6.0 %, nên ma sát là nguyên nhân chính của nó (mục 4.5). MapPID có độ bám trung bình $\bar{R}$ và tích $J=\bar{R}\bar{S}$ nhỏ nhất trong ba bộ.
+
+Nội dung thứ tư là đánh giá trên ba ca độc lập với ca chọn tham số, mỗi ca năm seed (Chương 5). Giữ nguyên bản đồ và khâu bù, MapPID giảm $E_{RMS}$ của Map 4.24 lần ở STEADY, 3.51 lần ở SLIP và 6.54 lần ở WEAVE, mà không cần ước lượng hệ số bám. Map lệch +32.3 % ở mức giữ cua mạnh nhất trên đường khô, phần lớn do giới hạn độ dốc của bản đồ, và −13.9 % khi $\mu=0.24$, tức trợ lực thừa trên mặt trơn; MapPID giữ độ lệch trong 0.43 % ở mọi cửa sổ của STEADY và trong ±0.16 % ở các bậc hệ số bám của SLIP. Cái giá là thành phần nhanh của mô-men trợ lực: $S$ tăng từ 0.20 đến 0.29 N·m ở Map lên 0.48 đến 0.76 N·m ở MapPID. Độ lệch đổi dấu theo chiều đổi vận tốc của Map ở SLIP cũng do ma sát cột lái (mục 5.3).
+
+So với PID đứng một mình, MapPID bám ngang ở STEADY, tốt hơn 4.6 % ở SLIP và kém 10.9 % ở WEAVE, còn $S$ thấp hơn ở cả ba chuỗi, 8.9 %, 1.6 % và 15.1 %. Khoảng cách ở WEAVE không nằm ở nhánh Map: ba phép chẩn đoán bỏ khâu trễ pha, bỏ cả khâu sớm pha và đặt vùng chết bằng không chỉ đóng được tối đa 0.9 % trong khoảng cách 10.3 % (mục 5.6). Giá trị của MapPID so với PID vì vậy là độ ồn thấp hơn và việc giữ nguyên bản đồ đã hiệu chỉnh, chỉ thêm nhánh PID; cái giá là bám động kém hơn khi lái liên tục.
+
+Nội dung thứ năm là độ vững. Khi từng nhóm tham số của xe lệch ±20 %, Map đứng cuối ở cả 27 điều kiện của phép thử năm seed, và PID cùng MapPID giữ độ lệch tĩnh không quá 0.56 % ở STEADY trong khi Map lên tới 92.0 %. Phản hồi không loại bỏ hết ảnh hưởng của tham số: $E_{RMS}$ của PID và MapPID ở SLIP tăng tới 71.7 % và 76.6 % khi khối lượng tăng 20 % (mục 5.7). Khi khối lốp và khối thân xe tự viết được thay bằng khối của thư viện VDB cùng giả thiết, kết quả trùng đối tượng tự viết trong 0.06 % với thân xe và 1.35 % với lốp cùng thân xe; độ trễ lốp đổi $E_{RMS}$ từ −7.7 % đến +5.0 %, và thứ hạng giữ ở 10 trong 12 ô, hai ô còn lại chỉ đảo thứ tự trong cặp ngang nhau (mục 5.8).
+
+Tóm lại, trên mô hình của luận văn, một nhánh PID cắm thêm vào bản đồ có sẵn đưa mô-men thanh xoắn về gần mô-men mục tiêu hơn bản đồ đứng một mình ở cả ba chuỗi thử, mà không cần biết hệ số bám và không sửa bản đồ. So với PID đứng một mình, MapPID cho độ ồn thấp hơn nhưng không bám tốt hơn một cách nhất quán. Các kết luận này thuộc một xe mô phỏng với góc vô-lăng cho trước, và mục 6.2 nêu các giới hạn đó.
+
+6.2. Hạn chế
+
+Thứ nhất, mọi kết quả là mô phỏng trên một xe có bộ số lấy từ tài liệu hoặc tự chọn (Bảng 2.4), chưa có số đo trên xe thật. Tham số lốp là số minh họa của [12], vệt khí nén được chọn vì không có số đo, và ma sát khô của cột lái lấy từ [1]; ma sát này ảnh hưởng rõ đến Map (mục 4.5 và 5.3), nên giá trị đo trên xe cụ thể có thể làm đổi độ lớn sai số của Map, dù Map vẫn đứng cuối khi $T_f$ lệch ±20 % (mục 5.7).
+
+Thứ hai, góc vô-lăng được cho trước, không có mô hình người lái, nên mô-men thanh xoắn đáp ứng tự do và không có phản ứng hiệu chỉnh của người lái. Ngưỡng phân biệt mô-men vô-lăng của [26] được đo khi người lái không lái; luận văn dùng nó làm mốc tham khảo và không đo cảm giác lái, nên một sai lệch mô-men nhỏ hơn không tự nó chứng tỏ cảm giác lái tốt hơn.
+
+Thứ ba, năm seed chỉ đo độ nhạy với nhiễu cảm biến. Các phép chẩn đoán D1 đến D3 của mục 5.6 chạy ở một seed, và mười bảy biến thể của mục 5.7 cũng chạy ở một seed trước khi chín điều kiện được chạy lại với năm seed. Phép thử tham số đổi từng nhóm một với mức ±20 % chung, là lựa chọn của luận văn, và không chọn lại bộ điều khiển cho xe lệch; các lệch kết hợp, như xe chở nặng cùng lốp mềm, chưa được thử.
+
+Thứ tư, khối VDB cho kiểm chứng cài đặt chứ không phải xác thực, vì chưa có số đo xe thật để đối chiếu. Trong các biến thể VDB, mô-men phản lực vẫn do phương trình vệt khí nén của luận văn tính, vì bản dùng mô-men tự lựa của VDB có hệ số khớp theo phương trình đó và không phải nguồn độc lập (mục 5.8).
+
+Thứ năm, giới hạn trợ lực tính từ nhu cầu trên đường khô và không đại diện cho năng lực của một motor thương mại [24]. Ở STEADY, một quá độ chạm giới hạn này ở giây 9 đến 10 chiếm 81 % tổng bình phương sai lệch của PID và MapPID (mục 5.2), nên $E_{RMS}$ toàn chuỗi của hai bộ ở chuỗi đó không phân biệt được chúng ở chế độ giữ cua.
+
+Thứ sáu, nguyên nhân khoảng cách giữa MapPID và PID ở WEAVE chưa được tách: giả thuyết còn lại, hệ số PID của hai bộ khác nhau, chưa được kiểm (mục 5.6).
+
+6.3. Hướng phát triển
+
+Hướng thứ nhất là đối chiếu mô hình với số đo và thử trên phần cứng. Việc cần làm trước là nhận dạng ma sát cột lái, vệt khí nén và độ cứng lốp của một xe cụ thể, rồi thử MapPID trên bàn thử có phần cứng trong vòng (HIL, Hardware-in-the-Loop). Có tiền lệ cho cả hai bước: [1] nhận dạng mô hình cột lái trên một xe thật, và [8] có phần thử HIL cho bộ điều khiển bám mô-men mục tiêu (mục 5 của [8]). Kết quả đo cũng cho phép nâng phép kiểm chứng ở mục 5.8 lên thành xác thực.
+
+Hướng thứ hai là đưa người lái vào vòng điều khiển. Vì góc vô-lăng được cho trước, luận văn chưa xét được việc người lái đổi góc khi thấy mô-men thay đổi, tức chưa biết phản hồi mô-men làm người lái bù ít hơn bao nhiêu khi hệ số bám đổi. [15, chương 4] xây dựng mô hình cơ-xương-thần kinh của cánh tay người lái cầm vô-lăng, kèm một bản hai chiều đơn giản hóa (mục 4.5), và [15, mục 5.4] dùng bốn kiểu người lái, phân theo tuổi và giới tính, để chỉnh đường đặc tính trợ lực; đó là điểm xuất phát có sẵn cho hướng này.
+
+Hướng thứ ba là khép giả thuyết còn mở của mục 5.6. Đặt bảng của Map bằng không trong MapPID rồi so với PID ở WEAVE với năm seed sẽ cho biết phần khoảng cách còn lại đến từ hệ số PID hay từ nhánh Map. Nếu phần lớn đến từ hệ số PID, quy tắc chọn ở Chương 4, vốn chỉ chấm độ bám trung bình và độ ồn, cần được xét lại cho các chuỗi lái nhanh.
+
+Hướng thứ tư là cho nhánh PID thích nghi với tải và hệ số bám. Mục 5.7 cho thấy $E_{RMS}$ của PID và MapPID ở SLIP tăng tới 71.7 % và 76.6 % khi khối lượng tăng 20 %, phù hợp với việc giới hạn trợ lực tính cho xe danh định bị chạm nhiều hơn, trong khi nhánh PID dùng bốn tham số cố định. [8, tr. 163] báo cáo rằng khi lực thanh răng danh định đổi từ 50 đến 150 %, sai số bám của bộ điều khiển có thích nghi đổi ít hơn nhiều so với khi không thích nghi. Vì vậy có thể cho các tham số của nhánh PID, hoặc giới hạn trợ lực, thay đổi theo một ước lượng của tải hoặc của hệ số bám. Một cách thực hiện là học tăng cường (RL, Reinforcement Learning), trong đó một tác tử học cách chọn hành động để cực đại hóa một tín hiệu thưởng bằng cách thử các hành động trong mô phỏng, mà không cần được chỉ trước hành động nào đúng [28, mục 1.1, tr. 2]. Mô hình và ba ca đánh giá của luận văn có thể dùng làm môi trường huấn luyện; điều kiện cần là tác tử không được làm mất tính ổn định của vòng, nên các cổng chấp nhận của mục 4.3 vẫn phải được giữ.
+
+Hướng thứ năm là áp quy trình chọn tham số cho nhiều bộ tham số xe. Quy trình mới được chạy cho một xe, và mục 5.7 cho thấy khối lượng là nhóm tham số có ảnh hưởng lớn nhất lên $E_{RMS}$; chạy lại cho một xe nhẹ và một xe nặng sẽ cho biết bốn tham số của nhánh PID thay đổi bao nhiêu giữa các xe.

@@ -1,0 +1,60 @@
+3.3. Bộ điều khiển PID
+
+3.3.1. Vì sao dùng PID
+
+Phản hồi sai lệch mô-men cần một luật điều khiển khử được sai lệch xác lập mà không cần biết hệ số bám. PID đáp ứng điều đó vì thành phần tích phân buộc sai lệch xác lập bằng không [14, tr. 67]. PID cũng là thuật toán phản hồi phổ biến nhất trong công nghiệp [14, tr. 59]: hơn 95 % vòng điều khiển trong điều khiển quá trình là loại PID, phần lớn thực chất là PI [14, tr. 1]. Trong EPS, theo [9, mục 1], Kim và Song (2002) là những người đầu tiên đề xuất cho mô-men người lái bám một mô-men mục tiêu, và họ dùng bộ PI; [9] cũng đưa PID kèm bộ quan sát nhiễu vào ba bộ phản hồi được so sánh trên xe thật.
+
+Chọn PID không có nghĩa PID là bộ phản hồi tốt nhất. [14, tr. 1] chỉ nói PID đủ cho nhiều bài toán khi động học của đối tượng hiền và yêu cầu hiệu năng vừa phải, trong khi cột lái ít tắt dần: khi người lái giữ chặt vô-lăng, cột lái dao động với chu kỳ riêng $2\pi\sqrt{J_{col}/K}=0.174$ s và hệ số tắt dần $C_{col}/(2\sqrt{KJ_{col}})=0.17$ (Bảng 2.4). Trong thử nghiệm xe đỗ của [9, mục 4.3], sai số bám là $\pm0.3$ N·m với PID kèm bộ quan sát nhiễu, $\pm0.1$ N·m với lead-lag kèm bộ quan sát nhiễu và $\pm0.9$ N·m với LQG; [9] giải thích rằng khâu lead-lag có nhiều bậc tự do hơn để định dạng vòng trong miền tần số. Luận văn vẫn chọn PID vì câu hỏi của luận văn là cấu trúc cắm thêm một nhánh phản hồi vào bản đồ, không phải tìm bộ phản hồi tối ưu, và vì PID chỉ có bốn tham số chỉnh, quen thuộc và đã được dùng ở [7] và [9].
+
+3.3.2. Dạng chuẩn và vai trò của ba thành phần
+
+Điểm xuất phát là luật PID dạng sách giáo khoa của Åström và Hägglund [14], tính tín hiệu điều khiển từ sai lệch $e=y_{sp}-y$ giữa giá trị đặt và đầu ra đo được:
+
+(3.12)  u(t) = K_p*e(t) + K_i*INT_0^t e(tau) dtau + K_d*de(t)/dt = K_p*[ e(t) + (1/T_i)*INT_0^t e(tau) dtau + T_d*de(t)/dt ]
+[ u(t)=K_p\,e(t)+K_i\int_0^t e(\tau)\,d\tau+K_d\,\frac{de(t)}{dt}=K_p\brack{e(t)+\frac{1}{T_i}\int_0^t e(\tau)\,d\tau+T_d\,\frac{de(t)}{dt}} ]
+
+trong đó $K_p$ là độ lợi tỉ lệ, $T_i$ và $T_d$ là thời gian tích phân và thời gian vi phân. Biểu thức bên phải là dạng chuẩn của [14, PT (3.9), tr. 64], còn gọi là dạng ISA (Instrument Society of America, hội nghề nghiệp xuất bản [14]) hay thuật toán lý tưởng; biểu thức ở giữa là dạng song song, với $K_i=K_p/T_i$ và $K_d=K_pT_d$ [14, PT (3.18), tr. 72]. Luận văn dùng dạng chuẩn vì các quy tắc của [14] về bộ lọc khâu vi phân và thời gian bám (mục 3.3.3) viết theo $T_i$ và $T_d$, và vì dạng chuẩn cho phép điểm không phức còn dạng nối tiếp chỉ có điểm không thực, điều hữu ích với hệ có cực dao động như cột lái [14, tr. 73].
+
+Thành phần tỉ lệ phản ứng với sai lệch hiện tại. Thành phần tích phân khử sai lệch xác lập: nếu sai lệch khác không thì tích phân còn tăng hoặc giảm, nên tín hiệu điều khiển không thể đứng yên [14, tr. 67]. Thành phần vi phân dự báo xu hướng của sai lệch: tín hiệu điều khiển tỉ lệ với sai lệch ngoại suy tuyến tính trước một thời gian $T_d$, nên cải thiện ổn định; tăng $T_d$ lúc đầu làm tắt dần tốt hơn nhưng $T_d$ quá lớn lại làm kém đi [14, tr. 69].
+
+3.3.3. Ba sửa đổi so với luật chuẩn
+
+Luật (3.12) hiếm khi được dùng nguyên dạng, vì các bản sửa đổi cho hiệu năng tốt hơn nhiều [14, tr. 70]. Bộ PID của luận văn khác (3.12) ở ba điểm, đều là sửa đổi được mô tả trong [14].
+
+Thứ nhất, khâu vi phân lấy đạo hàm của mô-men đo $T_{s,m}$ chứ không phải của sai lệch $e_T=T_{s,m}-T_{ref}(v_m,a_{y,m})$ (là (2.19) viết bằng tín hiệu đo). Sai lệch $e_T$ có dấu ngược với sai lệch $e$ của [14], vì trợ lực lớn hơn làm $T_s$ giảm. Vì $\dot{e}_T=\dot{T}_{s,m}-\dot{T}_{ref}$, cách này bỏ đạo hàm của mô-men mục tiêu. Đó là trọng số giá trị đặt của [14]: khâu vi phân tác dụng lên $c\,y_{sp}-y$, và thường chọn $c=0$ để tránh quá độ lớn trong tín hiệu điều khiển khi giá trị đặt nhảy [14, tr. 73-74, PT (3.19)-(3.21)]. Khâu tỉ lệ vẫn nhận sai lệch đầy đủ vì vòng phải bám mục tiêu, và khâu tích phân phải thấy sai lệch thật để không còn sai lệch xác lập [14, tr. 74]; cách sắp xếp này đôi khi được gọi là PI-D [14, tr. 74].
+
+Lý do chọn $c=0$ còn mạnh hơn ở vòng này so với [14], vì giá trị đặt ở đây là mô-men mục tiêu tính từ vận tốc và gia tốc ngang đo được chứ không do một người vận hành nhập. Mô-men mục tiêu đổi nhanh mỗi khi một cua bắt đầu hay kết thúc, và mang thêm nhiễu cùng bước lượng tử của hai cảm biến. Từ bảng $T_{ref}$ của Chương 2 và chuỗi cảm biến của Bảng 2.3, một bước lượng tử 0.01 g của $a_{y,m}$ làm $T_{ref}$ nhảy từ 0.12 N·m (20 km/h) đến 0.36 N·m (100 km/h) khi $a_y$ gần không, và một bước 1 km/h của $v_m$ làm $T_{ref}$ nhảy tối đa 0.041 N·m; các bước nhảy này gấp khoảng 12 đến 34 lần độ lệch chuẩn nhiễu của $T_{s,m}$ (0.0104 N·m). Nếu lấy đạo hàm của sai lệch, khâu vi phân với độ lợi tần số cao $K_pN$ (sửa đổi thứ hai) sẽ biến các bước nhảy đó thành xung trong mô-men trợ lực cỡ 12 đến 34 lần xung do nhiễu của $T_{s,m}$, và xung này không thêm được tắt dần nào. Khâu vi phân tồn tại để dập dao động của cột lái, thể hiện trong $T_{s,m}$, còn $T_{ref}$ thay đổi theo lệnh lái và chuyển động chậm hơn của thân xe. Bỏ $T_{ref}$ khỏi khâu vi phân không làm yếu vòng, vì [14, tr. 74] cho biết hệ số đặt trên giá trị đặt chỉ đổi đáp ứng với thay đổi của giá trị đặt, không đổi khả năng khử nhiễu tải và nhiễu đo; sụt hệ số bám tác dụng lên cột lái đúng là một nhiễu tải qua mô-men phản lực. Khi lái ổn định, $T_{ref}$ gần như không đổi nên đạo hàm của $T_{s,m}$ cho gần đúng cùng độ tắt dần như đạo hàm của sai lệch. Khâu tỉ lệ và khâu tích phân vẫn nhận $e_T$ nên phần nhiễu của $T_{ref}$ vẫn đi vào hai khâu này; đó là giá phải trả để bám mục tiêu và được phản ánh trong chỉ tiêu độ ồn ở Chương 4.
+
+Thứ hai, khâu vi phân dùng một trạng thái bậc nhất với hằng số thời gian $\tau_f=T_d/N$, nên một bước nhảy $\Delta T_{s,m}$ của mô-men đo chỉ tạo ra thay đổi ban đầu hữu hạn $NK_p\Delta T_{s,m}$ trong $u_D$ [14, tr. 76-77, PT (3.22)]. Độ lợi tần số cao của khâu vi phân bị giới hạn ở $K_pN$, nên nhiễu tần số cao được khuếch đại tối đa $K_pN$ lần; giới hạn này cần vì đạo hàm lý tưởng biến một bước nhảy của số đo nhiễu thành xung vô hạn [14, tr. 76]. Tỉ số $N$ quyết định bao nhiêu nhiễu tới motor, và [14, tr. 77] cho giá trị điển hình từ 8 đến 20.
+
+Ba thành phần của bộ điều khiển là
+
+(3.13)  u_P = K_p*e_T
+[ u_P=K_p\,e_T ]
+
+(3.14)  u_I = INT_0^t (K_i*e_T + K_aw*dT_a) dtau
+[ u_I=\int_0^t(K_i\,e_T+K_{aw}\,\Delta T_a)\,d\tau ]
+
+(3.15)  u_D = K_d*T_s,f_dot,  tau_f*T_s,f_dot + T_s,f = T_s,m
+[ u_D=K_d\,\dot T_{s,f},\qquad \tau_f\,\dot T_{s,f}+T_{s,f}=T_{s,m} ]
+
+trong đó $T_{s,f}$ là mô-men đo sau khâu trễ bậc nhất này, $K_{aw}$ là độ lợi chống bão hòa và $\Delta T_a$ là tín hiệu chống bão hòa, cả hai định nghĩa dưới đây. Tổng ba thành phần là lệnh chưa bị chặn:
+
+(3.16)  T_a,cmd = u_P + u_I + u_D
+[ T_{a,cmd}=u_P+u_I+u_D ]
+
+Bốn tham số cần chỉnh là $K_p$, $T_i$, $T_d$ và $N$; $K_i=K_p/T_i$, $K_d=K_pT_d$ và $\tau_f=T_d/N$ suy ra từ chúng như trên.
+
+Thứ ba, khâu tích phân được bảo vệ chống bão hòa tích phân (windup). Motor không theo được lệnh vượt giới hạn trợ lực (2.20) nên vòng phản hồi bị hở; nếu khâu tích phân vẫn tích lũy sai lệch thì nó trở nên rất lớn và phải mất thời gian dài mới trở lại bình thường, gây quá độ lớn khi lệnh thoát khỏi bão hòa [14, tr. 80-81]. Cách khắc phục là tính ngược (back-calculation) [14, tr. 83-85]: khi đầu ra bão hòa, tích phân được tính lại sao cho đầu ra nằm ở giới hạn, không tức thời mà với hằng số thời gian $T_t$. Hiệu giữa lệnh đã chặn $T_{a,lim}$ của (2.20) và lệnh chưa chặn $T_{a,cmd}$ được đưa ngược vào khâu tích phân qua (3.14):
+
+(3.17)  dT_a = T_a,lim - T_a,cmd
+[ \Delta T_a=T_{a,lim}-T_{a,cmd} ]
+
+Tốc độ đưa ngược $K_{aw}$ là nghịch đảo của thời gian bám $T_t$. [14, tr. 85] khuyên chọn $T_t$ lớn hơn $T_d$ và nhỏ hơn $T_i$, và nêu quy tắc ngón tay cái $T_t=\sqrt{T_iT_d}$; quy tắc này thỏa khuyến nghị khi $T_d<T_i$, điều kiện được đặt ở mục 4.3. Không nên chọn $T_t$ quá nhỏ khi có khâu vi phân, vì sai lệch giả có thể làm đầu ra bão hòa và vô tình xóa tích phân [14, tr. 85]. Vậy
+
+(3.18)  K_aw = 1/T_t = 1/sqrt(T_i*T_d) = sqrt(K_i/K_d)
+[ K_{aw}=\frac{1}{T_t}=\frac{1}{\sqrt{T_iT_d}}=\sqrt{\frac{K_i}{K_d}} ]
+
+Cùng một cách chọn được dùng cho PID và MapPID, và ở MapPID sai lệch bão hòa tính trên toàn bộ lệnh $T_{a,cmd}$ (mục 3.4). Nhờ đó khâu tích phân được xả mỗi khi lệnh chạm giới hạn trợ lực $T_{a,max}(v_m)$. Hình 3.4 vẽ vòng PID.
+
+[Hình 3.4: Sơ đồ vòng kín của bộ điều khiển PID phản hồi mô-men. Khối mục tiêu tính $T_{ref}(v_m,a_{y,m})$ theo (2.17). Khối bộ điều khiển gồm ba thành phần tỉ lệ, tích phân và vi phân; lệnh $T_{a,cmd}$ qua khâu giới hạn trợ lực, và lệnh đã chặn $T_{a,lim}$ điều khiển motor. Các thành phần tỉ lệ và tích phân tác dụng lên sai lệch $e_T=T_{s,m}-T_{ref}$, còn thành phần vi phân chỉ tác dụng lên mô-men đo $T_{s,m}$. Vận tốc đo là $v_m=H_v(v)$. | Documents/Thesis/figures/Hinh_3_4_PID.png]

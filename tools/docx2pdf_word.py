@@ -5,6 +5,9 @@ OneDrive or from an open window). The Word process started here is recorded by i
 time-out. The page check of docx2pdf_lo.py is reused.
 
 Usage: C:/Users/Admin/anaconda3/python.exe -I -X utf8 tools/docx2pdf_word.py Documents/Paper/paper_ENG.docx [out.pdf] [--txt Documents/Paper/paper_ENG.txt] [--png DIR]
+                                                                             [--fields] [--save-docx]
+  --fields       update every field (table of contents, lists of figures and tables, page references) twice before the export, as the whole thesis needs
+  --save-docx    also write the updated document back over the input .docx, so that it opens in Word with the fields filled in (use with --fields)
 """
 import os
 import shutil
@@ -19,7 +22,7 @@ import win32com.client
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import docx2pdf_lo as lo
 
-TIMEOUT = 150
+TIMEOUT = 300 if '--fields' in sys.argv else 150           # updating the fields of the whole thesis takes longer
 
 
 def word_pids():
@@ -27,7 +30,7 @@ def word_pids():
     return {int(l.split('","')[1]) for l in out.splitlines() if 'WINWORD' in l}
 
 
-def export(docx, pdf):
+def export(docx, pdf, fields=False, save_docx=False):
     docx = os.path.abspath(docx); pdf = os.path.abspath(pdf)
     work = tempfile.mkdtemp(prefix='docx2pdf_word_')
     src = os.path.join(work, 'in.docx'); out = os.path.join(work, 'in.pdf')
@@ -41,7 +44,15 @@ def export(docx, pdf):
         word.Visible = False
         word.DisplayAlerts = 0
         doc = word.Documents.Open(src, ReadOnly=True, AddToRecentFiles=False, Visible=False)
+        if fields:
+            doc.Repaginate()
+            for _ in range(2):                                      # the first pass fills the table of contents, which moves the pages; the second corrects the page numbers
+                for k in range(1, doc.TablesOfContents.Count + 1):
+                    doc.TablesOfContents(k).Update()
+                doc.Fields.Update()
         doc.ExportAsFixedFormat(out, 17)                            # 17 = wdExportFormatPDF
+        if save_docx:
+            doc.SaveAs2(os.path.join(work, 'updated.docx'), 16)     # 16 = wdFormatXMLDocument
         doc.Close(False)
         word.Quit()
     except Exception:
@@ -55,6 +66,8 @@ def export(docx, pdf):
     if not os.path.exists(out):
         raise RuntimeError('Word produced no PDF')
     shutil.copyfile(out, pdf)
+    if save_docx and os.path.exists(os.path.join(work, 'updated.docx')):
+        shutil.copyfile(os.path.join(work, 'updated.docx'), docx)
     shutil.rmtree(work, ignore_errors=True)
     return pdf
 
@@ -63,12 +76,13 @@ if __name__ == '__main__':
     import argparse, threading
     ap = argparse.ArgumentParser()
     ap.add_argument('docx'); ap.add_argument('pdf', nargs='?'); ap.add_argument('--txt'); ap.add_argument('--png')
+    ap.add_argument('--fields', action='store_true'); ap.add_argument('--save-docx', action='store_true')
     a = ap.parse_args()
     pdf = a.pdf or os.path.splitext(a.docx)[0] + '.pdf'
     before = word_pids()
     res = {}
     def run():
-        try: res['pdf'] = export(a.docx, pdf)
+        try: res['pdf'] = export(a.docx, pdf, a.fields, a.save_docx)
         except Exception as e: res['err'] = e
     th = threading.Thread(target=run, daemon=True); th.start(); th.join(TIMEOUT)
     if th.is_alive():

@@ -1,0 +1,22 @@
+3.5. So sánh cấu trúc ba bộ
+
+Bảng 3.2 so sánh ba bộ theo các tiêu chí rút ra từ các mục trên. Các hàng về sai lệch xác lập và về phần trợ lực xác lập suy từ (3.7), (3.8) và (3.21), nên chỉ đúng khi vòng ổn định, motor không bão hòa và bỏ qua ma sát khô của cột lái.
+
+Bảng 3.2: So sánh cấu trúc của ba bộ điều khiển.
+Tiêu chí | Map | PID | MapPID
+Tín hiệu đo đưa vào bộ điều khiển | $T_{s,m}$, $v_m$ | $T_{s,m}$, $v_m$, $a_{y,m}$ | $T_{s,m}$, $v_m$, $a_{y,m}$
+Bản đồ và khâu bù lead-lag | Có, là toàn bộ bộ điều khiển | Không | Có, giữ nguyên như Map
+Khâu tích phân và chống bão hòa | Không có | Có, tính ngược (3.17)-(3.18) | Có, tính trên toàn bộ lệnh
+Khâu lọc | Lead-lag | Bộ lọc bậc nhất của khâu vi phân, $\tau_f=T_d/N$ | Cả hai
+Tham số phải chỉnh | $K_{max}$ và mức làm chậm của khâu lag; bốn hằng số thời gian của khâu bù tính theo hai biến này | $K_p$, $T_i$, $T_d$, $N$ | $K_p$, $T_i$, $T_d$, $N$, với bản đồ đóng băng
+Thay đổi của $T_s$ khi $\mu$ giảm ở cùng $a_y$ | $\Delta T_r/(1+\bar{s})$, khác không và cùng dấu với $\Delta T_r$ (3.8) | Bằng không | Bằng không
+Trợ lực xác lập trên đường khô do | Bản đồ | Khâu tích phân, bằng $T_r-T_{ref}$ | Bản đồ; nhánh PID chỉ gánh phần dư (3.21)
+Khâu giới hạn trợ lực và motor | Chung | Chung | Chung
+
+Ba bộ giống nhau ở phần cuối của vòng (khâu giới hạn, motor, cảm biến), nên khác biệt về kết quả ở Chương 5 chỉ có thể đến từ cách tính $T_{a,cmd}$. Cấu trúc cho biết trước một điều: Map với độ dốc hữu hạn không khử được sai lệch tĩnh khi hệ số bám đổi, còn PID và MapPID khử được. Cấu trúc không cho biết gì về đáp ứng động và độ ồn, vì hai đại lượng đó phụ thuộc tham số, được chọn ở Chương 4 và đo ở Chương 5.
+
+3.6. Kết luận chương
+
+Chương này trình bày ba bộ điều khiển. Map gồm bản đồ dựng từ mô-men mục tiêu trên đường khô, có vùng chết và giới hạn độ dốc, cùng khâu bù lead-lag. Phân tích tĩnh cho thấy khi hệ số bám giảm ở cùng gia tốc ngang, mô-men thanh xoắn của Map giảm $\Delta T_r/(1+\bar{s})$ với $\bar{s}\le K_{max}$, nên Map không khử được sai lệch nếu $K_{max}$ hữu hạn; tăng $K_{max}$ để giảm sai lệch phải trả bằng nhiễu và dự trữ ổn định. PID và MapPID có thêm khâu tích phân nên sai lệch xác lập về không, với điều kiện vòng ổn định và motor không bão hòa. Mỗi lựa chọn thiết kế đều có lý do và nguồn: cấu trúc bản đồ và khâu bù theo [1], dạng PID và ba sửa đổi theo [14], cách cộng song song theo cấu trúc EPS thực tế [9], còn các phép tính tĩnh là kết quả của chính các phương trình ở Chương 2.
+
+Chương này có những giới hạn cần nhớ. Phân tích tĩnh bỏ qua ma sát khô của cột lái, dự trữ ổn định và động học, nên không thay cho kết quả mô phỏng. Các tham số của ba bộ ($K_{max}$, các hằng số thời gian của khâu bù, $K_p$, $T_i$, $T_d$ và $N$) chưa được chọn ở đây; Chương 4 chọn chúng theo cùng một quy tắc.
