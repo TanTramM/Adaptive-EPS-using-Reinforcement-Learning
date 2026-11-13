@@ -1,0 +1,33 @@
+TIẾN ĐỘ TẠM THỜI CỦA LUẬN VĂN (file tạm, xóa khi xong; cập nhật 2026-11-13, Lượt 107, máy laptop)
+Mục đích: biết đang làm tới đâu để máy khác (PC) hoặc phiên sau tiếp được. Chi tiết nằm ở: phần ghi chú SAU dòng @@END cuối Documents/Thesis/luanvan.txt (A mục tiêu, B chỗ lặp, C chỗ cắt, D mục D1-D21, E thứ tự làm, F hình đề xuất), nhật ký Tracking/historychat_vdb_tire.md (Lượt 102-107).
+
+ĐÃ XONG
+- Luận văn bản 1 đầy đủ, 115 trang (luanvan.txt là nguồn duy nhất; luanvan.docx, luanvan.pdf dựng lại ngày 2026-11-13 trên laptop).
+- Sửa căn lề ô bảng trong pdf (tools/txt2docx.py: ô căn trái, ô chỉ có phương trình không còn tự căn giữa).
+- Chỉ thị @@END trong tools/txt2docx.py: mọi dòng sau nó không dựng vào docx.
+- Đọc toàn bộ thân luận văn, phân tích độ dài theo chương và 11 chỗ lặp xuyên chương; ghi mục tiêu khoảng 75 trang (thân từ 85 xuống khoảng 54).
+- Phân tích 21 chỗ chưa ổn (D1-D21), ghi cách xử lý từng điểm.
+- D5, D20 (trợ lực ngược): đã kiểm số, không cần chạy lại, người dùng chốt GIỮ BẢN GỌN. Số: STEADY Map 0.05, PID 7.28, MapPID 7.44 %; SLIP 0.001, 4.19, 4.64 %; WEAVE 2.22, 23.79, 23.35 %. Bẫy đơn vị: cột rev_pct của Map và MapPID là phân số, của PID là phần trăm.
+- Vẽ 11 hình đề xuất bằng MATLAB vào Documents/Thesis/image_to_add/ (tools/make_fig_thesis_add.m), kèm ChuThich_Hinh.md (vị trí, chú thích, phần chữ mỗi hình thay).
+
+CHƯA LÀM (theo thứ tự đề xuất ở mục E của ghi chú)
+1. Cắt các chỗ lặp xuyên chương (B1-B11).
+2. Cắt chương 5 (5.6, 5.7, 5.8, 5.9 và các đoạn mở mục), rồi chương 3, chương 1, chương 2, chương 4.
+3. Rút phần đầu (danh mục ký hiệu 4 trang) và phụ lục A, B.
+4. Sửa các D loại [TỰ SỬA] và [CẦN SỐ]: D2-D16, D20, D21 (D5 làm theo bản gọn đã chốt).
+5. Chèn hình đề xuất (ưu tiên 1 và 2 ở ChuThich_Hinh.md) và cắt đúng phần chữ hoặc bảng mà hình thay; đánh số lại hình.
+6. Chạy lại tools/make_ch5_numbers.py (đối chiếu số 210/210), dựng docx, pdf, đếm trang.
+7. Rút gọn Tóm tắt, Abstract, 6.1 cho khớp số sau khi cắt.
+
+CHỜ NGƯỜI DÙNG, KHÔNG LÀM TRƯỚC
+- D1 tên đề tài (sửa được, không quan trọng).
+- D17 danh mục công trình (chờ trả lời từ rw, bàn sau).
+- D18 lời cam đoan và khai báo công cụ AI (tính sau).
+- D19 mẫu trình bày của trường, format (tính sau; số trang mục tiêu 60-80 chỉ chốt khi có mẫu).
+- Các ô trống phải tự điền: chuyên ngành, mã số, trang Nhiệm vụ luận văn, ngày ký cam đoan, lý lịch trích ngang.
+
+LƯU Ý KHI LÀM TIẾP
+- Chưa sửa chữ nào trong thân luanvan.txt (chỉ thêm ghi chú sau @@END). Số tài liệu trong ghi chú viết TL<n> để tools/renumber_thesis_refs.py không đụng.
+- Trước khi cắt hàng loạt: sao lưu luanvan.txt ra Desktop (Documents/Thesis/draft/luanvan_backup_*.txt là bản cũ).
+- Không dùng tools/sync_repo.sh; commit tay.
+- Nhật ký VDB_TIRE đã nén ở Lượt 105; lần nén tiếp theo ở Lượt 115.

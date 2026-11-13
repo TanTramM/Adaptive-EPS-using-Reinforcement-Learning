@@ -1689,3 +1689,164 @@ Nơi sinh: [điền]
 Quá trình đào tạo: [điền]
 
 Quá trình công tác: [điền]
+
+@@END
+
+==== GHI CHÚ RÚT GỌN LUẬN VĂN (2026-11-13, khung VDB_TIRE, Lượt 103; CHƯA SỬA GÌ, chỉ ghi để làm sau) ====
+Mọi dòng sau @@END không được dựng vào docx (tools/txt2docx.py bỏ qua). Số tài liệu viết dạng TL<n> để script đánh số lại không đụng vào.
+
+A. HIỆN TRẠNG VÀ MỤC TIÊU ĐỘ DÀI
+Bản pdf hiện tại 115 trang: phần đầu 19, Ch1 12 (tr. 20-31), Ch2 15 (32-46), Ch3 16 (47-62), Ch4 11 (63-73), Ch5 26 (74-99; trong đó 5.6 là 5 trang, 5.7 là 4, 5.8 là 3, 5.9 là 2), Ch6 5 (100-104), tài liệu tham khảo 3, phụ lục 7, lý lịch 1. Thân luận văn khoảng 43 000 chữ.
+Mục tiêu đề xuất khoảng 75 trang: phần đầu 12-13, Ch1 7, Ch2 10, Ch3 10, Ch4 7-8, Ch5 16-17, Ch6 3, tài liệu tham khảo 3, phụ lục 2-3, lý lịch 1. Tức thân cắt từ 85 xuống khoảng 54 trang (bớt khoảng 35 %).
+Nguyên tắc cắt: (1) mỗi ý, mỗi con số chỉ nói ở MỘT chỗ chính, chỗ khác chỉ trỏ tới; (2) bỏ các đoạn biện minh lựa chọn dài, giữ một câu kèm nguồn; (3) gom mọi "giới hạn" rải rác vào 6.2; (4) bảng và hình không lặp cùng một số liệu; (5) chi tiết quy trình (lưới, seed cục bộ, kiểm khớp số) chuyển sang phụ lục C hoặc bỏ.
+
+B. CÁC CHỖ LẶP XUYÊN CHƯƠNG (cắt trước, lợi nhiều trang nhất)
+B1. Chuyện ma sát cột lái và phép chạy T_f = 0 kể lại ở 3.2, 3.6, 4.5, 4.6, 5.3, 5.9, 6.1, 6.2. Giữ đầy đủ ở 4.5 (CALIB) và 5.3 (SLIP); 3.2 chỉ một câu "ma sát bị bỏ qua, xem 4.5"; 3.6, 4.6, 5.9 bỏ; 6.1 một câu.
+B2. Mốc ngưỡng phân biệt JND của TL26 giải thích đầy đủ hai lần (4.3 và 5.1.2) và nhắc lại ở 5.2, 5.3, 5.7.3, 5.9, 6.2. Giữ một lần ở 4.3 (lý do chọn ngưỡng 10 %), 5.1.2 chỉ một câu trỏ về 4.3, các chỗ khác bỏ câu so mốc hoặc chỉ ghi "(vượt mốc JND)".
+B3. Nguồn tham số xe nói bốn lần: 1.6.1 (hai đoạn dài), thân 2.2 và 2.3, Bảng 2.4, Bảng 5.12 (cột nguồn). Giữ Bảng 2.4; 1.6.1 rút còn hai câu (một xe sedan, số liệu từ tài liệu hoặc tự chọn, xem Bảng 2.4); Bảng 5.12 bỏ cột nguồn.
+B4. Mỗi chương và nhiều mục có đoạn "giới hạn cần nhớ" riêng (2.9, 3.6, 4.6, 5.5 cuối, 5.6.5 cuối, 5.7.3 cuối, 5.8.4, 5.9 cuối) và 6.2 lặp lại hết. Bỏ các đoạn rải rác, gom vào 6.2 (6.2 cũng rút còn khoảng nửa trang, viết thành một đoạn hoặc danh sách ngắn).
+B5. Kết luận chương 5 (5.9, 2 trang) và 6.1 (2 trang) gần như cùng nội dung và cùng con số. Đề xuất: 5.9 còn một đoạn (3-4 câu, chỉ thứ hạng và hai số chính), 6.1 giữ bản tóm tắt theo năm nội dung nhưng mỗi nội dung 2-3 câu.
+B6. Các con số kết quả chính (4.24, 3.51, 6.54 lần; 4.6 %, 10.9 %; 8.9, 1.6, 15.1 %; 0.20-0.29 lên 0.48-0.76 N·m) xuất hiện ở 5.2-5.4, 5.5, 5.9, 6.1, tóm tắt, abstract. Sau khi cắt: nói ở 5.2-5.4 và tổng hợp một lần ở 5.5 (bảng), 6.1 nhắc lại có chọn lọc.
+B7. Ý "bản đồ không dùng riêng được, luôn đi kèm khâu bù ổn định TL2" và "bộ điều khiển EPS gồm bản đồ, logic ổn định, logic phụ TL7" viết ở 1.2.1 rồi viết lại gần nguyên ở đầu Ch3. Giữ ở 1.2.1, đầu Ch3 chỉ một câu dẫn.
+B8. Lý do chọn PID nêu ở 1.4 rồi viết lại dài hơn ở 3.3.1. Giữ một chỗ (đề xuất 3.3.1, rút còn một đoạn); 1.4 chỉ một câu.
+B9. Công thức ΔT_s = ΔT_r/(1+s_m) đưa trước ở 1.2.3 rồi suy lại ở 3.2. Ở 1.2.3 chỉ nói bằng lời (bản đồ chỉ bù được một phần, độ dốc không tăng tùy ý được), công thức để ở 3.2.
+B10. Câu "chỉ tiêu chấm trên đại lượng thật, T_ref khi chấm tính từ v, a_y chưa nhiễu" có ở 2.8, 4.1 và 5.1.1. Giữ ở 4.1.
+B11. Bố cục chương và nội dung từng mục được liệt kê ở 1.8, đoạn mở mỗi chương (Ch3, Ch4, Ch5) và lại trong từng đoạn mở mục. Bỏ đoạn liệt kê mục ở đầu Ch4 và Ch5 (mục lục đã có); 1.8 bỏ câu liệt kê phụ lục.
+
+C. THEO CHƯƠNG: CHỖ CẮT ĐỀ XUẤT
+C1. Chương 1 (12 -> khoảng 7 trang).
+- 1.1.1-1.1.3: gộp thành một mục ngắn; bỏ số thị phần EPS châu Âu 2004/2009 và cơ cấu kiểu EPS 2008 (số cũ, không cần cho lập luận); giữ ảnh Hình 1.1 và đoạn cấu tạo C-EPS.
+- 1.2.2: số liệu FHWA rút còn một câu (mặt đường ướt thường gặp) hoặc bỏ; giữ đoạn cơ chế mất cảm giác đường của TL10, TL11.
+- 1.3 (khoảng 2 000 chữ, dài nhất chương): Bảng 1.1 đã tóm tắt đủ chín công trình. Mỗi công trình trong văn chỉ giữ 1-2 câu (phương pháp và điểm thiếu so với bài toán), bỏ chi tiết như số 0.1674 g, 5.641 độ/s của TL1, chi tiết ANFIS-FOC của TL15, mô tả DOB, LQG của TL7. Mục tiêu khoảng 900 chữ. 1.3.4 Nhận xét gộp với 1.4.
+- 1.6.1: xem B3. 1.6.2 giữ. 1.7: bỏ chi tiết lưới thô, lưới mịn (để Ch4), giữ ba bước phương pháp. Đoạn "mọi con số thuộc một trong ba loại" có thể bỏ.
+- 1.8: ba đóng góp giữ nhưng mỗi đóng góp một câu; bỏ liệt kê phụ lục.
+C2. Chương 2 (15 -> khoảng 10 trang).
+- Mở chương và 2.1: gộp, bỏ đoạn liệt kê nguồn (đã có Bảng 2.4).
+- 2.2: đoạn "Luận văn khác TL2 ở ba điểm" và đoạn mô tả phép nhận dạng Hyundai i30 của TL2 (lift-on, free-handle, Bode...) rút còn 2-3 câu; đoạn hai lý do lấy góc vô-lăng làm đầu vào giữ một lý do.
+- 2.3.3: đoạn giải thích chặn dưới t_p >= 0 và góc trượt hoàn toàn alpha_sl dài, rút một nửa; bỏ câu về lốp đổi dấu mô-men tự lựa (đưa vào 6.2 nếu cần).
+- 2.4: đoạn "Luận văn khác TL16 ở hai điểm" rút còn một câu.
+- 2.6: bỏ ví dụ ADAMS/Car 7.8 N·m và đoạn so với Ren-Deng (giữ một câu).
+- 2.7: Bảng 2.2 giữ; đoạn so với motor Nexteer 40-95 N·m rút còn một câu (đã nói ở 1.6.2).
+- 2.8: đoạn cơ sở số liệu cảm biến (Valeo, Bosch, OBD-II, công thức phương sai) đã có trong Bảng 2.3, rút còn 2-3 câu; đoạn cuối về chu kỳ cập nhật, xem B10.
+- 2.9: bỏ hoặc còn 2 câu (xem B4).
+C3. Chương 3 (16 -> khoảng 10 trang).
+- Mở chương: xem B7.
+- 3.1.1: ba lý do chọn Map làm chuẩn rút còn một câu.
+- 3.1.3: đoạn vùng chết T_s0 (cận trên, cận dưới, 28.8 lần độ lệch chuẩn nhiễu, so với 2 N·m của TL2 và TL1) rút còn 2-3 câu. Đoạn mô tả Hình 3.2 (điểm (0.3; 0) đến (2.1; 0.57)) rút.
+- 3.1.4: đoạn giải thích hàm truyền (s/z+1)/(s/p+1) và dự trữ pha rút; đoạn cuối về vai trò lead, lag còn 2 câu.
+- 3.2: đoạn đầu dẫn sách TL24 (giao điểm đặc tính, PT 3.8 của TL24) rút còn một câu; (3.9)-(3.10) có thể bỏ, chỉ giữ (3.8) và (3.11) (bảng 3.1 đã có cột tuyến tính hóa, cột đó cũng bỏ được); đoạn "chi phí thứ nhất, thứ hai" rút một nửa.
+- 3.3.1: xem B8; bỏ câu "hơn 95 % vòng điều khiển là PID", đoạn so sai số ±0.3/±0.1/±0.9 N·m của TL7 rút còn một câu.
+- 3.3.2: bỏ giải thích ISA, dạng nối tiếp, điểm không phức; giữ (3.12) và một câu về vai trò P, I, D.
+- 3.3.3: đoạn lý do c = 0 (khoảng 350 chữ, các con số 0.12-0.36 N·m, 12-34 lần) là đoạn dài nhất chương, rút còn 3-4 câu. Đoạn chống bão hòa rút còn công thức và một câu nguồn.
+- 3.4.1: đoạn ba lý do mắc song song rút; bỏ câu Williams (2009) trích lại qua TL7.
+- 3.4.3: hai đoạn về động học của nhánh và việc lắp vào xe có sẵn bản đồ rút còn một đoạn; ý chính là "bốn tham số PID chỉnh cho từng xe, T_ref phải khớp mô-men xác lập của bản đồ trên đường khô".
+- 3.5: Bảng 3.2 giữ, bỏ đoạn văn sau bảng (lặp). 3.6: còn 2-3 câu.
+C4. Chương 4 (11 -> khoảng 7-8 trang).
+- Mở chương: bỏ đoạn liệt kê mục; đoạn "số tham số của ba bộ khác nhau, mặt Pareto" giữ ngắn.
+- 4.1: đoạn rời rạc hóa (Euler tiến, sai phân lùi, Tustin, điều kiện Δt/T_i <= 0.1, Δt·K_aw < 2) chuyển sang phụ lục C hoặc rút còn 2 câu; câu về vi điều khiển 200-300 MHz bỏ.
+- 4.2.1: đoạn mô tả chi tiết cấu trúc từng mức (dốc 1 s giữ 2 s, 1.25 chu kỳ sin, bắt đầu ở đỉnh...) đã thể hiện ở Hình 4.1 và Bảng 4.1, rút một nửa.
+- 4.2.2: đoạn biện minh trung bình nhân và sàn 1 % rút còn 2 câu; công thức (4.6), (4.7) có thể gộp thành một dòng; hai chỉ tiêu phụ (tổng biến thiên, trợ lực ngược) bỏ nếu không báo số (xem D5).
+- 4.3: đoạn sàng lọc tuyến tính 68 đối tượng và phép thử chấp nhận phi tuyến (4.8) rút; đoạn JND giữ (xem B2) nhưng ngắn lại.
+- 4.4: lưới thô, lưới mịn, bước 1/24 và 1/6, seed cục bộ, quy tắc ba sigma (4.9), "hồ chung", giai đoạn 1 và 2 chuyển sang phụ lục C (hoặc bỏ, chỉ giữ một đoạn: quét thô rồi mịn, đánh giá năm seed chung, mặt safe/full, chọn J nhỏ nhất, hòa 3 %). Bảng 4.2 có thể chuyển phụ lục.
+- 4.5: Bảng 4.3 có thể bỏ hoặc gộp vào chữ; Bảng 4.4 rút bớt số lẻ (5 chữ số có nghĩa không cần, 3 chữ số đủ); Bảng 4.5 giữ.
+- 4.6: còn 2-3 câu.
+C5. Chương 5 (26 -> khoảng 16-17 trang).
+- Mở chương: bỏ đoạn liệt kê mục.
+- 5.1.1: Bảng 5.1 và Hình 5.1 giữ; đoạn mở mỗi mục 5.2, 5.3, 5.4 đang tả lại điều kiện của chuỗi, trùng Bảng 5.1, chỉ giữ một câu.
+- 5.1.2: (5.3) và định nghĩa ngang nhau giữ; đoạn JND xem B2.
+- 5.2: bỏ đoạn giải thích cách đọc Hình 5.2 (ba ô cùng thang, 0.0002 N·m...); đoạn đoạn đi thẳng 95-100 s và đoạn năm mức nhẹ gộp thành 2 câu.
+- 5.3: đoạn về đỉnh khi hệ số bám trở lại (66.5 s, 87 s) và cách đọc chưa kiểm rút còn 2 câu.
+- 5.4: đoạn hai lần chuyển làn (cửa sổ 0.4 s) dễ nhầm với cửa sổ 2.5 s của 5.6; xem D7.
+- 5.5: bỏ hai đoạn đầu (lặp số của 5.2-5.4), giữ Bảng 5.8 kèm Hình 5.5 và một đoạn đọc kết quả; đoạn phạm vi cuối mục bỏ (B4).
+- 5.6 (5 trang -> khoảng 2.5): 5.6.1 bỏ chi tiết kiểm khớp bản ghi (lệch 0 N·m, 5e-15 N·m, 10 cặp); giữ ba giả thuyết K1-K3 và quy tắc đọc 5 %. Bảng 5.9 bỏ hai cột hiệu biên độ, hiệu độ trễ (Hình 5.6 đã có) hoặc bỏ Hình 5.6; Bảng 5.10 rút còn cột u_map, u_PID và tỉ lệ vùng chết; 5.6.5 rút còn một đoạn.
+- 5.7 (4 trang -> khoảng 2.5): 5.7.1 rút đoạn lý do 20 % và danh sách tham số không đổi; Bảng 5.12 bỏ cột nguồn; 5.7.2 đoạn liệt kê thứ tự nhạy theo nhóm và đoạn theo N·m có thể gộp; Bảng 5.13 giữ.
+- 5.8 (3 trang -> khoảng 2): 5.8.1 đoạn cấu hình khối VDB (LMUY, tần số thả lỏng 100 Hz...) rút; Bảng 5.15 và Hình 5.9 cùng số liệu, giữ một (đề xuất giữ bảng, bỏ hình, hoặc ngược lại); 5.8.4 gộp vào 6.2.
+- 5.9: xem B5.
+C6. Chương 6 (5 -> khoảng 3 trang). 6.1 rút (B5); 6.2 gom và rút (B4); 6.3 năm hướng giữ nhưng mỗi hướng 2-3 câu (hướng 2 về Mehrabi và hướng 4 về RL đang dài).
+C7. Phần đầu (19 -> khoảng 13 trang). Danh mục ký hiệu khoảng 75 dòng, 4 trang: chỉ giữ ký hiệu dùng ở nhiều chương (khoảng 35-40 dòng); ký hiệu chỉ dùng trong một mục đã định nghĩa tại chỗ. Tóm tắt và abstract kiểm lại sau khi cắt cho khớp số. Mục lục có thể chỉ tới cấp 2 nếu cần bớt trang.
+C8. Phụ lục (7 -> khoảng 2-3 trang). Phụ lục A (68 cửa sổ CALIB, 31 cửa sổ SSW, 3 trang): Bảng 4.1 và 5.1 đã đủ để hiểu, có thể bỏ hoặc rút thành một bảng gọn. Phụ lục B (E_RMS và S theo từng seed, 17 biến thể nhân 9 ô, 3 trang): Bảng 5.8 và 5.13 đã đủ, đề xuất bỏ hoặc giữ một bảng 17 biến thể. Phụ lục C giữ, nhận thêm phần quy trình tìm tham số chuyển từ 4.4 nếu muốn.
+
+D. CHỖ CHƯA ỔN: PHÂN TÍCH VÀ CÁCH XỬ LÝ TỪNG ĐIỂM (viết lại ở Lượt 104 sau khi kiểm văn bản và dữ liệu; mỗi điểm ghi: vấn đề, đã kiểm gì, cách xử lý, ai quyết)
+Ký hiệu loại: [TỰ SỬA] sửa được ngay trong luanvan.txt, không cần chạy lại; [CẦN SỐ] cần lấy hoặc tính lại số từ dữ liệu có sẵn; [NGƯỜI DÙNG] người dùng hoặc thầy quyết.
+
+D1. Tên đề tài [ĐÃ CHỐT 2026-11-13: sửa được, không quan trọng].
+Cách xử lý: để tên làm việc; khi có tên chính thức thì đổi một dòng tiêu đề ở đầu file. Không cần thêm đoạn nào vào 1.4 hay 6.3 trừ khi thầy yêu cầu giữ chữ "học tăng cường" trong tên (khi đó xem phương án (b) đã ghi ở bản trước: đoạn giải thích vì sao dừng ở MapPID và nâng hướng RL ở 6.3).
+
+D2. Trích dẫn [13,16] cho mô-men mục tiêu ở 1.4 [TỰ SỬA].
+Đã kiểm: TL16 (Rajamani) trong luận văn chỉ dùng cho mô hình một vết và tham số xe (2.3.1, 2.4, Bảng 2.4); dàn ý cũng chỉ ghi Rajamani cho các phần đó. Không có chỗ nào Rajamani nói về mô-men vô-lăng mục tiêu.
+Cách xử lý: tách trích dẫn theo đúng ý: "một mô-men mục tiêu tính từ vận tốc xe và gia tốc ngang theo bảng mô-men ưa thích của TL13, có xu hướng khớp số đo trên xe thật của TL18". Bỏ TL16 khỏi câu này. Sau khi sửa chạy lại tools/renumber_thesis_refs.py để kiểm thứ tự xuất hiện (TL16 vẫn được trích lần đầu ở 1.6.1 nên số không đổi).
+
+D3. Lý do loại điều khiển mờ và bộ dựa mô hình ở 1.4 [TỰ SỬA].
+Vấn đề: câu "chúng cần tập luật hoặc mô hình của mặt đường và hệ lái" không đúng với TL15 (ANFIS học từ dữ liệu, không cần mô hình mặt đường) và TL14 (cần mô hình EPS, không cần mô hình mặt đường).
+Cách xử lý: thay bằng lý do đúng với mục tiêu của luận văn và có trong nguồn: (1) các bộ đó thay toàn bộ bộ điều khiển trợ lực, tức bỏ bản đồ đã hiệu chỉnh, trái với yêu cầu giữ nguyên bản đồ; (2) chính TL15 nêu ANFIS tính toán phức tạp và phụ thuộc việc chỉnh tập luật, còn TL14 thiết kế ổn định hóa chứ không bám mô-men mục tiêu. Kết câu: PID chỉ thêm bốn tham số và cắm song song được.
+
+D4. Số liệu thị phần cũ ở 1.1.1, 1.1.2 [TỰ SỬA].
+Vấn đề: số thị phần EPS châu Âu 2004 và dự báo 2009, cơ cấu kiểu EPS 2008, đều trích lại qua TL3, đã cũ gần 20 năm và không cần cho lập luận.
+Cách xử lý: bỏ hai câu số liệu, giữ câu "ngày nay phần lớn xe du lịch dùng EPS [TL2]" và câu "luận văn nghiên cứu C-EPS". Cùng lúc làm phần cắt C1.
+
+D5. Trợ lực ngược: 3.4.2 hứa báo ở mục 4.2 nhưng thân luận văn không có con số nào [ĐÃ CHỐT Lượt 106: GIỮ BẢN GỌN, chưa sửa].
+QUYẾT ĐỊNH (người dùng chốt 2026-11-13, Lượt 106): giữ bản gọn, khoảng nửa trang, không phân tích nguyên nhân. Việc cần làm khi sửa: (1) 5.5 thêm một bảng 3 x 3 "Tỉ lệ thời gian trợ lực ngược (%)" (hàng Map, PID, MapPID; cột STEADY, SLIP, WEAVE; trung bình ± độ lệch chuẩn năm seed 99995-99999), số lấy bằng script từ Result/Controllers/<bộ>/Cases_ssw/<bộ>_metrics_s<seed>.csv, dòng "whole case", cột Rev_pct, thêm khóa vào ch5_numbers.csv (tools/make_ch5_numbers.py), không gõ tay; (2) một câu đọc bảng ở 5.5: PID và MapPID ngang nhau, cả hai nhiều hơn Map nhiều lần, lớn nhất ở WEAVE; (3) một câu ở 6.2: phản hồi mô-men làm motor cản tay người ở một phần thời gian, là cái giá thứ hai ngoài độ ồn S, nguyên nhân chưa phân tích; (4) 3.4.2 sửa câu hứa thành "được báo cáo ở mục 5.5"; (5) 4.2.2 giữ định nghĩa (ngưỡng |T_s| >= 0.5 N·m, T_a·T_s < 0) nhưng bỏ cụm "trong khoảng 2 đến 140 s" vì số báo ở ca chấm; KHÔNG thêm hàng CALIB vào Bảng 4.5. Không viết cơ chế nào, không so ưu thế PID và MapPID theo chỉ tiêu này. Có thể thay bảng bằng hình Documents/Thesis/image_to_add/Add_5D_Reverse.png (chọn một trong hai, không cả hai; chú thích viết sẵn ở ChuThich_Hinh.md cùng thư mục).
+Số có sẵn, đã tính trên đúng thiết kế đã chọn (khớp mọi tham số) từ file đã có. (1) CALIB, năm seed 99990-99994, cột rev_pct trong Result/Compare/Pareto_common/ParetoCommon_<bộ>_w*_s99990-s99994.csv: PID 18.3 %, MapPID 0.18 và Map 0.038 NHƯNG hai số sau là PHÂN SỐ chứ không phải phần trăm (xem bẫy dưới), tức MapPID khoảng 18.1 % và Map khoảng 3.8 %. (2) Ba chuỗi chấm, năm seed 99995-99999, Result/Controllers/<bộ>/Cases_ssw/<bộ>_metrics_s<seed>.csv, dòng "whole case", cột Rev_pct (phần trăm thật): STEADY Map 0.054 ± 0.003, PID 7.28 ± 0.06, MapPID 7.44 ± 0.07; SLIP Map 0.001, PID 4.20 ± 0.17, MapPID 4.64 ± 0.09; WEAVE Map 2.22 ± 0.01, PID 23.79 ± 0.23, MapPID 23.35 ± 0.23. Cùng nguồn có RevPeak_Nm (đỉnh trợ lực ngược): Map 0.01-3.76 N·m, PID 4.6-8.2, MapPID 4.1-8.1.
+BẪY ĐƠN VỊ (cần ghi để không đọc nhầm lần nữa): calib_score.m trả m.rev là phân số (0 đến 1). pidlag_eval.m (PID) ghi cột rev_pct theo phần trăm, còn map2_eval.m (Map) và mappid_eval.m (MapPID) ghi thẳng m.rev vào cột cũng tên rev_pct, nên cột đó là phân số ở hai file kia. Kiểm chứng: Model/shared/data/mappid.json ghi CALIB_rev_pct_mean = 18.37. Không cần chạy lại, chỉ nhân 100 khi đọc; nếu sửa code thì sửa map2_eval.m và mappid_eval.m (nhân 100) và ghi trong nhật ký, không sửa số của file csv cũ.
+Cách xử lý đề xuất: thêm một hàng "trợ lực ngược (%)" vào Bảng 4.5 (CALIB: Map 3.8, PID 18.3, MapPID 18.1, trung bình năm seed, lấy lại từ csv bằng script, không gõ tay) và một cột hoặc một bảng nhỏ ở 5.5 cho ba chuỗi (số ở trên); sửa câu ở 3.4.2 thành "tỉ lệ này được báo cáo ở mục 4.5 và 5.5". Nếu người dùng không muốn đưa vào thì xóa định nghĩa ở 4.2.2 và câu hứa ở 3.4.2.
+
+D6. Map được chọn trên mặt safe, không qua cổng 10 % [TỰ SỬA].
+Đã kiểm: 4.5 đã có câu "cả 17 điểm đạt yêu cầu 10 % đều trượt phép thử chấp nhận phi tuyến, nên mặt full rỗng". Thiếu: hệ quả cho phép so sánh.
+Cách xử lý: thêm hai câu ở 4.5: (a) với cấu trúc Map, không tồn tại bộ tham số nào vừa ổn định vững vừa có sai số tĩnh dưới 10 %, và đó là một kết quả về cấu trúc (giới hạn độ dốc ở 3.2, ma sát ở 4.5), không phải do cách chọn; (b) vì vậy ở Chương 5 Map được dùng như bộ chuẩn đại diện cho bản đồ đã có trên xe, và độ lệch tĩnh lớn của nó là điều phép so muốn cho thấy. Nhắc lại một câu ở 5.1.1.
+
+D7. Hai loại cửa sổ cùng tên "chuyển làn" [TỰ SỬA].
+Vấn đề: 5.4 dùng cửa sổ 0.4 s (sau đỉnh đánh lái, nơi có vũng nước), 5.6 dùng cửa sổ một chu kỳ 2.5 s.
+Cách xử lý: ở 5.4 gọi là "cửa sổ vũng nước 0.4 s của lần chuyển làn thứ hai" và "cửa sổ đối chứng 0.4 s của lần thứ nhất"; ở 5.6 và Bảng 5.9-5.11 gọi "chuyển làn 1, 2 (cả chu kỳ)". Bỏ câu giải thích sự khác nhau đang có ở 5.4 và 5.6.2 vì tên đã rõ.
+
+D8. Ví dụ ở 2.5 làm yếu động cơ [TỰ SỬA].
+Vấn đề: ví dụ giữ góc 0.3 rad ở 20 m/s, không trợ lực, cho T_s chỉ giảm 5.1 % khi mu từ 0.8 xuống 0.4, rồi tự nói hiệu ứng còn nhỏ.
+Cách xử lý: thay bằng số đã có trong luận văn: ở 60 km/h và 0.3 g, T_r = 7.64 N·m trên đường khô (3.1.2) và giảm 1.047 N·m khi mu từ 0.8 xuống 0.35 (Bảng 3.1), tức 13.7 %; cộng câu dẫn Hình 2.4: đỉnh T_r ở mu = 0.3 chỉ bằng 38 % đỉnh ở mu = 0.8. Lưu ý ví dụ mới là ở cùng gia tốc ngang (không phải cùng góc), nên viết rõ điều kiện. Không cần chạy lại.
+
+D9. Cách nói tần số và chu kỳ trộn lẫn [TỰ SỬA].
+Đã kiểm: thân luận văn có 17 chỗ "Hz", 3 chỗ "rad/s", 5 chỗ "dự trữ pha"; phần lớn chỗ khác nói chu kỳ (s). Quy tắc A8 (chỉ miền thời gian) là của bài báo, luận văn không bắt buộc.
+Cách xử lý: thống nhất: kích thích lái ghi chu kỳ kèm tần số trong ngoặc ở lần đầu mỗi mục, ví dụ "chu kỳ 0.5 s (2 Hz)"; băng thông motor và tần số cắt bộ lọc giữ Hz; dự trữ pha, dự trữ độ lợi giữ (luận văn có dùng phân tích tuyến tính thật ở 4.3). Bỏ "rad/s" ở chỗ tần số Nyquist (4.4), ghi bằng chu kỳ lấy mẫu.
+
+D10. Dấu của sai lệch e_T [TỰ SỬA, nhẹ].
+Đã kiểm: không có lỗi. e_T = T_s,m − T_ref, Hình 3.4 vẽ đúng (T_s,m dấu +, T_ref dấu −); T_s cao hơn mục tiêu cho u_P dương, tức trợ lực tăng, kéo T_s xuống; u_D = K_d·dT_s,f/dt cùng chiều nên cũng là tắt dần. Câu ở 3.3.3 đã giải thích dấu ngược với TL24.
+Cách xử lý: chỉ đưa câu giải thích dấu lên ngay sau (2.19) hoặc (3.13) (một câu: "e_T dương nghĩa là vô-lăng nặng hơn mục tiêu, bộ điều khiển phải tăng trợ lực"), bỏ ở 3.3.3. Thêm phát hiện kèm theo: Hình 3.4 và 3.5 không vẽ đường chống bão hòa (T_a,lim − T_a,cmd đưa về khâu tích phân, (3.17)); thêm một mũi tên hoặc ghi trong chú thích hình. Sửa hình bằng tools/make_fig_thesis_ch3*.
+
+D11. Hai cách nói mức cải thiện [TỰ SỬA].
+Đã kiểm: 4.5 nói "MapPID giảm R̄ khoảng 79 %" (12.07 xuống 2.53, tức 4.77 lần); 5.5, 5.9, 6.1, tóm tắt, abstract nói "giảm E_RMS 4.24, 3.51, 6.54 lần".
+Cách xử lý: dùng "số lần" ở cả hai, 4.5 viết "giảm R̄ 4.77 lần (từ 12.1 % xuống 2.53 %)". Thêm khóa vào ch4_numbers.csv nếu script kiểm số đối chiếu chương 4.
+
+D12. Độ lệch +32.3 % của Map nằm ngoài dải chọn tham số [TỰ SỬA].
+Đã kiểm: 5.2 có câu ghi mức 0.35 và 0.38 g ngoài dải 0.1-0.3 g của CALIB; 5.9 và 6.1 nhắc "+32.3 % ở mức giữ cua mạnh nhất" mà không ghi điều kiện; tóm tắt và abstract không nêu số này nên không cần sửa.
+Cách xử lý: ở 5.9 và 6.1 viết "+32.3 % ở 45 km/h, 0.35 g, ngoài dải 0.1-0.3 g dùng để chọn tham số". Có thể thêm số đối chứng trong dải: lệch lớn nhất của Map ở các mức <= 0.3 g của STEADY (có trong Bảng 5.3 và csv, 9.5 % ở 25 km/h, 0.25 g) để người đọc thấy cả hai.
+
+D13. Câu về tần số 1.5 Hz ngoài CALIB nằm sai chỗ [TỰ SỬA].
+Vấn đề: 5.6.5 nêu cửa sổ 0.67 s (1.5 Hz) nhanh hơn sin nhanh nhất của CALIB (chu kỳ 1 s), tức tham số được chọn chưa gặp kích thích này; đây là giới hạn của ca chọn tham số chứ không phải của phép chẩn đoán.
+Cách xử lý: chuyển thành một câu ở 6.2 (giới hạn của CALIB) và một câu ở 5.4 khi nêu Bảng 5.7; trong hướng 3 của 6.3 gợi ý thêm sin chu kỳ ngắn hơn vào CALIB khi chạy lại. Không suy đoán nó có góp phần hay không.
+
+D14. Quá nhiều chữ số có nghĩa trong bảng [TỰ SỬA, qua script].
+Đã kiểm: Bảng 4.4 (6.77455, 29.8499, 0.0677100...), Bảng 4.5 (12.0719, 26.2366), Bảng 5.2, 5.4, 5.6 (1.0585 ± 0.0007), Bảng 5.3 và 5.5 (32.3002 ± 0.0029).
+Cách xử lý: tham số ghi 3 chữ số có nghĩa (6.77, 29.8 ms, 0.0677 s); chỉ tiêu ghi đến chữ số mà độ lệch chuẩn còn có nghĩa, tức làm tròn trung bình theo độ lệch chuẩn (ví dụ 0.250 ± 0.004); riêng E_RMS của PID và MapPID ở STEADY (0.2496 và 0.2498) giữ 4 chữ số vì cần thấy chúng ngang nhau. Sửa ở chỗ sinh bảng (tools/make_ch5_numbers.py và các script bảng chương 4) chứ không gõ tay, rồi chạy lại đối chiếu 210/210.
+
+D15. "Lựa chọn của luận văn" lặp 20 lần [TỰ SỬA].
+Đã kiểm: 20 chỗ dạng "là lựa chọn của luận văn", "do luận văn chọn" trong thân.
+Cách xử lý: thêm một bảng nhỏ ở cuối 4.4 (hoặc phụ lục C) "Các giá trị do luận văn tự chọn" gồm khoảng 12 dòng: c = 100 s/rad, n_st = 16, t_0, e_c, T_s0 = 0.3 N·m, sàn 1 % của R, ngưỡng hòa 3 % của J, hệ số 2 của phép thử nhiễu loạn, ba sigma, ngưỡng 5 % đọc chẩn đoán và thứ hạng, mức ±20 %, ngưỡng 0.5 N·m của trợ lực ngược, cận trên τ_2,out. Trong thân chỉ ghi "(tự chọn, Bảng x)" ở lần đầu, các lần sau bỏ.
+
+D16. Văn phong lặp "phù hợp với", "một cách đọc" [TỰ SỬA].
+Đã kiểm: 16 chỗ "phù hợp với", 5 chỗ "cách đọc", nhiều câu "luận văn không kiểm/không tách".
+Cách xử lý: giữ cách nói thận trọng chỉ ở chỗ cơ chế thật sự chưa kiểm (5.3 đỉnh khi mu trở lại, 5.7 giới hạn trợ lực, 5.8 SLIP với độ trễ); chỗ đã kiểm bằng phép chạy (ma sát, 5.6) nói thẳng. Các câu "luận văn không kiểm" gom vào 6.2 thành một danh sách cơ chế còn mở. Khi cắt theo mục C nhiều câu này tự mất.
+
+D17. Danh mục công trình [ĐÃ CHỐT 2026-11-13: đang chờ trả lời (rw), bàn sau]. Giữ nguyên trang hiện tại cho tới khi có trả lời.
+
+D18. Lời cam đoan [ĐÃ CHỐT 2026-11-13: tính sau]. Việc cần làm lúc đó: kiểm câu cuối và quy định khai báo công cụ AI của trường.
+
+D19. Mẫu trình bày của trường [ĐÃ CHỐT 2026-11-13: format tính sau]. Số trang mục tiêu 60-80 chỉ chốt sau khi có mẫu (cỡ chữ, giãn dòng); sửa ở tools/txt2docx.py một chỗ.
+
+D20. [RÚT LẠI Lượt 105] Bản ghi chú Lượt 104 viết "PID khoảng 18 %, MapPID khoảng 0.18 %, MapPID gánh phần trợ lực nên ít bị trợ lực ngược" là SAI: do đọc nhầm đơn vị (xem bẫy ở D5). Số đúng: MapPID và PID có tỉ lệ trợ lực ngược NGANG NHAU ở cả CALIB (18.1 và 18.3 %) lẫn ba chuỗi chấm (STEADY 7.4 và 7.3, SLIP 4.6 và 4.2, WEAVE 23.4 và 23.8 %); Map thấp hơn nhiều (CALIB 3.8 %, STEADY 0.05, SLIP 0.001, WEAVE 2.2 %). Cơ chế "bản đồ gánh phần trợ lực nên nhánh PID ít phải cản" KHÔNG được số liệu ủng hộ; không viết vào luận văn.
+ĐÃ CHỐT Lượt 106: gộp vào D5 (bản gọn), không làm gì thêm cho D20.
+Điều số liệu thật sự cho thấy và luận văn chưa nói: hai bộ có phản hồi tạo trợ lực ngược chiều tay người ở 4-24 % số mẫu (lớn nhất ở WEAVE), nhiều gấp nhiều lần Map; đây là cái giá thứ hai của phản hồi, ngoài độ ồn S. Nguyên nhân CHƯA phân tích (ghi nhận cũ ở historychat_common.md, mục D: trễ pha khoảng 80 ms ở lúc đổi chiều lái, nhưng đó là ý kiến cũ cho PI, PID và chưa kiểm cho thiết kế này; theo quy tắc 2026-10-27 chỉ dùng như rủi ro, không dùng làm lập luận). Cách xử lý: nếu đưa vào (D5), viết như một giới hạn của cả PID lẫn MapPID, thêm một câu vào 5.9 và 6.2 ("phản hồi mô-men làm motor cản tay người ở một phần đáng kể thời gian, chưa phân tích nguyên nhân"), thêm vào 6.3 hướng thử cổng hoặc phạt trợ lực ngược khi chọn tham số. Không kết luận gì về ưu thế giữa PID và MapPID từ chỉ tiêu này vì hai bộ ngang nhau.
+
+D21 (mới). Hình 3.4, 3.5 thiếu đường chống bão hòa [TỰ SỬA hình]: xem D10.
+
+F. HÌNH ĐỀ XUẤT THÊM (Lượt 106): 11 hình đã vẽ bằng MATLAB ở Documents/Thesis/image_to_add/ (tools/make_fig_thesis_add.m), vị trí, chú thích và phần chữ mỗi hình thay ở Documents/Thesis/image_to_add/ChuThich_Hinh.md. Khi chèn hình phải cắt đúng phần chữ hoặc bảng ghi ở cột "Thay gì", nếu không luận văn dài thêm. Chưa chèn hình nào.
+
+E. THỨ TỰ LÀM ĐỀ XUẤT
+1) Các chỗ lặp B1-B11 (ước tính bớt 10-12 trang). 2) Chương 5 theo C5 (bớt 9-10 trang). 3) Chương 3 và Chương 1 (bớt 10-11 trang). 4) Chương 2 và 4 (bớt 8-9 trang). 5) Phần đầu và phụ lục (bớt 10 trang). 6) Sửa các điểm D loại [TỰ SỬA] và [CẦN SỐ] (D2-D16, D20, D21; D5 và D20 lấy số trước), rồi chạy lại tools/make_ch5_numbers.py để đối chiếu số, dựng docx, pdf và đếm trang.

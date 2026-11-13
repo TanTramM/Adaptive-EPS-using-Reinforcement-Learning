@@ -410,6 +410,8 @@ def build(txt_path, docx_path, paper=False, thesis=False):
     global FONT_SCALE
     FONT_SCALE = 11.0 / 13.0 if paper else 1.0
     lines = open(txt_path, encoding='utf-8').read().splitlines()
+    if thesis and '@@END' in (l.strip() for l in lines):
+        lines = lines[:[l.strip() for l in lines].index('@@END')]       # '@@END': everything after it (working notes) is not typeset
     doc = Document()
     sec = doc.sections[0]
     sec.page_height, sec.page_width = Cm(29.7), Cm(21.0)
@@ -511,7 +513,12 @@ def build(txt_path, docx_path, paper=False, thesis=False):
             for ci in range(ncol):
                 cell = t.rows[ri].cells[ci]; cell.width = Cm(widths[ci]); p = cell.paragraphs[0]
                 p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1.0
-                add_rich(p, rw[ci] if ci < len(rw) else '', 12, bold=(ri == 0))
+                txt_ = rw[ci] if ci < len(rw) else ''
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                add_rich(p, txt_, 12, bold=(ri == 0))
+                if txt_ and INLINE.search(txt_) and not INLINE.sub('', txt_).strip():
+                    # a paragraph holding only an equation is typeset by Word as a centred display equation; a zero-width run keeps it inline and left-aligned
+                    zr_ = p.add_run('​'); set_font(zr_, 12)
         n_keep = len(t.rows) - 1 if len(t.rows) <= 16 else 1   # a short table (up to 16 rows) stays on one page (Word moves it whole); in a longer one only the header stays with the first row
         for row_k in t.rows[:n_keep]:
             for p_ in (pp for c_ in row_k.cells for pp in c_.paragraphs):
